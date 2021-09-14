@@ -1,0 +1,10 @@
+*.o
+*.a
+*.so
+*.test
+*.prof
+koko
+!koko/
+test.db
+dist/
+bin
