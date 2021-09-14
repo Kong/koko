@@ -1,0 +1,11 @@
+version: v1
+breaking:
+  use:
+  - FILE
+lint:
+  use:
+  - DEFAULT
+  ignore:
+  - google
+deps:
+  - buf.build/googleapis/googleapis

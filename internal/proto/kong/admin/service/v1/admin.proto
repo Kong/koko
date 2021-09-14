@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package kong.admin.service.v1;
+
+option go_package = "github.com/kong/koko/internal/gen/kong/admin/service/v1;v1";
+
+import "google/api/annotations.proto";
+
+service MetaService {
+  rpc GetVersion(GetVersionRequest) returns (GetVersionResponse) {
+    option (google.api.http) = {
+      get: "/v1/version"
+      response_body: "version"
+    };
+  }
+}
+
+message GetVersionRequest{
+}
+
+message GetVersionResponse{
+  string version = 1;
+}

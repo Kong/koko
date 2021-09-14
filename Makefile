@@ -1,0 +1,31 @@
+.DEFAULT_GOAL := test
+
+.PHONY: install-tools
+install-tools:
+	./scripts/install-tools.sh
+
+.PHONY: build
+build:
+	go build -o koko main.go
+
+.PHONY: run
+run:
+	go run main.go
+
+.PHONY: lint
+lint:
+	buf lint
+	golangci-lint run ./...
+
+.PHONY: test
+test: lint
+	go test -race ./...
+
+.PHONY: gen
+gen:
+	./scripts/update-codegen.sh
+
+.PHONY: gen-verify
+gen-verify:
+	./scripts/verify-codegen.sh
+
