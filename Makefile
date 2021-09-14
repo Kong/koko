@@ -1,5 +1,7 @@
 .DEFAULT_GOAL := test
 
+export GOPRIVATE=github.com/kong/go-wrpc
+
 .PHONY: install-tools
 install-tools:
 	./scripts/install-tools.sh

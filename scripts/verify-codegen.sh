@@ -18,6 +18,11 @@ fi
 
 ./scripts/update-codegen.sh
 
+if [[ $? -ne 0 ]];
+then
+  exit $?
+fi
+
 if [[ $(is_repo_dirty) -eq 1 ]];
 then
   echo "Codegen was out of date"

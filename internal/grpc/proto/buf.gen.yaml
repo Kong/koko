@@ -1,15 +1,15 @@
 version: v1
 plugins:
   - name: go
-    out: internal/gen
+    out: internal/gen/grpc
     opt:
     - paths=source_relative
   - name: go-grpc
-    out: internal/gen
+    out: internal/gen/grpc
     opt:
     - paths=source_relative
   - name: grpc-gateway
-    out: internal/gen
+    out: internal/gen/grpc
     opt:
       - paths=source_relative
   - name: openapiv2
