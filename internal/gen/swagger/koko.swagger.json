@@ -16,14 +16,14 @@
     "application/json"
   ],
   "paths": {
-    "/v1/version": {
+    "/v1/meta/version": {
       "get": {
         "operationId": "MetaService_GetVersion",
         "responses": {
           "200": {
-            "description": "",
+            "description": "A successful response.",
             "schema": {
-              "type": "string"
+              "$ref": "#/definitions/kong.admin.service.v1.GetVersionResponse"
             }
           },
           "default": {

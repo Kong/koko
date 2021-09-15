@@ -61,7 +61,7 @@ func RegisterMetaServiceHandlerServer(ctx context.Context, mux *runtime.ServeMux
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kong.admin.service.v1.MetaService/GetVersion", runtime.WithHTTPPathPattern("/v1/version"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kong.admin.service.v1.MetaService/GetVersion", runtime.WithHTTPPathPattern("/v1/meta/version"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -74,7 +74,7 @@ func RegisterMetaServiceHandlerServer(ctx context.Context, mux *runtime.ServeMux
 			return
 		}
 
-		forward_MetaService_GetVersion_0(ctx, mux, outboundMarshaler, w, req, response_MetaService_GetVersion_0{resp}, mux.GetForwardResponseOptions()...)
+		forward_MetaService_GetVersion_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -123,7 +123,7 @@ func RegisterMetaServiceHandlerClient(ctx context.Context, mux *runtime.ServeMux
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kong.admin.service.v1.MetaService/GetVersion", runtime.WithHTTPPathPattern("/v1/version"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kong.admin.service.v1.MetaService/GetVersion", runtime.WithHTTPPathPattern("/v1/meta/version"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -135,24 +135,15 @@ func RegisterMetaServiceHandlerClient(ctx context.Context, mux *runtime.ServeMux
 			return
 		}
 
-		forward_MetaService_GetVersion_0(ctx, mux, outboundMarshaler, w, req, response_MetaService_GetVersion_0{resp}, mux.GetForwardResponseOptions()...)
+		forward_MetaService_GetVersion_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
 	return nil
 }
 
-type response_MetaService_GetVersion_0 struct {
-	proto.Message
-}
-
-func (m response_MetaService_GetVersion_0) XXX_ResponseBody() interface{} {
-	response := m.Message.(*GetVersionResponse)
-	return response.Version
-}
-
 var (
-	pattern_MetaService_GetVersion_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "version"}, ""))
+	pattern_MetaService_GetVersion_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "meta", "version"}, ""))
 )
 
 var (

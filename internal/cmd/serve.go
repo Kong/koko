@@ -7,6 +7,8 @@ import (
 
 	"github.com/kong/koko/internal/config"
 	"github.com/kong/koko/internal/log"
+	"github.com/kong/koko/internal/server"
+	"github.com/kong/koko/internal/server/admin"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 )
@@ -45,7 +47,22 @@ func serveMain(ctx context.Context) error {
 	}
 	log := opts.Logger
 	log.Debug("setup successful")
-	return nil
+
+	h, err := admin.NewHandler(admin.HandlerOpts{
+		Logger: log,
+	})
+	if err != nil {
+		return err
+	}
+	s, err := server.NewHTTP(server.HTTPOpts{
+		Address: ":3000",
+		Logger:  log,
+		Handler: h,
+	})
+	if err != nil {
+		return err
+	}
+	return s.Run(ctx)
 }
 
 func setup() (initOpts, error) {

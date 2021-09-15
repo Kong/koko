@@ -9,8 +9,7 @@ import "google/api/annotations.proto";
 service MetaService {
   rpc GetVersion(GetVersionRequest) returns (GetVersionResponse) {
     option (google.api.http) = {
-      get: "/v1/version"
-      response_body: "version"
+      get: "/v1/meta/version"
     };
   }
 }
