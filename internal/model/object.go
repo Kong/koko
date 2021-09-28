@@ -14,6 +14,8 @@ type Object interface {
 	ID() string
 	Type() Type
 	Resource() Resource
+	Validate() error
+	ProcessDefaults() error
 }
 
 type ObjectList interface {
