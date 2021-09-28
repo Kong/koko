@@ -1,0 +1,64 @@
+syntax = "proto3";
+
+package kong.admin.service.v1;
+
+option go_package = "github.com/kong/koko/internal/gen/kong/admin/service/v1;v1";
+
+import "google/api/annotations.proto";
+import "kong/admin/model/v1/service.proto";
+
+service ServiceService {
+  rpc GetService(GetServiceRequest) returns (GetServiceResponse) {
+    option (google.api.http) = {
+      get: "/v1/services/{id}"
+      response_body: "item"
+    };
+  }
+  rpc CreateService(CreateServiceRequest) returns (CreateServiceResponse) {
+    option (google.api.http) = {
+      post: "/v1/services"
+      body: "item"
+      response_body: "item"
+    };
+  }
+  rpc DeleteService(DeleteServiceRequest) returns (DeleteServiceResponse) {
+    option (google.api.http) = {
+      delete: "/v1/services/{id}"
+    };
+  }
+  rpc ListServices(ListServicesRequest) returns (ListServicesResponse) {
+    option (google.api.http) = {
+      get: "/v1/services"
+    };
+  }
+}
+
+message GetServiceRequest{
+  string id = 1;
+}
+
+message GetServiceResponse{
+  model.v1.Service item = 1;
+}
+
+message CreateServiceRequest{
+  model.v1.Service item = 1;
+}
+
+message CreateServiceResponse{
+  model.v1.Service item = 1;
+}
+
+message DeleteServiceRequest{
+  string id = 1;
+}
+
+message DeleteServiceResponse{
+}
+
+message ListServicesRequest{
+}
+
+message ListServicesResponse{
+  repeated model.v1.Service items = 1;
+}

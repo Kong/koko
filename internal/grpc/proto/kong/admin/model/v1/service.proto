@@ -1,25 +1,26 @@
 syntax = "proto3";
 
-package kong.admin.model.v1;
+option go_package = "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1;v1";
 
-option go_package = "github.com/kong/koko/internal/gen/kong/admin/model/v1;v1";
+package kong.admin.model.v1;
 
 message Service {
   string id = 1;
   string name = 2;
-  int64 connect_timeout = 3;
-  int64 created_at = 4;
+  int32 connect_timeout = 3;
+  int32 created_at = 4;
   string host = 5;
   string path = 6;
-  int64 port = 7;
+  int32 port = 7;
   string protocol = 8;
-  int64 read_timeout = 9;
-  int64 retries = 10;
-  int64 updated_at = 11;
+  int32 read_timeout = 9;
+  int32 retries = 10;
+  int32 updated_at = 11;
   string url = 12;
-  int64 write_timeout = 13;
+  int32 write_timeout = 13;
   repeated string tags = 14;
   bool tls_verify = 15;
-  int64 tls_verify_depth = 16;
+  int32 tls_verify_depth = 16;
+  // Certificate client_certificate = 17;
   repeated string ca_certificates = 18;
 }

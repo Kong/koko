@@ -1,12 +1,15 @@
 {
   "swagger": "2.0",
   "info": {
-    "title": "kong/admin/model/v1/service.proto",
+    "title": "kong/admin/model/v1/error.proto",
     "version": "version not set"
   },
   "tags": [
     {
       "name": "MetaService"
+    },
+    {
+      "name": "ServiceService"
     }
   ],
   "consumes": [
@@ -35,6 +38,116 @@
         },
         "tags": [
           "kong.admin.service.v1.MetaService"
+        ]
+      }
+    },
+    "/v1/services": {
+      "get": {
+        "operationId": "ServiceService_ListServices",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/kong.admin.service.v1.ListServicesResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "tags": [
+          "kong.admin.service.v1.ServiceService"
+        ]
+      },
+      "post": {
+        "operationId": "ServiceService_CreateService",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/kong.admin.model.v1.Service"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/kong.admin.model.v1.Service"
+            }
+          }
+        ],
+        "tags": [
+          "kong.admin.service.v1.ServiceService"
+        ]
+      }
+    },
+    "/v1/services/{id}": {
+      "get": {
+        "operationId": "ServiceService_GetService",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/kong.admin.model.v1.Service"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "kong.admin.service.v1.ServiceService"
+        ]
+      },
+      "delete": {
+        "operationId": "ServiceService_DeleteService",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/kong.admin.service.v1.DeleteServiceResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "kong.admin.service.v1.ServiceService"
         ]
       }
     }
@@ -67,11 +180,112 @@
         }
       }
     },
+    "kong.admin.model.v1.Service": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "connectTimeout": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "createdAt": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "host": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "port": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "protocol": {
+          "type": "string"
+        },
+        "readTimeout": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "retries": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "updatedAt": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "url": {
+          "type": "string"
+        },
+        "writeTimeout": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "tlsVerify": {
+          "type": "boolean"
+        },
+        "tlsVerifyDepth": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "caCertificates": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "title": "Certificate client_certificate = 17;"
+        }
+      }
+    },
+    "kong.admin.service.v1.CreateServiceResponse": {
+      "type": "object",
+      "properties": {
+        "item": {
+          "$ref": "#/definitions/kong.admin.model.v1.Service"
+        }
+      }
+    },
+    "kong.admin.service.v1.DeleteServiceResponse": {
+      "type": "object"
+    },
+    "kong.admin.service.v1.GetServiceResponse": {
+      "type": "object",
+      "properties": {
+        "item": {
+          "$ref": "#/definitions/kong.admin.model.v1.Service"
+        }
+      }
+    },
     "kong.admin.service.v1.GetVersionResponse": {
       "type": "object",
       "properties": {
         "version": {
           "type": "string"
+        }
+      }
+    },
+    "kong.admin.service.v1.ListServicesResponse": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/kong.admin.model.v1.Service"
+          }
         }
       }
     }

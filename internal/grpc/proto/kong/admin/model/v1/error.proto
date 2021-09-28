@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+option go_package = "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1;v1";
+
+package kong.admin.model.v1;
+
+message ErrorDetail {
+  string type = 1;
+  string field = 2;
+  string message = 3;
+}

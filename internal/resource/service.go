@@ -2,6 +2,8 @@ package resource
 
 import (
 	"fmt"
+	"reflect"
+	"time"
 
 	ozzo "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/google/uuid"
@@ -160,5 +162,24 @@ func (r Service) ProcessDefaults() error {
 	if r.Service.Id == "" {
 		r.Service.Id = uuid.NewString()
 	}
+	addTZ(r.Service)
 	return nil
+}
+
+func setTS(obj interface{}, field string, override bool) {
+	ptr := reflect.ValueOf(obj)
+	if ptr.Kind() != reflect.Ptr {
+		return
+	}
+	v := reflect.Indirect(ptr)
+	ts := v.FieldByName(field)
+	if ts.Int() == 0 || override {
+		ts.Set(reflect.ValueOf(int32(time.Now().Unix())))
+		return
+	}
+}
+
+func addTZ(obj interface{}) {
+	setTS(obj, "CreatedAt", false)
+	setTS(obj, "UpdatedAt", true)
 }

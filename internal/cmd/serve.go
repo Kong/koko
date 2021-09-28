@@ -49,7 +49,7 @@ func serveMain(ctx context.Context) error {
 	log.Debug("setup successful")
 
 	h, err := admin.NewHandler(admin.HandlerOpts{
-		Logger: log,
+		Logger: log.With(zap.String("component", "admin-server")),
 	})
 	if err != nil {
 		return err

@@ -2,11 +2,17 @@ package store
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/kong/koko/internal/model"
 	"github.com/kong/koko/internal/persistence"
 	"google.golang.org/protobuf/proto"
+)
+
+var (
+	errNoObject = fmt.Errorf("no object")
+	ErrNotFound = fmt.Errorf("not found")
 )
 
 type Store interface {
@@ -32,6 +38,13 @@ func New(persister persistence.Persister) Store {
 
 func (s *ObjectStore) Create(ctx context.Context, object model.Object,
 	_ ...CreateOptsFunc) error {
+	if object == nil {
+		return errNoObject
+	}
+	if err := preProcess(object); err != nil {
+		return err
+	}
+
 	id, err := storageKey(object)
 	if err != nil {
 		return err
@@ -49,6 +62,18 @@ func (s *ObjectStore) Create(ctx context.Context, object model.Object,
 	return nil
 }
 
+func preProcess(object model.Object) error {
+	err := object.ProcessDefaults()
+	if err != nil {
+		return err
+	}
+	err = object.Validate()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (s *ObjectStore) Read(ctx context.Context, object model.Object,
 	opts ...ReadOptsFunc) error {
 	opt := NewReadOpts(opts...)
@@ -58,6 +83,9 @@ func (s *ObjectStore) Read(ctx context.Context, object model.Object,
 	}
 	value, err := s.store.Get(ctx, id)
 	if err != nil {
+		if errors.As(err, &persistence.ErrNotFound{}) {
+			return ErrNotFound
+		}
 		return err
 	}
 	err = proto.Unmarshal(value, object.Resource())
@@ -74,7 +102,14 @@ func (s *ObjectStore) Delete(ctx context.Context,
 	if err != nil {
 		return err
 	}
-	return s.store.Delete(ctx, id)
+	err = s.store.Delete(ctx, id)
+	if err != nil {
+		if errors.As(err, &persistence.ErrNotFound{}) {
+			return ErrNotFound
+		}
+		return err
+	}
+	return nil
 }
 
 func (s *ObjectStore) List(ctx context.Context, list model.ObjectList, opts ...ListOptsFunc) error {

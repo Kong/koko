@@ -36,6 +36,8 @@ func TestService_ProcessDefaults(t *testing.T) {
 		assert.True(t, validUUID(r.ID()))
 		// empty out the id for equality comparison
 		r.Service.Id = ""
+		r.Service.CreatedAt = 0
+		r.Service.UpdatedAt = 0
 		assert.Equal(t, r.Resource(), defaultService)
 	})
 	t.Run("defaults do not override explicit values", func(t *testing.T) {
@@ -47,8 +49,12 @@ func TestService_ProcessDefaults(t *testing.T) {
 		err := r.ProcessDefaults()
 		assert.Nil(t, err)
 		assert.True(t, validUUID(r.ID()))
-		// empty out the id for equality comparison
+		assert.NotEmpty(t, r.Service.CreatedAt)
+		assert.NotEmpty(t, r.Service.UpdatedAt)
+		// empty out the id and ts for equality comparison
 		r.Service.Id = ""
+		r.Service.CreatedAt = 0
+		r.Service.UpdatedAt = 0
 		assert.Equal(t, &v1.Service{
 			Protocol:       "grpc",
 			Port:           4242,

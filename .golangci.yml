@@ -62,3 +62,7 @@ issues:
     - revive
     text: "blank-imports"
     path: sqlite.go
+  - linters:
+    - staticcheck
+    text: "SA1019" # using old proto package because of dependency
+    path: "internal/server/admin/helpers.go"
