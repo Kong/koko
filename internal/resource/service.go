@@ -16,8 +16,10 @@ const (
 	defaultTimeout = 60000
 	defaultRetries = 5
 	defaultPort    = 80
-	TypeService    = model.Type("service")
-	maxRetry       = (1 << 15) - 1
+	maxRetry       = 32767
+	maxVerifyDepth = 64
+	// TypeService denotes the Service type.
+	TypeService = model.Type("service")
 )
 
 var (
@@ -108,7 +110,7 @@ func (r Service) Validate() error {
 		),
 		ozzo.Field(&s.Tags, typedefs.Tags()...),
 		ozzo.Field(&s.TlsVerifyDepth, ozzo.Min(0),
-			ozzo.Max(64)),
+			ozzo.Max(maxVerifyDepth)),
 		ozzo.Field(&s.CaCertificates, ozzo.Each(typedefs.UUID())),
 		ozzo.Field(&s.TlsVerifyDepth, ozzo.Empty.When(s.
 			Protocol != typedefs.ProtocolHTTPS).Error(

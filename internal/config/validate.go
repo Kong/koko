@@ -11,8 +11,9 @@ import (
 var v = validator.New()
 
 func init() {
+	const splitN = 2
 	v.RegisterTagNameFunc(func(fld reflect.StructField) string {
-		name := strings.SplitN(fld.Tag.Get("json"), ",", 2)[0]
+		name := strings.SplitN(fld.Tag.Get("json"), ",", splitN)[0]
 		if name == "-" {
 			return ""
 		}
@@ -21,8 +22,7 @@ func init() {
 }
 
 func validateTags(s interface{}) validator.ValidationErrors {
-	err := v.Struct(s)
-	if err != nil {
+	if err := v.Struct(s); err != nil {
 		errs, ok := err.(validator.ValidationErrors)
 		if !ok {
 			panic(fmt.Errorf("unexpected type from validation: %T", errs))

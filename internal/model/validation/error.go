@@ -20,10 +20,10 @@ type Error struct {
 
 func (e Error) Error() string {
 	var buf bytes.Buffer
-	len := len(e.Fields)
+	errCount := len(e.Fields)
 	for i, field := range e.Fields {
 		buf.WriteString(field.Error())
-		if i < len-1 {
+		if i < errCount-1 {
 			buf.WriteString(", ")
 		}
 	}

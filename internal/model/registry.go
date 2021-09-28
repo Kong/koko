@@ -7,8 +7,7 @@ type Registry interface{}
 var types = map[Type]func() Object{}
 
 func RegisterType(typ Type, fn func() Object) error {
-	_, ok := types[typ]
-	if ok {
+	if _, ok := types[typ]; ok {
 		return fmt.Errorf("type already registered: %v", typ)
 	}
 	types[typ] = fn

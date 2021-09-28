@@ -1,0 +1,64 @@
+run:
+  timeout: 5m
+linters:
+  enable:
+  - asciicheck
+  - bodyclose
+  - deadcode
+  - depguard
+  - dogsled
+  - durationcheck
+  - errcheck
+  - exportloopref
+  - forbidigo
+  - forcetypeassert
+  - gci
+  - goconst
+  - gocritic
+  - godot
+  - gofmt
+  - gofumpt
+  - goimports
+  - gomnd
+  - gosec
+  - gosimple
+  - govet
+  - ifshort
+  - importas
+  - ineffassign
+  - lll
+  - megacheck
+  - misspell
+  - nakedret
+  - nilerr
+  - noctx
+  - nolintlint
+  - predeclared
+  - revive
+  - rowserrcheck
+  - sqlclosecheck
+  - staticcheck
+  - structcheck
+  - stylecheck
+  - typecheck
+  - unconvert
+  - unparam
+  - varcheck
+  - whitespace
+issues:
+  exclude-rules:
+  - linters:
+    - staticcheck
+    text:  "SA4006" # ignore err not checked in test files
+    path: _test\.go
+  - linters:
+    - ineffassign
+    text:  "ineffectual assignment" # ignore err not checked in test files
+    path: _test\.go
+  - linters:
+    - gocritic
+    text: "unlambda"
+  - linters:
+    - revive
+    text: "blank-imports"
+    path: sqlite.go

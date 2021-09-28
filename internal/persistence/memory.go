@@ -2,6 +2,7 @@ package persistence
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"sync"
 )
@@ -34,7 +35,10 @@ func (m *Memory) Delete(ctx context.Context, key string) error {
 func (m *Memory) List(ctx context.Context, prefix string) ([][]byte, error) {
 	var res [][]byte
 	m.store.Range(func(k, v interface{}) bool {
-		key := k.(string)
+		key, ok := k.(string)
+		if !ok {
+			panic(fmt.Sprintf("expected string but found %T", k))
+		}
 		if strings.HasPrefix(key, prefix) {
 			res = append(res, v.([]byte))
 		}

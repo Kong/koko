@@ -4,9 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/kong/koko/internal/resource"
-
 	"github.com/kong/koko/internal/persistence"
+	"github.com/kong/koko/internal/resource"
 	"github.com/stretchr/testify/assert"
 )
 

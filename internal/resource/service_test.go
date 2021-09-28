@@ -1,7 +1,6 @@
 package resource
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/google/uuid"
@@ -79,7 +78,6 @@ func TestValidate(t *testing.T) {
 	svc := &Service{Service: &s}
 	err := svc.Validate()
 	assert.Nil(t, err)
-	fmt.Println(err)
 }
 
 func goodService() Service {
@@ -252,7 +250,7 @@ func TestService_Validate(t *testing.T) {
 				t.Errorf("Validate() error = %v, wantErr %v", err, tt.wantErr)
 			}
 			if tt.errFields != nil {
-				verr := err.(validation.Error)
+				verr, _ := err.(validation.Error)
 				gotFields := fieldsFromErr(verr)
 				assert.ElementsMatchf(t, tt.errFields, gotFields,
 					"mismatch in expected errors")

@@ -36,7 +36,7 @@ value BLOB);`
 	getQuery    = `SELECT * from store where key=$1`
 	insertQuery = `replace into store(key,value) values(?,?);`
 	deleteQuery = `delete from store where key=?`
-	ListQuery   = `SELECT * from store where key glob '?*'`
+	listQuery   = `SELECT * from store where key glob '?*'`
 )
 
 func migrate(ctx context.Context, db *sql.DB) error {
@@ -90,10 +90,14 @@ func (s *SQLite) Delete(ctx context.Context, key string) error {
 
 func (s *SQLite) List(ctx context.Context, prefix string) ([][]byte, error) {
 	var res [][]byte
-	rows, err := s.db.QueryContext(ctx, ListQuery, prefix)
+	rows, err := s.db.QueryContext(ctx, listQuery, prefix)
+	if rows.Err() != nil {
+		return nil, rows.Err()
+	}
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
 	for rows.Next() {
 		var resKey string
 		var value []byte

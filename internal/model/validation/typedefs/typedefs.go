@@ -30,6 +30,10 @@ const (
 	ProtocolGRPCS = "grpcs"
 	ProtocolUDP   = "udp"
 	ProtocolTCP   = "tcp"
+
+	maxPort    = 65535
+	maxTimeout = (1 << 31) - 2 //nolint:gomnd
+	maxTags    = 8
 )
 
 var protocols = []string{
@@ -55,19 +59,9 @@ func Protocol() []validation.Rule {
 	return []validation.Rule{Enum(protocols...)}
 }
 
-func Timestamp() []validation.Rule {
-	return []validation.Rule{
-		validation.Empty,
-	}
-}
-
 func Host() []validation.Rule {
 	return []validation.Rule{is.Host}
 }
-
-const (
-	maxPort = (1 << 16) - 1
-)
 
 func Port() []validation.Rule {
 	return []validation.Rule{
@@ -105,10 +99,6 @@ func REMatch(regex string, invert bool) validation.Rule {
 	}, err)
 }
 
-const (
-	maxTimeout = (1 << 31) - 2
-)
-
 func Timeout() []validation.Rule {
 	return []validation.Rule{
 		validation.Min(1),
@@ -119,6 +109,6 @@ func Timeout() []validation.Rule {
 func Tags() []validation.Rule {
 	return []validation.Rule{
 		validation.Each(Name()...),
-		validation.Length(0, 8),
+		validation.Length(0, maxTags),
 	}
 }
