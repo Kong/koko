@@ -5,13 +5,12 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/kong/koko/internal/persistence"
-	"github.com/kong/koko/internal/store"
-
 	"github.com/kong/koko/internal/config"
 	"github.com/kong/koko/internal/log"
+	"github.com/kong/koko/internal/persistence"
 	"github.com/kong/koko/internal/server"
 	"github.com/kong/koko/internal/server/admin"
+	"github.com/kong/koko/internal/store"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 )
