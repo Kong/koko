@@ -6,7 +6,6 @@ import (
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/service/v1"
-	"github.com/kong/koko/internal/persistence"
 	"github.com/kong/koko/internal/store"
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -14,6 +13,7 @@ import (
 
 type HandlerOpts struct {
 	Logger *zap.Logger
+	Store  store.Store
 }
 
 type CommonOpts struct {
@@ -38,12 +38,10 @@ func NewHandler(opts HandlerOpts) (http.Handler, error) {
 		return nil, err
 	}
 
-	store := store.New(&persistence.Memory{})
-
 	err = v1.RegisterServiceServiceHandlerServer(context.Background(),
 		mux, &ServiceService{
 			CommonOpts: CommonOpts{
-				store: store,
+				store: opts.Store,
 				logger: opts.Logger.With(zap.String("admin-service",
 					"service")),
 			},

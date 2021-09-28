@@ -5,6 +5,9 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/kong/koko/internal/persistence"
+	"github.com/kong/koko/internal/store"
+
 	"github.com/kong/koko/internal/config"
 	"github.com/kong/koko/internal/log"
 	"github.com/kong/koko/internal/server"
@@ -48,8 +51,11 @@ func serveMain(ctx context.Context) error {
 	log := opts.Logger
 	log.Debug("setup successful")
 
+	store := store.New(&persistence.Memory{})
+
 	h, err := admin.NewHandler(admin.HandlerOpts{
 		Logger: log.With(zap.String("component", "admin-server")),
+		Store:  store,
 	})
 	if err != nil {
 		return err
