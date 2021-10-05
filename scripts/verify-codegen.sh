@@ -16,6 +16,8 @@ then
   exit 1
 fi
 
+rm -rf ./internal/gen
+
 ./scripts/update-codegen.sh
 
 if [[ $? -ne 0 ]];
