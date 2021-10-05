@@ -9,6 +9,9 @@
       "name": "MetaService"
     },
     {
+      "name": "RouteService"
+    },
+    {
       "name": "ServiceService"
     }
   ],
@@ -38,6 +41,116 @@
         },
         "tags": [
           "kong.admin.service.v1.MetaService"
+        ]
+      }
+    },
+    "/v1/routes": {
+      "get": {
+        "operationId": "RouteService_ListRoutes",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/kong.admin.service.v1.ListRoutesResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "tags": [
+          "kong.admin.service.v1.RouteService"
+        ]
+      },
+      "post": {
+        "operationId": "RouteService_CreateRoute",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/kong.admin.model.v1.Route"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/kong.admin.model.v1.Route"
+            }
+          }
+        ],
+        "tags": [
+          "kong.admin.service.v1.RouteService"
+        ]
+      }
+    },
+    "/v1/routes/{id}": {
+      "get": {
+        "operationId": "RouteService_GetRoute",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/kong.admin.model.v1.Route"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "kong.admin.service.v1.RouteService"
+        ]
+      },
+      "delete": {
+        "operationId": "RouteService_DeleteRoute",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/kong.admin.service.v1.DeleteRouteResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "kong.admin.service.v1.RouteService"
         ]
       }
     },
@@ -180,6 +293,128 @@
         }
       }
     },
+    "kong.admin.model.v1.CIDRPort": {
+      "type": "object",
+      "properties": {
+        "ip": {
+          "type": "string"
+        },
+        "port": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "kong.admin.model.v1.HeaderValues": {
+      "type": "object",
+      "properties": {
+        "values": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "kong.admin.model.v1.Route": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "headers": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/kong.admin.model.v1.HeaderValues"
+          }
+        },
+        "hosts": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "createdAt": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "methods": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "paths": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "pathHandling": {
+          "type": "string"
+        },
+        "preserveHost": {
+          "type": "boolean"
+        },
+        "protocols": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "regexPriority": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "stripPath": {
+          "type": "boolean"
+        },
+        "updatedAt": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "snis": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "sources": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/kong.admin.model.v1.CIDRPort"
+          }
+        },
+        "destinations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/kong.admin.model.v1.CIDRPort"
+          }
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "httpsRedirectStatusCode": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "requestBuffering": {
+          "type": "boolean"
+        },
+        "responseBuffering": {
+          "type": "boolean"
+        },
+        "service": {
+          "$ref": "#/definitions/kong.admin.model.v1.Service"
+        }
+      }
+    },
     "kong.admin.model.v1.Service": {
       "type": "object",
       "properties": {
@@ -251,6 +486,14 @@
         }
       }
     },
+    "kong.admin.service.v1.CreateRouteResponse": {
+      "type": "object",
+      "properties": {
+        "item": {
+          "$ref": "#/definitions/kong.admin.model.v1.Route"
+        }
+      }
+    },
     "kong.admin.service.v1.CreateServiceResponse": {
       "type": "object",
       "properties": {
@@ -259,8 +502,19 @@
         }
       }
     },
+    "kong.admin.service.v1.DeleteRouteResponse": {
+      "type": "object"
+    },
     "kong.admin.service.v1.DeleteServiceResponse": {
       "type": "object"
+    },
+    "kong.admin.service.v1.GetRouteResponse": {
+      "type": "object",
+      "properties": {
+        "item": {
+          "$ref": "#/definitions/kong.admin.model.v1.Route"
+        }
+      }
     },
     "kong.admin.service.v1.GetServiceResponse": {
       "type": "object",
@@ -275,6 +529,17 @@
       "properties": {
         "version": {
           "type": "string"
+        }
+      }
+    },
+    "kong.admin.service.v1.ListRoutesResponse": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/kong.admin.model.v1.Route"
+          }
         }
       }
     },

@@ -264,11 +264,3 @@ func TestService_Validate(t *testing.T) {
 		})
 	}
 }
-
-func fieldsFromErr(err validation.Error) []string {
-	res := make([]string, 0, len(err.Fields))
-	for _, f := range err.Fields {
-		res = append(res, f.Name)
-	}
-	return res
-}

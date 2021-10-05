@@ -66,3 +66,6 @@ issues:
     - staticcheck
     text: "SA1019" # using old proto package because of dependency
     path: "internal/server/admin/helpers.go"
+  - linters:
+    - goconst
+    path: _test\.go

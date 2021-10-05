@@ -1,0 +1,64 @@
+syntax = "proto3";
+
+package kong.admin.service.v1;
+
+option go_package = "github.com/kong/koko/internal/gen/kong/admin/service/v1;v1";
+
+import "google/api/annotations.proto";
+import "kong/admin/model/v1/route.proto";
+
+service RouteService {
+  rpc GetRoute(GetRouteRequest) returns (GetRouteResponse) {
+    option (google.api.http) = {
+      get: "/v1/routes/{id}"
+      response_body: "item"
+    };
+  }
+  rpc CreateRoute(CreateRouteRequest) returns (CreateRouteResponse) {
+    option (google.api.http) = {
+      post: "/v1/routes"
+      body: "item"
+      response_body: "item"
+    };
+  }
+  rpc DeleteRoute(DeleteRouteRequest) returns (DeleteRouteResponse) {
+    option (google.api.http) = {
+      delete: "/v1/routes/{id}"
+    };
+  }
+  rpc ListRoutes(ListRoutesRequest) returns (ListRoutesResponse) {
+    option (google.api.http) = {
+      get: "/v1/routes"
+    };
+  }
+}
+
+message GetRouteRequest{
+  string id = 1;
+}
+
+message GetRouteResponse{
+  model.v1.Route item = 1;
+}
+
+message CreateRouteRequest{
+  model.v1.Route item = 1;
+}
+
+message CreateRouteResponse{
+  model.v1.Route item = 1;
+}
+
+message DeleteRouteRequest{
+  string id = 1;
+}
+
+message DeleteRouteResponse{
+}
+
+message ListRoutesRequest{
+}
+
+message ListRoutesResponse{
+  repeated model.v1.Route items = 1;
+}

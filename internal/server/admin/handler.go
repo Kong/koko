@@ -49,5 +49,18 @@ func NewHandler(opts HandlerOpts) (http.Handler, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	err = v1.RegisterRouteServiceHandlerServer(context.Background(),
+		mux, &RouteService{
+			CommonOpts: CommonOpts{
+				store: opts.Store,
+				logger: opts.Logger.With(zap.String("admin-service",
+					"route")),
+			},
+		})
+	if err != nil {
+		return nil, err
+	}
+
 	return mux, nil
 }

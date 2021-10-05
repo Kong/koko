@@ -1,0 +1,41 @@
+syntax = "proto3";
+
+option go_package = "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1;v1";
+
+package kong.admin.model.v1;
+
+import "kong/admin/model/v1/service.proto";
+import "google/protobuf/wrappers.proto";
+
+message Route {
+  string id = 1;
+  string name = 2;
+  map<string, HeaderValues> headers = 3;
+  repeated string hosts = 4;
+  int32 created_at = 5;
+  repeated string methods = 6;
+  repeated string paths = 7;
+  string path_handling = 8;
+  google.protobuf.BoolValue preserve_host = 9;
+  repeated string protocols = 10;
+  google.protobuf.Int32Value regex_priority = 11;
+  google.protobuf.BoolValue strip_path = 12;
+  int32 updated_at = 13;
+  repeated string snis = 14;
+  repeated CIDRPort sources = 15;
+  repeated CIDRPort destinations = 16;
+  repeated string tags = 17;
+  int32 https_redirect_status_code = 18;
+  google.protobuf.BoolValue request_buffering = 19;
+  google.protobuf.BoolValue response_buffering = 20;
+  Service service = 21;
+}
+
+message HeaderValues {
+  repeated string values = 1;
+}
+
+message CIDRPort {
+  string ip = 1;
+  int32 port = 2;
+}
