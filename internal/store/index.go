@@ -41,7 +41,8 @@ func (e ErrConstraint) Error() string {
 		e.Index.Name, e.Index.Type, e.Index.Value, e.Message)
 }
 
-func (s *ObjectStore) createIndexes(ctx context.Context, object model.Object) error {
+func (s *ObjectStore) createIndexes(ctx context.Context,
+	tx persistence.Tx, object model.Object) error {
 	indexes := object.Indexes()
 	for _, index := range indexes {
 		switch index.Type {
@@ -50,12 +51,12 @@ func (s *ObjectStore) createIndexes(ctx context.Context, object model.Object) er
 			if key == "" {
 				continue
 			}
-			err := s.checkIndex(ctx, index, key)
+			err := s.checkIndex(ctx, tx, index, key)
 			if err != nil {
 				return err
 			}
 
-			err = s.store.Put(ctx, key, value)
+			err = tx.Put(ctx, key, value)
 			if err != nil {
 				return fmt.Errorf("add '%s(%s)' index for '%s' type", index.Name,
 					index.Type, object.Type())
@@ -65,12 +66,12 @@ func (s *ObjectStore) createIndexes(ctx context.Context, object model.Object) er
 			if key == "" {
 				continue
 			}
-			err := s.checkIndex(ctx, index, key)
+			err := s.checkIndex(ctx, tx, index, key)
 			if err != nil {
 				return err
 			}
 
-			err = s.store.Put(ctx, key, value)
+			err = tx.Put(ctx, key, value)
 			if err != nil {
 				return err
 			}
@@ -78,7 +79,7 @@ func (s *ObjectStore) createIndexes(ctx context.Context, object model.Object) er
 			// check if the foreign entity exists or not
 			fk := fmt.Sprintf("%s/%s",
 				index.ForeignType, index.Value)
-			_, err = s.store.Get(ctx, fk)
+			_, err = tx.Get(ctx, fk)
 			switch {
 			case err == nil:
 				// happy path
@@ -98,9 +99,9 @@ func (s *ObjectStore) createIndexes(ctx context.Context, object model.Object) er
 	return nil
 }
 
-func (s *ObjectStore) checkIndex(ctx context.Context,
+func (s *ObjectStore) checkIndex(ctx context.Context, tx persistence.Tx,
 	index model.Index, key string) error {
-	_, err := s.store.Get(ctx, key)
+	_, err := tx.Get(ctx, key)
 	switch {
 	case err == nil:
 		// found the key, unique constraint violation
@@ -116,7 +117,7 @@ func (s *ObjectStore) checkIndex(ctx context.Context,
 	}
 }
 
-func (s *ObjectStore) deleteIndexes(ctx context.Context,
+func (s *ObjectStore) deleteIndexes(ctx context.Context, tx persistence.Tx,
 	object model.Object) error {
 	indexes := object.Indexes()
 	for _, index := range indexes {
@@ -126,7 +127,7 @@ func (s *ObjectStore) deleteIndexes(ctx context.Context,
 			if key == "" {
 				continue
 			}
-			err := s.store.Delete(ctx, key)
+			err := tx.Delete(ctx, key)
 			if err != nil {
 				s.logger.With(
 					zap.Error(err),
@@ -141,7 +142,7 @@ func (s *ObjectStore) deleteIndexes(ctx context.Context,
 			if key == "" {
 				continue
 			}
-			err := s.store.Delete(ctx, key)
+			err := tx.Delete(ctx, key)
 			if err != nil {
 				s.logger.With(
 					zap.Error(err),

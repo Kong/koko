@@ -14,7 +14,9 @@ import (
 
 func TestService(t *testing.T) {
 	// TODO improve these tests
-	s := New(&persistence.Memory{}, log.Logger)
+	persister, err := persistence.NewSQLite(":memory:")
+	assert.Nil(t, err)
+	s := New(persister, log.Logger)
 	svc := resource.NewService()
 	id := uuid.NewString()
 	svc.Service = &v1.Service{
@@ -49,7 +51,7 @@ func TestService(t *testing.T) {
 	}
 	assert.Nil(t, s.Create(context.Background(), svc))
 	svcs := resource.NewList(resource.TypeService)
-	err := s.List(context.Background(), svcs)
+	err = s.List(context.Background(), svcs)
 	assert.Nil(t, err)
 	assert.Len(t, svcs.GetAll(), 2)
 }

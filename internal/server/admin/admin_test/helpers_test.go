@@ -11,9 +11,13 @@ import (
 )
 
 func setup(t *testing.T) (*httptest.Server, func()) {
+	persister, err := persistence.NewMemory()
+	if err != nil {
+		t.Fatalf("create persister: %v", err)
+	}
 	handler, err := admin.NewHandler(admin.HandlerOpts{
 		Logger: log.Logger,
-		Store:  store.New(&persistence.Memory{}, log.Logger),
+		Store:  store.New(persister, log.Logger),
 	})
 	if err != nil {
 		t.Fatalf("creating httptest.Server: %v", err)

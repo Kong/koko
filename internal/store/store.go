@@ -21,8 +21,6 @@ type Store interface {
 	Read(context.Context, model.Object, ...ReadOptsFunc) error
 	Delete(context.Context, ...DeleteOptsFunc) error
 	List(context.Context, model.ObjectList, ...ListOptsFunc) error
-	// TODO(hbagdi): required but something to tackle later on
-	// Tx(func(s Store) error) error
 }
 
 // ObjectStore stores objects.
@@ -39,16 +37,29 @@ func New(persister persistence.Persister, logger *zap.Logger) Store {
 	}
 }
 
+func (s *ObjectStore) withTx(ctx context.Context,
+	fn func(tx persistence.Tx) error) error {
+	tx, err := s.store.Tx(ctx)
+	if err != nil {
+		return err
+	}
+	err = fn(tx)
+	if err != nil {
+		rollbackerr := tx.Rollback()
+		if rollbackerr != nil {
+			return rollbackerr
+		}
+		return err
+	}
+	return tx.Commit()
+}
+
 func (s *ObjectStore) Create(ctx context.Context, object model.Object,
 	_ ...CreateOptsFunc) error {
 	if object == nil {
 		return errNoObject
 	}
 	if err := preProcess(object); err != nil {
-		return err
-	}
-
-	if err := s.createIndexes(ctx, object); err != nil {
 		return err
 	}
 
@@ -61,12 +72,12 @@ func (s *ObjectStore) Create(ctx context.Context, object model.Object,
 		return err
 	}
 
-	err = s.store.Put(ctx, id, value)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return s.withTx(ctx, func(tx persistence.Tx) error {
+		if err := s.createIndexes(ctx, tx, object); err != nil {
+			return err
+		}
+		return tx.Put(ctx, id, value)
+	})
 }
 
 func preProcess(object model.Object) error {
@@ -88,12 +99,14 @@ func (s *ObjectStore) Read(ctx context.Context, object model.Object,
 	if err != nil {
 		return err
 	}
-	return s.readByTypeID(ctx, id, object)
+	return s.withTx(ctx, func(tx persistence.Tx) error {
+		return s.readByTypeID(ctx, tx, id, object)
+	})
 }
 
-func (s *ObjectStore) readByTypeID(ctx context.Context, typeID string,
-	object model.Object) error {
-	value, err := s.store.Get(ctx, typeID)
+func (s *ObjectStore) readByTypeID(ctx context.Context, tx persistence.Tx,
+	typeID string, object model.Object) error {
+	value, err := tx.Get(ctx, typeID)
 	if err != nil {
 		if errors.As(err, &persistence.ErrNotFound{}) {
 			return ErrNotFound
@@ -118,22 +131,20 @@ func (s *ObjectStore) Delete(ctx context.Context,
 	if err != nil {
 		return err
 	}
-	err = s.readByTypeID(ctx, id, object)
-	if err != nil {
-		return err
-	}
-	err = s.store.Delete(ctx, id)
-	if err != nil {
-		if errors.As(err, &persistence.ErrNotFound{}) {
-			return ErrNotFound
+	return s.withTx(ctx, func(tx persistence.Tx) error {
+		err = s.readByTypeID(ctx, tx, id, object)
+		if err != nil {
+			return err
 		}
-		return err
-	}
-	err = s.deleteIndexes(ctx, object)
-	if err != nil {
-		return err
-	}
-	return nil
+		err = tx.Delete(ctx, id)
+		if err != nil {
+			if errors.As(err, &persistence.ErrNotFound{}) {
+				return ErrNotFound
+			}
+			return err
+		}
+		return s.deleteIndexes(ctx, tx, object)
+	})
 }
 
 func (s *ObjectStore) List(ctx context.Context, list model.ObjectList, opts ...ListOptsFunc) error {
