@@ -68,3 +68,23 @@ func NewHandler(opts HandlerOpts) (http.Handler, error) {
 
 	return opts.StoreInjector.Wrap(mux), nil
 }
+
+type StoreInjector struct {
+	store store.Store
+	next  http.Handler
+}
+
+type contextKey struct{}
+
+var storeCtxKey = &contextKey{}
+
+func (s StoreInjector) Handler(next http.Handler) http.Handler {
+	s.next = next
+	return s
+}
+
+func (s StoreInjector) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	ctx := context.WithValue(r.Context(), storeCtxKey, s.store)
+	s.next.ServeHTTP(w, r.WithContext(ctx))
+>>>>>>> feat: dynamic store injection
+}
