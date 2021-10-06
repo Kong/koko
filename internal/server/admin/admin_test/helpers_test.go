@@ -13,7 +13,7 @@ import (
 func setup(t *testing.T) (*httptest.Server, func()) {
 	handler, err := admin.NewHandler(admin.HandlerOpts{
 		Logger: log.Logger,
-		Store:  store.New(&persistence.Memory{}),
+		Store:  store.New(&persistence.Memory{}, log.Logger),
 	})
 	if err != nil {
 		t.Fatalf("creating httptest.Server: %v", err)

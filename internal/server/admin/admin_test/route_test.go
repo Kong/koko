@@ -41,7 +41,15 @@ func TestRouteCreate(t *testing.T) {
 	})
 	t.Run("recreating the same route fails", func(t *testing.T) {
 		// TODO(hbagdi): index on the name and check id exists before create
-		t.Skip()
+		route := goodRoute()
+		res := c.POST("/v1/routes").WithJSON(route).Expect()
+		res.Status(400)
+		body := res.JSON().Object()
+		body.ValueEqual("message", "data constraint error")
+		body.Value("details").Array().Length().Equal(1)
+		err := body.Value("details").Array().Element(0)
+		err.Object().ValueEqual("type", "constraint")
+		err.Object().ValueEqual("field", "name")
 	})
 }
 

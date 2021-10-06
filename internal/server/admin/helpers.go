@@ -56,6 +56,18 @@ func handleErr(logger *zap.Logger, err error) error {
 	}
 
 	switch e := err.(type) {
+	case store.ErrConstraint:
+		s := status.New(codes.InvalidArgument, "data constraint error")
+		errDetail := &pbModel.ErrorDetail{
+			Type:    "constraint",
+			Field:   e.Index.FieldName,
+			Message: e.Error(),
+		}
+		s, err := s.WithDetails(errDetail)
+		if err != nil {
+			panic(err)
+		}
+		return s.Err()
 	case validation.Error:
 		s := status.New(codes.InvalidArgument, "validation error")
 		errDetails := make([]proto1.Message, len(e.Fields))
@@ -72,7 +84,7 @@ func handleErr(logger *zap.Logger, err error) error {
 		}
 		return s.Err()
 	default:
-		logger.With(zap.Error(err))
+		logger.With(zap.Error(err)).Error("error in service")
 		return status.Error(codes.Internal, "")
 	}
 }

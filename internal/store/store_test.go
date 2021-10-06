@@ -6,13 +6,15 @@ import (
 
 	"github.com/google/uuid"
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
+	"github.com/kong/koko/internal/log"
 	"github.com/kong/koko/internal/persistence"
 	"github.com/kong/koko/internal/resource"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestService(t *testing.T) {
-	s := New(&persistence.Memory{})
+	// TODO improve these tests
+	s := New(&persistence.Memory{}, log.Logger)
 	svc := resource.NewService()
 	id := uuid.NewString()
 	svc.Service = &v1.Service{
@@ -41,7 +43,7 @@ func TestService(t *testing.T) {
 	svc = resource.NewService()
 	svc.Service = &v1.Service{
 		Id:   uuid.NewString(),
-		Name: "bar",
+		Name: "foo",
 		Host: "foo.com",
 		Path: "/bar",
 	}

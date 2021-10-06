@@ -65,6 +65,27 @@ func (r Route) Resource() model.Resource {
 	return r.Route
 }
 
+func (r Route) Indexes() []model.Index {
+	res := []model.Index{
+		{
+			Name:      "name",
+			Type:      model.IndexUnique,
+			Value:     r.Route.Name,
+			FieldName: "name",
+		},
+	}
+	if r.Route.Service != nil {
+		res = append(res, model.Index{
+			Name:        "svc_id",
+			Type:        model.IndexForeign,
+			ForeignType: TypeService,
+			FieldName:   "service.id",
+			Value:       r.Route.Service.Id,
+		})
+	}
+	return res
+}
+
 func (r Route) Validate() error {
 	if r.Route == nil {
 		return fmt.Errorf("invalid nil resource")

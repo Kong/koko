@@ -7,6 +7,7 @@ import (
 
 	"github.com/kong/koko/internal/model"
 	"github.com/kong/koko/internal/persistence"
+	"go.uber.org/zap"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -27,12 +28,14 @@ type Store interface {
 // ObjectStore stores objects.
 // TODO(hbagdi): better name needed between this and the interface.
 type ObjectStore struct {
-	store persistence.Persister
+	logger *zap.Logger
+	store  persistence.Persister
 }
 
-func New(persister persistence.Persister) Store {
+func New(persister persistence.Persister, logger *zap.Logger) Store {
 	return &ObjectStore{
-		store: persister,
+		logger: logger,
+		store:  persister,
 	}
 }
 
@@ -42,6 +45,10 @@ func (s *ObjectStore) Create(ctx context.Context, object model.Object,
 		return errNoObject
 	}
 	if err := preProcess(object); err != nil {
+		return err
+	}
+
+	if err := s.createIndexes(ctx, object); err != nil {
 		return err
 	}
 
@@ -81,7 +88,12 @@ func (s *ObjectStore) Read(ctx context.Context, object model.Object,
 	if err != nil {
 		return err
 	}
-	value, err := s.store.Get(ctx, id)
+	return s.readByTypeID(ctx, id, object)
+}
+
+func (s *ObjectStore) readByTypeID(ctx context.Context, typeID string,
+	object model.Object) error {
+	value, err := s.store.Get(ctx, typeID)
 	if err != nil {
 		if errors.As(err, &persistence.ErrNotFound{}) {
 			return ErrNotFound
@@ -102,11 +114,23 @@ func (s *ObjectStore) Delete(ctx context.Context,
 	if err != nil {
 		return err
 	}
+	object, err := model.NewObject(opt.typ)
+	if err != nil {
+		return err
+	}
+	err = s.readByTypeID(ctx, id, object)
+	if err != nil {
+		return err
+	}
 	err = s.store.Delete(ctx, id)
 	if err != nil {
 		if errors.As(err, &persistence.ErrNotFound{}) {
 			return ErrNotFound
 		}
+		return err
+	}
+	err = s.deleteIndexes(ctx, object)
+	if err != nil {
 		return err
 	}
 	return nil

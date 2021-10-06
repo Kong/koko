@@ -144,3 +144,14 @@ func (r Service) ProcessDefaults() error {
 	addTZ(r.Service)
 	return nil
 }
+
+func (r Service) Indexes() []model.Index {
+	return []model.Index{
+		{
+			Name:      "name",
+			Type:      model.IndexUnique,
+			Value:     r.Service.Name,
+			FieldName: "name",
+		},
+	}
+}

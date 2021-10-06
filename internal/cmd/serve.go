@@ -50,7 +50,8 @@ func serveMain(ctx context.Context) error {
 	log := opts.Logger
 	log.Debug("setup successful")
 
-	store := store.New(&persistence.Memory{})
+	store := store.New(&persistence.Memory{}, log.With(zap.String("component",
+		"store")))
 
 	h, err := admin.NewHandler(admin.HandlerOpts{
 		Logger: log.With(zap.String("component", "admin-server")),
