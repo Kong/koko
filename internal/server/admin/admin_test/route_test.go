@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/gavv/httpexpect/v2"
+	"github.com/google/uuid"
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
 	"github.com/stretchr/testify/assert"
 )
@@ -40,7 +41,6 @@ func TestRouteCreate(t *testing.T) {
 		validateGoodRoute(body)
 	})
 	t.Run("recreating the same route fails", func(t *testing.T) {
-		// TODO(hbagdi): index on the name and check id exists before create
 		route := goodRoute()
 		res := c.POST("/v1/routes").WithJSON(route).Expect()
 		res.Status(400)
@@ -50,6 +50,23 @@ func TestRouteCreate(t *testing.T) {
 		err := body.Value("details").Array().Element(0)
 		err.Object().ValueEqual("type", "constraint")
 		err.Object().ValueEqual("field", "name")
+	})
+	t.Run("creating a route with a non-existent service fails", func(t *testing.T) {
+		route := &v1.Route{
+			Name:  "bar",
+			Paths: []string{"/"},
+			Service: &v1.Service{
+				Id: uuid.NewString(),
+			},
+		}
+		res := c.POST("/v1/routes").WithJSON(route).Expect()
+		res.Status(400)
+		body := res.JSON().Object()
+		body.ValueEqual("message", "data constraint error")
+		body.Value("details").Array().Length().Equal(1)
+		err := body.Value("details").Array().Element(0)
+		err.Object().ValueEqual("type", "constraint")
+		err.Object().ValueEqual("field", "service.id")
 	})
 }
 
