@@ -16,7 +16,7 @@ func TestService(t *testing.T) {
 	// TODO improve these tests
 	persister, err := persistence.NewSQLite(":memory:")
 	assert.Nil(t, err)
-	s := New(persister, log.Logger)
+	s := New(persister, log.Logger).ForCluster("default")
 	svc := resource.NewService()
 	id := uuid.NewString()
 	svc.Service = &v1.Service{

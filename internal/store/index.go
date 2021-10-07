@@ -10,7 +10,8 @@ import (
 	"go.uber.org/zap"
 )
 
-func indexKV(index model.Index, object model.Object) (string, []byte) {
+func (s *ObjectStore) indexKV(index model.Index, object model.Object) (string,
+	[]byte) {
 	if index.Name == "" || index.Value == "" {
 		return "", nil
 	}
@@ -19,13 +20,13 @@ func indexKV(index model.Index, object model.Object) (string, []byte) {
 		key := fmt.Sprintf("ix/u/%s/%s/%s", object.Type(), index.Name,
 			index.Value)
 		value := object.ID()
-		return key, []byte(value)
+		return s.clusterKey(key), []byte(value)
 	case model.IndexForeign:
 		key := fmt.Sprintf("ix/f/%s/%s/%s/%s",
 			index.ForeignType, index.Value,
 			object.Type(), object.ID())
 		value := []byte{'1'}
-		return key, value
+		return s.clusterKey(key), value
 	default:
 		panic("invalid index type")
 	}
@@ -47,7 +48,7 @@ func (s *ObjectStore) createIndexes(ctx context.Context,
 	for _, index := range indexes {
 		switch index.Type {
 		case model.IndexUnique:
-			key, value := indexKV(index, object)
+			key, value := s.indexKV(index, object)
 			if key == "" {
 				continue
 			}
@@ -62,7 +63,7 @@ func (s *ObjectStore) createIndexes(ctx context.Context,
 					index.Type, object.Type())
 			}
 		case model.IndexForeign:
-			key, value := indexKV(index, object)
+			key, value := s.indexKV(index, object)
 			if key == "" {
 				continue
 			}
@@ -123,7 +124,7 @@ func (s *ObjectStore) deleteIndexes(ctx context.Context, tx persistence.Tx,
 	for _, index := range indexes {
 		switch index.Type {
 		case model.IndexUnique:
-			key, _ := indexKV(index, object)
+			key, _ := s.indexKV(index, object)
 			if key == "" {
 				continue
 			}
@@ -138,7 +139,7 @@ func (s *ObjectStore) deleteIndexes(ctx context.Context, tx persistence.Tx,
 				).Error("delete index failed, possible data integrity issue")
 			}
 		case model.IndexForeign:
-			key, _ := indexKV(index, object)
+			key, _ := s.indexKV(index, object)
 			if key == "" {
 				continue
 			}

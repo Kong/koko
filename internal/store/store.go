@@ -23,17 +23,31 @@ type Store interface {
 	List(context.Context, model.ObjectList, ...ListOptsFunc) error
 }
 
-// ObjectStore stores objects.
-// TODO(hbagdi): better name needed between this and the interface.
-type ObjectStore struct {
+type objectStoreOpts struct {
 	logger *zap.Logger
 	store  persistence.Persister
 }
 
-func New(persister persistence.Persister, logger *zap.Logger) Store {
+// ObjectStore stores objects.
+// TODO(hbagdi): better name needed between this and the interface.
+type ObjectStore struct {
+	cluster string
+	objectStoreOpts
+}
+
+func New(persister persistence.Persister, logger *zap.Logger) *ObjectStore {
 	return &ObjectStore{
-		logger: logger,
-		store:  persister,
+		objectStoreOpts: objectStoreOpts{
+			logger: logger,
+			store:  persister,
+		},
+	}
+}
+
+func (s *ObjectStore) ForCluster(cluster string) *ObjectStore {
+	return &ObjectStore{
+		objectStoreOpts: s.objectStoreOpts,
+		cluster:         cluster,
 	}
 }
 
@@ -63,7 +77,7 @@ func (s *ObjectStore) Create(ctx context.Context, object model.Object,
 		return err
 	}
 
-	id, err := storageKey(object)
+	id, err := s.genID(object.Type(), object.ID())
 	if err != nil {
 		return err
 	}
@@ -95,7 +109,7 @@ func preProcess(object model.Object) error {
 func (s *ObjectStore) Read(ctx context.Context, object model.Object,
 	opts ...ReadOptsFunc) error {
 	opt := NewReadOpts(opts...)
-	id, err := genID(object.Type(), opt.id)
+	id, err := s.genID(object.Type(), opt.id)
 	if err != nil {
 		return err
 	}
@@ -123,7 +137,7 @@ func (s *ObjectStore) readByTypeID(ctx context.Context, tx persistence.Tx,
 func (s *ObjectStore) Delete(ctx context.Context,
 	opts ...DeleteOptsFunc) error {
 	opt := NewDeleteOpts(opts...)
-	id, err := genID(opt.typ, opt.id)
+	id, err := s.genID(opt.typ, opt.id)
 	if err != nil {
 		return err
 	}
@@ -149,7 +163,7 @@ func (s *ObjectStore) Delete(ctx context.Context,
 
 func (s *ObjectStore) List(ctx context.Context, list model.ObjectList, opts ...ListOptsFunc) error {
 	typ := list.Type()
-	values, err := s.store.List(ctx, fmt.Sprintf("%s/", typ))
+	values, err := s.store.List(ctx, s.listKey(typ))
 	if err != nil {
 		return err
 	}
@@ -167,19 +181,23 @@ func (s *ObjectStore) List(ctx context.Context, list model.ObjectList, opts ...L
 	return nil
 }
 
-func storageKey(object model.Object) (string, error) {
-	if object == nil {
-		return "", fmt.Errorf("no ID specified")
-	}
-	return genID(object.Type(), object.ID())
+func (s *ObjectStore) listKey(typ model.Type) string {
+	return s.clusterKey(fmt.Sprintf("%s/", typ))
 }
 
-func genID(typ model.Type, id string) (string, error) {
+func (s *ObjectStore) genID(typ model.Type, id string) (string, error) {
 	if id == "" {
 		return "", fmt.Errorf("no ID specified")
 	}
 	if typ == "" {
 		return "", fmt.Errorf("no type specified")
 	}
-	return fmt.Sprintf("%s/%s", typ, id), nil
+	return s.clusterKey(fmt.Sprintf("%s/%s", typ, id)), nil
+}
+
+func (s *ObjectStore) clusterKey(key string) string {
+	if s.cluster == "" {
+		panic("cluster not set")
+	}
+	return fmt.Sprintf("c/%s/%s", s.cluster, key)
 }

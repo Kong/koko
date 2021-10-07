@@ -20,9 +20,10 @@ type ServiceService struct {
 
 func (s *ServiceService) GetService(ctx context.Context,
 	req *v1.GetServiceRequest) (*v1.GetServiceResponse, error) {
+	db := getDB(ctx)
 	result := resource.NewService()
 	s.logger.With(zap.String("id", req.Id)).Debug("reading service by id")
-	err := s.store.Read(ctx, result, store.GetByID(req.Id))
+	err := db.Read(ctx, result, store.GetByID(req.Id))
 	if err != nil {
 		return nil, s.err(err)
 	}
@@ -33,10 +34,10 @@ func (s *ServiceService) GetService(ctx context.Context,
 
 func (s *ServiceService) CreateService(ctx context.Context,
 	req *v1.CreateServiceRequest) (*v1.CreateServiceResponse, error) {
+	db := getDB(ctx)
 	res := resource.NewService()
 	res.Service = req.Item
-	err := s.store.Create(ctx, res)
-	if err != nil {
+	if err := db.Create(ctx, res); err != nil {
 		return nil, s.err(err)
 	}
 	setHeader(ctx, http.StatusCreated)
@@ -47,7 +48,8 @@ func (s *ServiceService) CreateService(ctx context.Context,
 
 func (s *ServiceService) DeleteService(ctx context.Context,
 	request *v1.DeleteServiceRequest) (*v1.DeleteServiceResponse, error) {
-	err := s.store.Delete(ctx, store.DeleteByID(request.Id),
+	db := getDB(ctx)
+	err := db.Delete(ctx, store.DeleteByID(request.Id),
 		store.DeleteByType(resource.TypeService))
 	if err != nil {
 		return nil, s.err(err)
@@ -58,8 +60,9 @@ func (s *ServiceService) DeleteService(ctx context.Context,
 
 func (s *ServiceService) ListServices(ctx context.Context,
 	_ *v1.ListServicesRequest) (*v1.ListServicesResponse, error) {
+	db := getDB(ctx)
 	list := resource.NewList(resource.TypeService)
-	if err := s.store.List(ctx, list); err != nil {
+	if err := db.List(ctx, list); err != nil {
 		return nil, s.err(err)
 	}
 	return &v1.ListServicesResponse{

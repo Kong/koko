@@ -18,11 +18,24 @@ type RouteService struct {
 	CommonOpts
 }
 
+func getDB(ctx context.Context) store.Store {
+	v := ctx.Value(StoreContextKey)
+	if v == nil {
+		panic("no store in context")
+	}
+	s, ok := v.(store.Store)
+	if !ok {
+		panic(fmt.Sprintf("expected store.Store in context but got '%T'", v))
+	}
+	return s
+}
+
 func (s *RouteService) GetRoute(ctx context.Context,
 	req *v1.GetRouteRequest) (*v1.GetRouteResponse, error) {
+	db := getDB(ctx)
 	result := resource.NewRoute()
 	s.logger.With(zap.String("id", req.Id)).Debug("reading route by id")
-	err := s.store.Read(ctx, result, store.GetByID(req.Id))
+	err := db.Read(ctx, result, store.GetByID(req.Id))
 	if err != nil {
 		return nil, s.err(err)
 	}
@@ -33,10 +46,10 @@ func (s *RouteService) GetRoute(ctx context.Context,
 
 func (s *RouteService) CreateRoute(ctx context.Context,
 	req *v1.CreateRouteRequest) (*v1.CreateRouteResponse, error) {
+	db := getDB(ctx)
 	res := resource.NewRoute()
 	res.Route = req.Item
-	err := s.store.Create(ctx, res)
-	if err != nil {
+	if err := db.Create(ctx, res); err != nil {
 		return nil, s.err(err)
 	}
 	setHeader(ctx, http.StatusCreated)
@@ -47,7 +60,8 @@ func (s *RouteService) CreateRoute(ctx context.Context,
 
 func (s *RouteService) DeleteRoute(ctx context.Context,
 	request *v1.DeleteRouteRequest) (*v1.DeleteRouteResponse, error) {
-	err := s.store.Delete(ctx, store.DeleteByID(request.Id),
+	db := getDB(ctx)
+	err := db.Delete(ctx, store.DeleteByID(request.Id),
 		store.DeleteByType(resource.TypeRoute))
 	if err != nil {
 		return nil, s.err(err)
@@ -58,8 +72,9 @@ func (s *RouteService) DeleteRoute(ctx context.Context,
 
 func (s *RouteService) ListRoutes(ctx context.Context,
 	_ *v1.ListRoutesRequest) (*v1.ListRoutesResponse, error) {
+	db := getDB(ctx)
 	list := resource.NewList(resource.TypeRoute)
-	if err := s.store.List(ctx, list); err != nil {
+	if err := db.List(ctx, list); err != nil {
 		return nil, s.err(err)
 	}
 	return &v1.ListRoutesResponse{
