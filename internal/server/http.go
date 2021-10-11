@@ -2,7 +2,9 @@ package server
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
+	"net"
 	"net/http"
 	"time"
 
@@ -24,6 +26,8 @@ type HTTPOpts struct {
 	Address string
 	Logger  *zap.Logger
 	Handler http.Handler
+	// TLS protocol is used when this field is not nil.
+	TLS *tls.Config
 }
 
 func NewHTTP(opts HTTPOpts) (*HTTP, error) {
@@ -32,8 +36,9 @@ func NewHTTP(opts HTTPOpts) (*HTTP, error) {
 	}
 	return &HTTP{
 		server: &http.Server{
-			Addr:    opts.Address,
-			Handler: opts.Handler,
+			Addr:      opts.Address,
+			Handler:   opts.Handler,
+			TLSConfig: opts.TLS,
 		},
 		logger: opts.Logger,
 	}, nil
@@ -43,7 +48,16 @@ func (h *HTTP) Run(ctx context.Context) error {
 	errCh := make(chan error)
 	s := h.server
 	go func() {
-		err := s.ListenAndServe()
+		h.logger.Debug("starting server")
+		listener, err := net.Listen("tcp", h.server.Addr)
+		if err != nil {
+			errCh <- err
+			return
+		}
+		if h.server.TLSConfig != nil {
+			listener = tls.NewListener(listener, h.server.TLSConfig)
+		}
+		err = s.Serve(listener)
 		if err != nil {
 			if err != http.ErrServerClosed {
 				errCh <- err
