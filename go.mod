@@ -9,7 +9,9 @@ require (
 	github.com/go-playground/validator/v10 v10.9.0
 	github.com/golang/protobuf v1.5.2
 	github.com/google/uuid v1.3.0
+	github.com/gorilla/websocket v1.4.2
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.6.0
+	github.com/hbagdi/gang v0.1.0
 	github.com/imdario/mergo v0.3.12
 	github.com/kong/go-wrpc v0.0.0-20210914213024-d4348db6b815
 	github.com/mattn/go-sqlite3 v1.14.8
@@ -38,7 +40,6 @@ require (
 	github.com/golang/glog v1.0.0 // indirect
 	github.com/golang/groupcache v0.0.0-20200121045136-8c9f03a8e57e // indirect
 	github.com/google/go-querystring v1.0.0 // indirect
-	github.com/gorilla/websocket v1.4.2 // indirect
 	github.com/imkira/go-interpol v1.0.0 // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/jhump/protoreflect v1.9.1-0.20210817181203-db1a327a393e // indirect

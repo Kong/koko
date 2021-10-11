@@ -6,13 +6,16 @@ import (
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/service/v1"
+	"github.com/kong/koko/internal/server"
 	"go.uber.org/zap"
+	"google.golang.org/grpc"
 	"google.golang.org/protobuf/encoding/protojson"
 )
 
 // HandlerWrapper is used to wrap a http.Handler with another http.Handler.
 type HandlerWrapper interface {
 	Wrap(http.Handler) http.Handler
+	server.GrpcInterceptorInjector
 }
 
 // ContextKey type must be used to manipulate the context of a request.
@@ -69,22 +72,22 @@ func NewHandler(opts HandlerOpts) (http.Handler, error) {
 	return opts.StoreInjector.Wrap(mux), nil
 }
 
-type StoreInjector struct {
-	store store.Store
-	next  http.Handler
-}
-
-type contextKey struct{}
-
-var storeCtxKey = &contextKey{}
-
-func (s StoreInjector) Handler(next http.Handler) http.Handler {
-	s.next = next
-	return s
-}
-
-func (s StoreInjector) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	ctx := context.WithValue(r.Context(), storeCtxKey, s.store)
-	s.next.ServeHTTP(w, r.WithContext(ctx))
->>>>>>> feat: dynamic store injection
+func NewGRPC(opts HandlerOpts) *grpc.Server {
+	server := grpc.NewServer(
+		grpc.UnaryInterceptor(opts.StoreInjector.Handle),
+	)
+	v1.RegisterMetaServiceServer(server, &MetaService{})
+	v1.RegisterServiceServiceServer(server, &ServiceService{
+		CommonOpts: CommonOpts{
+			logger: opts.Logger.With(zap.String("admin-service",
+				"service")),
+		},
+	})
+	v1.RegisterRouteServiceServer(server, &RouteService{
+		CommonOpts: CommonOpts{
+			logger: opts.Logger.With(zap.String("admin-service",
+				"route")),
+		},
+	})
+	return server
 }

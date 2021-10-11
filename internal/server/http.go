@@ -13,10 +13,6 @@ import (
 
 var defaultShutdownTimeout = 5 * time.Second
 
-type (
-	GRPCServer struct{}
-)
-
 type HTTP struct {
 	server *http.Server
 	logger *zap.Logger

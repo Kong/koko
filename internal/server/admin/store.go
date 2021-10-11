@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/kong/koko/internal/store"
+	"google.golang.org/grpc"
 )
 
 // StoreContextKey is used by the Admin handler to retrieve a store.Store
@@ -13,6 +14,14 @@ var StoreContextKey = &ContextKey{}
 
 type DefaultStoreWrapper struct {
 	Store store.Store
+}
+
+func (s DefaultStoreWrapper) Handle(ctx context.Context,
+	req interface{},
+	_ *grpc.UnaryServerInfo,
+	handler grpc.UnaryHandler) (resp interface{}, err error) {
+	ctx = inject(ctx, s.Store)
+	return handler(ctx, req)
 }
 
 func (s DefaultStoreWrapper) Wrap(handler http.Handler) http.Handler {
@@ -25,6 +34,10 @@ type defaultStoreInjector struct {
 }
 
 func (s defaultStoreInjector) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	ctx := context.WithValue(r.Context(), StoreContextKey, s.store)
+	ctx := inject(r.Context(), s.store)
 	s.next.ServeHTTP(w, r.WithContext(ctx))
+}
+
+func inject(ctx context.Context, store store.Store) context.Context {
+	return context.WithValue(ctx, StoreContextKey, store)
 }
