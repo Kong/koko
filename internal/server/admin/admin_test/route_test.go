@@ -68,6 +68,21 @@ func TestRouteCreate(t *testing.T) {
 		err.Object().ValueEqual("type", "constraint")
 		err.Object().ValueEqual("field", "service.id")
 	})
+	t.Run("creating a route with a valid service.id succeeds", func(t *testing.T) {
+		service := goodService()
+		service.Id = uuid.NewString()
+		res := c.POST("/v1/services").WithJSON(service).Expect()
+		res.Status(201)
+		route := &v1.Route{
+			Name:  "bar",
+			Paths: []string{"/"},
+			Service: &v1.Service{
+				Id: service.Id,
+			},
+		}
+		res = c.POST("/v1/routes").WithJSON(route).Expect()
+		res.Status(201)
+	})
 }
 
 func TestRouteDelete(t *testing.T) {

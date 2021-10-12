@@ -62,7 +62,7 @@ func serveMain(ctx context.Context) error {
 		return err
 	}
 	store := store.New(memory, logger.With(zap.String("component",
-		"store")))
+		"store"))).ForCluster("default")
 
 	adminLogger := logger.With(zap.String("component", "admin-server"))
 	h, err := admin.NewHandler(admin.HandlerOpts{

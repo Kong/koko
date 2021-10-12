@@ -78,8 +78,10 @@ func (s *ObjectStore) createIndexes(ctx context.Context,
 			}
 
 			// check if the foreign entity exists or not
-			fk := fmt.Sprintf("%s/%s",
-				index.ForeignType, index.Value)
+			fk, err := s.genID(index.ForeignType, index.Value)
+			if err != nil {
+				return err
+			}
 			_, err = tx.Get(ctx, fk)
 			switch {
 			case err == nil:
