@@ -49,6 +49,30 @@ func (c CommonOpts) getDB(ctx context.Context,
 	return store, nil
 }
 
+type services struct {
+	service v1.ServiceServiceServer
+	route   v1.RouteServiceServer
+}
+
+func buildServices(opts HandlerOpts) services {
+	return services{
+		service: &ServiceService{
+			CommonOpts: CommonOpts{
+				storeLoader: opts.StoreLoader,
+				logger: opts.Logger.With(zap.String("admin-service",
+					"service")),
+			},
+		},
+		route: &RouteService{
+			CommonOpts: CommonOpts{
+				storeLoader: opts.StoreLoader,
+				logger: opts.Logger.With(zap.String("admin-service",
+					"route")),
+			},
+		},
+	}
+}
+
 func NewHandler(opts HandlerOpts) (http.Handler, error) {
 	err := validateOpts(opts)
 	if err != nil {
@@ -70,26 +94,15 @@ func NewHandler(opts HandlerOpts) (http.Handler, error) {
 		return nil, err
 	}
 
+	services := buildServices(opts)
 	err = v1.RegisterServiceServiceHandlerServer(context.Background(),
-		mux, &ServiceService{
-			CommonOpts: CommonOpts{
-				storeLoader: opts.StoreLoader,
-				logger: opts.Logger.With(zap.String("admin-service",
-					"service")),
-			},
-		})
+		mux, services.service)
 	if err != nil {
 		return nil, err
 	}
 
 	err = v1.RegisterRouteServiceHandlerServer(context.Background(),
-		mux, &RouteService{
-			CommonOpts: CommonOpts{
-				storeLoader: opts.StoreLoader,
-				logger: opts.Logger.With(zap.String("admin-service",
-					"route")),
-			},
-		})
+		mux, services.route)
 	if err != nil {
 		return nil, err
 	}
@@ -109,20 +122,9 @@ func validateOpts(opts HandlerOpts) error {
 
 func NewGRPC(opts HandlerOpts) *grpc.Server {
 	server := grpc.NewServer()
+	services := buildServices(opts)
 	v1.RegisterMetaServiceServer(server, &MetaService{})
-	v1.RegisterServiceServiceServer(server, &ServiceService{
-		CommonOpts: CommonOpts{
-			storeLoader: opts.StoreLoader,
-			logger: opts.Logger.With(zap.String("admin-service",
-				"service")),
-		},
-	})
-	v1.RegisterRouteServiceServer(server, &RouteService{
-		CommonOpts: CommonOpts{
-			storeLoader: opts.StoreLoader,
-			logger: opts.Logger.With(zap.String("admin-service",
-				"route")),
-		},
-	})
+	v1.RegisterServiceServiceServer(server, services.service)
+	v1.RegisterRouteServiceServer(server, services.route)
 	return server
 }
