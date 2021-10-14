@@ -6,6 +6,7 @@ option go_package = "github.com/kong/koko/internal/gen/kong/admin/service/v1;v1"
 
 import "google/api/annotations.proto";
 import "kong/admin/model/v1/service.proto";
+import "kong/admin/model/v1/cluster.proto";
 
 service ServiceService {
   rpc GetService(GetServiceRequest) returns (GetServiceResponse) {
@@ -35,6 +36,7 @@ service ServiceService {
 
 message GetServiceRequest{
   string id = 1;
+  model.v1.RequestCluster cluster = 2;
 }
 
 message GetServiceResponse{
@@ -43,6 +45,7 @@ message GetServiceResponse{
 
 message CreateServiceRequest{
   model.v1.Service item = 1;
+  model.v1.RequestCluster cluster = 2;
 }
 
 message CreateServiceResponse{
@@ -51,12 +54,14 @@ message CreateServiceResponse{
 
 message DeleteServiceRequest{
   string id = 1;
+  model.v1.RequestCluster cluster = 2;
 }
 
 message DeleteServiceResponse{
 }
 
 message ListServicesRequest{
+  model.v1.RequestCluster cluster = 1;
 }
 
 message ListServicesResponse{

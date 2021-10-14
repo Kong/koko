@@ -18,24 +18,15 @@ type RouteService struct {
 	CommonOpts
 }
 
-func getDB(ctx context.Context) store.Store {
-	v := ctx.Value(StoreContextKey)
-	if v == nil {
-		panic("no store in context")
-	}
-	s, ok := v.(store.Store)
-	if !ok {
-		panic(fmt.Sprintf("expected store.Store in context but got '%T'", v))
-	}
-	return s
-}
-
 func (s *RouteService) GetRoute(ctx context.Context,
 	req *v1.GetRouteRequest) (*v1.GetRouteResponse, error) {
-	db := getDB(ctx)
+	db, err := s.CommonOpts.getDB(ctx, req.Cluster)
+	if err != nil {
+		return nil, err
+	}
 	result := resource.NewRoute()
 	s.logger.With(zap.String("id", req.Id)).Debug("reading route by id")
-	err := db.Read(ctx, result, store.GetByID(req.Id))
+	err = db.Read(ctx, result, store.GetByID(req.Id))
 	if err != nil {
 		return nil, s.err(err)
 	}
@@ -46,7 +37,10 @@ func (s *RouteService) GetRoute(ctx context.Context,
 
 func (s *RouteService) CreateRoute(ctx context.Context,
 	req *v1.CreateRouteRequest) (*v1.CreateRouteResponse, error) {
-	db := getDB(ctx)
+	db, err := s.CommonOpts.getDB(ctx, req.Cluster)
+	if err != nil {
+		return nil, err
+	}
 	res := resource.NewRoute()
 	res.Route = req.Item
 	if err := db.Create(ctx, res); err != nil {
@@ -59,9 +53,12 @@ func (s *RouteService) CreateRoute(ctx context.Context,
 }
 
 func (s *RouteService) DeleteRoute(ctx context.Context,
-	request *v1.DeleteRouteRequest) (*v1.DeleteRouteResponse, error) {
-	db := getDB(ctx)
-	err := db.Delete(ctx, store.DeleteByID(request.Id),
+	req *v1.DeleteRouteRequest) (*v1.DeleteRouteResponse, error) {
+	db, err := s.CommonOpts.getDB(ctx, req.Cluster)
+	if err != nil {
+		return nil, err
+	}
+	err = db.Delete(ctx, store.DeleteByID(req.Id),
 		store.DeleteByType(resource.TypeRoute))
 	if err != nil {
 		return nil, s.err(err)
@@ -71,8 +68,11 @@ func (s *RouteService) DeleteRoute(ctx context.Context,
 }
 
 func (s *RouteService) ListRoutes(ctx context.Context,
-	_ *v1.ListRoutesRequest) (*v1.ListRoutesResponse, error) {
-	db := getDB(ctx)
+	req *v1.ListRoutesRequest) (*v1.ListRoutesResponse, error) {
+	db, err := s.CommonOpts.getDB(ctx, req.Cluster)
+	if err != nil {
+		return nil, err
+	}
 	list := resource.NewList(resource.TypeRoute)
 	if err := db.List(ctx, list); err != nil {
 		return nil, s.err(err)

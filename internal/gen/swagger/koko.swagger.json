@@ -1,7 +1,7 @@
 {
   "swagger": "2.0",
   "info": {
-    "title": "kong/admin/model/v1/error.proto",
+    "title": "kong/admin/model/v1/cluster.proto",
     "version": "version not set"
   },
   "tags": [
@@ -61,6 +61,14 @@
             }
           }
         },
+        "parameters": [
+          {
+            "name": "cluster.id",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
         "tags": [
           "kong.admin.service.v1.RouteService"
         ]
@@ -89,6 +97,12 @@
             "schema": {
               "$ref": "#/definitions/kong.admin.model.v1.Route"
             }
+          },
+          {
+            "name": "cluster.id",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [
@@ -119,6 +133,12 @@
             "in": "path",
             "required": true,
             "type": "string"
+          },
+          {
+            "name": "cluster.id",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [
@@ -147,6 +167,12 @@
             "in": "path",
             "required": true,
             "type": "string"
+          },
+          {
+            "name": "cluster.id",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [
@@ -171,6 +197,14 @@
             }
           }
         },
+        "parameters": [
+          {
+            "name": "cluster.id",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
         "tags": [
           "kong.admin.service.v1.ServiceService"
         ]
@@ -199,6 +233,12 @@
             "schema": {
               "$ref": "#/definitions/kong.admin.model.v1.Service"
             }
+          },
+          {
+            "name": "cluster.id",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [
@@ -229,6 +269,12 @@
             "in": "path",
             "required": true,
             "type": "string"
+          },
+          {
+            "name": "cluster.id",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [
@@ -256,6 +302,12 @@
             "name": "id",
             "in": "path",
             "required": true,
+            "type": "string"
+          },
+          {
+            "name": "cluster.id",
+            "in": "query",
+            "required": false,
             "type": "string"
           }
         ],
@@ -313,6 +365,14 @@
           "items": {
             "type": "string"
           }
+        }
+      }
+    },
+    "kong.admin.model.v1.RequestCluster": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
         }
       }
     },
@@ -491,6 +551,9 @@
       "properties": {
         "item": {
           "$ref": "#/definitions/kong.admin.model.v1.Route"
+        },
+        "cluster": {
+          "$ref": "#/definitions/kong.admin.model.v1.RequestCluster"
         }
       }
     },

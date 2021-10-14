@@ -64,10 +64,11 @@ func serveMain(ctx context.Context) error {
 	store := store.New(memory, logger.With(zap.String("component",
 		"store"))).ForCluster("default")
 
+	storeLoader := admin.DefaultStoreLoader{Store: store}
 	adminLogger := logger.With(zap.String("component", "admin-server"))
 	h, err := admin.NewHandler(admin.HandlerOpts{
-		Logger:        adminLogger,
-		StoreInjector: admin.DefaultStoreWrapper{Store: store},
+		Logger:      adminLogger,
+		StoreLoader: storeLoader,
 	})
 	if err != nil {
 		return err
@@ -84,8 +85,8 @@ func serveMain(ctx context.Context) error {
 	g.AddWithCtxE(s.Run)
 
 	rawGRPCServer := admin.NewGRPC(admin.HandlerOpts{
-		Logger:        logger.With(zap.String("component", "admin-server")),
-		StoreInjector: admin.DefaultStoreWrapper{Store: store},
+		Logger:      logger.With(zap.String("component", "admin-server")),
+		StoreLoader: storeLoader,
 	})
 	if err != nil {
 		return err

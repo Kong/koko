@@ -20,10 +20,13 @@ type ServiceService struct {
 
 func (s *ServiceService) GetService(ctx context.Context,
 	req *v1.GetServiceRequest) (*v1.GetServiceResponse, error) {
-	db := getDB(ctx)
+	db, err := s.CommonOpts.getDB(ctx, req.Cluster)
+	if err != nil {
+		return nil, err
+	}
 	result := resource.NewService()
 	s.logger.With(zap.String("id", req.Id)).Debug("reading service by id")
-	err := db.Read(ctx, result, store.GetByID(req.Id))
+	err = db.Read(ctx, result, store.GetByID(req.Id))
 	if err != nil {
 		return nil, s.err(err)
 	}
@@ -34,7 +37,10 @@ func (s *ServiceService) GetService(ctx context.Context,
 
 func (s *ServiceService) CreateService(ctx context.Context,
 	req *v1.CreateServiceRequest) (*v1.CreateServiceResponse, error) {
-	db := getDB(ctx)
+	db, err := s.CommonOpts.getDB(ctx, req.Cluster)
+	if err != nil {
+		return nil, err
+	}
 	res := resource.NewService()
 	res.Service = req.Item
 	if err := db.Create(ctx, res); err != nil {
@@ -47,9 +53,12 @@ func (s *ServiceService) CreateService(ctx context.Context,
 }
 
 func (s *ServiceService) DeleteService(ctx context.Context,
-	request *v1.DeleteServiceRequest) (*v1.DeleteServiceResponse, error) {
-	db := getDB(ctx)
-	err := db.Delete(ctx, store.DeleteByID(request.Id),
+	req *v1.DeleteServiceRequest) (*v1.DeleteServiceResponse, error) {
+	db, err := s.CommonOpts.getDB(ctx, req.Cluster)
+	if err != nil {
+		return nil, err
+	}
+	err = db.Delete(ctx, store.DeleteByID(req.Id),
 		store.DeleteByType(resource.TypeService))
 	if err != nil {
 		return nil, s.err(err)
@@ -59,8 +68,11 @@ func (s *ServiceService) DeleteService(ctx context.Context,
 }
 
 func (s *ServiceService) ListServices(ctx context.Context,
-	_ *v1.ListServicesRequest) (*v1.ListServicesResponse, error) {
-	db := getDB(ctx)
+	req *v1.ListServicesRequest) (*v1.ListServicesResponse, error) {
+	db, err := s.CommonOpts.getDB(ctx, req.Cluster)
+	if err != nil {
+		return nil, err
+	}
 	list := resource.NewList(resource.TypeService)
 	if err := db.List(ctx, list); err != nil {
 		return nil, s.err(err)

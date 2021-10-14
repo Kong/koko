@@ -19,8 +19,9 @@ func setup(t *testing.T) (*httptest.Server, func()) {
 
 	handler, err := admin.NewHandler(admin.HandlerOpts{
 		Logger: log.Logger,
-		StoreInjector: admin.DefaultStoreWrapper{Store: objectStore.
-			ForCluster("default")},
+		StoreLoader: admin.DefaultStoreLoader{
+			Store: objectStore.ForCluster("default"),
+		},
 	})
 	if err != nil {
 		t.Fatalf("creating httptest.Server: %v", err)

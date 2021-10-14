@@ -2,42 +2,38 @@ package admin
 
 import (
 	"context"
-	"net/http"
+	"fmt"
 
+	model "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
 	"github.com/kong/koko/internal/store"
-	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 )
 
-// StoreContextKey is used by the Admin handler to retrieve a store.Store
-// from ctx of a request.
-var StoreContextKey = &ContextKey{}
+type StoreLoadErr struct {
+	Code    codes.Code
+	Message string
+}
 
-type DefaultStoreWrapper struct {
+func (s StoreLoadErr) Error() string {
+	return fmt.Sprintf("%s (grpc-code: %d)", s.Message, s.Code)
+}
+
+type StoreLoader interface {
+	// Load returns the store to use for the request and cluster.
+	// Cluster is derived from request and maybe nil.
+	// Ctx is specific to request. It may be expanded in future to include
+	// HTTP metadata as needed.
+	// If err is of type StoreLoadErr,
+	// corresponding GRPC status code and message are returned to the client.
+	// For any other error, an internal error is returned to the client
+	Load(ctx context.Context, cluster *model.RequestCluster) (store.Store, error)
+}
+
+type DefaultStoreLoader struct {
 	Store store.Store
 }
 
-func (s DefaultStoreWrapper) Handle(ctx context.Context,
-	req interface{},
-	_ *grpc.UnaryServerInfo,
-	handler grpc.UnaryHandler) (resp interface{}, err error) {
-	ctx = inject(ctx, s.Store)
-	return handler(ctx, req)
-}
-
-func (s DefaultStoreWrapper) Wrap(handler http.Handler) http.Handler {
-	return defaultStoreInjector{store: s.Store, next: handler}
-}
-
-type defaultStoreInjector struct {
-	store store.Store
-	next  http.Handler
-}
-
-func (s defaultStoreInjector) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	ctx := inject(r.Context(), s.store)
-	s.next.ServeHTTP(w, r.WithContext(ctx))
-}
-
-func inject(ctx context.Context, store store.Store) context.Context {
-	return context.WithValue(ctx, StoreContextKey, store)
+func (d DefaultStoreLoader) Load(_ context.Context,
+	_ *model.RequestCluster) (store.Store, error) {
+	return d.Store, nil
 }

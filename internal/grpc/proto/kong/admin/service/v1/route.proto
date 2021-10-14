@@ -6,6 +6,7 @@ option go_package = "github.com/kong/koko/internal/gen/kong/admin/service/v1;v1"
 
 import "google/api/annotations.proto";
 import "kong/admin/model/v1/route.proto";
+import "kong/admin/model/v1/cluster.proto";
 
 service RouteService {
   rpc GetRoute(GetRouteRequest) returns (GetRouteResponse) {
@@ -35,6 +36,7 @@ service RouteService {
 
 message GetRouteRequest{
   string id = 1;
+  model.v1.RequestCluster cluster = 2;
 }
 
 message GetRouteResponse{
@@ -43,20 +45,24 @@ message GetRouteResponse{
 
 message CreateRouteRequest{
   model.v1.Route item = 1;
+  model.v1.RequestCluster cluster = 2;
 }
 
 message CreateRouteResponse{
   model.v1.Route item = 1;
+  model.v1.RequestCluster cluster = 2;
 }
 
 message DeleteRouteRequest{
   string id = 1;
+  model.v1.RequestCluster cluster = 2;
 }
 
 message DeleteRouteResponse{
 }
 
 message ListRoutesRequest{
+  model.v1.RequestCluster cluster = 1;
 }
 
 message ListRoutesResponse{
