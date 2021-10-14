@@ -111,8 +111,10 @@ func serveMain(ctx context.Context) error {
 		Client: configClient,
 	})
 	handler, err := ws.NewHandler(ws.HandlerOpts{
-		Logger:  controlLogger,
-		Manager: m,
+		Logger: controlLogger,
+		Authenticator: &ws.DefaultAuthenticator{
+			Manager: m,
+		},
 	})
 	if err != nil {
 		return err
