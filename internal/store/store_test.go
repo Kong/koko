@@ -55,3 +55,18 @@ func TestService(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Len(t, svcs.GetAll(), 2)
 }
+
+func TestForCluster(t *testing.T) {
+	persister, err := persistence.NewSQLite(":memory:")
+	assert.Nil(t, err)
+	s := New(persister, log.Logger)
+	assert.Empty(t, s.cluster)
+	// validate clusterRegex is being used
+	assert.Panics(t, func() {
+		s.ForCluster("borked.on.purpose")
+	})
+	// validate clusterKey panics correctly
+	assert.Panics(t, func() {
+		s.clusterKey("foo")
+	})
+}

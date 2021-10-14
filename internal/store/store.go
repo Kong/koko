@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"regexp"
 
 	"github.com/kong/koko/internal/model"
 	"github.com/kong/koko/internal/persistence"
@@ -44,7 +45,13 @@ func New(persister persistence.Persister, logger *zap.Logger) *ObjectStore {
 	}
 }
 
+var clusterRegex = regexp.MustCompile("^[_a-z0-9]{1,64}$")
+
 func (s *ObjectStore) ForCluster(cluster string) *ObjectStore {
+	if !clusterRegex.MatchString(cluster) {
+		panic(fmt.Sprintf("unexpected cluster identifier: %v", cluster))
+	}
+
 	return &ObjectStore{
 		objectStoreOpts: s.objectStoreOpts,
 		cluster:         cluster,
