@@ -5,6 +5,7 @@ import (
 	"sync"
 	"time"
 
+	model "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/service/v1"
 	"github.com/kong/koko/internal/server/kong/ws/config"
 	"github.com/kong/koko/internal/server/kong/ws/mold"
@@ -12,12 +13,24 @@ import (
 )
 
 type ManagerOpts struct {
-	Client ConfigClient
-	Logger *zap.Logger
+	Client  ConfigClient
+	Cluster Cluster
+	Logger  *zap.Logger
+}
+
+type Cluster interface {
+	Get() string
+}
+
+type DefaultCluster struct{}
+
+func (d DefaultCluster) Get() string {
+	return "default"
 }
 
 func NewManager(opts ManagerOpts) *Manager {
 	return &Manager{
+		cluster:      opts.Cluster,
 		configClient: opts.Client,
 		logger:       opts.Logger,
 		payload:      &config.Payload{},
@@ -27,6 +40,7 @@ func NewManager(opts ManagerOpts) *Manager {
 
 type Manager struct {
 	configClient ConfigClient
+	cluster      Cluster
 	logger       *zap.Logger
 
 	payload *config.Payload
@@ -107,7 +121,11 @@ func (m *Manager) fetchContent(ctx context.Context) (mold.GrpcContent, error) {
 	reqCtx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 	serviceList, err := m.configClient.Service.ListServices(reqCtx,
-		&v1.ListServicesRequest{})
+		&v1.ListServicesRequest{
+			Cluster: &model.RequestCluster{
+				Id: m.cluster.Get(),
+			},
+		})
 	if err != nil {
 		return mold.GrpcContent{}, err
 	}
@@ -115,7 +133,11 @@ func (m *Manager) fetchContent(ctx context.Context) (mold.GrpcContent, error) {
 	reqCtx, cancel = context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 	routesList, err := m.configClient.Route.ListRoutes(reqCtx,
-		&v1.ListRoutesRequest{})
+		&v1.ListRoutesRequest{
+			Cluster: &model.RequestCluster{
+				Id: m.cluster.Get(),
+			},
+		})
 	if err != nil {
 		return mold.GrpcContent{}, err
 	}

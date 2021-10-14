@@ -108,14 +108,16 @@ func serveMain(ctx context.Context) error {
 	}
 	controlLogger := logger.With(zap.String("component", "control-server"))
 	m := ws.NewManager(ws.ManagerOpts{
-		Logger: controlLogger,
-		Client: configClient,
+		Logger:  controlLogger,
+		Client:  configClient,
+		Cluster: ws.DefaultCluster{},
 	})
+	authenticator := &ws.DefaultAuthenticator{
+		Manager: m,
+	}
 	handler, err := ws.NewHandler(ws.HandlerOpts{
-		Logger: controlLogger,
-		Authenticator: &ws.DefaultAuthenticator{
-			Manager: m,
-		},
+		Logger:        controlLogger,
+		Authenticator: authenticator,
 	})
 	if err != nil {
 		return err

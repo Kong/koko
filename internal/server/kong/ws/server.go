@@ -18,7 +18,8 @@ type HandlerOpts struct {
 func NewHandler(opts HandlerOpts) (http.Handler, error) {
 	mux := &http.ServeMux{}
 	mux.Handle("/v1/outlet", Handler{
-		logger: opts.Logger,
+		logger:        opts.Logger,
+		authenticator: opts.Authenticator,
 	})
 	return mux, nil
 }

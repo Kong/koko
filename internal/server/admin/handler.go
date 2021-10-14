@@ -112,12 +112,14 @@ func NewGRPC(opts HandlerOpts) *grpc.Server {
 	v1.RegisterMetaServiceServer(server, &MetaService{})
 	v1.RegisterServiceServiceServer(server, &ServiceService{
 		CommonOpts: CommonOpts{
+			storeLoader: opts.StoreLoader,
 			logger: opts.Logger.With(zap.String("admin-service",
 				"service")),
 		},
 	})
 	v1.RegisterRouteServiceServer(server, &RouteService{
 		CommonOpts: CommonOpts{
+			storeLoader: opts.StoreLoader,
 			logger: opts.Logger.With(zap.String("admin-service",
 				"route")),
 		},
