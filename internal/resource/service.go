@@ -67,46 +67,50 @@ func (r Service) Resource() model.Resource {
 }
 
 func (r Service) Validate() error {
+	panic("implement me")
+}
+
+func (r Service) ValidateCompat() error {
 	if r.Service == nil {
 		return fmt.Errorf("invalid nil resource")
 	}
 	s := r.Service
 	err := ozzo.ValidateStruct(r.Service,
 		ozzo.Field(&s.Id, typedefs.IDRules()...),
-		ozzo.Field(&s.Name, typedefs.Name()...),
+		ozzo.Field(&s.Name, typedefs.NameRule()...),
 		ozzo.Field(&s.Retries, ozzo.Min(1), ozzo.Max(maxRetry)),
-		ozzo.Field(&s.Protocol, typedefs.Protocol()...),
+		ozzo.Field(&s.Protocol, typedefs.ProtocolRule()...),
 		ozzo.Field(&s.Host, mergeRules(
 			ozzo.Required,
-			typedefs.Host(),
+			typedefs.HostRule(),
 		)...,
 		),
 		ozzo.Field(&s.Port, mergeRules(
 			ozzo.Required,
-			typedefs.Port(),
+			typedefs.PortRule(),
 		)...,
 		),
 		ozzo.Field(&s.Path, mergeRules(
 			ozzo.Required,
-			typedefs.Path(),
+			typedefs.PathRule(),
 		)...,
 		),
 		ozzo.Field(&s.ConnectTimeout, mergeRules(
 			ozzo.Required,
-			typedefs.Timeout(),
+			typedefs.TimeoutRule(),
 		)...,
 		),
 		ozzo.Field(&s.ReadTimeout, mergeRules(
 			ozzo.Required,
-			typedefs.Timeout(),
+			typedefs.TimeoutRule(),
 		)...,
 		),
 		ozzo.Field(&s.WriteTimeout, mergeRules(
 			ozzo.Required,
-			typedefs.Timeout(),
+			typedefs.TimeoutRule(),
 		)...,
 		),
-		ozzo.Field(&s.Tags, typedefs.Tags()...),
+		ozzo.Field(&s.Tags, typedefs.TagsRule()...),
 		ozzo.Field(&s.TlsVerifyDepth, ozzo.Min(0),
 			ozzo.Max(maxVerifyDepth)),
 		ozzo.Field(&s.CaCertificates, ozzo.Each(typedefs.UUID())),

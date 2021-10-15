@@ -50,7 +50,7 @@ func Test_notHTTPProtocol(t *testing.T) {
 
 func TestMergeRules(t *testing.T) {
 	// merge rule arrays
-	rules := mergeRules(typedefs.UUID(), typedefs.Protocol())
+	rules := mergeRules(typedefs.UUID(), typedefs.ProtocolRule())
 	assert.NotNil(t, rules)
 
 	assert.Panics(t, func() {

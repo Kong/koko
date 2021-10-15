@@ -14,6 +14,7 @@ type Object interface {
 	ID() string
 	Type() Type
 	Resource() Resource
+	ValidateCompat() error
 	Validate() error
 	Indexes() []Index
 	ProcessDefaults() error

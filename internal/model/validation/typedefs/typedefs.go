@@ -17,7 +17,7 @@ func UUID() validation.Rule {
 	return is.UUID
 }
 
-func Name() []validation.Rule {
+func NameRule() []validation.Rule {
 	return []validation.Rule{
 		REMatch(`^[0-9a-zA-z\.\-\_\~]*$`, false),
 	}
@@ -30,10 +30,7 @@ const (
 	ProtocolGRPCS = "grpcs"
 	ProtocolUDP   = "udp"
 	ProtocolTCP   = "tcp"
-
-	maxPort    = 65535
-	maxTimeout = (1 << 31) - 2 //nolint:gomnd
-	maxTags    = 8
+	ProtocolTLS   = "tls"
 )
 
 var protocols = []string{
@@ -55,22 +52,22 @@ func Enum(values ...string) validation.Rule {
 	}, err)
 }
 
-func Protocol() []validation.Rule {
+func ProtocolRule() []validation.Rule {
 	return []validation.Rule{Enum(protocols...)}
 }
 
-func Host() []validation.Rule {
+func HostRule() []validation.Rule {
 	return []validation.Rule{is.Host}
 }
 
-func Port() []validation.Rule {
+func PortRule() []validation.Rule {
 	return []validation.Rule{
 		validation.Min(1),
 		validation.Max(maxPort),
 	}
 }
 
-func Path() []validation.Rule {
+func PathRule() []validation.Rule {
 	return []validation.Rule{
 		StringPrefix("/"),
 		REMatch("//", true),
@@ -99,16 +96,16 @@ func REMatch(regex string, invert bool) validation.Rule {
 	}, err)
 }
 
-func Timeout() []validation.Rule {
+func TimeoutRule() []validation.Rule {
 	return []validation.Rule{
 		validation.Min(1),
 		validation.Max(maxTimeout),
 	}
 }
 
-func Tags() []validation.Rule {
+func TagsRule() []validation.Rule {
 	return []validation.Rule{
-		validation.Each(Name()...),
+		validation.Each(NameRule()...),
 		validation.Length(0, maxTags),
 	}
 }

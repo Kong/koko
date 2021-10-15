@@ -87,14 +87,18 @@ func (r Route) Indexes() []model.Index {
 }
 
 func (r Route) Validate() error {
+	panic("implement me")
+}
+
+func (r Route) ValidateCompat() error {
 	if r.Route == nil {
 		return fmt.Errorf("invalid nil resource")
 	}
 	s := r.Route
 	err := ozzo.ValidateStruct(r.Route,
 		ozzo.Field(&s.Id, typedefs.IDRules()...),
-		ozzo.Field(&s.Name, typedefs.Name()...),
-		ozzo.Field(&s.Tags, typedefs.Tags()...),
+		ozzo.Field(&s.Name, typedefs.NameRule()...),
+		ozzo.Field(&s.Tags, typedefs.TagsRule()...),
 		// TODO add validation
 	)
 	if err != nil {

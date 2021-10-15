@@ -82,7 +82,7 @@ func TestValidate(t *testing.T) {
 	}
 
 	svc := &Service{Service: &s}
-	err := svc.Validate()
+	err := svc.ValidateCompat()
 	assert.Nil(t, err)
 }
 
@@ -251,9 +251,9 @@ func TestService_Validate(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := tt.Service().Validate()
+			err := tt.Service().ValidateCompat()
 			if (err != nil) != tt.wantErr {
-				t.Errorf("Validate() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("ValidateCompat() error = %v, wantErr %v", err, tt.wantErr)
 			}
 			if tt.errFields != nil {
 				verr, _ := err.(validation.Error)
