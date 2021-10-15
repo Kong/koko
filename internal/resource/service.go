@@ -7,6 +7,7 @@ import (
 	"github.com/imdario/mergo"
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
 	"github.com/kong/koko/internal/model"
+	"github.com/kong/koko/internal/model/json/generator"
 	"github.com/kong/koko/internal/model/validation/typedefs"
 )
 
@@ -14,7 +15,7 @@ const (
 	defaultTimeout = 60000
 	defaultRetries = 5
 	defaultPort    = 80
-	maxRetry       = 32767
+	maxRetries     = 32767
 	maxVerifyDepth = 64
 	// TypeService denotes the Service type.
 	TypeService = model.Type("service")
@@ -78,7 +79,7 @@ func (r Service) ValidateCompat() error {
 	err := ozzo.ValidateStruct(r.Service,
 		ozzo.Field(&s.Id, typedefs.IDRules()...),
 		ozzo.Field(&s.Name, typedefs.NameRule()...),
-		ozzo.Field(&s.Retries, ozzo.Min(1), ozzo.Max(maxRetry)),
+		ozzo.Field(&s.Retries, ozzo.Min(1), ozzo.Max(maxRetries)),
 		ozzo.Field(&s.Protocol, typedefs.ProtocolRule()...),
 		ozzo.Field(&s.Host, mergeRules(
 			ozzo.Required,
@@ -157,5 +158,122 @@ func (r Service) Indexes() []model.Index {
 			Value:     r.Service.Name,
 			FieldName: "name",
 		},
+	}
+}
+
+func init() {
+	serviceSchema := &generator.Schema{
+		Type: "object",
+		Properties: map[string]*generator.Schema{
+			"id":   typedefs.ID,
+			"name": typedefs.Name,
+			"retries": {
+				Type:    "integer",
+				Minimum: 1,
+				Maximum: maxRetries,
+			},
+			"protocol":        typedefs.Protocol,
+			"host":            typedefs.Host,
+			"port":            typedefs.Port,
+			"path":            typedefs.Path,
+			"connect_timeout": typedefs.Timeout,
+			"read_timeout":    typedefs.Timeout,
+			"write_timeout":   typedefs.Timeout,
+			"tags":            typedefs.Tags,
+			"tls_verify": {
+				Type: "boolean",
+			},
+			"tls_verify_depth": {
+				Type:    "integer",
+				Minimum: 0,
+				Maximum: maxVerifyDepth,
+			},
+			"ca_certificates": {
+				Type:  "array",
+				Items: typedefs.ID,
+			},
+		},
+		AdditionalProperties: false,
+		Required: []string{
+			"id",
+			"protocol",
+			"host",
+			"port",
+			"connect_timeout",
+			"read_timeout",
+			"write_timeout",
+		},
+		AllOf: []*generator.Schema{
+			{
+				Description: "tls_verify can be set only when protocol is" +
+					" https",
+				If: &generator.Schema{
+					Properties: map[string]*generator.Schema{
+						"tls_verify": {
+							Const: true,
+						},
+					},
+				},
+				Then: &generator.Schema{
+					Properties: map[string]*generator.Schema{
+						"protocol": {
+							Const: typedefs.ProtocolHTTPS,
+						},
+					},
+				},
+			},
+			{
+				// tls_verify_depth can be set only when protocol is https
+				If: &generator.Schema{
+					Required: []string{"tls_verify_depth"},
+				},
+				Then: &generator.Schema{
+					Properties: map[string]*generator.Schema{
+						"protocol": {
+							Const: typedefs.ProtocolHTTPS,
+						},
+					},
+				},
+			},
+			{
+				// ca certificates can be set only when protocol is https
+				If: &generator.Schema{
+					Required: []string{"ca_certificates"},
+				},
+				Then: &generator.Schema{
+					Properties: map[string]*generator.Schema{
+						"protocol": {
+							Const: typedefs.ProtocolHTTPS,
+						},
+					},
+				},
+			},
+			{
+				// path is required when protocol is http or https
+				If: &generator.Schema{
+					Properties: map[string]*generator.Schema{
+						"protocol": {
+							Enum: []interface{}{
+								typedefs.ProtocolHTTP,
+								typedefs.ProtocolHTTPS,
+							},
+						},
+					},
+				},
+				Then: &generator.Schema{
+					Required: []string{"path"},
+				},
+			},
+			{
+				// NYI
+				Not: &generator.Schema{
+					Required: []string{"ca_certificates"},
+				},
+			},
+		},
+	}
+	err := generator.Register(string(TypeService), serviceSchema)
+	if err != nil {
+		panic(err)
 	}
 }

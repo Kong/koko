@@ -1,0 +1,173 @@
+{
+  "required": [
+    "id",
+    "protocol",
+    "host",
+    "port",
+    "connect_timeout",
+    "read_timeout",
+    "write_timeout"
+  ],
+  "properties": {
+    "ca_certificates": {
+      "items": {
+        "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "connect_timeout": {
+      "maximum": 2147483646,
+      "minimum": 1,
+      "type": "integer"
+    },
+    "host": {
+      "pattern": "^[a-z0-9]([-a-z0-9]*[a-z0-9])?(.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$",
+      "type": "string"
+    },
+    "id": {
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+      "type": "string"
+    },
+    "name": {
+      "maxLength": 128,
+      "minLength": 1,
+      "pattern": "^[0-9a-zA-Z.-_~]*$",
+      "type": "string"
+    },
+    "path": {
+      "type": "string",
+      "allOf": [
+        {
+          "pattern": "^/.*"
+        },
+        {
+          "not": {
+            "pattern": "//"
+          }
+        }
+      ]
+    },
+    "port": {
+      "maximum": 65535,
+      "minimum": 1,
+      "type": "integer"
+    },
+    "protocol": {
+      "enum": [
+        "http",
+        "https",
+        "grpc",
+        "grpcs",
+        "tcp",
+        "udp",
+        "tls"
+      ],
+      "type": "string"
+    },
+    "read_timeout": {
+      "maximum": 2147483646,
+      "minimum": 1,
+      "type": "integer"
+    },
+    "retries": {
+      "maximum": 32767,
+      "minimum": 1,
+      "type": "integer"
+    },
+    "tags": {
+      "maxLength": 8,
+      "items": {
+        "maxLength": 128,
+        "minLength": 1,
+        "pattern": "^[0-9a-zA-Z.-_~]*$",
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "tls_verify": {
+      "type": "boolean"
+    },
+    "tls_verify_depth": {
+      "maximum": 64,
+      "type": "integer"
+    },
+    "write_timeout": {
+      "maximum": 2147483646,
+      "minimum": 1,
+      "type": "integer"
+    }
+  },
+  "type": "object",
+  "allOf": [
+    {
+      "description": "tls_verify can be set only when protocol is https",
+      "if": {
+        "properties": {
+          "tls_verify": {
+            "const": true
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "protocol": {
+            "const": "https"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "required": [
+          "tls_verify_depth"
+        ]
+      },
+      "then": {
+        "properties": {
+          "protocol": {
+            "const": "https"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "required": [
+          "ca_certificates"
+        ]
+      },
+      "then": {
+        "properties": {
+          "protocol": {
+            "const": "https"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "protocol": {
+            "enum": [
+              "http",
+              "https"
+            ]
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "path"
+        ]
+      }
+    },
+    {
+      "not": {
+        "required": [
+          "ca_certificates"
+        ]
+      }
+    }
+  ]
+}

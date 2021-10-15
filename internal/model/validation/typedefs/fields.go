@@ -1,7 +1,7 @@
 package typedefs
 
 import (
-	"github.com/kong/koko/internal/model/json"
+	"github.com/kong/koko/internal/model/json/generator"
 )
 
 const (
@@ -11,25 +11,25 @@ const (
 	maxTags       = 8
 )
 
-var ID = &json.Schema{
+var ID = &generator.Schema{
 	Type:    "string",
 	Pattern: "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
 }
 
-var Name = &json.Schema{
+var Name = &generator.Schema{
 	Type:      "string",
 	Pattern:   "^[0-9a-zA-Z.-_~]*$",
 	MinLength: 1,
 	MaxLength: maxNameLength,
 }
 
-var Timeout = &json.Schema{
+var Timeout = &generator.Schema{
 	Type:    "integer",
 	Minimum: 1,
 	Maximum: maxTimeout,
 }
 
-var Protocol = &json.Schema{
+var Protocol = &generator.Schema{
 	Type: "string",
 	Enum: []interface{}{
 		ProtocolHTTP,
@@ -42,43 +42,43 @@ var Protocol = &json.Schema{
 	},
 }
 
-var Host = &json.Schema{
+var Host = &generator.Schema{
 	Type:    "string",
 	Pattern: "^[a-z0-9]([-a-z0-9]*[a-z0-9])?(.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$",
 }
 
-var Port = &json.Schema{
+var Port = &generator.Schema{
 	Type:    "integer",
 	Minimum: 1,
 	Maximum: maxPort,
 }
 
-var Tags = &json.Schema{
+var Tags = &generator.Schema{
 	Type:      "array",
 	Items:     Name,
 	MaxLength: maxTags,
 }
 
-var Path = &json.Schema{
+var Path = &generator.Schema{
 	Type: "string",
-	AllOf: []*json.Schema{
+	AllOf: []*generator.Schema{
 		{
 			Pattern: "^/.*",
 		},
 		{
-			Not: &json.Schema{
+			Not: &generator.Schema{
 				Pattern: "//",
 			},
 		},
 	},
 }
 
-var CIDRPort = &json.Schema{
+var CIDRPort = &generator.Schema{
 	Type: "object",
-	Properties: map[string]*json.Schema{
+	Properties: map[string]*generator.Schema{
 		"ip": {
 			Type: "string",
-			OneOf: []*json.Schema{
+			OneOf: []*generator.Schema{
 				// TODO(hbagdi): add ipv6
 				{
 					Description: "must be a valid IP or CIDR",
@@ -94,7 +94,7 @@ var CIDRPort = &json.Schema{
 		},
 		"port": Port,
 	},
-	OneOf: []*json.Schema{
+	OneOf: []*generator.Schema{
 		{
 			Description: "either one of 'ip' or 'port' is required",
 			Required:    []string{"ip"},
