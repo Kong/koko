@@ -12,8 +12,9 @@ const (
 )
 
 var ID = &generator.Schema{
-	Type:    "string",
-	Pattern: "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+	Description: "must be a valid UUID",
+	Type:        "string",
+	Pattern:     "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
 }
 
 var Name = &generator.Schema{
@@ -43,8 +44,9 @@ var Protocol = &generator.Schema{
 }
 
 var Host = &generator.Schema{
-	Type:    "string",
-	Pattern: "^[a-z0-9]([-a-z0-9]*[a-z0-9])?(.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$",
+	Description: "must be a valid hostname",
+	Type:        "string",
+	Pattern:     "^[a-z0-9]([-a-z0-9]*[a-z0-9])?(.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$",
 }
 
 var Port = &generator.Schema{
@@ -54,21 +56,22 @@ var Port = &generator.Schema{
 }
 
 var Tags = &generator.Schema{
-	Type:      "array",
-	Items:     Name,
-	MaxLength: maxTags,
+	Type:     "array",
+	Items:    Name,
+	MaxItems: maxTags,
 }
 
 var Path = &generator.Schema{
 	Type: "string",
 	AllOf: []*generator.Schema{
 		{
-			Description: "path must begin with `/`",
+			Description: "must begin with `/`",
 			Pattern:     "^/.*",
 		},
 		{
 			Not: &generator.Schema{
-				Pattern: "//",
+				Description: "must not contain `//`",
+				Pattern:     "//",
 			},
 		},
 	},

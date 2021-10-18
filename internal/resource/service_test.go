@@ -4,8 +4,8 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
-	"github.com/kong/koko/internal/model/validation"
+	model "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
+	"github.com/kong/koko/internal/model/json/validation"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -55,7 +55,7 @@ func TestService_ProcessDefaults(t *testing.T) {
 		r.Service.Id = ""
 		r.Service.CreatedAt = 0
 		r.Service.UpdatedAt = 0
-		assert.Equal(t, &v1.Service{
+		assert.Equal(t, &model.Service{
 			Protocol:       "grpc",
 			Port:           4242,
 			Retries:        1,
@@ -67,7 +67,7 @@ func TestService_ProcessDefaults(t *testing.T) {
 }
 
 func TestValidate(t *testing.T) {
-	s := v1.Service{
+	s := model.Service{
 		Id:             uuid.NewString(),
 		Name:           "foo",
 		Retries:        1<<15 - 1,
@@ -100,6 +100,7 @@ func TestService_Validate(t *testing.T) {
 		Service   func() Service
 		wantErr   bool
 		errFields []string
+		Errs      []*model.ErrorDetail
 	}{
 		{
 			name: "empty service throws an error",
@@ -107,14 +108,14 @@ func TestService_Validate(t *testing.T) {
 				return NewService()
 			},
 			wantErr: true,
-			errFields: []string{
-				"host",
-				"path",
-				"connect_timeout",
-				"read_timeout",
-				"write_timeout",
-				"id",
-				"port",
+			Errs: []*model.ErrorDetail{
+				{
+					Type: model.ErrorType_ERROR_TYPE_ENTITY,
+					Messages: []string{
+						"missing properties: 'id', 'protocol', 'host', " +
+							"'port', 'connect_timeout', 'read_timeout', 'write_timeout'",
+					},
+				},
 			},
 		},
 		{
@@ -124,8 +125,34 @@ func TestService_Validate(t *testing.T) {
 				_ = s.ProcessDefaults()
 				return s
 			},
-			wantErr:   true,
-			errFields: []string{"host", "path"},
+			wantErr: true,
+			Errs: []*model.ErrorDetail{
+				{
+					Type: model.ErrorType_ERROR_TYPE_ENTITY,
+					Messages: []string{
+						"missing properties: 'host'",
+						"path is required when protocol is http or https",
+					},
+				},
+			},
+		},
+		{
+			name: "invalid timeout throws an error",
+			Service: func() Service {
+				s := goodService()
+				s.Service.ReadTimeout = -1
+				return s
+			},
+			wantErr: true,
+			Errs: []*model.ErrorDetail{
+				{
+					Type:  model.ErrorType_ERROR_TYPE_FIELD,
+					Field: "read_timeout",
+					Messages: []string{
+						"must be >= 1 but found -1",
+					},
+				},
+			},
 		},
 		{
 			name: "invalid ID throws an error",
@@ -134,8 +161,16 @@ func TestService_Validate(t *testing.T) {
 				s.Service.Id = "bad-uuid"
 				return s
 			},
-			wantErr:   true,
-			errFields: []string{"id"},
+			wantErr: true,
+			Errs: []*model.ErrorDetail{
+				{
+					Type:  model.ErrorType_ERROR_TYPE_FIELD,
+					Field: "id",
+					Messages: []string{
+						"must be a valid UUID",
+					},
+				},
+			},
 		},
 		{
 			name: "invalid name throws an error",
@@ -144,18 +179,80 @@ func TestService_Validate(t *testing.T) {
 				s.Service.Name = "%foo"
 				return s
 			},
-			wantErr:   true,
-			errFields: []string{"name"},
+			wantErr: true,
+			Errs: []*model.ErrorDetail{
+				{
+					Type:  model.ErrorType_ERROR_TYPE_FIELD,
+					Field: "name",
+					Messages: []string{
+						"must match pattern^[0-9a-zA-Z.-_~]*$",
+					},
+				},
+			},
 		},
 		{
-			name: "invalid name throws an error",
+			name: "invalid host throws an error",
 			Service: func() Service {
 				s := goodService()
-				s.Service.Name = "%foo"
+				s.Service.Host = "%foo"
 				return s
 			},
-			wantErr:   true,
-			errFields: []string{"name"},
+			wantErr: true,
+			Errs: []*model.ErrorDetail{
+				{
+					Type:  model.ErrorType_ERROR_TYPE_FIELD,
+					Field: "host",
+					Messages: []string{
+						"must be a valid hostname",
+					},
+				},
+			},
+		},
+		{
+			name: "invalid tags throws an error",
+			Service: func() Service {
+				s := goodService()
+				s.Service.Tags = []string{"$tag"}
+				return s
+			},
+			wantErr: true,
+			Errs: []*model.ErrorDetail{
+				{
+					Type:  model.ErrorType_ERROR_TYPE_FIELD,
+					Field: "tags[0]",
+					Messages: []string{
+						"must match pattern^[0-9a-zA-Z.-_~]*$",
+					},
+				},
+			},
+		},
+		{
+			name: "more than 8 tags throw an error",
+			Service: func() Service {
+				s := goodService()
+				s.Service.Tags = []string{
+					"tag0",
+					"tag1",
+					"tag2",
+					"tag3",
+					"tag4",
+					"tag5",
+					"tag6",
+					"tag7",
+					"tag8",
+				}
+				return s
+			},
+			wantErr: true,
+			Errs: []*model.ErrorDetail{
+				{
+					Type:  model.ErrorType_ERROR_TYPE_FIELD,
+					Field: "tags",
+					Messages: []string{
+						"maximum 8 items required, but found 9 items",
+					},
+				},
+			},
 		},
 		{
 			name: "invalid protocol throws an error",
@@ -165,9 +262,14 @@ func TestService_Validate(t *testing.T) {
 				return s
 			},
 			wantErr: true,
-			errFields: []string{
-				"protocol",
-				"path",
+			Errs: []*model.ErrorDetail{
+				{
+					Type:  model.ErrorType_ERROR_TYPE_FIELD,
+					Field: "protocol",
+					Messages: []string{
+						"must be one of [http https grpc grpcs tcp udp tls]",
+					},
+				},
 			},
 		},
 		{
@@ -177,8 +279,16 @@ func TestService_Validate(t *testing.T) {
 				s.Service.Retries = -1
 				return s
 			},
-			wantErr:   true,
-			errFields: []string{"retries"},
+			wantErr: true,
+			Errs: []*model.ErrorDetail{
+				{
+					Type:  model.ErrorType_ERROR_TYPE_FIELD,
+					Field: "retries",
+					Messages: []string{
+						"must be >= 1 but found -1",
+					},
+				},
+			},
 		},
 		{
 			name: "invalid port throws an error",
@@ -187,8 +297,16 @@ func TestService_Validate(t *testing.T) {
 				s.Service.Port = 69420
 				return s
 			},
-			wantErr:   true,
-			errFields: []string{"port"},
+			wantErr: true,
+			Errs: []*model.ErrorDetail{
+				{
+					Type:  model.ErrorType_ERROR_TYPE_FIELD,
+					Field: "port",
+					Messages: []string{
+						"must be <= 65535 but found 69420",
+					},
+				},
+			},
 		},
 		{
 			name: "path must begin with /",
@@ -199,6 +317,15 @@ func TestService_Validate(t *testing.T) {
 			},
 			wantErr:   true,
 			errFields: []string{"path"},
+			Errs: []*model.ErrorDetail{
+				{
+					Type:  model.ErrorType_ERROR_TYPE_FIELD,
+					Field: "path",
+					Messages: []string{
+						"must begin with `/`",
+					},
+				},
+			},
 		},
 		{
 			name: "path must not contain '//'",
@@ -207,8 +334,16 @@ func TestService_Validate(t *testing.T) {
 				s.Service.Path = "/foo//bar"
 				return s
 			},
-			wantErr:   true,
-			errFields: []string{"path"},
+			wantErr: true,
+			Errs: []*model.ErrorDetail{
+				{
+					Type:  model.ErrorType_ERROR_TYPE_FIELD,
+					Field: "path",
+					Messages: []string{
+						"must not contain `//`",
+					},
+				},
+			},
 		},
 		{
 			name: "ca_certificates must be ID",
@@ -218,8 +353,20 @@ func TestService_Validate(t *testing.T) {
 				return s
 			},
 			wantErr: true,
-			errFields: []string{
-				"ca_certificates",
+			Errs: []*model.ErrorDetail{
+				{
+					Type:  model.ErrorType_ERROR_TYPE_FIELD,
+					Field: "ca_certificates[0]",
+					Messages: []string{
+						"must be a valid UUID",
+					},
+				},
+				{
+					Type: model.ErrorType_ERROR_TYPE_ENTITY,
+					Messages: []string{
+						"ca_certificates are not yet implemented",
+					},
+				},
 			},
 		},
 		{
@@ -232,9 +379,15 @@ func TestService_Validate(t *testing.T) {
 				return s
 			},
 			wantErr: true,
-			errFields: []string{
-				"tls_verify_depth",
-				"tls_verify",
+			Errs: []*model.ErrorDetail{
+				{
+					Type: model.ErrorType_ERROR_TYPE_ENTITY,
+					Messages: []string{
+						"tls_verify can be set only when protocol is `https`",
+						"tls_verify_depth can be set only when protocol is" +
+							" `https`",
+					},
+				},
 			},
 		},
 		{
@@ -251,15 +404,13 @@ func TestService_Validate(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := tt.Service().ValidateCompat()
+			err := tt.Service().Validate()
 			if (err != nil) != tt.wantErr {
-				t.Errorf("ValidateCompat() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("Validate() error = %v, wantErr %v", err, tt.wantErr)
 			}
-			if tt.errFields != nil {
+			if tt.Errs != nil {
 				verr, _ := err.(validation.Error)
-				gotFields := fieldsFromErr(verr)
-				assert.ElementsMatchf(t, tt.errFields, gotFields,
-					"mismatch in expected errors")
+				assert.ElementsMatch(t, tt.Errs, verr.Errs)
 			}
 		})
 	}

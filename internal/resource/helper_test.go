@@ -3,7 +3,6 @@ package resource
 import (
 	"testing"
 
-	"github.com/kong/koko/internal/model/validation"
 	"github.com/kong/koko/internal/model/validation/typedefs"
 	"github.com/stretchr/testify/assert"
 )
@@ -56,12 +55,4 @@ func TestMergeRules(t *testing.T) {
 	assert.Panics(t, func() {
 		mergeRules("foo")
 	})
-}
-
-func fieldsFromErr(err validation.Error) []string {
-	res := make([]string, 0, len(err.Fields))
-	for _, f := range err.Fields {
-		res = append(res, f.Name)
-	}
-	return res
 }

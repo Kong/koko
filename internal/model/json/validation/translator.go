@@ -43,8 +43,7 @@ func (t ErrorTranslator) addErr(field string, errorType model.ErrorType,
 
 func (t ErrorTranslator) renderErrs(schemaErr jsonschema.Detailed,
 	schema *jsonschema.Schema) {
-	ok := t.getErr(schemaErr.KeywordLocation, schemaErr.InstanceLocation,
-		schema)
+	ok := t.getErr(schemaErr, schema)
 	if ok {
 		return
 	}
@@ -84,10 +83,13 @@ func pretty(input string) string {
 	return buf.String()
 }
 
-func (t ErrorTranslator) getErr(location string, field string,
+func (t ErrorTranslator) getErr(schemaErr jsonschema.Detailed,
 	schema *jsonschema.Schema) bool {
-	var ok bool
-	walk(location, schema, func(schema *jsonschema.Schema,
+	var (
+		ok    bool
+		field = schemaErr.InstanceLocation
+	)
+	walk(schemaErr.KeywordLocation, schema, func(schema *jsonschema.Schema,
 		hint string) bool {
 		message := ""
 		switch hint {
@@ -96,10 +98,15 @@ func (t ErrorTranslator) getErr(location string, field string,
 		case "Pattern":
 			message = "must match pattern" + schema.Pattern.String()
 		case "Required":
-			message = fmt.Sprintf("required field(s) missing: %s", schema.Required)
+			message = schemaErr.Error
 		case "Enum":
 			message = fmt.Sprintf("must be one of %v", schema.Enum)
-
+		case "Minimum":
+			message = schemaErr.Error
+		case "Maximum":
+			message = schemaErr.Error
+		case "MaxItems":
+			message = schemaErr.Error
 		default:
 			panic("unexpected hint")
 		}
@@ -179,6 +186,12 @@ func walk(location string, schema *jsonschema.Schema,
 			schema = schema.Not
 		case "required":
 			hint = "Required"
+		case "minimum":
+			hint = "Minimum"
+		case "maximum":
+			hint = "Maximum"
+		case "maxItems":
+			hint = "MaxItems"
 		case "pattern":
 			hint = "Pattern"
 		case "enum":
