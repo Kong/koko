@@ -4,10 +4,11 @@ import (
 	"fmt"
 	"net/http"
 
-	ozzo "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/imdario/mergo"
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
 	"github.com/kong/koko/internal/model"
+	"github.com/kong/koko/internal/model/json/generator"
+	"github.com/kong/koko/internal/model/json/validation"
 	"github.com/kong/koko/internal/model/validation/typedefs"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )
@@ -30,15 +31,6 @@ var (
 	}
 	_ model.Object = Route{}
 )
-
-func init() {
-	err := model.RegisterType(TypeRoute, func() model.Object {
-		return NewRoute()
-	})
-	if err != nil {
-		panic(err)
-	}
-}
 
 func NewRoute() Route {
 	return Route{
@@ -87,24 +79,11 @@ func (r Route) Indexes() []model.Index {
 }
 
 func (r Route) Validate() error {
-	panic("implement me")
+	return validation.Validate(string(TypeRoute), r.Route)
 }
 
 func (r Route) ValidateCompat() error {
-	if r.Route == nil {
-		return fmt.Errorf("invalid nil resource")
-	}
-	s := r.Route
-	err := ozzo.ValidateStruct(r.Route,
-		ozzo.Field(&s.Id, typedefs.IDRules()...),
-		ozzo.Field(&s.Name, typedefs.NameRule()...),
-		ozzo.Field(&s.Tags, typedefs.TagsRule()...),
-		// TODO add validation
-	)
-	if err != nil {
-		return validationErr(err)
-	}
-	return nil
+	return r.Validate()
 }
 
 func (r Route) ProcessDefaults() error {
@@ -119,4 +98,30 @@ func (r Route) ProcessDefaults() error {
 	defaultID(&r.Route.Id)
 	addTZ(r.Route)
 	return nil
+}
+
+func init() {
+	err := model.RegisterType(TypeRoute, func() model.Object {
+		return NewRoute()
+	})
+	if err != nil {
+		panic(err)
+	}
+
+	routeSchema := &generator.Schema{
+		Type: "object",
+		Properties: map[string]*generator.Schema{
+			"id":   typedefs.ID,
+			"name": typedefs.Name,
+			"tags": typedefs.Tags,
+		},
+		AdditionalProperties: true,
+		Required: []string{
+			"id",
+		},
+	}
+	err = generator.Register(string(TypeRoute), routeSchema)
+	if err != nil {
+		panic(err)
+	}
 }

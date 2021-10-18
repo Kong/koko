@@ -33,15 +33,6 @@ var (
 	_ model.Object = Service{}
 )
 
-func init() {
-	err := model.RegisterType(TypeService, func() model.Object {
-		return NewService()
-	})
-	if err != nil {
-		panic(err)
-	}
-}
-
 func NewService() Service {
 	return Service{
 		Service: &v1.Service{},
@@ -100,6 +91,13 @@ func (r Service) Indexes() []model.Index {
 }
 
 func init() {
+	err := model.RegisterType(TypeService, func() model.Object {
+		return NewService()
+	})
+	if err != nil {
+		panic(err)
+	}
+
 	serviceSchema := &generator.Schema{
 		Type: "object",
 		Properties: map[string]*generator.Schema{
@@ -230,7 +228,7 @@ func init() {
 			},
 		},
 	}
-	err := generator.Register(string(TypeService), serviceSchema)
+	err = generator.Register(string(TypeService), serviceSchema)
 	if err != nil {
 		panic(err)
 	}
