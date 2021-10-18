@@ -106,7 +106,7 @@ func preProcess(object model.Object) error {
 	if err != nil {
 		return err
 	}
-	err = object.ValidateCompat()
+	err = object.Validate()
 	if err != nil {
 		return err
 	}
