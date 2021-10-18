@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -e
 
 function is_repo_dirty() {
   status=$(git status --porcelain)

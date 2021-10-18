@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -e
 
 # check go installed
 go version > /dev/null 2>&1
