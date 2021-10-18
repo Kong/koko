@@ -93,24 +93,39 @@ func (t ErrorTranslator) getErr(schemaErr jsonschema.Detailed,
 		hint string) bool {
 		message := ""
 		switch hint {
-		case "":
+		case "properties":
+			fallthrough
+		case "if":
+			fallthrough
+		case "then":
+			fallthrough
+		case "not":
+			fallthrough
+		case "items":
+			fallthrough
+		case "allOf":
+			fallthrough
+		case "oneOf":
+			fallthrough
+		case "anyOf":
 			message = schema.Description
-		case "Pattern":
-			message = "must match pattern" + schema.Pattern.String()
-		case "Required":
-			message = schemaErr.Error
-		case "Enum":
-			message = fmt.Sprintf("must be one of %v", schema.Enum)
-		case "Minimum":
-			message = schemaErr.Error
-		case "Maximum":
-			message = schemaErr.Error
-		case "MaxItems":
-			message = schemaErr.Error
-		case "MaxLength":
+		case "pattern":
+			message = fmt.Sprintf("must match pattern '%v'",
+				schema.Pattern.String())
+		case "required":
+			fallthrough
+		case "enum":
+			fallthrough
+		case "minimum":
+			fallthrough
+		case "maximum":
+			fallthrough
+		case "maxItems":
+			fallthrough
+		case "maxLength":
 			message = schemaErr.Error
 		default:
-			panic("unexpected hint")
+			panic("unexpected hint: " + hint)
 		}
 		if message != "" {
 			ok = true
@@ -142,7 +157,7 @@ func walk(location string, schema *jsonschema.Schema,
 		if fragment == "" {
 			continue
 		}
-		hint := ""
+		hint := fragment
 		switch fragment {
 		case "properties":
 			i++
@@ -186,22 +201,7 @@ func walk(location string, schema *jsonschema.Schema,
 			schema = schema.If
 		case "not":
 			schema = schema.Not
-		case "required":
-			hint = "Required"
-		case "minimum":
-			hint = "Minimum"
-		case "maximum":
-			hint = "Maximum"
-		case "maxItems":
-			hint = "MaxItems"
-		case "pattern":
-			hint = "Pattern"
-		case "enum":
-			hint = "Enum"
-		case "maxLength":
-			hint = "MaxLength"
 		default:
-			panic("unexpected fragment: " + fragment)
 		}
 		ok := fn(schema, hint)
 		if !ok {
