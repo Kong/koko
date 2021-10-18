@@ -4,8 +4,15 @@ option go_package = "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1;
 
 package kong.admin.model.v1;
 
+enum ErrorType {
+  ERROR_TYPE_UNSPECIFIED = 0;
+  ERROR_TYPE_FIELD = 1;
+  ERROR_TYPE_ENTITY = 2;
+  ERROR_TYPE_REFERENCE = 3;
+}
+
 message ErrorDetail {
-  string type = 1;
+  ErrorType type = 1;
   string field = 2;
-  string message = 3;
+  repeated string messages = 3;
 }

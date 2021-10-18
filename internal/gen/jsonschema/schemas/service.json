@@ -39,7 +39,8 @@
       "type": "string",
       "allOf": [
         {
-          "pattern": "^/.*"
+          "pattern": "^/.*",
+          "description": "path must begin with `/`"
         },
         {
           "not": {
@@ -103,6 +104,9 @@
     {
       "description": "tls_verify can be set only when protocol is https",
       "if": {
+        "required": [
+          "tls_verify"
+        ],
         "properties": {
           "tls_verify": {
             "const": true

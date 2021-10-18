@@ -63,7 +63,8 @@ var Path = &generator.Schema{
 	Type: "string",
 	AllOf: []*generator.Schema{
 		{
-			Pattern: "^/.*",
+			Description: "path must begin with `/`",
+			Pattern:     "^/.*",
 		},
 		{
 			Not: &generator.Schema{

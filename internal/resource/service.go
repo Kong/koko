@@ -8,6 +8,7 @@ import (
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
 	"github.com/kong/koko/internal/model"
 	"github.com/kong/koko/internal/model/json/generator"
+	"github.com/kong/koko/internal/model/json/validation"
 	"github.com/kong/koko/internal/model/validation/typedefs"
 )
 
@@ -68,7 +69,7 @@ func (r Service) Resource() model.Resource {
 }
 
 func (r Service) Validate() error {
-	panic("implement me")
+	return validation.Validate(string(TypeService), r.Service)
 }
 
 func (r Service) ValidateCompat() error {
@@ -208,6 +209,7 @@ func init() {
 				Description: "tls_verify can be set only when protocol is" +
 					" https",
 				If: &generator.Schema{
+					Required: []string{"tls_verify"},
 					Properties: map[string]*generator.Schema{
 						"tls_verify": {
 							Const: true,

@@ -48,7 +48,7 @@ func TestRouteCreate(t *testing.T) {
 		body.ValueEqual("message", "data constraint error")
 		body.Value("details").Array().Length().Equal(1)
 		err := body.Value("details").Array().Element(0)
-		err.Object().ValueEqual("type", "constraint")
+		err.Object().ValueEqual("type", v1.ErrorType_ERROR_TYPE_REFERENCE.String())
 		err.Object().ValueEqual("field", "name")
 	})
 	t.Run("creating a route with a non-existent service fails", func(t *testing.T) {
@@ -65,7 +65,7 @@ func TestRouteCreate(t *testing.T) {
 		body.ValueEqual("message", "data constraint error")
 		body.Value("details").Array().Length().Equal(1)
 		err := body.Value("details").Array().Element(0)
-		err.Object().ValueEqual("type", "constraint")
+		err.Object().ValueEqual("type", v1.ErrorType_ERROR_TYPE_REFERENCE.String())
 		err.Object().ValueEqual("field", "service.id")
 	})
 	t.Run("creating a route with a valid service.id succeeds", func(t *testing.T) {

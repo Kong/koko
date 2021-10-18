@@ -57,7 +57,8 @@ func TestServiceCreate(t *testing.T) {
 		errs := body.Value("details").Array()
 		var fields []string
 		for _, err := range errs.Iter() {
-			err.Object().ValueEqual("type", "validation")
+			err.Object().ValueEqual("type", v1.ErrorType_ERROR_TYPE_FIELD.
+				String())
 			fields = append(fields, err.Object().Value("field").String().Raw())
 		}
 		assert.ElementsMatch(t, []string{"path", "connect_timeout"}, fields)
@@ -71,7 +72,8 @@ func TestServiceCreate(t *testing.T) {
 			body.ValueEqual("message", "data constraint error")
 			body.Value("details").Array().Length().Equal(1)
 			err := body.Value("details").Array().Element(0)
-			err.Object().ValueEqual("type", "constraint")
+			err.Object().ValueEqual("type", v1.ErrorType_ERROR_TYPE_REFERENCE.
+				String())
 			err.Object().ValueEqual("field", "name")
 		})
 }

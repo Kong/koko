@@ -10,7 +10,8 @@ import (
 	proto1 "github.com/golang/protobuf/proto"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	pbModel "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
-	"github.com/kong/koko/internal/model/validation"
+	"github.com/kong/koko/internal/model/json/validation"
+	legacyValidation "github.com/kong/koko/internal/model/validation"
 	"github.com/kong/koko/internal/store"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
@@ -59,26 +60,37 @@ func handleErr(logger *zap.Logger, err error) error {
 	case store.ErrConstraint:
 		s := status.New(codes.InvalidArgument, "data constraint error")
 		errDetail := &pbModel.ErrorDetail{
-			Type:    "constraint",
-			Field:   e.Index.FieldName,
-			Message: e.Error(),
+			Type:     pbModel.ErrorType_ERROR_TYPE_REFERENCE,
+			Field:    e.Index.FieldName,
+			Messages: []string{e.Error()},
 		}
 		s, err := s.WithDetails(errDetail)
 		if err != nil {
 			panic(err)
 		}
 		return s.Err()
-	case validation.Error:
+	case legacyValidation.Error:
 		s := status.New(codes.InvalidArgument, "validation error")
 		errDetails := make([]proto1.Message, len(e.Fields))
 		for i, fieldErr := range e.Fields {
 			errDetails[i] = &pbModel.ErrorDetail{
-				Type:    "validation",
-				Field:   fieldErr.Name,
-				Message: fieldErr.Message,
+				Type:     pbModel.ErrorType_ERROR_TYPE_FIELD,
+				Field:    fieldErr.Name,
+				Messages: []string{fieldErr.Message},
 			}
 		}
 		s, err := s.WithDetails(errDetails...)
+		if err != nil {
+			panic(err)
+		}
+		return s.Err()
+	case validation.Error:
+		s := status.New(codes.InvalidArgument, "validation error")
+		var errs []proto1.Message
+		for _, err := range e.Errs {
+			errs = append(errs, err)
+		}
+		s, err := s.WithDetails(errs...)
 		if err != nil {
 			panic(err)
 		}
