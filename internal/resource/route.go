@@ -9,7 +9,7 @@ import (
 	"github.com/kong/koko/internal/model"
 	"github.com/kong/koko/internal/model/json/generator"
 	"github.com/kong/koko/internal/model/json/validation"
-	"github.com/kong/koko/internal/model/validation/typedefs"
+	"github.com/kong/koko/internal/model/json/validation/typedefs"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 

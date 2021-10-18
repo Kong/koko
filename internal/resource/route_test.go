@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
-	"github.com/kong/koko/internal/model/validation/typedefs"
+	"github.com/kong/koko/internal/model/json/validation/typedefs"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )
