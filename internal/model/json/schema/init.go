@@ -4,14 +4,21 @@ import (
 	"bytes"
 	"fmt"
 	"strings"
+	"sync"
 
 	genJSONSchema "github.com/kong/koko/internal/gen/jsonschema"
 	"github.com/santhosh-tekuri/jsonschema/v5"
 )
 
-var schemas = map[string]*jsonschema.Schema{}
+var (
+	schemas = map[string]*jsonschema.Schema{}
+	once    sync.Once
+)
 
-func init() {
+// initSchemas reads and compiles schemas.
+// This is not done in a traditional init() to avoid circular dependency on the
+// generated JSON schemas.
+func initSchemas() {
 	const dir = "schemas"
 	schemaFS := genJSONSchema.KongSchemas
 	files, err := schemaFS.ReadDir(dir)
@@ -39,6 +46,7 @@ func init() {
 }
 
 func Get(name string) (*jsonschema.Schema, error) {
+	once.Do(initSchemas)
 	schema, ok := schemas[name]
 	if !ok {
 		return nil, fmt.Errorf("schema not found: '%v'", name)
