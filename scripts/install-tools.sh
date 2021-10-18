@@ -18,4 +18,4 @@ go install "google.golang.org/protobuf/cmd/protoc-gen-go"
 
 curl -sSfL \
 "https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh" \
-| sh -s -- -b bin v1.41.1
+| sh -s -- -b bin v1.42.1
