@@ -255,6 +255,27 @@ func TestService_Validate(t *testing.T) {
 			},
 		},
 		{
+			name: "name longer than 128 character errors out",
+			Service: func() Service {
+				s := goodService()
+				s.Service.
+					Name = "anyservicewithareallylongnameisnotveryhelpful" + "" +
+					"toanyoneatallisitifyouthinkitisthistestisgoingtoprove" +
+					"youwrongandifitdoesnottheniguesswearedoomed"
+				return s
+			},
+			wantErr: true,
+			Errs: []*model.ErrorDetail{
+				{
+					Type:  model.ErrorType_ERROR_TYPE_FIELD,
+					Field: "name",
+					Messages: []string{
+						"length must be <= 128, but got 141",
+					},
+				},
+			},
+		},
+		{
 			name: "invalid protocol throws an error",
 			Service: func() Service {
 				s := goodService()

@@ -107,6 +107,8 @@ func (t ErrorTranslator) getErr(schemaErr jsonschema.Detailed,
 			message = schemaErr.Error
 		case "MaxItems":
 			message = schemaErr.Error
+		case "MaxLength":
+			message = schemaErr.Error
 		default:
 			panic("unexpected hint")
 		}
@@ -196,6 +198,8 @@ func walk(location string, schema *jsonschema.Schema,
 			hint = "Pattern"
 		case "enum":
 			hint = "Enum"
+		case "maxLength":
+			hint = "MaxLength"
 		default:
 			panic("unexpected fragment: " + fragment)
 		}
