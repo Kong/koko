@@ -29,9 +29,9 @@ type Schema struct {
 	// RFC draft-wright-json-schema-validation-00, section 5
 	MultipleOf           int                `json:"multipleOf,omitempty"`           // section 5.1
 	Maximum              int                `json:"maximum,omitempty"`              // section 5.2
-	ExclusiveMaximum     bool               `json:"exclusiveMaximum,omitempty"`     // section 5.3
+	ExclusiveMaximum     int                `json:"exclusiveMaximum,omitempty"`     // section 5.3
 	Minimum              int                `json:"minimum,omitempty"`              // section 5.4
-	ExclusiveMinimum     bool               `json:"exclusiveMinimum,omitempty"`     // section 5.5
+	ExclusiveMinimum     int                `json:"exclusiveMinimum,omitempty"`     // section 5.5
 	MaxLength            int                `json:"maxLength,omitempty"`            // section 5.6
 	MinLength            int                `json:"minLength,omitempty"`            // section 5.7
 	Pattern              string             `json:"pattern,omitempty"`              // section 5.8

@@ -3,6 +3,7 @@ package validation
 import (
 	"bytes"
 	"fmt"
+	"net/url"
 	"strconv"
 	"strings"
 
@@ -107,6 +108,8 @@ func (t ErrorTranslator) getErr(schemaErr jsonschema.Detailed,
 			fallthrough
 		case "oneOf":
 			fallthrough
+		case "patternProperties":
+			fallthrough
 		case "anyOf":
 			message = schema.Description
 		case "pattern":
@@ -115,6 +118,8 @@ func (t ErrorTranslator) getErr(schemaErr jsonschema.Detailed,
 		case "required":
 			fallthrough
 		case "enum":
+			fallthrough
+		case "exclusiveMinimum":
 			fallthrough
 		case "minimum":
 			fallthrough
@@ -172,6 +177,21 @@ func walk(location string, schema *jsonschema.Schema,
 				panic(err)
 			}
 			schema = schema.AllOf[pos]
+		case "patternProperties":
+			i++
+			if i == len(fragments) {
+				return
+			}
+			key, err := url.PathUnescape(fragments[i])
+			if err != nil {
+				panic(err)
+			}
+			for pattern, patternSchema := range schema.PatternProperties {
+				if key == pattern.String() {
+					schema = patternSchema
+					break
+				}
+			}
 		case "oneOf":
 			i++
 			if i == len(fragments) {

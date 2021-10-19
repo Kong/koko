@@ -82,17 +82,17 @@ var CIDRPort = &generator.Schema{
 	Properties: map[string]*generator.Schema{
 		"ip": {
 			Type: "string",
-			OneOf: []*generator.Schema{
+			AnyOf: []*generator.Schema{
 				// TODO(hbagdi): add ipv6
 				{
 					Description: "must be a valid IP or CIDR",
 					// TODO(hbagdi): replace with a stricter matcher
-					Pattern: "^(?:[0-9]{1,3}.){3}[0-9]{1,3}$",
+					Pattern: "^([0-9]{1,3}[.]{1}){3}[0-9]{1,3}$",
 				},
 				{
 					Description: "must be a valid IP or CIDR",
 					// TODO(hbagdi): replace with a stricter matcher
-					Pattern: "^(?:[0-9]{1,3}.){3}[0-9]{1,3}/[0-9]{1,3}$",
+					Pattern: "^([0-9]{1,3}[.]{1}){3}[0-9]{1,3}/[0-9]{1,3}$",
 				},
 			},
 		},

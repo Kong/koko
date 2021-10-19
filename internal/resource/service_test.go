@@ -96,11 +96,10 @@ func goodService() Service {
 
 func TestService_Validate(t *testing.T) {
 	tests := []struct {
-		name      string
-		Service   func() Service
-		wantErr   bool
-		errFields []string
-		Errs      []*model.ErrorDetail
+		name    string
+		Service func() Service
+		wantErr bool
+		Errs    []*model.ErrorDetail
 	}{
 		{
 			name: "empty service throws an error",
@@ -337,8 +336,7 @@ func TestService_Validate(t *testing.T) {
 				s.Service.Path = "foo"
 				return s
 			},
-			wantErr:   true,
-			errFields: []string{"path"},
+			wantErr: true,
 			Errs: []*model.ErrorDetail{
 				{
 					Type:  model.ErrorType_ERROR_TYPE_FIELD,
