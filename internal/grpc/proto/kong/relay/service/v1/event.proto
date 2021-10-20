@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package kong.relay.service.v1;
+
+option go_package = "github.com/kong/koko/internal/gen/kong/relay/service/v1;v1";
+
+import "kong/admin/model/v1/cluster.proto";
+
+service EventService {
+  rpc FetchReconfigureEvents(FetchReconfigureEventsRequest) returns
+      (stream FetchReconfigureEventsResponse);
+}
+
+message FetchReconfigureEventsRequest{
+  admin.model.v1.RequestCluster cluster = 1;
+}
+
+message FetchReconfigureEventsResponse{
+}

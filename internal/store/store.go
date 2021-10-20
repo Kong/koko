@@ -6,8 +6,11 @@ import (
 	"fmt"
 	"regexp"
 
+	"github.com/google/uuid"
+	nonPublic "github.com/kong/koko/internal/gen/grpc/kong/nonpublic/v1"
 	"github.com/kong/koko/internal/model"
 	"github.com/kong/koko/internal/persistence"
+	"github.com/kong/koko/internal/store/event"
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/proto"
 )
@@ -97,8 +100,33 @@ func (s *ObjectStore) Create(ctx context.Context, object model.Object,
 		if err := s.createIndexes(ctx, tx, object); err != nil {
 			return err
 		}
+		if err := s.updateEvent(ctx, tx); err != nil {
+			return err
+		}
 		return tx.Put(ctx, id, value)
 	})
+}
+
+func (s *ObjectStore) updateEvent(ctx context.Context, tx persistence.Tx) error {
+	event := event.Event{
+		StoreEvent: &nonPublic.StoreEvent{
+			Id:    s.clusterKey(event.ID),
+			Value: s.clock(),
+		},
+	}
+	value, err := proto.Marshal(event.Resource())
+	if err != nil {
+		return fmt.Errorf("proto marshal update event: %v", err)
+	}
+	id, err := s.genID(event.Type(), event.ID())
+	if err != nil {
+		return err
+	}
+	return tx.Put(ctx, id, value)
+}
+
+func (s *ObjectStore) clock() string {
+	return uuid.NewString()
 }
 
 func preProcess(object model.Object) error {
@@ -164,7 +192,10 @@ func (s *ObjectStore) Delete(ctx context.Context,
 			}
 			return err
 		}
-		return s.deleteIndexes(ctx, tx, object)
+		if err := s.deleteIndexes(ctx, tx, object); err != nil {
+			return err
+		}
+		return s.updateEvent(ctx, tx)
 	})
 }
 

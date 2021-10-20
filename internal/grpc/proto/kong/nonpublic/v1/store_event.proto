@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+option go_package = "github.com/kong/koko/internal/gen/grpc/kong/nonpublic/v1";
+
+package kong.nonpublic.v1;
+
+message StoreEvent {
+  string id = 1;
+  string value = 2;
+}

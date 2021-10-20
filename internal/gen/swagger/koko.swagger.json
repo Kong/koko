@@ -13,6 +13,9 @@
     },
     {
       "name": "ServiceService"
+    },
+    {
+      "name": "EventService"
     }
   ],
   "consumes": [
@@ -616,6 +619,9 @@
           }
         }
       }
+    },
+    "kong.relay.service.v1.FetchReconfigureEventsResponse": {
+      "type": "object"
     }
   }
 }
