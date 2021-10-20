@@ -9,11 +9,13 @@ import (
 	"github.com/hbagdi/gang"
 	"github.com/kong/koko/internal/config"
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/service/v1"
+	relay "github.com/kong/koko/internal/gen/grpc/kong/relay/service/v1"
 	"github.com/kong/koko/internal/log"
 	"github.com/kong/koko/internal/persistence"
 	"github.com/kong/koko/internal/server"
 	"github.com/kong/koko/internal/server/admin"
 	"github.com/kong/koko/internal/server/kong/ws"
+	relayImpl "github.com/kong/koko/internal/server/relay"
 	"github.com/kong/koko/internal/store"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
@@ -57,7 +59,8 @@ func serveMain(ctx context.Context) error {
 
 	var g gang.Gang
 
-	memory, err := persistence.NewMemory()
+	// setup data store
+	memory, err := persistence.NewSQLite("test.db")
 	if err != nil {
 		return err
 	}
@@ -74,6 +77,7 @@ func serveMain(ctx context.Context) error {
 		return err
 	}
 
+	// setup Admin API server
 	s, err := server.NewHTTP(server.HTTPOpts{
 		Address: ":3000",
 		Logger:  adminLogger,
@@ -84,6 +88,7 @@ func serveMain(ctx context.Context) error {
 	}
 	g.AddWithCtxE(s.Run)
 
+	// setup relay server
 	rawGRPCServer := admin.NewGRPC(admin.HandlerOpts{
 		Logger:      logger.With(zap.String("component", "admin-server")),
 		StoreLoader: storeLoader,
@@ -100,12 +105,24 @@ func serveMain(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	g.AddWithCtxE(grpcServer.Run)
-
-	configClient, err := setupConfigClient()
+	relayService := relayImpl.NewEventService(ctx,
+		relayImpl.EventServiceOpts{
+			Store:  store,
+			Logger: logger.With(zap.String("component", "relay-server")),
+		})
+	relay.RegisterEventServiceServer(rawGRPCServer, relayService)
 	if err != nil {
 		return err
 	}
+	g.AddWithCtxE(grpcServer.Run)
+
+	// setup relay client
+	configClient, err := setupRelayClient()
+	if err != nil {
+		return err
+	}
+
+	// setup control server
 	controlLogger := logger.With(zap.String("component", "control-server"))
 	m := ws.NewManager(ws.ManagerOpts{
 		Logger:  controlLogger,
@@ -114,6 +131,7 @@ func serveMain(ctx context.Context) error {
 	})
 	authenticator := &ws.DefaultAuthenticator{
 		Manager: m,
+		Context: ctx,
 	}
 	handler, err := ws.NewHandler(ws.HandlerOpts{
 		Logger:        controlLogger,
@@ -141,12 +159,16 @@ func serveMain(ctx context.Context) error {
 	}
 	g.AddWithCtxE(s.Run)
 
+	// run rabbit run
 	errCh := g.Run(ctx)
 	var mErr multiErr
 	for err := range errCh {
 		mErr.Errors = append(mErr.Errors, err)
 	}
-	return mErr
+	if len(mErr.Errors) > 0 {
+		return mErr
+	}
+	return nil
 }
 
 type multiErr struct {
@@ -208,7 +230,7 @@ func setupLogging(c config.Log) (*zap.Logger, error) {
 	return logger, nil
 }
 
-func setupConfigClient() (ws.ConfigClient, error) {
+func setupRelayClient() (ws.ConfigClient, error) {
 	cc, err := grpc.Dial("localhost:3001", grpc.WithInsecure())
 	if err != nil {
 		return ws.ConfigClient{}, err
@@ -216,5 +238,7 @@ func setupConfigClient() (ws.ConfigClient, error) {
 	return ws.ConfigClient{
 		Service: v1.NewServiceServiceClient(cc),
 		Route:   v1.NewRouteServiceClient(cc),
+
+		Event: relay.NewEventServiceClient(cc),
 	}, nil
 }

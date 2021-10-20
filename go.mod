@@ -4,6 +4,7 @@ go 1.17
 
 require (
 	github.com/bufbuild/buf v0.56.0
+	github.com/cenkalti/backoff/v4 v4.1.1
 	github.com/gavv/httpexpect/v2 v2.3.1
 	github.com/go-playground/validator/v10 v10.9.0
 	github.com/golang/protobuf v1.5.2

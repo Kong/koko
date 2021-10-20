@@ -5,6 +5,6 @@
 *.prof
 koko
 !koko/
-test.db
+*.db*
 dist/
 bin

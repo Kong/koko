@@ -1,8 +1,10 @@
 package ws
 
 import (
+	"context"
 	"fmt"
 	"net/http"
+	"sync"
 )
 
 type ErrAuth struct {
@@ -26,9 +28,16 @@ type Authenticator interface {
 }
 
 type DefaultAuthenticator struct {
+	once    sync.Once
 	Manager *Manager
+	// Context is passed on the Manager.Run.
+	// Use this context to shut down the manager.
+	Context context.Context
 }
 
 func (d *DefaultAuthenticator) Authenticate(_ *http.Request) (*Manager, error) {
+	d.once.Do(func() {
+		go d.Manager.Run(d.Context)
+	})
 	return d.Manager, nil
 }
