@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/google/uuid"
 	relay "github.com/kong/koko/internal/gen/grpc/kong/relay/service/v1"
 	"github.com/kong/koko/internal/store"
 	storeEvent "github.com/kong/koko/internal/store/event"
@@ -37,9 +38,10 @@ func NewEventService(ctx context.Context, opts EventServiceOpts) relay.EventServ
 }
 
 type client struct {
-	done   chan struct{}
-	stream relay.EventService_FetchReconfigureEventsServer
-	seenID string
+	done       chan struct{}
+	stream     relay.EventService_FetchReconfigureEventsServer
+	seenID     string
+	remoteAddr string
 }
 
 func (e *EventService) FetchReconfigureEvents(req *relay.FetchReconfigureEventsRequest,
@@ -59,9 +61,11 @@ func (e *EventService) FetchReconfigureEvents(req *relay.FetchReconfigureEventsR
 	).Debug("received request for fetching events")
 
 	done := make(chan struct{})
-	e.clients.Store(peer.Addr.String(), &client{
-		done:   done,
-		stream: stream,
+	streamID := uuid.NewString()
+	e.clients.Store(streamID, &client{
+		done:       done,
+		stream:     stream,
+		remoteAddr: peer.Addr.String(),
 	})
 	select {
 	case <-done:
@@ -70,7 +74,7 @@ func (e *EventService) FetchReconfigureEvents(req *relay.FetchReconfigureEventsR
 		// stream was likely closed by the client so
 		// remove from tracking list
 	}
-	e.clients.Delete(peer.Addr.String())
+	e.clients.Delete(streamID)
 	return nil
 }
 
@@ -112,14 +116,13 @@ func (e *EventService) lastEvent(ctx context.Context) (string, error) {
 }
 
 func (e *EventService) updateClients(eventID string) {
-	e.clients.Range(func(key, value interface{}) bool {
+	e.clients.Range(func(_, value interface{}) bool {
 		node, ok := value.(*client)
 		if !ok {
 			panic(fmt.Sprintf("unexpected type: %T, expected %T",
 				value, client{}))
 		}
-		clientLogger :=
-			e.logger.With(zap.String("client", key.(string)))
+		clientLogger := e.logger.With(zap.String("client", node.remoteAddr))
 		if node.seenID == eventID {
 			clientLogger.Debug("skipping re-configure as seenID is up-to-date")
 			return true
