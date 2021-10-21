@@ -6,6 +6,7 @@ import (
 
 	"github.com/google/uuid"
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
+	"github.com/kong/koko/internal/json"
 	"github.com/kong/koko/internal/log"
 	"github.com/kong/koko/internal/persistence"
 	"github.com/kong/koko/internal/resource"
@@ -128,5 +129,35 @@ func TestUpdateEvent(t *testing.T) {
 			uuid.MustParse(deleteEventID)
 		})
 		require.NotEqual(t, createEventID, deleteEventID)
+	})
+}
+
+func TestStoredValue(t *testing.T) {
+	t.Run("store value is a JSON string", func(t *testing.T) {
+		ctx := context.Background()
+		persister, err := persistence.NewSQLite(":memory:")
+		require.Nil(t, err)
+		s := New(persister, log.Logger).ForCluster("default")
+		svc := resource.NewService()
+		id := uuid.NewString()
+		svc.Service = &v1.Service{
+			Id:   id,
+			Name: "bar",
+			Host: "foo.com",
+			Path: "/bar",
+		}
+		require.Nil(t, s.Create(ctx, svc))
+		key, err := s.genID(resource.TypeService, id)
+		require.Nil(t, err)
+		value, err := persister.Get(ctx, key)
+		require.Nil(t, err)
+		var v map[string]interface{}
+		err = json.Marshaller.Unmarshal(value, &v)
+		require.Nil(t, err)
+
+		require.Equal(t, "bar", v["name"])
+		require.Equal(t, id, v["id"])
+		require.Equal(t, "foo.com", v["host"])
+		require.Equal(t, "/bar", v["path"])
 	})
 }

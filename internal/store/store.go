@@ -8,11 +8,11 @@ import (
 
 	"github.com/google/uuid"
 	nonPublic "github.com/kong/koko/internal/gen/grpc/kong/nonpublic/v1"
+	"github.com/kong/koko/internal/json"
 	"github.com/kong/koko/internal/model"
 	"github.com/kong/koko/internal/persistence"
 	"github.com/kong/koko/internal/store/event"
 	"go.uber.org/zap"
-	"google.golang.org/protobuf/proto"
 )
 
 var (
@@ -91,7 +91,7 @@ func (s *ObjectStore) Create(ctx context.Context, object model.Object,
 	if err != nil {
 		return err
 	}
-	value, err := proto.Marshal(object.Resource())
+	value, err := json.Marshal(object.Resource())
 	if err != nil {
 		return err
 	}
@@ -114,7 +114,7 @@ func (s *ObjectStore) updateEvent(ctx context.Context, tx persistence.Tx) error 
 			Value: s.clock(),
 		},
 	}
-	value, err := proto.Marshal(event.Resource())
+	value, err := json.Marshal(event.Resource())
 	if err != nil {
 		return fmt.Errorf("proto marshal update event: %v", err)
 	}
@@ -164,7 +164,7 @@ func (s *ObjectStore) readByTypeID(ctx context.Context, tx persistence.Tx,
 		}
 		return err
 	}
-	err = proto.Unmarshal(value, object.Resource())
+	err = json.Unmarshal(value, object.Resource())
 	if err != nil {
 		return err
 	}
@@ -212,7 +212,7 @@ func (s *ObjectStore) List(ctx context.Context, list model.ObjectList, opts ...L
 		if err != nil {
 			return err
 		}
-		err = proto.Unmarshal(value, object.Resource())
+		err = json.Unmarshal(value, object.Resource())
 		if err != nil {
 			return err
 		}
