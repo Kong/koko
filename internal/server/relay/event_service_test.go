@@ -11,7 +11,6 @@ import (
 	"github.com/kong/koko/internal/persistence"
 	"github.com/kong/koko/internal/resource"
 	"github.com/kong/koko/internal/store"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/status"
@@ -31,7 +30,7 @@ func TestEventService(t *testing.T) {
 		Logger: log.Logger,
 	}
 	server := NewEventService(ctx, opts)
-	assert.NotNil(t, server)
+	require.NotNil(t, server)
 	l := setup()
 	s := grpc.NewServer()
 	relay.RegisterEventServiceServer(s, server)

@@ -5,7 +5,7 @@ import (
 
 	"github.com/gavv/httpexpect/v2"
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func goodService() *v1.Service {
@@ -61,7 +61,7 @@ func TestServiceCreate(t *testing.T) {
 				String())
 			fields = append(fields, err.Object().Value("field").String().Raw())
 		}
-		assert.ElementsMatch(t, []string{"path", "connect_timeout"}, fields)
+		require.ElementsMatch(t, []string{"path", "connect_timeout"}, fields)
 	})
 	t.Run("recreating the service with the same name fails",
 		func(t *testing.T) {
@@ -138,6 +138,6 @@ func TestServiceList(t *testing.T) {
 		for _, item := range items.Iter() {
 			gotIDs = append(gotIDs, item.Object().Value("id").String().Raw())
 		}
-		assert.ElementsMatch(t, []string{id1, id2}, gotIDs)
+		require.ElementsMatch(t, []string{id1, id2}, gotIDs)
 	})
 }

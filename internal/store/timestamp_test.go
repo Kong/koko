@@ -10,7 +10,6 @@ import (
 	"github.com/kong/koko/internal/log"
 	"github.com/kong/koko/internal/persistence"
 	"github.com/kong/koko/internal/resource"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -30,8 +29,8 @@ func TestAddTS(t *testing.T) {
 		updatedAt := time.Unix(int64(svc.Service.UpdatedAt), 0)
 		now := time.Now()
 		// reasonably be sure that current time was used
-		assert.True(t, now.Sub(createdAt) < 1*time.Second)
-		assert.True(t, now.Sub(updatedAt) < 1*time.Second)
+		require.True(t, now.Sub(createdAt) < 1*time.Second)
+		require.True(t, now.Sub(updatedAt) < 1*time.Second)
 	})
 	t.Run("timestamps are added to persisted resource", func(t *testing.T) {
 		persister, err := persistence.NewMemory()
@@ -70,7 +69,7 @@ func TestAddTS(t *testing.T) {
 		updatedAt := time.Unix(int64(svc.Service.UpdatedAt), 0)
 		now := time.Now()
 		// reasonably be sure that current time was used
-		assert.True(t, now.Sub(createdAt) < 1*time.Second)
-		assert.True(t, now.Sub(updatedAt) < 1*time.Second)
+		require.True(t, now.Sub(createdAt) < 1*time.Second)
+		require.True(t, now.Sub(updatedAt) < 1*time.Second)
 	})
 }

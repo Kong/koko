@@ -7,39 +7,39 @@ import (
 	model "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
 	"github.com/kong/koko/internal/model/json/validation"
 	"github.com/kong/koko/internal/model/json/validation/typedefs"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestNewService(t *testing.T) {
 	s := NewService()
-	assert.NotNil(t, s)
-	assert.NotNil(t, s.Service)
+	require.NotNil(t, s)
+	require.NotNil(t, s.Service)
 }
 
 func TestService_ID(t *testing.T) {
 	var s Service
 	id := s.ID()
-	assert.Empty(t, id)
+	require.Empty(t, id)
 	s = NewService()
 	id = s.ID()
-	assert.Empty(t, id)
+	require.Empty(t, id)
 }
 
 func TestService_Type(t *testing.T) {
-	assert.Equal(t, TypeService, NewService().Type())
+	require.Equal(t, TypeService, NewService().Type())
 }
 
 func TestService_ProcessDefaults(t *testing.T) {
 	t.Run("defaults are correctly injected", func(t *testing.T) {
 		r := NewService()
 		err := r.ProcessDefaults()
-		assert.Nil(t, err)
-		assert.True(t, validUUID(r.ID()))
+		require.Nil(t, err)
+		require.True(t, validUUID(r.ID()))
 		// empty out the id for equality comparison
 		r.Service.Id = ""
 		r.Service.CreatedAt = 0
 		r.Service.UpdatedAt = 0
-		assert.Equal(t, r.Resource(), defaultService)
+		require.Equal(t, r.Resource(), defaultService)
 	})
 	t.Run("defaults do not override explicit values", func(t *testing.T) {
 		r := NewService()
@@ -48,11 +48,11 @@ func TestService_ProcessDefaults(t *testing.T) {
 		r.Service.Retries = 1
 		r.Service.Protocol = "grpc"
 		err := r.ProcessDefaults()
-		assert.Nil(t, err)
-		assert.True(t, validUUID(r.ID()))
+		require.Nil(t, err)
+		require.True(t, validUUID(r.ID()))
 		// empty out the id and ts for equality comparison
 		r.Service.Id = ""
-		assert.Equal(t, &model.Service{
+		require.Equal(t, &model.Service{
 			Protocol:       "grpc",
 			Port:           4242,
 			Retries:        1,
@@ -80,7 +80,7 @@ func TestValidate(t *testing.T) {
 
 	svc := &Service{Service: &s}
 	err := svc.ValidateCompat()
-	assert.Nil(t, err)
+	require.Nil(t, err)
 }
 
 func goodService() Service {
@@ -446,7 +446,7 @@ func TestService_Validate(t *testing.T) {
 			}
 			if tt.Errs != nil {
 				verr, _ := err.(validation.Error)
-				assert.ElementsMatch(t, tt.Errs, verr.Errs)
+				require.ElementsMatch(t, tt.Errs, verr.Errs)
 			}
 		})
 	}
