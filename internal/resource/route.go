@@ -98,7 +98,6 @@ func (r Route) ProcessDefaults() error {
 		}
 	}
 	defaultID(&r.Route.Id)
-	addTZ(r.Route)
 	return nil
 }
 

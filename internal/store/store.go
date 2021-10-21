@@ -134,6 +134,8 @@ func preProcess(object model.Object) error {
 	if err != nil {
 		return err
 	}
+	addTS(object.Resource())
+
 	err = object.Validate()
 	if err != nil {
 		return err

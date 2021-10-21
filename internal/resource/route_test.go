@@ -55,12 +55,8 @@ func TestRoute_ProcessDefaults(t *testing.T) {
 		err := r.ProcessDefaults()
 		assert.Nil(t, err)
 		assert.True(t, validUUID(r.ID()))
-		assert.NotEmpty(t, r.Route.CreatedAt)
-		assert.NotEmpty(t, r.Route.UpdatedAt)
 		// empty out the id and ts for equality comparison
 		r.Route.Id = ""
-		r.Route.CreatedAt = 0
-		r.Route.UpdatedAt = 0
 		assert.Equal(t, &model.Route{
 			Protocols:               []string{typedefs.ProtocolGRPC},
 			RegexPriority:           wrapperspb.Int32(1),

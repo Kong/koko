@@ -75,7 +75,6 @@ func (r Service) ProcessDefaults() error {
 		return err
 	}
 	defaultID(&r.Service.Id)
-	addTZ(r.Service)
 	return nil
 }
 
