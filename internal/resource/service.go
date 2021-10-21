@@ -185,13 +185,7 @@ func init() {
 					Required: []string{"protocol"},
 					Properties: map[string]*generator.Schema{
 						"protocol": {
-							Contains: &generator.Schema{
-								OneOf: []*generator.Schema{
-									{
-										Const: typedefs.ProtocolHTTPS,
-									},
-								},
-							},
+							Const: typedefs.ProtocolHTTPS,
 						},
 					},
 				},
@@ -202,14 +196,12 @@ func init() {
 					Required: []string{"protocol"},
 					Properties: map[string]*generator.Schema{
 						"protocol": {
-							Contains: &generator.Schema{
-								OneOf: []*generator.Schema{
-									{
-										Const: typedefs.ProtocolHTTPS,
-									},
-									{
-										Const: typedefs.ProtocolHTTP,
-									},
+							OneOf: []*generator.Schema{
+								{
+									Const: typedefs.ProtocolHTTPS,
+								},
+								{
+									Const: typedefs.ProtocolHTTP,
 								},
 							},
 						},
@@ -217,6 +209,39 @@ func init() {
 				},
 				Then: &generator.Schema{
 					Required: []string{"path"},
+				},
+			},
+			{
+				Description: "path can be set only when protocol is 'http' or" +
+					" 'https'",
+				If: &generator.Schema{
+					Required: []string{"protocol"},
+					Properties: map[string]*generator.Schema{
+						"protocol": {
+							OneOf: []*generator.Schema{
+								{
+									Const: typedefs.ProtocolGRPC,
+								},
+								{
+									Const: typedefs.ProtocolGRPCS,
+								},
+								{
+									Const: typedefs.ProtocolTCP,
+								},
+								{
+									Const: typedefs.ProtocolTLS,
+								},
+								{
+									Const: typedefs.ProtocolUDP,
+								},
+							},
+						},
+					},
+				},
+				Then: &generator.Schema{
+					Properties: map[string]*generator.Schema{
+						"path": {Not: &generator.Schema{}},
+					},
 				},
 			},
 			{

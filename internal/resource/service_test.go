@@ -6,6 +6,7 @@ import (
 	"github.com/google/uuid"
 	model "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
 	"github.com/kong/koko/internal/model/json/validation"
+	"github.com/kong/koko/internal/model/json/validation/typedefs"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -369,6 +370,7 @@ func TestService_Validate(t *testing.T) {
 			name: "ca_certificates must be ID",
 			Service: func() Service {
 				s := goodService()
+				s.Service.Protocol = typedefs.ProtocolHTTPS
 				s.Service.CaCertificates = []string{"foo"}
 				return s
 			},
@@ -420,6 +422,24 @@ func TestService_Validate(t *testing.T) {
 				return s
 			},
 			wantErr: false,
+		},
+		{
+			name: "path cannot be set when protocol is not http or https",
+			Service: func() Service {
+				s := goodService()
+				s.Service.Protocol = "tcp"
+				return s
+			},
+			wantErr: true,
+			Errs: []*model.ErrorDetail{
+				{
+					Type: model.ErrorType_ERROR_TYPE_ENTITY,
+					Messages: []string{
+						"path can be set only when protocol is 'http' or" +
+							" 'https'",
+					},
+				},
+			},
 		},
 	}
 	for _, tt := range tests {

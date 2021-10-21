@@ -159,13 +159,7 @@
         ],
         "properties": {
           "protocol": {
-            "contains": {
-              "oneOf": [
-                {
-                  "const": "https"
-                }
-              ]
-            }
+            "const": "https"
           }
         }
       }
@@ -178,16 +172,14 @@
         ],
         "properties": {
           "protocol": {
-            "contains": {
-              "oneOf": [
-                {
-                  "const": "https"
-                },
-                {
-                  "const": "http"
-                }
-              ]
-            }
+            "oneOf": [
+              {
+                "const": "https"
+              },
+              {
+                "const": "http"
+              }
+            ]
           }
         }
       },
@@ -195,6 +187,42 @@
         "required": [
           "path"
         ]
+      }
+    },
+    {
+      "description": "path can be set only when protocol is 'http' or 'https'",
+      "if": {
+        "required": [
+          "protocol"
+        ],
+        "properties": {
+          "protocol": {
+            "oneOf": [
+              {
+                "const": "grpc"
+              },
+              {
+                "const": "grpcs"
+              },
+              {
+                "const": "tcp"
+              },
+              {
+                "const": "tls"
+              },
+              {
+                "const": "udp"
+              }
+            ]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "path": {
+            "not": {}
+          }
+        }
       }
     },
     {
