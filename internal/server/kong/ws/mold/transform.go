@@ -3,10 +3,9 @@ package mold
 import (
 	"fmt"
 
-	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/kong/koko/internal/gen/wrpc/kong/model"
+	"github.com/kong/koko/internal/json"
 	"github.com/kong/koko/internal/server/kong/ws/config"
-	"google.golang.org/protobuf/encoding/protojson"
 )
 
 func GrpcToWrpc(input GrpcContent) (config.Content, error) {
@@ -47,18 +46,14 @@ func GrpcToWrpc(input GrpcContent) (config.Content, error) {
 	return res, nil
 }
 
-var jsonpb = runtime.JSONPb{
-	MarshalOptions: protojson.MarshalOptions{UseProtoNames: true},
-}
-
 // convert uses JSON marshal/unmarshal to convert between types.
 // TODO(hbagdi): explore better alternatives using reflect.
 func convert(from, to interface{}) error {
-	jsonBytes, err := jsonpb.Marshal(from)
+	jsonBytes, err := json.Marshal(from)
 	if err != nil {
 		return fmt.Errorf("jsonpb marshal: %v", err)
 	}
-	err = jsonpb.Unmarshal(jsonBytes, to)
+	err = json.Unmarshal(jsonBytes, to)
 	if err != nil {
 		return fmt.Errorf("jsonpb unmarshal: %v", err)
 	}

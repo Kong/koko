@@ -8,12 +8,12 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	model "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/service/v1"
+	"github.com/kong/koko/internal/json"
 	"github.com/kong/koko/internal/server"
 	"github.com/kong/koko/internal/store"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/encoding/protojson"
 )
 
 // HandlerWrapper is used to wrap a http.Handler with another http.Handler.
@@ -79,12 +79,7 @@ func NewHandler(opts HandlerOpts) (http.Handler, error) {
 		return nil, err
 	}
 	mux := runtime.NewServeMux(
-		runtime.WithMarshalerOption(runtime.
-			MIMEWildcard, &runtime.JSONPb{
-			MarshalOptions: protojson.MarshalOptions{
-				UseProtoNames: true,
-			},
-		}),
+		runtime.WithMarshalerOption(runtime.MIMEWildcard, json.Marshaller),
 		runtime.WithForwardResponseOption(setHTTPStatus),
 	)
 
