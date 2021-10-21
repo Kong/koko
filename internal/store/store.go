@@ -187,6 +187,12 @@ func (s *ObjectStore) Delete(ctx context.Context,
 		if err != nil {
 			return err
 		}
+
+		err := s.checkForeignIndexesForDelete(ctx, tx, object)
+		if err != nil {
+			return err
+		}
+
 		err = tx.Delete(ctx, id)
 		if err != nil {
 			if errors.As(err, &persistence.ErrNotFound{}) {

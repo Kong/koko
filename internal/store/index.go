@@ -161,3 +161,17 @@ func (s *ObjectStore) deleteIndexes(ctx context.Context, tx persistence.Tx,
 	}
 	return nil
 }
+
+func (s *ObjectStore) checkForeignIndexesForDelete(ctx context.Context,
+	tx persistence.Tx,
+	object model.Object) error {
+	key := fmt.Sprintf("ix/f/%s/%s", object.Type(), object.ID())
+	values, err := tx.List(ctx, s.clusterKey(key))
+	if err != nil {
+		return err
+	}
+	if len(values) > 0 {
+		return ErrConstraint{Message: "foreign references exist"}
+	}
+	return nil
+}

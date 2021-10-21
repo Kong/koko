@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/google/uuid"
@@ -159,5 +160,39 @@ func TestStoredValue(t *testing.T) {
 		require.Equal(t, id, v["id"])
 		require.Equal(t, "foo.com", v["host"])
 		require.Equal(t, "/bar", v["path"])
+	})
+}
+
+func TestIndexForeign(t *testing.T) {
+	t.Run("object with foreign references cannot be deleted", func(t *testing.T) {
+		ctx := context.Background()
+		persister, err := persistence.NewSQLite(":memory:")
+		require.Nil(t, err)
+		s := New(persister, log.Logger).ForCluster("default")
+		svc := resource.NewService()
+		serviceID := uuid.NewString()
+		svc.Service = &v1.Service{
+			Id:   serviceID,
+			Name: "bar",
+			Host: "foo.com",
+			Path: "/bar",
+		}
+		require.Nil(t, s.Create(ctx, svc))
+
+		route := resource.NewRoute()
+		routeID := uuid.NewString()
+		route.Route = &v1.Route{
+			Id:    routeID,
+			Name:  "foo",
+			Hosts: []string{"example.com"},
+			Service: &v1.Service{
+				Id: serviceID,
+			},
+		}
+		require.Nil(t, s.Create(ctx, route))
+
+		err = s.Delete(ctx, DeleteByType(resource.TypeService), DeleteByID(serviceID))
+		require.NotNil(t, err)
+		require.True(t, errors.As(err, &ErrConstraint{}))
 	})
 }
