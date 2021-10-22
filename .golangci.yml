@@ -69,3 +69,7 @@ issues:
   - linters:
     - goconst
     path: _test\.go
+  - linters:
+      - forbidigo
+    text: "fmt.Printf"
+    path: internal/cmd/version.go
