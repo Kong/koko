@@ -123,24 +123,29 @@ func serveMain(ctx context.Context) error {
 	}
 
 	// setup control server
+	cert, err := tls.LoadX509KeyPair("cluster.crt", "cluster.key")
+	if err != nil {
+		return err
+	}
 	controlLogger := logger.With(zap.String("component", "control-server"))
 	m := ws.NewManager(ws.ManagerOpts{
 		Logger:  controlLogger,
 		Client:  configClient,
 		Cluster: ws.DefaultCluster{},
 	})
+	authFn, err := ws.AuthFnSharedTLS(cert)
+	if err != nil {
+		return err
+	}
 	authenticator := &ws.DefaultAuthenticator{
 		Manager: m,
 		Context: ctx,
+		AuthFn:  authFn,
 	}
 	handler, err := ws.NewHandler(ws.HandlerOpts{
 		Logger:        controlLogger,
 		Authenticator: authenticator,
 	})
-	if err != nil {
-		return err
-	}
-	cert, err := tls.LoadX509KeyPair("cluster.crt", "cluster.key")
 	if err != nil {
 		return err
 	}
@@ -152,6 +157,7 @@ func serveMain(ctx context.Context) error {
 		TLS: &tls.Config{
 			MinVersion:   tls.VersionTLS12,
 			Certificates: []tls.Certificate{cert},
+			ClientAuth:   tls.RequestClientCert,
 		},
 	})
 	if err != nil {

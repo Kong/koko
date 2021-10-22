@@ -60,6 +60,7 @@ func (h Handler) respondWithErr(w http.ResponseWriter, _ *http.Request,
 		if err != nil {
 			h.logger.With(zap.Error(err)).Error("write auth error")
 		}
+		return
 	}
 	h.logger.With(zap.Error(err)).Error("error while authenticating")
 	w.WriteHeader(http.StatusInternalServerError)
