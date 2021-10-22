@@ -20,6 +20,9 @@ type ServiceService struct {
 
 func (s *ServiceService) GetService(ctx context.Context,
 	req *v1.GetServiceRequest) (*v1.GetServiceResponse, error) {
+	if req.Id == "" {
+		return nil, s.err(ErrClient{"required ID is missing"})
+	}
 	db, err := s.CommonOpts.getDB(ctx, req.Cluster)
 	if err != nil {
 		return nil, err
@@ -54,6 +57,9 @@ func (s *ServiceService) CreateService(ctx context.Context,
 
 func (s *ServiceService) DeleteService(ctx context.Context,
 	req *v1.DeleteServiceRequest) (*v1.DeleteServiceResponse, error) {
+	if req.Id == "" {
+		return nil, s.err(ErrClient{"required ID is missing"})
+	}
 	db, err := s.CommonOpts.getDB(ctx, req.Cluster)
 	if err != nil {
 		return nil, err

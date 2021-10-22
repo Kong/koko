@@ -24,6 +24,14 @@ const (
 	statusCodeKey = "koko-status-code"
 )
 
+type ErrClient struct {
+	Message string
+}
+
+func (e ErrClient) Error() string {
+	return e.Message
+}
+
 func setHeader(ctx context.Context, code int) {
 	err := grpc.SetHeader(ctx, metadata.Pairs(statusCodeKey,
 		fmt.Sprintf("%d", code)))
@@ -78,6 +86,9 @@ func handleErr(logger *zap.Logger, err error) error {
 		if err != nil {
 			panic(err)
 		}
+		return s.Err()
+	case ErrClient:
+		s := status.New(codes.InvalidArgument, e.Message)
 		return s.Err()
 	default:
 		logger.With(zap.Error(err)).Error("error in service")

@@ -100,6 +100,9 @@ func TestRouteDelete(t *testing.T) {
 	t.Run("deleting a route return 204", func(t *testing.T) {
 		c.DELETE("/v1/routes/" + id).Expect().Status(204)
 	})
+	t.Run("delete request without an ID returns 400", func(t *testing.T) {
+		c.DELETE("/v1/routes/").Expect().Status(400)
+	})
 }
 
 func TestRouteRead(t *testing.T) {
@@ -117,6 +120,9 @@ func TestRouteRead(t *testing.T) {
 	t.Run("reading a route return 200", func(t *testing.T) {
 		body := c.GET("/v1/routes/" + id).Expect().Status(200).JSON().Object()
 		validateGoodRoute(body)
+	})
+	t.Run("read request without an ID returns 400", func(t *testing.T) {
+		c.GET("/v1/routes/").Expect().Status(400)
 	})
 }
 

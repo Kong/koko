@@ -93,6 +93,9 @@ func TestServiceDelete(t *testing.T) {
 	t.Run("deleting a service return 204", func(t *testing.T) {
 		c.DELETE("/v1/services/" + id).Expect().Status(204)
 	})
+	t.Run("delete request without an ID returns 400", func(t *testing.T) {
+		c.DELETE("/v1/services/").Expect().Status(400)
+	})
 }
 
 func TestServiceRead(t *testing.T) {
@@ -110,6 +113,9 @@ func TestServiceRead(t *testing.T) {
 	t.Run("reading a service return 200", func(t *testing.T) {
 		body := c.GET("/v1/services/" + id).Expect().Status(200).JSON().Object()
 		validateGoodService(body)
+	})
+	t.Run("read request without an ID returns 400", func(t *testing.T) {
+		c.GET("/v1/services/").Expect().Status(400)
 	})
 }
 

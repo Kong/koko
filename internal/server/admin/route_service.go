@@ -20,6 +20,9 @@ type RouteService struct {
 
 func (s *RouteService) GetRoute(ctx context.Context,
 	req *v1.GetRouteRequest) (*v1.GetRouteResponse, error) {
+	if req.Id == "" {
+		return nil, s.err(ErrClient{"required ID is missing"})
+	}
 	db, err := s.CommonOpts.getDB(ctx, req.Cluster)
 	if err != nil {
 		return nil, err
@@ -54,6 +57,9 @@ func (s *RouteService) CreateRoute(ctx context.Context,
 
 func (s *RouteService) DeleteRoute(ctx context.Context,
 	req *v1.DeleteRouteRequest) (*v1.DeleteRouteResponse, error) {
+	if req.Id == "" {
+		return nil, s.err(ErrClient{"required ID is missing"})
+	}
 	db, err := s.CommonOpts.getDB(ctx, req.Cluster)
 	if err != nil {
 		return nil, err
