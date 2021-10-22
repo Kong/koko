@@ -29,6 +29,8 @@ func (s *ServiceService) GetService(ctx context.Context,
 	}
 	result := resource.NewService()
 	s.logger.With(zap.String("id", req.Id)).Debug("reading service by id")
+	ctx, cancel := context.WithTimeout(ctx, dbQueryTimeout)
+	defer cancel()
 	err = db.Read(ctx, result, store.GetByID(req.Id))
 	if err != nil {
 		return nil, s.err(err)
@@ -46,6 +48,8 @@ func (s *ServiceService) CreateService(ctx context.Context,
 	}
 	res := resource.NewService()
 	res.Service = req.Item
+	ctx, cancel := context.WithTimeout(ctx, dbQueryTimeout)
+	defer cancel()
 	if err := db.Create(ctx, res); err != nil {
 		return nil, s.err(err)
 	}
@@ -64,6 +68,8 @@ func (s *ServiceService) DeleteService(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
+	ctx, cancel := context.WithTimeout(ctx, dbQueryTimeout)
+	defer cancel()
 	err = db.Delete(ctx, store.DeleteByID(req.Id),
 		store.DeleteByType(resource.TypeService))
 	if err != nil {
@@ -80,6 +86,8 @@ func (s *ServiceService) ListServices(ctx context.Context,
 		return nil, err
 	}
 	list := resource.NewList(resource.TypeService)
+	ctx, cancel := context.WithTimeout(ctx, dbQueryTimeout)
+	defer cancel()
 	if err := db.List(ctx, list); err != nil {
 		return nil, s.err(err)
 	}

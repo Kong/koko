@@ -14,6 +14,8 @@ import (
 	"google.golang.org/grpc/peer"
 )
 
+const dbQueryTimeout = 5 * time.Second
+
 type EventService struct {
 	relay.UnimplementedEventServiceServer
 
@@ -102,8 +104,7 @@ func (e *EventService) run(ctx context.Context) {
 
 func (e *EventService) lastEvent(ctx context.Context) (string, error) {
 	event := storeEvent.New()
-	const queryTimeout = 5 * time.Second
-	ctx, cancel := context.WithTimeout(ctx, queryTimeout)
+	ctx, cancel := context.WithTimeout(ctx, dbQueryTimeout)
 	defer cancel()
 	err := e.store.Read(ctx, event, store.GetByID(storeEvent.ID))
 	if err != nil {

@@ -118,31 +118,17 @@ func (m *Manager) reconcilePayload(ctx context.Context) error {
 	return m.payload.Update(wrpcContent)
 }
 
-var defaultTimeout = 5 * time.Second
+var defaultRequestTimeout = 5 * time.Second
 
 func (m *Manager) fetchContent(ctx context.Context) (mold.GrpcContent, error) {
 	var err error
 
-	reqCtx, cancel := context.WithTimeout(ctx, defaultTimeout)
-	defer cancel()
-	serviceList, err := m.configClient.Service.ListServices(reqCtx,
-		&admin.ListServicesRequest{
-			Cluster: &model.RequestCluster{
-				Id: m.cluster.Get(),
-			},
-		})
+	serviceList, err := m.fetchServices(ctx)
 	if err != nil {
 		return mold.GrpcContent{}, err
 	}
 
-	reqCtx, cancel = context.WithTimeout(ctx, defaultTimeout)
-	defer cancel()
-	routesList, err := m.configClient.Route.ListRoutes(reqCtx,
-		&admin.ListRoutesRequest{
-			Cluster: &model.RequestCluster{
-				Id: m.cluster.Get(),
-			},
-		})
+	routesList, err := m.fetchRoutes(ctx)
 	if err != nil {
 		return mold.GrpcContent{}, err
 	}
@@ -151,6 +137,30 @@ func (m *Manager) fetchContent(ctx context.Context) (mold.GrpcContent, error) {
 		Services: serviceList.Items,
 		Routes:   routesList.Items,
 	}, nil
+}
+
+func (m *Manager) fetchServices(ctx context.Context) (*admin.
+	ListServicesResponse, error) {
+	ctx, cancel := context.WithTimeout(ctx, defaultRequestTimeout)
+	defer cancel()
+	return m.configClient.Service.ListServices(ctx,
+		&admin.ListServicesRequest{
+			Cluster: &model.RequestCluster{
+				Id: m.cluster.Get(),
+			},
+		})
+}
+
+func (m *Manager) fetchRoutes(ctx context.Context) (*admin.
+	ListRoutesResponse, error) {
+	ctx, cancel := context.WithTimeout(ctx, defaultRequestTimeout)
+	defer cancel()
+	return m.configClient.Route.ListRoutes(ctx,
+		&admin.ListRoutesRequest{
+			Cluster: &model.RequestCluster{
+				Id: m.cluster.Get(),
+			},
+		})
 }
 
 func (m *Manager) Run(ctx context.Context) {

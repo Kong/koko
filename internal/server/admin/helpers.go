@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"time"
 
 	proto1 "github.com/golang/protobuf/proto"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
@@ -22,6 +23,8 @@ import (
 
 const (
 	statusCodeKey = "koko-status-code"
+
+	dbQueryTimeout = 5 * time.Second
 )
 
 type ErrClient struct {
