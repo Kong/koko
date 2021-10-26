@@ -28,4 +28,37 @@ jobs:
       run: make gen-verify
     - name: make test
       run: make test
+  integration:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    strategy:
+      matrix:
+        kong_version:
+        - '2.2.2'
+        - '2.3.3'
+        - '2.4.1'
+        - '2.5.1'
+        - '2.6.0'
+    env:
+      GOPRIVATE: github.com/kong/go-wrpc
+      KOKO_TEST_KONG_DP_VERSION: ${{ matrix.kong_version }}
+    steps:
+    - name: Setup go
+      uses: actions/setup-go@v2
+      with:
+        go-version: '^1.17'
+    - name: Checkout repository
+      uses: actions/checkout@v2
+    - name: Setup private modules
+      run: |
+          git config --global url."https://${{ secrets.GO_WRPC_MODULE_TOKEN }}:x-oauth-basic@github.com/kong/go-wrpc".insteadOf "https://github.com/kong/go-wrpc"
+    - name: Cache Go modules
+      uses: actions/cache@v1
+      with:
+        path: ~/go/pkg/mod
+        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-
+    - name: make test-integration
+      run: make test-integration
 

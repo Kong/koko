@@ -72,4 +72,11 @@ issues:
   - linters:
       - forbidigo
     text: "fmt.Printf"
-    path: internal/cmd/version.go
+    path: internal/cmd/version.go|internal/test/kong/manual/main.go
+  - linters:
+      - errcheck
+    text: "Error return value of"
+    path: _test\.go
+  - linters:
+      - noctx
+    path: _test\.go

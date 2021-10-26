@@ -1,4 +1,4 @@
-.DEFAULT_GOAL := test
+.DEFAULT_GOAL := all
 
 export GOPRIVATE=github.com/kong/go-wrpc
 
@@ -19,9 +19,16 @@ lint:
 	buf lint
 	./bin/golangci-lint run ./...
 
+.PHONY: all
+all: lint test
+
 .PHONY: test
-test: lint
+test:
 	go test -race ./...
+
+.PHONY: test-integration
+test-integration:
+	go test -tags=integration ./internal/test/...
 
 .PHONY: gen
 gen:
