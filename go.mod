@@ -14,13 +14,13 @@ require (
 	github.com/hbagdi/gang v0.1.0
 	github.com/imdario/mergo v0.3.12
 	github.com/kong/go-wrpc v0.0.0-20210914213024-d4348db6b815
-	github.com/mattn/go-sqlite3 v1.14.8
+	github.com/mattn/go-sqlite3 v1.14.9
 	github.com/santhosh-tekuri/jsonschema/v5 v5.0.0
 	github.com/spf13/cobra v1.2.1
 	github.com/stretchr/testify v1.7.0
-	go.uber.org/zap v1.19.0
-	google.golang.org/genproto v0.0.0-20210903162649-d08c68adba83
-	google.golang.org/grpc v1.41.0-dev.0.20210907181116-2f3355d2244e
+	go.uber.org/zap v1.19.1
+	google.golang.org/genproto v0.0.0-20211026145609-4688e4c4e024
+	google.golang.org/grpc v1.41.0
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.1.0
 	google.golang.org/protobuf v1.27.1
 	gopkg.in/yaml.v2 v2.4.0
@@ -60,7 +60,7 @@ require (
 	github.com/yudai/gojsondiff v1.0.0 // indirect
 	github.com/yudai/golcs v0.0.0-20170316035057-ecda9a501e82 // indirect
 	go.opencensus.io v0.23.0 // indirect
-	go.uber.org/atomic v1.7.0 // indirect
+	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/multierr v1.7.0 // indirect
 	golang.org/x/crypto v0.0.0-20210711020723-a769d52b0f97 // indirect
 	golang.org/x/net v0.0.0-20210907225631-ff17edfbf26d // indirect
