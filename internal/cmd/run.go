@@ -18,7 +18,14 @@ import (
 	"google.golang.org/grpc"
 )
 
-func Run(ctx context.Context, logger *zap.Logger) error {
+type ServerConfig struct {
+	DPAuthCert tls.Certificate
+	KongCPCert tls.Certificate
+	Logger     *zap.Logger
+}
+
+func Run(ctx context.Context, config ServerConfig) error {
+	logger := config.Logger
 	var g gang.Gang
 
 	// setup data store
@@ -85,17 +92,14 @@ func Run(ctx context.Context, logger *zap.Logger) error {
 	}
 
 	// setup control server
-	cert, err := tls.LoadX509KeyPair("cluster.crt", "cluster.key")
-	if err != nil {
-		return err
-	}
+
 	controlLogger := logger.With(zap.String("component", "control-server"))
 	m := ws.NewManager(ws.ManagerOpts{
 		Logger:  controlLogger,
 		Client:  configClient,
 		Cluster: ws.DefaultCluster{},
 	})
-	authFn, err := ws.AuthFnSharedTLS(cert)
+	authFn, err := ws.AuthFnSharedTLS(config.DPAuthCert)
 	if err != nil {
 		return err
 	}
@@ -118,7 +122,7 @@ func Run(ctx context.Context, logger *zap.Logger) error {
 		Handler: handler,
 		TLS: &tls.Config{
 			MinVersion:   tls.VersionTLS12,
-			Certificates: []tls.Certificate{cert},
+			Certificates: []tls.Certificate{config.KongCPCert},
 			ClientAuth:   tls.RequestClientCert,
 		},
 	})

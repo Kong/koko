@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 
 	"github.com/kong/koko/internal/config"
@@ -46,7 +47,15 @@ func serveMain(ctx context.Context) error {
 	logger := opts.Logger
 	logger.Debug("setup successful")
 
-	return Run(ctx, logger)
+	cert, err := tls.LoadX509KeyPair("cluster.crt", "cluster.key")
+	if err != nil {
+		return err
+	}
+	return Run(ctx, ServerConfig{
+		DPAuthCert: cert,
+		KongCPCert: cert,
+		Logger:     logger,
+	})
 }
 
 func setup() (initOpts, error) {

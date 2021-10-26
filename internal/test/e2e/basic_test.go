@@ -3,6 +3,7 @@ package e2e
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"net/http"
 	"os"
@@ -21,8 +22,15 @@ import (
 
 func TestGatewayConfig(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
+	cert, err := tls.X509KeyPair([]byte(kong.DefaultSharedCert),
+		[]byte(kong.DefaultSharedKey))
+	require.Nil(t, err)
 	go func() {
-		require.Nil(t, cmd.Run(ctx, log.Logger))
+		require.Nil(t, cmd.Run(ctx, cmd.ServerConfig{
+			DPAuthCert: cert,
+			KongCPCert: cert,
+			Logger:     log.Logger,
+		}))
 	}()
 	defer cancel()
 	service := &v1.Service{
