@@ -1,4 +1,4 @@
-package admin
+package util
 
 import (
 	"context"
@@ -8,7 +8,6 @@ import (
 	"strconv"
 	"time"
 
-	proto1 "github.com/golang/protobuf/proto"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	pbModel "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
 	"github.com/kong/koko/internal/model/json/validation"
@@ -22,9 +21,8 @@ import (
 )
 
 const (
-	statusCodeKey = "koko-status-code"
-
-	dbQueryTimeout = 5 * time.Second
+	StatusCodeKey  = "koko-status-code"
+	DBQueryTimeout = 5 * time.Second
 )
 
 type ErrClient struct {
@@ -35,21 +33,21 @@ func (e ErrClient) Error() string {
 	return e.Message
 }
 
-func setHeader(ctx context.Context, code int) {
-	err := grpc.SetHeader(ctx, metadata.Pairs(statusCodeKey,
+func SetHeader(ctx context.Context, code int) {
+	err := grpc.SetHeader(ctx, metadata.Pairs(StatusCodeKey,
 		fmt.Sprintf("%d", code)))
 	if err != nil {
 		panic(err)
 	}
 }
 
-func setHTTPStatus(ctx context.Context, w http.ResponseWriter,
+func SetHTTPStatus(ctx context.Context, w http.ResponseWriter,
 	_ proto2.Message) error {
 	md, ok := runtime.ServerMetadataFromContext(ctx)
 	if !ok {
 		return fmt.Errorf("no server metadata in context")
 	}
-	values := md.HeaderMD.Get(statusCodeKey)
+	values := md.HeaderMD.Get(StatusCodeKey)
 	if len(values) > 0 {
 		code, err := strconv.Atoi(values[0])
 		if err != nil {
@@ -57,11 +55,11 @@ func setHTTPStatus(ctx context.Context, w http.ResponseWriter,
 		}
 		defer w.WriteHeader(code)
 	}
-	w.Header().Del("grpc-metadata-" + statusCodeKey)
+	w.Header().Del("grpc-metadata-" + StatusCodeKey)
 	return nil
 }
 
-func handleErr(logger *zap.Logger, err error) error {
+func HandleErr(logger *zap.Logger, err error) error {
 	if errors.Is(err, store.ErrNotFound) {
 		return status.Error(codes.NotFound, "")
 	}
@@ -81,7 +79,7 @@ func handleErr(logger *zap.Logger, err error) error {
 		return s.Err()
 	case validation.Error:
 		s := status.New(codes.InvalidArgument, "validation error")
-		var errs []proto1.Message
+		var errs []Message
 		for _, err := range e.Errs {
 			errs = append(errs, err)
 		}

@@ -65,7 +65,7 @@ issues:
   - linters:
     - staticcheck
     text: "SA1019" # using old proto package because of dependency
-    path: "internal/server/admin/helpers.go"
+    path: "internal/server/util/deprecated_proto.go"
   - linters:
     - goconst
     path: _test\.go

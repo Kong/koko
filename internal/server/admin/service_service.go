@@ -9,6 +9,7 @@ import (
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/service/v1"
 	"github.com/kong/koko/internal/model"
 	"github.com/kong/koko/internal/resource"
+	"github.com/kong/koko/internal/server/util"
 	"github.com/kong/koko/internal/store"
 	"go.uber.org/zap"
 )
@@ -21,7 +22,7 @@ type ServiceService struct {
 func (s *ServiceService) GetService(ctx context.Context,
 	req *v1.GetServiceRequest) (*v1.GetServiceResponse, error) {
 	if req.Id == "" {
-		return nil, s.err(ErrClient{"required ID is missing"})
+		return nil, s.err(util.ErrClient{Message: "required ID is missing"})
 	}
 	db, err := s.CommonOpts.getDB(ctx, req.Cluster)
 	if err != nil {
@@ -29,7 +30,7 @@ func (s *ServiceService) GetService(ctx context.Context,
 	}
 	result := resource.NewService()
 	s.logger.With(zap.String("id", req.Id)).Debug("reading service by id")
-	ctx, cancel := context.WithTimeout(ctx, dbQueryTimeout)
+	ctx, cancel := context.WithTimeout(ctx, util.DBQueryTimeout)
 	defer cancel()
 	err = db.Read(ctx, result, store.GetByID(req.Id))
 	if err != nil {
@@ -48,12 +49,12 @@ func (s *ServiceService) CreateService(ctx context.Context,
 	}
 	res := resource.NewService()
 	res.Service = req.Item
-	ctx, cancel := context.WithTimeout(ctx, dbQueryTimeout)
+	ctx, cancel := context.WithTimeout(ctx, util.DBQueryTimeout)
 	defer cancel()
 	if err := db.Create(ctx, res); err != nil {
 		return nil, s.err(err)
 	}
-	setHeader(ctx, http.StatusCreated)
+	util.SetHeader(ctx, http.StatusCreated)
 	return &v1.CreateServiceResponse{
 		Item: res.Service,
 	}, nil
@@ -62,20 +63,20 @@ func (s *ServiceService) CreateService(ctx context.Context,
 func (s *ServiceService) DeleteService(ctx context.Context,
 	req *v1.DeleteServiceRequest) (*v1.DeleteServiceResponse, error) {
 	if req.Id == "" {
-		return nil, s.err(ErrClient{"required ID is missing"})
+		return nil, s.err(util.ErrClient{Message: "required ID is missing"})
 	}
 	db, err := s.CommonOpts.getDB(ctx, req.Cluster)
 	if err != nil {
 		return nil, err
 	}
-	ctx, cancel := context.WithTimeout(ctx, dbQueryTimeout)
+	ctx, cancel := context.WithTimeout(ctx, util.DBQueryTimeout)
 	defer cancel()
 	err = db.Delete(ctx, store.DeleteByID(req.Id),
 		store.DeleteByType(resource.TypeService))
 	if err != nil {
 		return nil, s.err(err)
 	}
-	setHeader(ctx, http.StatusNoContent)
+	util.SetHeader(ctx, http.StatusNoContent)
 	return &v1.DeleteServiceResponse{}, nil
 }
 
@@ -86,7 +87,7 @@ func (s *ServiceService) ListServices(ctx context.Context,
 		return nil, err
 	}
 	list := resource.NewList(resource.TypeService)
-	ctx, cancel := context.WithTimeout(ctx, dbQueryTimeout)
+	ctx, cancel := context.WithTimeout(ctx, util.DBQueryTimeout)
 	defer cancel()
 	if err := db.List(ctx, list); err != nil {
 		return nil, s.err(err)
@@ -97,7 +98,7 @@ func (s *ServiceService) ListServices(ctx context.Context,
 }
 
 func (s *ServiceService) err(err error) error {
-	return handleErr(s.logger, err)
+	return util.HandleErr(s.logger, err)
 }
 
 func servicesFromObjects(objects []model.Object) []*pbModel.Service {

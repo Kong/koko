@@ -9,6 +9,7 @@ import (
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/service/v1"
 	"github.com/kong/koko/internal/model"
 	"github.com/kong/koko/internal/resource"
+	"github.com/kong/koko/internal/server/util"
 	"github.com/kong/koko/internal/store"
 	"go.uber.org/zap"
 )
@@ -21,7 +22,7 @@ type RouteService struct {
 func (s *RouteService) GetRoute(ctx context.Context,
 	req *v1.GetRouteRequest) (*v1.GetRouteResponse, error) {
 	if req.Id == "" {
-		return nil, s.err(ErrClient{"required ID is missing"})
+		return nil, s.err(util.ErrClient{Message: "required ID is missing"})
 	}
 	db, err := s.CommonOpts.getDB(ctx, req.Cluster)
 	if err != nil {
@@ -29,7 +30,7 @@ func (s *RouteService) GetRoute(ctx context.Context,
 	}
 	result := resource.NewRoute()
 	s.logger.With(zap.String("id", req.Id)).Debug("reading route by id")
-	ctx, cancel := context.WithTimeout(ctx, dbQueryTimeout)
+	ctx, cancel := context.WithTimeout(ctx, util.DBQueryTimeout)
 	defer cancel()
 	err = db.Read(ctx, result, store.GetByID(req.Id))
 	if err != nil {
@@ -48,12 +49,12 @@ func (s *RouteService) CreateRoute(ctx context.Context,
 	}
 	res := resource.NewRoute()
 	res.Route = req.Item
-	ctx, cancel := context.WithTimeout(ctx, dbQueryTimeout)
+	ctx, cancel := context.WithTimeout(ctx, util.DBQueryTimeout)
 	defer cancel()
 	if err := db.Create(ctx, res); err != nil {
 		return nil, s.err(err)
 	}
-	setHeader(ctx, http.StatusCreated)
+	util.SetHeader(ctx, http.StatusCreated)
 	return &v1.CreateRouteResponse{
 		Item: res.Route,
 	}, nil
@@ -62,20 +63,20 @@ func (s *RouteService) CreateRoute(ctx context.Context,
 func (s *RouteService) DeleteRoute(ctx context.Context,
 	req *v1.DeleteRouteRequest) (*v1.DeleteRouteResponse, error) {
 	if req.Id == "" {
-		return nil, s.err(ErrClient{"required ID is missing"})
+		return nil, s.err(util.ErrClient{Message: "required ID is missing"})
 	}
 	db, err := s.CommonOpts.getDB(ctx, req.Cluster)
 	if err != nil {
 		return nil, err
 	}
-	ctx, cancel := context.WithTimeout(ctx, dbQueryTimeout)
+	ctx, cancel := context.WithTimeout(ctx, util.DBQueryTimeout)
 	defer cancel()
 	err = db.Delete(ctx, store.DeleteByID(req.Id),
 		store.DeleteByType(resource.TypeRoute))
 	if err != nil {
 		return nil, s.err(err)
 	}
-	setHeader(ctx, http.StatusNoContent)
+	util.SetHeader(ctx, http.StatusNoContent)
 	return &v1.DeleteRouteResponse{}, nil
 }
 
@@ -86,7 +87,7 @@ func (s *RouteService) ListRoutes(ctx context.Context,
 		return nil, err
 	}
 	list := resource.NewList(resource.TypeRoute)
-	ctx, cancel := context.WithTimeout(ctx, dbQueryTimeout)
+	ctx, cancel := context.WithTimeout(ctx, util.DBQueryTimeout)
 	defer cancel()
 	if err := db.List(ctx, list); err != nil {
 		return nil, s.err(err)
@@ -97,7 +98,7 @@ func (s *RouteService) ListRoutes(ctx context.Context,
 }
 
 func (s *RouteService) err(err error) error {
-	return handleErr(s.logger, err)
+	return util.HandleErr(s.logger, err)
 }
 
 func routesFromObjects(objects []model.Object) []*pbModel.Route {

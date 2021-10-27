@@ -10,6 +10,7 @@ import (
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/service/v1"
 	"github.com/kong/koko/internal/json"
 	"github.com/kong/koko/internal/server"
+	"github.com/kong/koko/internal/server/util"
 	"github.com/kong/koko/internal/store"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
@@ -80,7 +81,7 @@ func NewHandler(opts HandlerOpts) (http.Handler, error) {
 	}
 	mux := runtime.NewServeMux(
 		runtime.WithMarshalerOption(runtime.MIMEWildcard, json.Marshaller),
-		runtime.WithForwardResponseOption(setHTTPStatus),
+		runtime.WithForwardResponseOption(util.SetHTTPStatus),
 	)
 
 	err = v1.RegisterMetaServiceHandlerServer(context.Background(),
