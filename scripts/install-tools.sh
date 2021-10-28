@@ -24,13 +24,7 @@ go install "google.golang.org/grpc/cmd/protoc-gen-go-grpc"
 go install "github.com/kong/go-wrpc/cmd/protoc-gen-go-wrpc"
 go install "google.golang.org/protobuf/cmd/protoc-gen-go"
 
-# install golangci-lint if needed
-
-GOLANGCI_LINT_VERSION=1.42.1
-FOUND_LINT_VERSION=$(./bin/golangci-lint version --format short)
-if [[ "$FOUND_LINT_VERSION" != "${GOLANGCI_LINT_VERSION}" ]];
-then
-  curl -sSfL \
+GOLANGCI_LINT_VERSION=v1.42.1
+curl -sSfL \
   "https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh" \
-  | sh -s -- -b bin v${GOLANGCI_LINT_VERSION}
-fi
+  | sh -s -- -b bin ${GOLANGCI_LINT_VERSION}
