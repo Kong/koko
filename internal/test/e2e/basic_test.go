@@ -6,24 +6,27 @@ import (
 	"crypto/tls"
 	"fmt"
 	"net/http"
-	"os"
 	"testing"
-	"time"
 
 	"github.com/cenkalti/backoff/v4"
 	"github.com/gavv/httpexpect/v2"
 	"github.com/google/uuid"
 	"github.com/kong/koko/internal/cmd"
+	"github.com/kong/koko/internal/crypto"
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
 	"github.com/kong/koko/internal/log"
+	"github.com/kong/koko/internal/test/certs"
 	"github.com/kong/koko/internal/test/kong"
+	"github.com/kong/koko/internal/test/util"
 	"github.com/stretchr/testify/require"
 )
 
-func TestGatewayConfig(t *testing.T) {
+func TestSharedMTLS(t *testing.T) {
+	// ensure that Kong Gateway can connect using Shared MTLS mode
 	ctx, cancel := context.WithCancel(context.Background())
-	cert, err := tls.X509KeyPair([]byte(kong.DefaultSharedCert),
-		[]byte(kong.DefaultSharedKey))
+	defer cancel()
+
+	cert, err := tls.X509KeyPair(certs.DefaultSharedCert, certs.DefaultSharedKey)
 	require.Nil(t, err)
 	go func() {
 		require.Nil(t, cmd.Run(ctx, cmd.ServerConfig{
@@ -32,14 +35,14 @@ func TestGatewayConfig(t *testing.T) {
 			Logger:     log.Logger,
 		}))
 	}()
-	defer cancel()
+	require.Nil(t, util.WaitForAdminAPI(t))
+
 	service := &v1.Service{
 		Id:   uuid.NewString(),
 		Name: "foo",
 		Host: "httpbin.org",
 		Path: "/",
 	}
-	require.Nil(t, waitForAdminAPI(t))
 	c := httpexpect.New(t, "http://localhost:3000")
 	res := c.POST("/v1/services").WithJSON(service).Expect()
 	res.Status(201)
@@ -52,11 +55,12 @@ func TestGatewayConfig(t *testing.T) {
 	}
 	res = c.POST("/v1/routes").WithJSON(route).Expect()
 	res.Status(201)
+
 	go func() {
-		_ = kong.RunDP(ctx, getKongConf())
+		_ = kong.RunDP(ctx, kong.GetKongConfForShared())
 	}()
 	testing.Verbose()
-	require.Nil(t, waitForKong(t))
+	require.Nil(t, util.WaitForKong(t))
 
 	// test the route
 	require.Nil(t, backoff.Retry(func() error {
@@ -69,66 +73,66 @@ func TestGatewayConfig(t *testing.T) {
 			return fmt.Errorf("unexpected status code: %v", res.StatusCode)
 		}
 		return nil
-	}, backoffer))
+	}, util.TestBackoff))
 }
 
-var path404 = "61d624f6-59fb-45a0-9892-9f6e81264f3e"
+func TestPKIMTLS(t *testing.T) {
+	// ensure that Kong Gateway can connect using PKI MTLS mode
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
-var backoffer backoff.BackOff
+	cpCert, err := tls.X509KeyPair(certs.CPCert, certs.CPKey)
+	require.Nil(t, err)
 
-func init() {
-	backoffer = backoff.NewConstantBackOff(1 * time.Second)
-	backoffer = backoff.WithMaxRetries(backoffer, 30)
-}
+	dpCACert, err := crypto.ParsePEMCerts(certs.DPTree1CACert)
+	require.Nil(t, err)
+	go func() {
+		require.Nil(t, cmd.Run(ctx, cmd.ServerConfig{
+			Logger: log.Logger,
 
-func waitForKong(t *testing.T) error {
-	return backoff.RetryNotify(func() error {
-		res, err := http.Get("http://localhost:8000/" + path404)
+			KongCPCert: cpCert,
+
+			DPAuthMode:    cmd.DPAuthPKIMTLS,
+			DPAuthCACerts: dpCACert,
+		}))
+	}()
+	require.Nil(t, util.WaitForAdminAPI(t))
+
+	service := &v1.Service{
+		Id:   uuid.NewString(),
+		Name: "foo",
+		Host: "httpbin.org",
+		Path: "/",
+	}
+	c := httpexpect.New(t, "http://localhost:3000")
+	res := c.POST("/v1/services").WithJSON(service).Expect()
+	res.Status(201)
+	route := &v1.Route{
+		Name:  "bar",
+		Paths: []string{"/"},
+		Service: &v1.Service{
+			Id: service.Id,
+		},
+	}
+	res = c.POST("/v1/routes").WithJSON(route).Expect()
+	res.Status(201)
+
+	go func() {
+		_ = kong.RunDP(ctx, kong.GetKongConf())
+	}()
+	testing.Verbose()
+	require.Nil(t, util.WaitForKong(t))
+
+	// test the route
+	require.Nil(t, backoff.Retry(func() error {
+		res, err := http.Get("http://localhost:8000/headers")
 		if err != nil {
 			return err
 		}
 		defer res.Body.Close()
-		if res.StatusCode == http.StatusNotFound {
-			return nil
+		if res.StatusCode != http.StatusOK {
+			return fmt.Errorf("unexpected status code: %v", res.StatusCode)
 		}
-		panic(fmt.Sprintf("unexpected status code: %v", res.StatusCode))
-	}, backoffer, func(err error, duration time.Duration) {
-		if err != nil {
-			t.Log("waiting for kong DP")
-		}
-	})
-}
-
-func waitForAdminAPI(t *testing.T) error {
-	return backoff.RetryNotify(func() error {
-		res, err := http.Get("http://localhost:3000/v1/meta/version")
-		if err != nil {
-			return err
-		}
-		defer res.Body.Close()
-		if res.StatusCode == http.StatusOK {
-			return nil
-		}
-		panic(fmt.Sprintf("unexpected status code: %v", res.StatusCode))
-	}, backoffer, func(err error, duration time.Duration) {
-		if err != nil {
-			t.Log("waiting for admin API")
-		}
-	})
-}
-
-func getKongConf() kong.DockerInput {
-	kongVersion := os.Getenv("KOKO_TEST_KONG_DP_VERSION")
-	if kongVersion == "" {
-		panic("no KOKO_TEST_KONG_DP_VERSION set")
-	}
-	res := kong.DockerInput{Version: kongVersion}
-	if testing.Verbose() {
-		k := "KONG_LOG_LEVEL"
-		v := "debug"
-		if _, ok := res.EnvVars[k]; !ok {
-			res.EnvVars[k] = v
-		}
-	}
-	return res
+		return nil
+	}, util.TestBackoff))
 }

@@ -1,7 +1,6 @@
-package kong
+package certs
 
-var DefaultSharedCert = `
------BEGIN CERTIFICATE-----
+var DefaultSharedCert = []byte(`-----BEGIN CERTIFICATE-----
 MIIFFTCCAv2gAwIBAgIUGe7tYr0E1gRLynY64ROoG6nIlv4wDQYJKoZIhvcNAQEL
 BQAwGjEYMBYGA1UEAwwPa29uZ19jbHVzdGVyaW5nMB4XDTIxMDYxODE2MzcwMVoX
 DTIyMDYxODE2MzcwMVowGjEYMBYGA1UEAwwPa29uZ19jbHVzdGVyaW5nMIICIjAN
@@ -30,11 +29,9 @@ U1DrdYV+cu82euzI7IQgd4PcI9A3ZIMYRZMUEEM2Yy4VDjcpvZfdp/kQ4bl+uvNT
 YIQ/EweNOV3mcz3zkJAzrh5AbZv340M6dK+d9b62dv4GdudZQW5m1+Xkg5l2CwB0
 4iTNwgZuF4aH8JfrvjxzUZq1losySXNtrzwoIroYJjoU6D41q31HUKw07iVZWjVP
 QTVkC1kvuz/V
------END CERTIFICATE-----
-`
+-----END CERTIFICATE-----`)
 
-var DefaultSharedKey = `
------BEGIN PRIVATE KEY-----
+var DefaultSharedKey = []byte(`-----BEGIN PRIVATE KEY-----
 MIIJQwIBADANBgkqhkiG9w0BAQEFAASCCS0wggkpAgEAAoICAQC/Edvo96qzaPV6
 MAoGOjrxAx6OoW71/mGNXFY0TeTEAntJK1ocCdLp4rTv/jFX61cNRu3CXZJvvTIh
 xPlap8AUOd60QN7F2iydrzlwkHdZuh5Rrd1yJ+kQsRw5jid+rOiqzAEHrWam+aKV
@@ -85,5 +82,4 @@ dOqqFvSzzMxpbP1TEqkH8y+5B7C6KCIFziG7oZlHCtilSw8S1hfHjLfB80LmRjkz
 Q1JHbm7ynM8un+hKN0aSlgroMEG5GysXB7oh9Bof49i2DROZQrByqmUOLuTqdmD0
 oHqDkxpcP8L046+mfaHHv52YRKVEfO/40DWtakm/ZCJMu++ylFjZcXhgYrLfbUfc
 o4hASPboYF/OL8h4mCM7vAQBWXnJYT4=
------END PRIVATE KEY-----
-`
+-----END PRIVATE KEY-----`)

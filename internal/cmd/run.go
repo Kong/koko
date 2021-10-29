@@ -3,6 +3,8 @@ package cmd
 import (
 	"context"
 	"crypto/tls"
+	"crypto/x509"
+	"fmt"
 
 	"github.com/hbagdi/gang"
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/service/v1"
@@ -19,10 +21,21 @@ import (
 )
 
 type ServerConfig struct {
-	DPAuthCert tls.Certificate
+	DPAuthMode    DPAuthMode
+	DPAuthCert    tls.Certificate
+	DPAuthCACerts []*x509.Certificate
+
 	KongCPCert tls.Certificate
-	Logger     *zap.Logger
+
+	Logger *zap.Logger
 }
+
+type DPAuthMode int
+
+const (
+	DPAuthSharedMTLS = iota
+	DPAuthPKIMTLS
+)
 
 func Run(ctx context.Context, config ServerConfig) error {
 	logger := config.Logger
@@ -99,10 +112,22 @@ func Run(ctx context.Context, config ServerConfig) error {
 		Client:  configClient,
 		Cluster: ws.DefaultCluster{},
 	})
-	authFn, err := ws.AuthFnSharedTLS(config.DPAuthCert)
-	if err != nil {
-		return err
+	var authFn ws.AuthFn
+	switch config.DPAuthMode {
+	case DPAuthSharedMTLS:
+		authFn, err = ws.AuthFnSharedTLS(config.DPAuthCert)
+		if err != nil {
+			return err
+		}
+	case DPAuthPKIMTLS:
+		authFn, err = ws.AuthFnPKITLS(config.DPAuthCACerts)
+		if err != nil {
+			return err
+		}
+	default:
+		return fmt.Errorf("unknown auth mode: %v", config.DPAuthMode)
 	}
+
 	authenticator := &ws.DefaultAuthenticator{
 		Manager: m,
 		Context: ctx,

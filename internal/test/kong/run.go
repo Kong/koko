@@ -6,8 +6,12 @@ import (
 	"context"
 	"os"
 	"os/exec"
+	"strings"
 	"sync"
+	"testing"
 	"text/template"
+
+	"github.com/kong/koko/internal/test/certs"
 )
 
 var (
@@ -23,6 +27,10 @@ var (
 	AuthModeMTLSShared AuthMode = "shared"
 )
 
+type Computed struct {
+	CPHostname string
+}
+
 type DockerInput struct {
 	Version    string
 	EnvVars    map[string]string
@@ -30,13 +38,14 @@ type DockerInput struct {
 	ClientCert []byte
 	ClientKey  []byte
 	CACert     []byte
+	CPAddr     string
+	Computed   Computed
 }
 
 var defaultEnvVars = map[string]string{
 	"KONG_VITALS":                 "off",
 	"KONG_NGINX_WORKER_PROCESSES": "1",
 	"KONG_CLUSTER_CONTROL_PLANE":  "localhost:3100",
-	"KONG_CLUSTER_MTLS":           "shared",
 	"KONG_ANONYMOUS_REPORTS":      "off",
 }
 
@@ -57,12 +66,16 @@ docker run \
   -e "KONG_CLUSTER_CERT=/certs/cluster.crt" \
   -e "KONG_CLUSTER_CERT_KEY=/certs/cluster.key" \
   -e "KONG_LUA_SSL_TRUSTED_CERTIFICATE=/certs/cluster-ca.crt" \
+  -e "KONG_CLUSTER_CA_CERT=/certs/cluster-ca.crt" \
 {{- range $k, $v := $.EnvVars }}
   -e "{{ $k }}={{ $v }}" \
 {{- end -}}
   -v "$DIR/cluster.crt:/certs/cluster.crt" \
   -v "$DIR/cluster-ca.crt:/certs/cluster-ca.crt" \
   -v "$DIR/cluster.key:/certs/cluster.key" \
+{{- if .Computed.CPHostname }}
+  --add-host "{{- .Computed.CPHostname -}}:host-gateway" \
+{{- end -}}
   --network host kong:{{ .Version }}
 `
 
@@ -138,18 +151,15 @@ func RunDP(ctx context.Context, input DockerInput) error {
 }
 
 func setup(dir string, input DockerInput) (err error) {
-	err = os.WriteFile(dir+"/cluster.key", []byte(DefaultSharedKey),
-		os.ModePerm)
+	err = os.WriteFile(dir+"/cluster.key", input.ClientKey, os.ModePerm)
 	if err != nil {
 		return
 	}
-	err = os.WriteFile(dir+"/cluster.crt", []byte(DefaultSharedCert),
-		os.ModePerm)
+	err = os.WriteFile(dir+"/cluster.crt", input.ClientCert, os.ModePerm)
 	if err != nil {
 		return
 	}
-	err = os.WriteFile(dir+"/cluster-ca.crt", []byte(DefaultSharedCert),
-		os.ModePerm)
+	err = os.WriteFile(dir+"/cluster-ca.crt", input.CACert, os.ModePerm)
 	if err != nil {
 		return
 	}
@@ -180,17 +190,45 @@ func addDefaults(input DockerInput) DockerInput {
 			res.EnvVars[k] = v
 		}
 	}
-	if res.AuthMode == "" {
-		res.AuthMode = AuthModeMTLSShared
+	if res.CPAddr != "" {
+		res.EnvVars["KONG_CLUSTER_CONTROL_PLANE"] = res.CPAddr
+		i := strings.Index(res.CPAddr, ":")
+		res.Computed.CPHostname = res.CPAddr[:i]
 	}
-	if len(res.ClientKey) == 0 {
-		res.ClientKey = []byte(DefaultSharedKey)
+	return res
+}
+
+func GetKongConfForShared() DockerInput {
+	kongVersion := os.Getenv("KOKO_TEST_KONG_DP_VERSION")
+	if kongVersion == "" {
+		panic("no KOKO_TEST_KONG_DP_VERSION set")
 	}
-	if len(res.ClientCert) == 0 {
-		res.ClientCert = []byte(DefaultSharedCert)
+	res := DockerInput{
+		EnvVars: map[string]string{
+			"KONG_CLUSTER_MTLS": "shared",
+		},
+		Version: kongVersion,
 	}
-	if len(res.CACert) == 0 {
-		res.CACert = []byte(DefaultSharedCert)
+	if testing.Verbose() {
+		k := "KONG_LOG_LEVEL"
+		v := "debug"
+		if _, ok := res.EnvVars[k]; !ok {
+			res.EnvVars[k] = v
+		}
 	}
+	res.ClientKey = certs.DefaultSharedKey
+	res.ClientCert = certs.DefaultSharedCert
+	res.CACert = certs.DefaultSharedCert
+	return res
+}
+
+func GetKongConf() DockerInput {
+	res := GetKongConfForShared()
+	res.EnvVars["KONG_CLUSTER_SERVER_NAME"] = "cp.example.com"
+	res.EnvVars["KONG_CLUSTER_MTLS"] = "pki"
+	res.CPAddr = "localhost:3100"
+	res.CACert = certs.CPCACert
+	res.ClientKey = certs.DPTree1Key
+	res.ClientCert = certs.DPTree1Cert
 	return res
 }
