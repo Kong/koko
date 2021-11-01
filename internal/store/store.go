@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
+	"time"
 
 	"github.com/google/uuid"
 	nonPublic "github.com/kong/koko/internal/gen/grpc/kong/nonpublic/v1"
@@ -14,6 +15,8 @@ import (
 	"github.com/kong/koko/internal/store/event"
 	"go.uber.org/zap"
 )
+
+const DefaultDBQueryTimeout = 5 * time.Second
 
 var (
 	errNoObject = fmt.Errorf("no object")
@@ -80,6 +83,8 @@ func (s *ObjectStore) withTx(ctx context.Context,
 
 func (s *ObjectStore) Create(ctx context.Context, object model.Object,
 	_ ...CreateOptsFunc) error {
+	ctx, cancel := context.WithTimeout(ctx, DefaultDBQueryTimeout)
+	defer cancel()
 	if object == nil {
 		return errNoObject
 	}
@@ -145,6 +150,8 @@ func preProcess(object model.Object) error {
 
 func (s *ObjectStore) Read(ctx context.Context, object model.Object,
 	opts ...ReadOptsFunc) error {
+	ctx, cancel := context.WithTimeout(ctx, DefaultDBQueryTimeout)
+	defer cancel()
 	opt := NewReadOpts(opts...)
 	id, err := s.genID(object.Type(), opt.id)
 	if err != nil {
@@ -173,6 +180,8 @@ func (s *ObjectStore) readByTypeID(ctx context.Context, tx persistence.Tx,
 
 func (s *ObjectStore) Delete(ctx context.Context,
 	opts ...DeleteOptsFunc) error {
+	ctx, cancel := context.WithTimeout(ctx, DefaultDBQueryTimeout)
+	defer cancel()
 	opt := NewDeleteOpts(opts...)
 	id, err := s.genID(opt.typ, opt.id)
 	if err != nil {
@@ -208,6 +217,8 @@ func (s *ObjectStore) Delete(ctx context.Context,
 }
 
 func (s *ObjectStore) List(ctx context.Context, list model.ObjectList, opts ...ListOptsFunc) error {
+	ctx, cancel := context.WithTimeout(ctx, DefaultDBQueryTimeout)
+	defer cancel()
 	typ := list.Type()
 	values, err := s.store.List(ctx, s.listKey(typ))
 	if err != nil {

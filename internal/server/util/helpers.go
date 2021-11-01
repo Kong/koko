@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
-	"time"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	pbModel "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
@@ -21,8 +20,7 @@ import (
 )
 
 const (
-	StatusCodeKey  = "koko-status-code"
-	DBQueryTimeout = 5 * time.Second
+	StatusCodeKey = "koko-status-code"
 )
 
 type ErrClient struct {

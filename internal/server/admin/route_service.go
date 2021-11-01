@@ -30,8 +30,6 @@ func (s *RouteService) GetRoute(ctx context.Context,
 	}
 	result := resource.NewRoute()
 	s.logger.With(zap.String("id", req.Id)).Debug("reading route by id")
-	ctx, cancel := context.WithTimeout(ctx, util.DBQueryTimeout)
-	defer cancel()
 	err = db.Read(ctx, result, store.GetByID(req.Id))
 	if err != nil {
 		return nil, s.err(err)
@@ -49,8 +47,6 @@ func (s *RouteService) CreateRoute(ctx context.Context,
 	}
 	res := resource.NewRoute()
 	res.Route = req.Item
-	ctx, cancel := context.WithTimeout(ctx, util.DBQueryTimeout)
-	defer cancel()
 	if err := db.Create(ctx, res); err != nil {
 		return nil, s.err(err)
 	}
@@ -69,8 +65,6 @@ func (s *RouteService) DeleteRoute(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-	ctx, cancel := context.WithTimeout(ctx, util.DBQueryTimeout)
-	defer cancel()
 	err = db.Delete(ctx, store.DeleteByID(req.Id),
 		store.DeleteByType(resource.TypeRoute))
 	if err != nil {
@@ -87,8 +81,6 @@ func (s *RouteService) ListRoutes(ctx context.Context,
 		return nil, err
 	}
 	list := resource.NewList(resource.TypeRoute)
-	ctx, cancel := context.WithTimeout(ctx, util.DBQueryTimeout)
-	defer cancel()
 	if err := db.List(ctx, list); err != nil {
 		return nil, s.err(err)
 	}
