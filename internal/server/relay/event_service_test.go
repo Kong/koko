@@ -8,9 +8,9 @@ import (
 	model "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
 	relay "github.com/kong/koko/internal/gen/grpc/kong/relay/service/v1"
 	"github.com/kong/koko/internal/log"
-	"github.com/kong/koko/internal/persistence"
 	"github.com/kong/koko/internal/resource"
 	"github.com/kong/koko/internal/store"
+	"github.com/kong/koko/internal/test/util"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/status"
@@ -18,10 +18,7 @@ import (
 )
 
 func TestEventService(t *testing.T) {
-	persister, err := persistence.NewMemory()
-	if err != nil {
-		t.Fatalf("create persister: %v", err)
-	}
+	persister := util.GetPersister(t)
 	store := store.New(persister, log.Logger).ForCluster("default")
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()

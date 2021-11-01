@@ -37,13 +37,9 @@ type Tx interface {
 }
 
 type ErrNotFound struct {
-	key string
+	Key string
 }
 
 func (e ErrNotFound) Error() string {
-	return fmt.Sprintf("%v not found", e.key)
-}
-
-func (e ErrNotFound) Key() string {
-	return e.key
+	return fmt.Sprintf("%v not found", e.Key)
 }

@@ -8,8 +8,8 @@ import (
 	"github.com/google/uuid"
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
 	"github.com/kong/koko/internal/log"
-	"github.com/kong/koko/internal/persistence"
 	"github.com/kong/koko/internal/resource"
+	"github.com/kong/koko/internal/test/util"
 	"github.com/stretchr/testify/require"
 )
 
@@ -33,8 +33,7 @@ func TestAddTS(t *testing.T) {
 		require.True(t, now.Sub(updatedAt) < 1*time.Second)
 	})
 	t.Run("timestamps are added to persisted resource", func(t *testing.T) {
-		persister, err := persistence.NewMemory()
-		require.Nil(t, err)
+		persister := util.GetPersister(t)
 		s := New(persister, log.Logger).ForCluster("default")
 		svc := resource.NewService()
 		id := uuid.NewString()
@@ -49,8 +48,7 @@ func TestAddTS(t *testing.T) {
 		require.NotEmpty(t, svc.Service.UpdatedAt)
 	})
 	t.Run("timestamps provided in input are overridden", func(t *testing.T) {
-		persister, err := persistence.NewMemory()
-		require.Nil(t, err)
+		persister := util.GetPersister(t)
 		s := New(persister, log.Logger).ForCluster("default")
 		svc := resource.NewService()
 		id := uuid.NewString()

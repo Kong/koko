@@ -5,16 +5,13 @@ import (
 	"testing"
 
 	"github.com/kong/koko/internal/log"
-	"github.com/kong/koko/internal/persistence"
 	"github.com/kong/koko/internal/server/admin"
 	"github.com/kong/koko/internal/store"
+	"github.com/kong/koko/internal/test/util"
 )
 
 func setup(t *testing.T) (*httptest.Server, func()) {
-	persister, err := persistence.NewMemory()
-	if err != nil {
-		t.Fatalf("create persister: %v", err)
-	}
+	persister := util.GetPersister(t)
 	objectStore := store.New(persister, log.Logger)
 
 	handler, err := admin.NewHandler(admin.HandlerOpts{

@@ -1,37 +1,44 @@
-package persistence
+package postgres
 
 import (
 	"context"
 	"database/sql"
 	"fmt"
 
-	_ "github.com/mattn/go-sqlite3"
+	"github.com/kong/koko/internal/persistence"
+	_ "github.com/lib/pq"
 )
 
 const (
 	createTableQuery = `create table if not exists store(
-key text PRIMARY KEY, value BLOB);`
+key text PRIMARY KEY, value bytea);`
 
 	getQuery    = `SELECT * from store where key=$1`
-	insertQuery = `replace into store(key,value) values(?,?);`
-	deleteQuery = `delete from store where key=?`
+	insertQuery = `insert into store(key,value) values($1,$2) on conflict (key) do update set value=$2;`
+	deleteQuery = `delete from store where key=$1`
+
+	defaultMaxConn = 50
+	DefaultPort    = 5432
 )
 
 var listQuery = func(prefix string) string {
-	return fmt.Sprintf(`SELECT * from store where key glob '%s*'`, prefix)
+	return fmt.Sprintf(`SELECT * FROM store WHERE key LIKE '%s%%';`, prefix)
 }
 
-type SQLite struct {
+type Postgres struct {
 	db *sql.DB
 }
 
-func NewMemory() (Persister, error) {
-	return NewSQLite("file::memory:")
+type Opts struct {
+	Hostname string
+	Port     int
+	User     string
+	Password string
 }
 
-func NewSQLite(filename string) (Persister, error) {
-	db, err := sql.Open("sqlite3",
-		filename+"?_journal_mode=WAL&_busy_timeout=5000")
+func New(opts Opts) (persistence.Persister, error) {
+	dsn := connString(opts)
+	db, err := sql.Open("postgres", dsn)
 	if err != nil {
 		return nil, err
 	}
@@ -40,11 +47,29 @@ func NewSQLite(filename string) (Persister, error) {
 		return nil, err
 	}
 
-	db.SetMaxOpenConns(1)
-	res := &SQLite{
+	db.SetMaxOpenConns(defaultMaxConn)
+	res := &Postgres{
 		db: db,
 	}
 	return res, nil
+}
+
+func connString(opts Opts) string {
+	var res string
+	if opts.Hostname != "" {
+		res += fmt.Sprintf("host=%s ", opts.Hostname)
+	}
+	if opts.Port != 0 {
+		res += fmt.Sprintf("port=%d ", opts.Port)
+	}
+	if opts.User != "" {
+		res += fmt.Sprintf("user=%s ", opts.User)
+	}
+	if opts.Password != "" {
+		res += fmt.Sprintf("password=%s ", opts.Password)
+	}
+	res += "sslmode=disable"
+	return res
 }
 
 func migrate(ctx context.Context, db *sql.DB) error {
@@ -52,8 +77,8 @@ func migrate(ctx context.Context, db *sql.DB) error {
 	return err
 }
 
-func (s *SQLite) withinTx(ctx context.Context,
-	fn func(tx Tx) error) error {
+func (s *Postgres) withinTx(ctx context.Context,
+	fn func(tx persistence.Tx) error) error {
 	tx, err := s.Tx(ctx)
 	if err != nil {
 		return err
@@ -69,9 +94,9 @@ func (s *SQLite) withinTx(ctx context.Context,
 	return tx.Commit()
 }
 
-func (s *SQLite) Get(ctx context.Context, key string) ([]byte, error) {
+func (s *Postgres) Get(ctx context.Context, key string) ([]byte, error) {
 	var res []byte
-	err := s.withinTx(ctx, func(tx Tx) error {
+	err := s.withinTx(ctx, func(tx persistence.Tx) error {
 		var err error
 		res, err = tx.Get(ctx, key)
 		return err
@@ -79,21 +104,21 @@ func (s *SQLite) Get(ctx context.Context, key string) ([]byte, error) {
 	return res, err
 }
 
-func (s *SQLite) Put(ctx context.Context, key string, value []byte) error {
-	return s.withinTx(ctx, func(tx Tx) error {
+func (s *Postgres) Put(ctx context.Context, key string, value []byte) error {
+	return s.withinTx(ctx, func(tx persistence.Tx) error {
 		return tx.Put(ctx, key, value)
 	})
 }
 
-func (s *SQLite) Delete(ctx context.Context, key string) error {
-	return s.withinTx(ctx, func(tx Tx) error {
+func (s *Postgres) Delete(ctx context.Context, key string) error {
+	return s.withinTx(ctx, func(tx persistence.Tx) error {
 		return tx.Delete(ctx, key)
 	})
 }
 
-func (s *SQLite) List(ctx context.Context, prefix string) ([][]byte, error) {
+func (s *Postgres) List(ctx context.Context, prefix string) ([][]byte, error) {
 	var res [][]byte
-	err := s.withinTx(ctx, func(tx Tx) error {
+	err := s.withinTx(ctx, func(tx persistence.Tx) error {
 		var err error
 		res, err = tx.List(ctx, prefix)
 		return err
@@ -101,7 +126,7 @@ func (s *SQLite) List(ctx context.Context, prefix string) ([][]byte, error) {
 	return res, err
 }
 
-func (s *SQLite) Tx(ctx context.Context) (Tx, error) {
+func (s *Postgres) Tx(ctx context.Context) (persistence.Tx, error) {
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
 		return nil, err
@@ -128,7 +153,7 @@ func (t *sqliteTx) Get(ctx context.Context, key string) ([]byte, error) {
 	err := row.Scan(&resKey, &value)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, ErrNotFound{key: key}
+			return nil, persistence.ErrNotFound{Key: key}
 		}
 		return nil, err
 	}
@@ -160,7 +185,7 @@ func (t *sqliteTx) Delete(ctx context.Context, key string) error {
 		return err
 	}
 	if rowCount == 0 {
-		return ErrNotFound{key: key}
+		return persistence.ErrNotFound{Key: key}
 	}
 	if rowCount != 1 {
 		return fmt.Errorf("invalid rows affected")

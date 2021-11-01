@@ -3,7 +3,14 @@ on: [push, pull_request]
 jobs:
   unit-test:
     runs-on: ubuntu-latest
+    continue-on-error: true
+    strategy:
+      matrix:
+        database:
+        - sqlite3
+        - postgres
     env:
+      KOKO_TEST_DB: ${{ matrix.database }}
       GOPRIVATE: github.com/kong/go-wrpc
     steps:
     - name: Setup go
@@ -20,5 +27,7 @@ jobs:
       with:
         path: ~/go/pkg/mod
         key: ${{ runner.os }}-go-unit-${{ hashFiles('**/go.sum') }}
+    - name: setup-db
+      run: ./scripts/setup-db.sh &
     - name: make test
       run: make test

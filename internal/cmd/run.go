@@ -9,7 +9,7 @@ import (
 	"github.com/hbagdi/gang"
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/service/v1"
 	relay "github.com/kong/koko/internal/gen/grpc/kong/relay/service/v1"
-	"github.com/kong/koko/internal/persistence"
+	"github.com/kong/koko/internal/persistence/sqlite"
 	"github.com/kong/koko/internal/server"
 	"github.com/kong/koko/internal/server/admin"
 	"github.com/kong/koko/internal/server/kong/ws"
@@ -42,7 +42,7 @@ func Run(ctx context.Context, config ServerConfig) error {
 	var g gang.Gang
 
 	// setup data store
-	memory, err := persistence.NewMemory()
+	memory, err := sqlite.NewMemory()
 	if err != nil {
 		return err
 	}

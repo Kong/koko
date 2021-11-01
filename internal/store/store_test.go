@@ -9,16 +9,15 @@ import (
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
 	"github.com/kong/koko/internal/json"
 	"github.com/kong/koko/internal/log"
-	"github.com/kong/koko/internal/persistence"
 	"github.com/kong/koko/internal/resource"
 	"github.com/kong/koko/internal/store/event"
+	"github.com/kong/koko/internal/test/util"
 	"github.com/stretchr/testify/require"
 )
 
 func TestService(t *testing.T) {
 	// TODO improve these tests
-	persister, err := persistence.NewSQLite(":memory:")
-	require.Nil(t, err)
+	persister := util.GetPersister(t)
 	s := New(persister, log.Logger).ForCluster("default")
 	svc := resource.NewService()
 	id := uuid.NewString()
@@ -54,14 +53,13 @@ func TestService(t *testing.T) {
 	}
 	require.Nil(t, s.Create(context.Background(), svc))
 	svcs := resource.NewList(resource.TypeService)
-	err = s.List(context.Background(), svcs)
+	err := s.List(context.Background(), svcs)
 	require.Nil(t, err)
 	require.Len(t, svcs.GetAll(), 2)
 }
 
 func TestForCluster(t *testing.T) {
-	persister, err := persistence.NewSQLite(":memory:")
-	require.Nil(t, err)
+	persister := util.GetPersister(t)
 	s := New(persister, log.Logger)
 	require.Empty(t, s.cluster)
 	// validate clusterRegex is being used
@@ -75,8 +73,7 @@ func TestForCluster(t *testing.T) {
 }
 
 func TestUpdateEvent(t *testing.T) {
-	persister, err := persistence.NewMemory()
-	require.Nil(t, err)
+	persister := util.GetPersister(t)
 	s := New(persister, log.Logger).ForCluster("default")
 	ctx := context.Background()
 	t.Run("empty cluster has no update event", func(t *testing.T) {
@@ -136,8 +133,7 @@ func TestUpdateEvent(t *testing.T) {
 func TestStoredValue(t *testing.T) {
 	t.Run("store value is a JSON string", func(t *testing.T) {
 		ctx := context.Background()
-		persister, err := persistence.NewSQLite(":memory:")
-		require.Nil(t, err)
+		persister := util.GetPersister(t)
 		s := New(persister, log.Logger).ForCluster("default")
 		svc := resource.NewService()
 		id := uuid.NewString()
@@ -166,8 +162,7 @@ func TestStoredValue(t *testing.T) {
 func TestIndexForeign(t *testing.T) {
 	t.Run("object with foreign references cannot be deleted", func(t *testing.T) {
 		ctx := context.Background()
-		persister, err := persistence.NewSQLite(":memory:")
-		require.Nil(t, err)
+		persister := util.GetPersister(t)
 		s := New(persister, log.Logger).ForCluster("default")
 		svc := resource.NewService()
 		serviceID := uuid.NewString()
@@ -191,7 +186,8 @@ func TestIndexForeign(t *testing.T) {
 		}
 		require.Nil(t, s.Create(ctx, route))
 
-		err = s.Delete(ctx, DeleteByType(resource.TypeService), DeleteByID(serviceID))
+		err := s.Delete(ctx, DeleteByType(resource.TypeService),
+			DeleteByID(serviceID))
 		require.NotNil(t, err)
 		require.True(t, errors.As(err, &ErrConstraint{}))
 	})

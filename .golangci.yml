@@ -61,7 +61,7 @@ issues:
   - linters:
     - revive
     text: "blank-imports"
-    path: sqlite.go
+    path: "internal/persistence" # blank imports for SQLs
   - linters:
     - staticcheck
     text: "SA1019" # using old proto package because of dependency
