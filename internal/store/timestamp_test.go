@@ -33,7 +33,8 @@ func TestAddTS(t *testing.T) {
 		require.True(t, now.Sub(updatedAt) < 1*time.Second)
 	})
 	t.Run("timestamps are added to persisted resource", func(t *testing.T) {
-		persister := util.GetPersister(t)
+		persister, err := util.GetPersister()
+		require.Nil(t, err)
 		s := New(persister, log.Logger).ForCluster("default")
 		svc := resource.NewService()
 		id := uuid.NewString()
@@ -48,7 +49,8 @@ func TestAddTS(t *testing.T) {
 		require.NotEmpty(t, svc.Service.UpdatedAt)
 	})
 	t.Run("timestamps provided in input are overridden", func(t *testing.T) {
-		persister := util.GetPersister(t)
+		persister, err := util.GetPersister()
+		require.Nil(t, err)
 		s := New(persister, log.Logger).ForCluster("default")
 		svc := resource.NewService()
 		id := uuid.NewString()

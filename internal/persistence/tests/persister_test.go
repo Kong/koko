@@ -12,7 +12,8 @@ import (
 )
 
 func TestPersister(t *testing.T) {
-	p := util.GetPersister(t)
+	p, err := util.GetPersister()
+	require.Nil(t, err)
 
 	t.Run("Get()", func(t *testing.T) {
 		t.Run("returns an existing value", func(t *testing.T) {

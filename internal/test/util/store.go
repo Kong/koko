@@ -2,7 +2,6 @@ package util
 
 import (
 	"os"
-	"testing"
 
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/kong/koko/internal/db"
@@ -10,7 +9,6 @@ import (
 	"github.com/kong/koko/internal/persistence"
 	"github.com/kong/koko/internal/persistence/postgres"
 	"github.com/kong/koko/internal/persistence/sqlite"
-	"github.com/stretchr/testify/require"
 )
 
 var testConfig = db.Config{
@@ -27,7 +25,12 @@ var testConfig = db.Config{
 	Logger: log.Logger,
 }
 
-func GetPersister(t *testing.T) persistence.Persister {
+func CleanDB() error {
+	_, err := GetPersister()
+	return err
+}
+
+func GetPersister() (persistence.Persister, error) {
 	dbConfig := testConfig
 	dialect := os.Getenv("KOKO_TEST_DB")
 	if dialect == "" {
@@ -36,7 +39,9 @@ func GetPersister(t *testing.T) persistence.Persister {
 	switch dialect {
 	case "sqlite3":
 		dbClient, err := sqlite.NewSQLClient(dbConfig.SQLite)
-		require.Nil(t, err)
+		if err != nil {
+			return nil, err
+		}
 		// store may not exist always so ignore the error
 		// TODO(hbagdi): add "IF exists" clause
 		_, _ = dbClient.Exec("delete from store;")
@@ -44,7 +49,9 @@ func GetPersister(t *testing.T) persistence.Persister {
 		dbConfig.Dialect = db.DialectSQLite3
 	case "postgres":
 		dbClient, err := postgres.NewSQLClient(dbConfig.Postgres)
-		require.Nil(t, err)
+		if err != nil {
+			return nil, err
+		}
 		// store may not exist always so ignore the error
 		// TODO(hbagdi): add "IF exists" clause
 		_, _ = dbClient.Exec("truncate table store;")
@@ -52,10 +59,14 @@ func GetPersister(t *testing.T) persistence.Persister {
 		dbConfig.Dialect = db.DialectPostgres
 	}
 
-	require.Nil(t, runMigrations(dbConfig))
+	if err := runMigrations(dbConfig); err != nil {
+		return nil, err
+	}
 	persister, err := db.NewPersister(dbConfig)
-	require.Nil(t, err)
-	return persister
+	if err != nil {
+		return nil, err
+	}
+	return persister, nil
 }
 
 func runMigrations(config db.Config) error {

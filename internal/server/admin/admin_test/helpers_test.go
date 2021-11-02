@@ -8,11 +8,13 @@ import (
 	"github.com/kong/koko/internal/server/admin"
 	"github.com/kong/koko/internal/store"
 	"github.com/kong/koko/internal/test/util"
+	"github.com/stretchr/testify/require"
 )
 
 func setup(t *testing.T) (*httptest.Server, func()) {
-	persister := util.GetPersister(t)
-	objectStore := store.New(persister, log.Logger)
+	p, err := util.GetPersister()
+	require.Nil(t, err)
+	objectStore := store.New(p, log.Logger)
 
 	handler, err := admin.NewHandler(admin.HandlerOpts{
 		Logger: log.Logger,

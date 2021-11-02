@@ -11,8 +11,6 @@ import (
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/service/v1"
 	relay "github.com/kong/koko/internal/gen/grpc/kong/relay/service/v1"
 	"github.com/kong/koko/internal/persistence"
-	"github.com/kong/koko/internal/persistence/postgres"
-	"github.com/kong/koko/internal/persistence/sqlite"
 	"github.com/kong/koko/internal/server"
 	"github.com/kong/koko/internal/server/admin"
 	"github.com/kong/koko/internal/server/kong/ws"
@@ -185,22 +183,9 @@ func setupRelayClient() (ws.ConfigClient, error) {
 }
 
 func setupDB(logger *zap.Logger) (persistence.Persister, error) {
-	dbConfig := db.Config{
-		Dialect: db.DialectSQLite3,
-		// Dialect: db.DialectPostgres,
-		SQLite: sqlite.Opts{
-			Filename: "test.db",
-			InMemory: true,
-		},
-		Postgres: postgres.Opts{
-			Hostname: "localhost",
-			Port:     postgres.DefaultPort,
-			User:     "koko",
-			Password: "koko",
-			DBName:   "koko",
-		},
-		Logger: logger,
-	}
+	dbConfig := dbConfig
+	dbConfig.Logger = logger
+
 	m, err := db.NewMigrator(dbConfig)
 	if err != nil {
 		return nil, err
@@ -221,10 +206,9 @@ func setupDB(logger *zap.Logger) (persistence.Persister, error) {
 				return nil, err
 			}
 		} else {
-			// TODO(hbagdi): put command to upgrade schema (once it exists) to make
-			// the error more helpful
 			return nil, fmt.Errorf("database schema out of date, " +
-				"please upgrade database schema")
+				"please run 'koko db migrate-up' to migrate the schema to" +
+				" latest version")
 		}
 	}
 

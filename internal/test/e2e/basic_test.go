@@ -29,7 +29,7 @@ func TestSharedMTLS(t *testing.T) {
 	cert, err := tls.X509KeyPair(certs.DefaultSharedCert, certs.DefaultSharedKey)
 	require.Nil(t, err)
 	go func() {
-		cleanup(t)
+		require.Nil(t, util.CleanDB())
 		require.Nil(t, cmd.Run(ctx, cmd.ServerConfig{
 			DPAuthCert: cert,
 			KongCPCert: cert,
@@ -88,7 +88,7 @@ func TestPKIMTLS(t *testing.T) {
 	dpCACert, err := crypto.ParsePEMCerts(certs.DPTree1CACert)
 	require.Nil(t, err)
 	go func() {
-		cleanup(t)
+		require.Nil(t, util.CleanDB())
 		require.Nil(t, cmd.Run(ctx, cmd.ServerConfig{
 			Logger: log.Logger,
 
@@ -137,9 +137,4 @@ func TestPKIMTLS(t *testing.T) {
 		}
 		return nil
 	}, util.TestBackoff))
-}
-
-func cleanup(t *testing.T) {
-	// this clears the tables
-	util.GetPersister(t)
 }
