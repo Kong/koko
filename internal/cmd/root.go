@@ -8,8 +8,10 @@ import (
 
 // rootCmd represents the base command when called without any subcommands.
 var rootCmd = &cobra.Command{
-	Use:   "koko",
-	Short: "Control plane software for Kong Gateway",
+	Use:           "koko",
+	Short:         "Control plane software for Kong Gateway",
+	SilenceUsage:  true,
+	SilenceErrors: true,
 }
 
 func ExecuteContext(ctx context.Context) {
