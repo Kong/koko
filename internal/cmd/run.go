@@ -7,8 +7,11 @@ import (
 	"fmt"
 
 	"github.com/hbagdi/gang"
+	"github.com/kong/koko/internal/db"
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/service/v1"
 	relay "github.com/kong/koko/internal/gen/grpc/kong/relay/service/v1"
+	"github.com/kong/koko/internal/persistence"
+	"github.com/kong/koko/internal/persistence/postgres"
 	"github.com/kong/koko/internal/persistence/sqlite"
 	"github.com/kong/koko/internal/server"
 	"github.com/kong/koko/internal/server/admin"
@@ -41,12 +44,12 @@ func Run(ctx context.Context, config ServerConfig) error {
 	logger := config.Logger
 	var g gang.Gang
 
-	// setup data store
-	memory, err := sqlite.NewMemory()
+	persister, err := setupDB(logger)
 	if err != nil {
-		return err
+		return fmt.Errorf("database: %v", err)
 	}
-	store := store.New(memory, logger.With(zap.String("component",
+
+	store := store.New(persister, logger.With(zap.String("component",
 		"store"))).ForCluster("default")
 
 	storeLoader := admin.DefaultStoreLoader{Store: store}
@@ -179,4 +182,59 @@ func setupRelayClient() (ws.ConfigClient, error) {
 
 		Event: relay.NewEventServiceClient(cc),
 	}, nil
+}
+
+func setupDB(logger *zap.Logger) (persistence.Persister, error) {
+	dbConfig := db.Config{
+		Dialect: db.DialectSQLite3,
+		// Dialect: db.DialectPostgres,
+		SQLite: sqlite.Opts{
+			Filename: "test.db",
+			InMemory: true,
+		},
+		Postgres: postgres.Opts{
+			Hostname: "localhost",
+			Port:     postgres.DefaultPort,
+			User:     "koko",
+			Password: "koko",
+			DBName:   "koko",
+		},
+		Logger: logger,
+	}
+	m, err := db.NewMigrator(dbConfig)
+	if err != nil {
+		return nil, err
+	}
+	c, l, err := m.Status()
+	if err != nil {
+		return nil, err
+	}
+	logger.Sugar().Debugf("migration status: current: %d, latest: %d", c, l)
+
+	if c != l {
+		if dbConfig.Dialect == db.DialectSQLite3 {
+			logger.Sugar().Info("migration out of date")
+			logger.Sugar().Info("running migration in-process as sqlite" +
+				" database detected")
+			err := runMigrations(m)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			// TODO(hbagdi): put command to upgrade schema (once it exists) to make
+			// the error more helpful
+			return nil, fmt.Errorf("database schema out of date, " +
+				"please upgrade database schema")
+		}
+	}
+
+	// setup data store
+	return db.NewPersister(dbConfig)
+}
+
+func runMigrations(m *db.Migrator) error {
+	if err := m.Up(); err != nil {
+		return fmt.Errorf("migrating database: %v", err)
+	}
+	return nil
 }

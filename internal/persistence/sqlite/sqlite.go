@@ -10,9 +10,6 @@ import (
 )
 
 const (
-	createTableQuery = `create table if not exists store(
-key text PRIMARY KEY, value BLOB);`
-
 	getQuery    = `SELECT * from store where key=$1`
 	insertQuery = `replace into store(key,value) values($1,$2);`
 	deleteQuery = `delete from store where key=$1`
@@ -26,31 +23,48 @@ type SQLite struct {
 	db *sql.DB
 }
 
-func NewMemory() (persistence.Persister, error) {
-	return New("file::memory:")
+type Opts struct {
+	Filename string
+	InMemory bool
 }
 
-func New(filename string) (persistence.Persister, error) {
-	db, err := sql.Open("sqlite3",
-		filename+"?_journal_mode=WAL&_busy_timeout=5000")
+const (
+	sqliteParams = "?_journal_mode=WAL&_busy_timeout=5000"
+)
+
+func getDSN(opts Opts) (string, error) {
+	if opts.InMemory {
+		return "file::memory:?cache=shared", nil
+	}
+	if opts.Filename == "" {
+		return "", fmt.Errorf("sqlite: no database file name")
+	}
+	return opts.Filename + sqliteParams, nil
+}
+
+func NewSQLClient(opts Opts) (*sql.DB, error) {
+	dsn, err := getDSN(opts)
 	if err != nil {
 		return nil, err
 	}
-	err = migrate(context.TODO(), db)
+	db, err := sql.Open("sqlite3", dsn)
+	if err != nil {
+		return nil, err
+	}
+	db.SetMaxOpenConns(1)
+	return db, nil
+}
+
+func New(opts Opts) (persistence.Persister, error) {
+	db, err := NewSQLClient(opts)
 	if err != nil {
 		return nil, err
 	}
 
-	db.SetMaxOpenConns(1)
 	res := &SQLite{
 		db: db,
 	}
 	return res, nil
-}
-
-func migrate(ctx context.Context, db *sql.DB) error {
-	_, err := db.ExecContext(ctx, createTableQuery)
-	return err
 }
 
 func (s *SQLite) withinTx(ctx context.Context,

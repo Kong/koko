@@ -1,50 +1,71 @@
 package util
 
 import (
-	"database/sql"
 	"os"
 	"testing"
 
+	"github.com/golang-migrate/migrate/v4"
+	"github.com/kong/koko/internal/db"
+	"github.com/kong/koko/internal/log"
 	"github.com/kong/koko/internal/persistence"
 	"github.com/kong/koko/internal/persistence/postgres"
 	"github.com/kong/koko/internal/persistence/sqlite"
 	"github.com/stretchr/testify/require"
 )
 
-func GetPersister(t *testing.T) persistence.Persister {
-	var (
-		res persistence.Persister
-		err error
-	)
-	db := os.Getenv("KOKO_TEST_DB")
-	if db == "" {
-		db = "sqlite3"
-	}
-	switch db {
-	case "sqlite3":
-		res, err = sqlite.NewMemory()
-	case "postgres":
-		require.Nil(t, cleanPostgres())
-		res, err = postgres.New(postgres.Opts{
-			Hostname: "localhost",
-			Port:     postgres.DefaultPort,
-			User:     "koko",
-			Password: "koko",
-		})
-	}
-	require.Nil(t, err)
-
-	return res
+var testConfig = db.Config{
+	SQLite: sqlite.Opts{
+		InMemory: true,
+	},
+	Postgres: postgres.Opts{
+		Hostname: "localhost",
+		Port:     postgres.DefaultPort,
+		User:     "koko",
+		Password: "koko",
+		DBName:   "koko",
+	},
+	Logger: log.Logger,
 }
 
-func cleanPostgres() error {
-	db, err := sql.Open("postgres",
-		"host=localhost user=koko password=koko port=5432 sslmode=disable")
+func GetPersister(t *testing.T) persistence.Persister {
+	dbConfig := testConfig
+	dialect := os.Getenv("KOKO_TEST_DB")
+	if dialect == "" {
+		dialect = "sqlite3"
+	}
+	switch dialect {
+	case "sqlite3":
+		dbClient, err := sqlite.NewSQLClient(dbConfig.SQLite)
+		require.Nil(t, err)
+		// store may not exist always so ignore the error
+		// TODO(hbagdi): add "IF exists" clause
+		_, _ = dbClient.Exec("delete from store;")
+
+		dbConfig.Dialect = db.DialectSQLite3
+	case "postgres":
+		dbClient, err := postgres.NewSQLClient(dbConfig.Postgres)
+		require.Nil(t, err)
+		// store may not exist always so ignore the error
+		// TODO(hbagdi): add "IF exists" clause
+		_, _ = dbClient.Exec("truncate table store;")
+
+		dbConfig.Dialect = db.DialectPostgres
+	}
+
+	require.Nil(t, runMigrations(dbConfig))
+	persister, err := db.NewPersister(dbConfig)
+	require.Nil(t, err)
+	return persister
+}
+
+func runMigrations(config db.Config) error {
+	m, err := db.NewMigrator(config)
 	if err != nil {
 		return err
 	}
-	// store may not exist always so ignore the error
-	// TODO(hbagdi): add "IF exists" clause
-	_, _ = db.Exec("truncate table store")
+	err = m.Up()
+	if err != nil && err != migrate.ErrNoChange {
+		return err
+	}
 	return nil
 }

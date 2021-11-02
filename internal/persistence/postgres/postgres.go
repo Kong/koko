@@ -10,9 +10,6 @@ import (
 )
 
 const (
-	createTableQuery = `create table if not exists store(
-key text PRIMARY KEY, value bytea);`
-
 	getQuery    = `SELECT * from store where key=$1`
 	insertQuery = `insert into store(key,value) values($1,$2) on conflict (key) do update set value=$2;`
 	deleteQuery = `delete from store where key=$1`
@@ -30,31 +27,14 @@ type Postgres struct {
 }
 
 type Opts struct {
+	DBName   string
 	Hostname string
 	Port     int
 	User     string
 	Password string
 }
 
-func New(opts Opts) (persistence.Persister, error) {
-	dsn := connString(opts)
-	db, err := sql.Open("postgres", dsn)
-	if err != nil {
-		return nil, err
-	}
-	err = migrate(context.TODO(), db)
-	if err != nil {
-		return nil, err
-	}
-
-	db.SetMaxOpenConns(defaultMaxConn)
-	res := &Postgres{
-		db: db,
-	}
-	return res, nil
-}
-
-func connString(opts Opts) string {
+func getDSN(opts Opts) string {
 	var res string
 	if opts.Hostname != "" {
 		res += fmt.Sprintf("host=%s ", opts.Hostname)
@@ -68,13 +48,32 @@ func connString(opts Opts) string {
 	if opts.Password != "" {
 		res += fmt.Sprintf("password=%s ", opts.Password)
 	}
+	if opts.DBName != "" {
+		res += fmt.Sprintf("dbname=%s ", opts.DBName)
+	}
 	res += "sslmode=disable"
 	return res
 }
 
-func migrate(ctx context.Context, db *sql.DB) error {
-	_, err := db.ExecContext(ctx, createTableQuery)
-	return err
+func NewSQLClient(opts Opts) (*sql.DB, error) {
+	dsn := getDSN(opts)
+	db, err := sql.Open("postgres", dsn)
+	if err != nil {
+		return nil, err
+	}
+	db.SetMaxOpenConns(defaultMaxConn)
+	return db, err
+}
+
+func New(opts Opts) (persistence.Persister, error) {
+	db, err := NewSQLClient(opts)
+	if err != nil {
+		return nil, err
+	}
+	res := &Postgres{
+		db: db,
+	}
+	return res, nil
 }
 
 func (s *Postgres) withinTx(ctx context.Context,
