@@ -13,6 +13,7 @@ import (
 	"github.com/kong/koko/internal/persistence"
 	"github.com/kong/koko/internal/server"
 	"github.com/kong/koko/internal/server/admin"
+	"github.com/kong/koko/internal/server/health"
 	"github.com/kong/koko/internal/server/kong/ws"
 	relayImpl "github.com/kong/koko/internal/server/relay"
 	"github.com/kong/koko/internal/store"
@@ -151,6 +152,22 @@ func Run(ctx context.Context, config ServerConfig) error {
 			Certificates: []tls.Certificate{config.KongCPCert},
 			ClientAuth:   tls.RequestClientCert,
 		},
+	})
+	if err != nil {
+		return err
+	}
+	g.AddWithCtxE(s.Run)
+
+	// health endpoint
+	handler, err = health.NewHandler(health.HandlerOpts{})
+	if err != nil {
+		return err
+	}
+
+	s, err = server.NewHTTP(server.HTTPOpts{
+		Address: ":4200",
+		Logger:  logger.With(zap.String("component", "health-server")),
+		Handler: handler,
 	})
 	if err != nil {
 		return err
