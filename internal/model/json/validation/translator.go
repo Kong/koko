@@ -92,7 +92,7 @@ func (t ErrorTranslator) getErr(schemaErr jsonschema.Detailed,
 	)
 	walk(schemaErr.KeywordLocation, schema, func(schema *jsonschema.Schema,
 		hint string) bool {
-		message := ""
+		var message string
 		switch hint {
 		case "properties":
 			fallthrough

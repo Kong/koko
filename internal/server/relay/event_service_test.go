@@ -57,6 +57,7 @@ func TestEventService(t *testing.T) {
 				&relay.FetchReconfigureEventsRequest{
 					Cluster: &model.RequestCluster{Id: "default"},
 				})
+			require.Nil(t, err)
 			res := resource.NewService()
 			res.Service.Host = "example.com"
 			res.Service.Path = "/"

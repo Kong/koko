@@ -3,6 +3,7 @@ run:
 linters:
   enable:
   - asciicheck
+  - bidichk
   - bodyclose
   - deadcode
   - depguard
@@ -10,6 +11,7 @@ linters:
   - durationcheck
   - errcheck
   - exportloopref
+  - exhaustive
   - forbidigo
   - forcetypeassert
   - gci
@@ -31,9 +33,11 @@ linters:
   - misspell
   - nakedret
   - nilerr
+  - nilnil
   - noctx
   - nolintlint
   - predeclared
+  - promlinter
   - revive
   - rowserrcheck
   - sqlclosecheck
@@ -44,7 +48,9 @@ linters:
   - unconvert
   - unparam
   - varcheck
+  - wastedassign
   - whitespace
+  - tenv
 issues:
   exclude-rules:
   - linters:

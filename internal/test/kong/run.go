@@ -193,6 +193,9 @@ func addDefaults(input DockerInput) DockerInput {
 	if res.CPAddr != "" {
 		res.EnvVars["KONG_CLUSTER_CONTROL_PLANE"] = res.CPAddr
 		i := strings.Index(res.CPAddr, ":")
+		if i == -1 {
+			panic("incorrect")
+		}
 		res.Computed.CPHostname = res.CPAddr[:i]
 	}
 	return res
