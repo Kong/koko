@@ -8,6 +8,9 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/kong/koko/internal/config"
+	"github.com/kong/koko/internal/db"
+
 	"github.com/cenkalti/backoff/v4"
 	"github.com/gavv/httpexpect/v2"
 	"github.com/google/uuid"
@@ -34,6 +37,12 @@ func TestSharedMTLS(t *testing.T) {
 			DPAuthCert: cert,
 			KongCPCert: cert,
 			Logger:     log.Logger,
+			Database: config.Database{
+				Dialect: db.DialectSQLite3,
+				SQLite: config.SQLite{
+					InMemory: true,
+				},
+			},
 		}))
 	}()
 	require.Nil(t, util.WaitForAdminAPI(t))
@@ -96,6 +105,12 @@ func TestPKIMTLS(t *testing.T) {
 
 			DPAuthMode:    cmd.DPAuthPKIMTLS,
 			DPAuthCACerts: dpCACert,
+			Database: config.Database{
+				Dialect: db.DialectSQLite3,
+				SQLite: config.SQLite{
+					InMemory: true,
+				},
+			},
 		}))
 	}()
 	require.Nil(t, util.WaitForAdminAPI(t))

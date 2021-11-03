@@ -5,9 +5,12 @@ import (
 	"io/ioutil"
 	"path/filepath"
 
+	"github.com/ghodss/yaml"
 	"github.com/imdario/mergo"
+	"github.com/kong/koko/internal/db"
+	"github.com/kong/koko/internal/persistence/postgres"
+	"github.com/kong/koko/internal/persistence/sqlite"
 	"go.uber.org/zap/zapcore"
-	"gopkg.in/yaml.v2"
 )
 
 var (
@@ -67,4 +70,21 @@ func parse(content []byte) (Config, error) {
 		return Config{}, err
 	}
 	return result, nil
+}
+
+func ToDBConfig(configDB Database) db.Config {
+	return db.Config{
+		Dialect: configDB.Dialect,
+		SQLite: sqlite.Opts{
+			InMemory: configDB.SQLite.InMemory,
+			Filename: configDB.SQLite.Filename,
+		},
+		Postgres: postgres.Opts{
+			DBName:   configDB.Postgres.DBName,
+			Hostname: configDB.Postgres.Hostname,
+			Port:     configDB.Postgres.Port,
+			User:     configDB.Postgres.User,
+			Password: configDB.Postgres.Password,
+		},
+	}
 }

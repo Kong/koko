@@ -80,11 +80,11 @@ func driverForDialect(config Config) (database.Driver, error) {
 }
 
 func NewMigrator(config Config) (*Migrator, error) {
-	source, err := sourceForDialect(config.Dialect)
+	dbDriver, err := driverForDialect(config)
 	if err != nil {
 		return nil, err
 	}
-	dbDriver, err := driverForDialect(config)
+	source, err := sourceForDialect(config.Dialect)
 	if err != nil {
 		return nil, err
 	}

@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 
+	"github.com/kong/koko/internal/config"
 	"github.com/kong/koko/internal/db"
 	"github.com/spf13/cobra"
 )
@@ -19,7 +20,7 @@ var dbStatusCmd = &cobra.Command{
 		logger := opts.Logger
 		logger.Debug("setup successful")
 
-		dbConfig := dbConfig
+		dbConfig := config.ToDBConfig(opts.Config.Database)
 		dbConfig.Logger = logger
 
 		m, err := db.NewMigrator(dbConfig)

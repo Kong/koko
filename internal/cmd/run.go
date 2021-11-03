@@ -7,6 +7,7 @@ import (
 	"fmt"
 
 	"github.com/hbagdi/gang"
+	"github.com/kong/koko/internal/config"
 	"github.com/kong/koko/internal/db"
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/service/v1"
 	relay "github.com/kong/koko/internal/gen/grpc/kong/relay/service/v1"
@@ -29,7 +30,8 @@ type ServerConfig struct {
 
 	KongCPCert tls.Certificate
 
-	Logger *zap.Logger
+	Logger   *zap.Logger
+	Database config.Database
 }
 
 type DPAuthMode int
@@ -43,7 +45,7 @@ func Run(ctx context.Context, config ServerConfig) error {
 	logger := config.Logger
 	var g gang.Gang
 
-	persister, err := setupDB(logger)
+	persister, err := setupDB(logger, config.Database)
 	if err != nil {
 		return fmt.Errorf("database: %v", err)
 	}
@@ -199,11 +201,10 @@ func setupRelayClient() (ws.ConfigClient, error) {
 	}, nil
 }
 
-func setupDB(logger *zap.Logger) (persistence.Persister, error) {
-	dbConfig := dbConfig
-	dbConfig.Logger = logger
-
-	m, err := db.NewMigrator(dbConfig)
+func setupDB(logger *zap.Logger, configDB config.Database) (persistence.Persister, error) {
+	config := config.ToDBConfig(configDB)
+	config.Logger = logger
+	m, err := db.NewMigrator(config)
 	if err != nil {
 		return nil, err
 	}
@@ -214,7 +215,7 @@ func setupDB(logger *zap.Logger) (persistence.Persister, error) {
 	logger.Sugar().Debugf("migration status: current: %d, latest: %d", c, l)
 
 	if c != l {
-		if dbConfig.Dialect == db.DialectSQLite3 {
+		if configDB.Dialect == db.DialectSQLite3 {
 			logger.Sugar().Info("migration out of date")
 			logger.Sugar().Info("running migration in-process as sqlite" +
 				" database detected")
@@ -230,7 +231,7 @@ func setupDB(logger *zap.Logger) (persistence.Persister, error) {
 	}
 
 	// setup data store
-	return db.NewPersister(dbConfig)
+	return db.NewPersister(config)
 }
 
 func runMigrations(m *db.Migrator) error {

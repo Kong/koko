@@ -7,7 +7,6 @@ import (
 
 	"github.com/kong/koko/internal/config"
 	"github.com/kong/koko/internal/log"
-	"github.com/kong/koko/internal/util"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 )
@@ -28,9 +27,6 @@ var serveCmd = &cobra.Command{
 }
 
 func init() {
-	serveCmd.Flags().StringVar(&cfgFile, "config", "koko.yaml",
-		"path to configuration file")
-
 	rootCmd.AddCommand(serveCmd)
 }
 
@@ -47,7 +43,8 @@ func serveMain(ctx context.Context) error {
 	logger := opts.Logger
 	logger.Debug("setup successful")
 
-	cert, err := tls.LoadX509KeyPair("cluster.crt", "cluster.key")
+	cert, err := tls.LoadX509KeyPair(opts.Config.Control.TLSCertPath,
+		opts.Config.Control.TLSKeyPath)
 	if err != nil {
 		return err
 	}
@@ -55,6 +52,7 @@ func serveMain(ctx context.Context) error {
 		DPAuthCert: cert,
 		KongCPCert: cert,
 		Logger:     logger,
+		Database:   opts.Config.Database,
 	})
 }
 
@@ -62,11 +60,6 @@ func setup() (initOpts, error) {
 	cfg, err := config.Get(cfgFile)
 	if err != nil {
 		return initOpts{}, err
-	}
-
-	errs := config.Validate(cfg)
-	if len(errs) > 0 {
-		return initOpts{}, util.MultiError{Errors: errs}
 	}
 
 	logger, err := setupLogging(cfg.Log)
