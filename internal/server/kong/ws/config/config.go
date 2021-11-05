@@ -5,6 +5,7 @@ import (
 	"compress/gzip"
 	"encoding/json"
 	"fmt"
+	"sync"
 
 	"github.com/kong/koko/internal/gen/wrpc/kong/model"
 )
@@ -21,9 +22,12 @@ type Content struct {
 
 type Payload struct {
 	compressed []byte
+	mu         sync.RWMutex
 }
 
 func (p *Payload) Update(config Content) error {
+	p.mu.Lock()
+	defer p.mu.Unlock()
 	payload := map[string]interface{}{
 		"type":         "reconfigure",
 		"config_table": config,
@@ -47,5 +51,7 @@ func (p *Payload) Update(config Content) error {
 }
 
 func (p *Payload) Payload() []byte {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
 	return p.compressed
 }
