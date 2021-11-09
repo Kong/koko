@@ -21,6 +21,11 @@ func NewHandler(opts HandlerOpts) (http.Handler, error) {
 		logger:        opts.Logger,
 		authenticator: opts.Authenticator,
 	})
+	mux.HandleFunc("/health", func(w http.ResponseWriter,
+		_ *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+
 	return mux, nil
 }
 

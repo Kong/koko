@@ -153,3 +153,48 @@ func TestPKIMTLS(t *testing.T) {
 		return nil
 	}, util.TestBackoff))
 }
+
+func TestHealthEndpointOnCPPort(t *testing.T) {
+	// ensure that health-check is enabled on the CP port
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	cert, err := tls.X509KeyPair(certs.DefaultSharedCert, certs.DefaultSharedKey)
+	require.Nil(t, err)
+	go func() {
+		require.Nil(t, util.CleanDB())
+		require.Nil(t, cmd.Run(ctx, cmd.ServerConfig{
+			DPAuthCert: cert,
+			KongCPCert: cert,
+			Logger:     log.Logger,
+			Database: config.Database{
+				Dialect: db.DialectSQLite3,
+				SQLite: config.SQLite{
+					InMemory: true,
+				},
+			},
+		}))
+	}()
+	// test the endpoint
+	require.Nil(t, backoff.Retry(func() error {
+		client := insecureHTTPClient()
+		res, err := client.Get("https://localhost:3100/health")
+		if err != nil {
+			return err
+		}
+		defer res.Body.Close()
+		if res.StatusCode != http.StatusOK {
+			return fmt.Errorf("unexpected status code: %v", res.StatusCode)
+		}
+		return nil
+	}, util.TestBackoff))
+}
+
+func insecureHTTPClient() *http.Client {
+	transport := http.Transport{
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: true,
+		},
+	}
+	return &http.Client{Transport: &transport}
+}
