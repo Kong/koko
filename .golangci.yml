@@ -1,5 +1,7 @@
 run:
   timeout: 5m
+  build-tags:
+  - integration
 linters:
   enable:
   - asciicheck

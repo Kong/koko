@@ -1,4 +1,5 @@
 //go:build integration
+
 package e2e
 
 import (
@@ -8,14 +9,13 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/kong/koko/internal/config"
-	"github.com/kong/koko/internal/db"
-
 	"github.com/cenkalti/backoff/v4"
 	"github.com/gavv/httpexpect/v2"
 	"github.com/google/uuid"
 	"github.com/kong/koko/internal/cmd"
+	"github.com/kong/koko/internal/config"
 	"github.com/kong/koko/internal/crypto"
+	"github.com/kong/koko/internal/db"
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
 	"github.com/kong/koko/internal/log"
 	"github.com/kong/koko/internal/test/certs"
