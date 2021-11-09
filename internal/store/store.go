@@ -44,6 +44,12 @@ type ObjectStore struct {
 }
 
 func New(persister persistence.Persister, logger *zap.Logger) *ObjectStore {
+	if logger == nil {
+		panic("logger is required")
+	}
+	if persister == nil {
+		panic("persister is required")
+	}
 	return &ObjectStore{
 		objectStoreOpts: objectStoreOpts{
 			logger: logger,
@@ -265,9 +271,6 @@ func (s *ObjectStore) Delete(ctx context.Context,
 
 		err = tx.Delete(ctx, id)
 		if err != nil {
-			if errors.As(err, &persistence.ErrNotFound{}) {
-				return ErrNotFound
-			}
 			return err
 		}
 		if err := s.deleteIndexes(ctx, tx, object); err != nil {

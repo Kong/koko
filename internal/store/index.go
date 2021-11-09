@@ -88,8 +88,7 @@ func (s *ObjectStore) createIndexes(ctx context.Context,
 				// happy path
 			case errors.As(err, &persistence.ErrNotFound{}):
 				return ErrConstraint{
-					Index:   index,
-					Message: "not found",
+					Index: index,
 				}
 			default:
 				// some other problem
@@ -165,6 +164,9 @@ func (s *ObjectStore) deleteIndexes(ctx context.Context, tx persistence.Tx,
 func (s *ObjectStore) checkForeignIndexesForDelete(ctx context.Context,
 	tx persistence.Tx,
 	object model.Object) error {
+	// TODO(hbagdi): change the tx.List to return keys and values
+	// this is required in other places as well, then use the keys
+	// to build an index and return a more informative error back
 	key := fmt.Sprintf("ix/f/%s/%s", object.Type(), object.ID())
 	values, err := tx.List(ctx, s.clusterKey(key))
 	if err != nil {
