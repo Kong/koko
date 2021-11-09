@@ -25,6 +25,7 @@ var (
 
 type Store interface {
 	Create(context.Context, model.Object, ...CreateOptsFunc) error
+	Upsert(context.Context, model.Object, ...CreateOptsFunc) error
 	Read(context.Context, model.Object, ...ReadOptsFunc) error
 	Delete(context.Context, ...DeleteOptsFunc) error
 	List(context.Context, model.ObjectList, ...ListOptsFunc) error
@@ -108,6 +109,66 @@ func (s *ObjectStore) Create(ctx context.Context, object model.Object,
 		if err := s.updateEvent(ctx, tx); err != nil {
 			return err
 		}
+		return tx.Put(ctx, id, value)
+	})
+}
+
+func (s *ObjectStore) Upsert(ctx context.Context, object model.Object,
+	_ ...CreateOptsFunc) error {
+	ctx, cancel := context.WithTimeout(ctx, DefaultDBQueryTimeout)
+	defer cancel()
+	if object == nil {
+		return errNoObject
+	}
+	if err := preProcess(object); err != nil {
+		return err
+	}
+
+	id, err := s.genID(object.Type(), object.ID())
+	if err != nil {
+		return err
+	}
+	value, err := json.Marshal(object.Resource())
+	if err != nil {
+		return err
+	}
+
+	return s.withTx(ctx, func(tx persistence.Tx) error {
+		// 1.delete old indexes if they exist
+		// no need to delete the object itself since it will be overwritten
+		// anyways
+		oldObject, err := model.NewObject(object.Type())
+		if err != nil {
+			return err
+		}
+		err = s.readByTypeID(ctx, tx, id, oldObject)
+		switch err {
+		case nil:
+			// TODO(hbagdi): perf: drop and rebuild index only if changed
+			// object exists, delete the indexes
+			if err := s.deleteIndexes(ctx, tx, oldObject); err != nil {
+				return err
+			}
+
+		case ErrNotFound:
+			// object doesn't exist, move on
+
+		default:
+			// some other error
+			return err
+		}
+
+		// 2. create new indexes
+		if err := s.createIndexes(ctx, tx, object); err != nil {
+			return err
+		}
+
+		// 3. fire off new update event
+		if err := s.updateEvent(ctx, tx); err != nil {
+			return err
+		}
+
+		// 4. write the object
 		return tx.Put(ctx, id, value)
 	})
 }

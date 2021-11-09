@@ -197,3 +197,107 @@ func TestIndexForeign(t *testing.T) {
 		require.True(t, errors.As(err, &ErrConstraint{}))
 	})
 }
+
+func TestUpsert(t *testing.T) {
+	t.Run("object can be upserted without any side-effect", func(t *testing.T) {
+		ctx := context.Background()
+		persister, err := util.GetPersister()
+		require.Nil(t, err)
+		s := New(persister, log.Logger).ForCluster("default")
+
+		svc := resource.NewService()
+		serviceID := uuid.NewString()
+
+		svc.Service = &v1.Service{
+			Id:   serviceID,
+			Name: "bar",
+			Host: "foo.com",
+			Path: "/bar",
+		}
+		require.Nil(t, s.Create(ctx, svc))
+
+		svc.Service.Name = "foo"
+		require.Nil(t, s.Upsert(ctx, svc))
+
+		serviceID2 := uuid.NewString()
+		svc.Service = &v1.Service{
+			Id:   serviceID2,
+			Name: "bar",
+			Host: "foo.com",
+			Path: "/bar",
+		}
+		require.Nil(t, s.Upsert(ctx, svc))
+
+		require.Nil(t, s.Read(ctx, svc, GetByID(serviceID)))
+		require.Nil(t, s.Read(ctx, svc, GetByID(serviceID2)))
+	})
+	t.Run("object with foreign references are updated fine",
+		func(t *testing.T) {
+			ctx := context.Background()
+			persister, err := util.GetPersister()
+			require.Nil(t, err)
+			s := New(persister, log.Logger).ForCluster("default")
+			svc := resource.NewService()
+			serviceID := uuid.NewString()
+			svc.Service = &v1.Service{
+				Id:   serviceID,
+				Name: "foo",
+				Host: "foo.com",
+				Path: "/bar",
+			}
+			require.Nil(t, s.Create(ctx, svc))
+
+			serviceID2 := uuid.NewString()
+			svc.Service = &v1.Service{
+				Id:   serviceID2,
+				Name: "bar",
+				Host: "foo.com",
+				Path: "/bar",
+			}
+			require.Nil(t, s.Upsert(ctx, svc))
+
+			route := resource.NewRoute()
+			routeID := uuid.NewString()
+			route.Route = &v1.Route{
+				Id:    routeID,
+				Name:  "foo",
+				Hosts: []string{"example.com"},
+				Service: &v1.Service{
+					Id: serviceID,
+				},
+			}
+			require.Nil(t, s.Create(ctx, route))
+
+			route.Route = &v1.Route{
+				Id:    routeID,
+				Name:  "foo",
+				Hosts: []string{"example.com"},
+				Service: &v1.Service{
+					Id: serviceID2,
+				},
+			}
+
+			require.Nil(t, s.Upsert(ctx, route))
+
+			svc.Service = &v1.Service{
+				Id:   serviceID2,
+				Name: "fubar",
+				Host: "foo.com",
+				Path: "/bar",
+			}
+			require.Nil(t, s.Upsert(ctx, svc))
+
+			err = s.Delete(ctx, DeleteByType(resource.TypeService),
+				DeleteByID(serviceID))
+			require.Nil(t, err)
+
+			svc = resource.NewService()
+			require.Nil(t, s.Read(ctx, svc, GetByID(serviceID2)))
+			require.Equal(t, "fubar", svc.Service.Name)
+
+			err = s.Delete(ctx, DeleteByType(resource.TypeService),
+				DeleteByID(serviceID2))
+			require.NotNil(t, err)
+			require.True(t, errors.As(err, &ErrConstraint{}))
+		})
+}
