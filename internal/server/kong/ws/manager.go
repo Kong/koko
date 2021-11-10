@@ -3,13 +3,16 @@ package ws
 import (
 	"context"
 	"io"
+	"net"
 	"sync"
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
+	"github.com/gorilla/websocket"
 	model "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
 	admin "github.com/kong/koko/internal/gen/grpc/kong/admin/service/v1"
 	relay "github.com/kong/koko/internal/gen/grpc/kong/relay/service/v1"
+	"github.com/kong/koko/internal/resource"
 	"github.com/kong/koko/internal/server/kong/ws/config"
 	"github.com/kong/koko/internal/server/kong/ws/mold"
 	"go.uber.org/zap"
@@ -52,9 +55,49 @@ type Manager struct {
 	broadcastMutex sync.Mutex
 }
 
+func (m *Manager) updateNodeStatus(node Node) {
+	const timeout = 5 * time.Second
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	_, err := m.configClient.Node.UpsertNode(ctx, &admin.UpsertNodeRequest{
+		Item: &model.Node{
+			Id:       node.ID,
+			Version:  node.Version,
+			Hostname: node.Hostname,
+			Type:     resource.NodeTypeKongProxy,
+			LastPing: int32(time.Now().Unix()),
+		},
+		Cluster: &model.RequestCluster{
+			Id: m.cluster.Get(),
+		},
+	})
+	if err != nil {
+		m.logger.With(zap.Error(err)).Error("update kong node status")
+	}
+}
+
+func (m *Manager) setupPingHandler(node Node) {
+	c := node.conn
+	c.SetPingHandler(func(appData string) error {
+		// code inspired from the upstream library
+		writeWait := time.Second
+		err := c.WriteControl(websocket.PongMessage, nil,
+			time.Now().Add(writeWait))
+		if err == websocket.ErrCloseSent {
+			return nil
+		} else if e, ok := err.(net.Error); ok && e.Temporary() {
+			return nil
+		}
+		m.updateNodeStatus(node)
+
+		return err
+	})
+}
+
 func (m *Manager) AddNode(node Node) {
 	loggerWithNode := m.logger.With(zap.String("client-ip",
 		node.conn.RemoteAddr().String()))
+	m.setupPingHandler(node)
 	if err := m.nodes.Add(node); err != nil {
 		m.logger.With(zap.Error(err)).Error("track node")
 	}
@@ -102,6 +145,7 @@ func (m *Manager) broadcast() {
 type ConfigClient struct {
 	Service admin.ServiceServiceClient
 	Route   admin.RouteServiceClient
+	Node    admin.NodeServiceClient
 
 	Event relay.EventServiceClient
 }

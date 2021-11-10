@@ -2,10 +2,17 @@ package ws
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/gorilla/websocket"
 	"go.uber.org/zap"
+)
+
+const (
+	nodeIDKey       = "node_id"
+	nodeHostnameKey = "node_hostname"
+	nodeVersionKey  = "node_version"
 )
 
 var upgrader = websocket.Upgrader{}
@@ -34,7 +41,32 @@ type Handler struct {
 	authenticator Authenticator
 }
 
+func validateRequest(r *http.Request) error {
+	queryParams := r.URL.Query()
+	if queryParams.Get(nodeIDKey) == "" {
+		return fmt.Errorf("invalid request, missing node_id query parameter")
+	}
+	if queryParams.Get(nodeHostnameKey) == "" {
+		return fmt.Errorf("invalid request, " +
+			"missing node_hostname query parameter")
+	}
+	if queryParams.Get(nodeVersionKey) == "" {
+		return fmt.Errorf("invalid request, " +
+			"missing node_version query parameter")
+	}
+	return nil
+}
+
 func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if err := validateRequest(r); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		_, err := w.Write([]byte(err.Error()))
+		if err != nil {
+			h.logger.With(zap.Error(err)).Error(
+				"write bad request response for websocket upgrade")
+		}
+		return
+	}
 	m, err := h.authenticator.Authenticate(r)
 	if err != nil {
 		h.respondWithErr(w, r, err)
@@ -45,8 +77,18 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		h.logger.With(zap.Error(err)).Error("upgrade to websocket failed")
 		return
 	}
-	m.AddNode(Node{conn: c, logger: h.logger.With(zap.String(
-		"client-ip", c.RemoteAddr().String()))})
+
+	queryParams := r.URL.Query()
+	node := Node{
+		ID:       queryParams.Get(nodeIDKey),
+		Hostname: queryParams.Get(nodeHostnameKey),
+		Version:  queryParams.Get(nodeVersionKey),
+		conn:     c,
+		logger: h.logger.With(
+			zap.String("client-ip", c.RemoteAddr().String()),
+		),
+	}
+	m.AddNode(node)
 }
 
 func (h Handler) respondWithErr(w http.ResponseWriter, _ *http.Request,

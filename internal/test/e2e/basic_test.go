@@ -198,3 +198,70 @@ func insecureHTTPClient() *http.Client {
 	}
 	return &http.Client{Transport: &transport}
 }
+
+func TestNodesEndpoint(t *testing.T) {
+	// ensure that gateway nodes are tracked in database
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	cert, err := tls.X509KeyPair(certs.DefaultSharedCert, certs.DefaultSharedKey)
+	require.Nil(t, err)
+	go func() {
+		require.Nil(t, util.CleanDB())
+		require.Nil(t, cmd.Run(ctx, cmd.ServerConfig{
+			DPAuthCert: cert,
+			KongCPCert: cert,
+			Logger:     log.Logger,
+			Database: config.Database{
+				Dialect: db.DialectSQLite3,
+				SQLite: config.SQLite{
+					InMemory: true,
+				},
+			},
+		}))
+	}()
+	require.Nil(t, util.WaitForAdminAPI(t))
+
+	service := &v1.Service{
+		Id:   uuid.NewString(),
+		Name: "foo",
+		Host: "httpbin.org",
+		Path: "/",
+	}
+	c := httpexpect.New(t, "http://localhost:3000")
+	res := c.POST("/v1/services").WithJSON(service).Expect()
+	res.Status(201)
+	route := &v1.Route{
+		Name:  "bar",
+		Paths: []string{"/"},
+		Service: &v1.Service{
+			Id: service.Id,
+		},
+	}
+	res = c.POST("/v1/routes").WithJSON(route).Expect()
+	res.Status(201)
+
+	go func() {
+		_ = kong.RunDP(ctx, kong.GetKongConfForShared())
+	}()
+	testing.Verbose()
+	require.Nil(t, util.WaitForKong(t))
+
+	// test the route
+	require.Nil(t, backoff.Retry(func() error {
+		res, err := http.Get("http://localhost:8000/headers")
+		if err != nil {
+			return err
+		}
+		defer res.Body.Close()
+		if res.StatusCode != http.StatusOK {
+			return fmt.Errorf("unexpected status code: %v", res.StatusCode)
+		}
+		return nil
+	}, util.TestBackoff))
+
+	res = c.GET("/v1/nodes").Expect()
+	res.Status(http.StatusOK)
+	nodes := res.JSON().Object().Value("items").Array()
+	nodes.Length().Equal(1)
+}

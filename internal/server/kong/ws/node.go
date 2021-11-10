@@ -15,9 +15,12 @@ func (s sum) String() string {
 }
 
 type Node struct {
-	conn   *websocket.Conn
-	logger *zap.Logger
-	hash   sum
+	ID       string
+	Version  string
+	Hostname string
+	conn     *websocket.Conn
+	logger   *zap.Logger
+	hash     sum
 }
 
 type ErrConnClosed struct {
