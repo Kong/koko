@@ -1,0 +1,77 @@
+syntax = "proto3";
+
+package kong.admin.service.v1;
+
+option go_package = "github.com/kong/koko/internal/gen/kong/admin/service/v1;v1";
+
+import "google/api/annotations.proto";
+import "kong/admin/model/v1/node.proto";
+import "kong/admin/model/v1/cluster.proto";
+
+service NodeService {
+  rpc GetNode(GetNodeRequest) returns (GetNodeResponse) {
+    option (google.api.http) = {
+      get: "/v1/nodes/{id}"
+      response_body: "item"
+    };
+  }
+
+  rpc CreateNode(CreateNodeRequest) returns (CreateNodeResponse);
+
+  rpc UpsertNode(UpsertNodeRequest) returns (UpsertNodeResponse);
+
+  rpc DeleteNode(DeleteNodeRequest) returns (DeleteNodeResponse) {
+    option (google.api.http) = {
+      delete: "/v1/nodes/{id}"
+    };
+  }
+  rpc ListNodes(ListNodesRequest) returns (ListNodesResponse) {
+    option (google.api.http) = {
+      get: "/v1/nodes"
+    };
+  }
+}
+
+message GetNodeRequest{
+  string id = 1;
+  model.v1.RequestCluster cluster = 2;
+}
+
+message GetNodeResponse{
+  model.v1.Node item = 1;
+}
+
+message CreateNodeRequest{
+  model.v1.Node item = 1;
+  model.v1.RequestCluster cluster = 2;
+}
+
+message CreateNodeResponse{
+  model.v1.Node item = 1;
+}
+
+
+message UpsertNodeRequest{
+  model.v1.Node item = 1;
+  model.v1.RequestCluster cluster = 2;
+}
+
+message UpsertNodeResponse{
+  model.v1.Node item = 1;
+}
+
+message DeleteNodeRequest{
+  string id = 1;
+  model.v1.RequestCluster cluster = 2;
+}
+
+message DeleteNodeResponse{
+}
+
+message ListNodesRequest{
+  model.v1.RequestCluster cluster = 1;
+}
+
+message ListNodesResponse{
+  repeated model.v1.Node items = 1;
+}

@@ -9,6 +9,9 @@
       "name": "MetaService"
     },
     {
+      "name": "NodeService"
+    },
+    {
       "name": "RouteService"
     },
     {
@@ -44,6 +47,106 @@
         },
         "tags": [
           "kong.admin.service.v1.MetaService"
+        ]
+      }
+    },
+    "/v1/nodes": {
+      "get": {
+        "operationId": "NodeService_ListNodes",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/kong.admin.service.v1.ListNodesResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "cluster.id",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "kong.admin.service.v1.NodeService"
+        ]
+      }
+    },
+    "/v1/nodes/{id}": {
+      "get": {
+        "operationId": "NodeService_GetNode",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/kong.admin.model.v1.Node"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "cluster.id",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "kong.admin.service.v1.NodeService"
+        ]
+      },
+      "delete": {
+        "operationId": "NodeService_DeleteNode",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/kong.admin.service.v1.DeleteNodeResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "cluster.id",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "kong.admin.service.v1.NodeService"
         ]
       }
     },
@@ -459,6 +562,35 @@
         }
       }
     },
+    "kong.admin.model.v1.Node": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "hostname": {
+          "type": "string"
+        },
+        "lastPing": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "type": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "updatedAt": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
     "kong.admin.model.v1.RequestCluster": {
       "type": "object",
       "properties": {
@@ -637,6 +769,14 @@
         }
       }
     },
+    "kong.admin.service.v1.CreateNodeResponse": {
+      "type": "object",
+      "properties": {
+        "item": {
+          "$ref": "#/definitions/kong.admin.model.v1.Node"
+        }
+      }
+    },
     "kong.admin.service.v1.CreateRouteResponse": {
       "type": "object",
       "properties": {
@@ -656,11 +796,22 @@
         }
       }
     },
+    "kong.admin.service.v1.DeleteNodeResponse": {
+      "type": "object"
+    },
     "kong.admin.service.v1.DeleteRouteResponse": {
       "type": "object"
     },
     "kong.admin.service.v1.DeleteServiceResponse": {
       "type": "object"
+    },
+    "kong.admin.service.v1.GetNodeResponse": {
+      "type": "object",
+      "properties": {
+        "item": {
+          "$ref": "#/definitions/kong.admin.model.v1.Node"
+        }
+      }
     },
     "kong.admin.service.v1.GetRouteResponse": {
       "type": "object",
@@ -686,6 +837,17 @@
         }
       }
     },
+    "kong.admin.service.v1.ListNodesResponse": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/kong.admin.model.v1.Node"
+          }
+        }
+      }
+    },
     "kong.admin.service.v1.ListRoutesResponse": {
       "type": "object",
       "properties": {
@@ -705,6 +867,14 @@
           "items": {
             "$ref": "#/definitions/kong.admin.model.v1.Service"
           }
+        }
+      }
+    },
+    "kong.admin.service.v1.UpsertNodeResponse": {
+      "type": "object",
+      "properties": {
+        "item": {
+          "$ref": "#/definitions/kong.admin.model.v1.Node"
         }
       }
     },

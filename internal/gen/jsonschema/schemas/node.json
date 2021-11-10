@@ -1,0 +1,37 @@
+{
+  "required": [
+    "id",
+    "hostname",
+    "type",
+    "last_ping",
+    "version"
+  ],
+  "properties": {
+    "hostname": {
+      "maxLength": 1024,
+      "minLength": 1,
+      "type": "string"
+    },
+    "id": {
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+      "type": "string",
+      "description": "must be a valid UUID"
+    },
+    "last_ping": {
+      "minimum": 1,
+      "type": "integer"
+    },
+    "type": {
+      "enum": [
+        "kong-proxy"
+      ],
+      "type": "string"
+    },
+    "version": {
+      "maxLength": 128,
+      "minLength": 1,
+      "type": "string"
+    }
+  },
+  "type": "object"
+}

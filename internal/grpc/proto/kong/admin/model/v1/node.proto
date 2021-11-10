@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+option go_package = "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1;v1";
+
+package kong.admin.model.v1;
+
+message Node {
+  string id = 1;
+  string version = 2;
+  string hostname = 3;
+  int32 last_ping = 4;
+  string type = 5;
+  int32 created_at = 6;
+  int32 updated_at = 7;
+  // int32 last_config = 8;
+}
