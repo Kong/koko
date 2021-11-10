@@ -22,6 +22,13 @@ service ServiceService {
       response_body: "item"
     };
   }
+  rpc UpsertService(UpsertServiceRequest) returns (UpsertServiceResponse) {
+    option (google.api.http) = {
+      put: "/v1/services/{item.id}"
+      body: "item"
+      response_body: "item"
+    };
+  }
   rpc DeleteService(DeleteServiceRequest) returns (DeleteServiceResponse) {
     option (google.api.http) = {
       delete: "/v1/services/{id}"
@@ -49,6 +56,16 @@ message CreateServiceRequest{
 }
 
 message CreateServiceResponse{
+  model.v1.Service item = 1;
+}
+
+
+message UpsertServiceRequest{
+  model.v1.Service item = 1;
+  model.v1.RequestCluster cluster = 2;
+}
+
+message UpsertServiceResponse{
   model.v1.Service item = 1;
 }
 

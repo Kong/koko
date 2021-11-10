@@ -20,6 +20,7 @@ const _ = grpc.SupportPackageIsVersion7
 type RouteServiceClient interface {
 	GetRoute(ctx context.Context, in *GetRouteRequest, opts ...grpc.CallOption) (*GetRouteResponse, error)
 	CreateRoute(ctx context.Context, in *CreateRouteRequest, opts ...grpc.CallOption) (*CreateRouteResponse, error)
+	UpsertRoute(ctx context.Context, in *UpsertRouteRequest, opts ...grpc.CallOption) (*UpsertRouteResponse, error)
 	DeleteRoute(ctx context.Context, in *DeleteRouteRequest, opts ...grpc.CallOption) (*DeleteRouteResponse, error)
 	ListRoutes(ctx context.Context, in *ListRoutesRequest, opts ...grpc.CallOption) (*ListRoutesResponse, error)
 }
@@ -50,6 +51,15 @@ func (c *routeServiceClient) CreateRoute(ctx context.Context, in *CreateRouteReq
 	return out, nil
 }
 
+func (c *routeServiceClient) UpsertRoute(ctx context.Context, in *UpsertRouteRequest, opts ...grpc.CallOption) (*UpsertRouteResponse, error) {
+	out := new(UpsertRouteResponse)
+	err := c.cc.Invoke(ctx, "/kong.admin.service.v1.RouteService/UpsertRoute", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *routeServiceClient) DeleteRoute(ctx context.Context, in *DeleteRouteRequest, opts ...grpc.CallOption) (*DeleteRouteResponse, error) {
 	out := new(DeleteRouteResponse)
 	err := c.cc.Invoke(ctx, "/kong.admin.service.v1.RouteService/DeleteRoute", in, out, opts...)
@@ -74,6 +84,7 @@ func (c *routeServiceClient) ListRoutes(ctx context.Context, in *ListRoutesReque
 type RouteServiceServer interface {
 	GetRoute(context.Context, *GetRouteRequest) (*GetRouteResponse, error)
 	CreateRoute(context.Context, *CreateRouteRequest) (*CreateRouteResponse, error)
+	UpsertRoute(context.Context, *UpsertRouteRequest) (*UpsertRouteResponse, error)
 	DeleteRoute(context.Context, *DeleteRouteRequest) (*DeleteRouteResponse, error)
 	ListRoutes(context.Context, *ListRoutesRequest) (*ListRoutesResponse, error)
 	mustEmbedUnimplementedRouteServiceServer()
@@ -88,6 +99,9 @@ func (UnimplementedRouteServiceServer) GetRoute(context.Context, *GetRouteReques
 }
 func (UnimplementedRouteServiceServer) CreateRoute(context.Context, *CreateRouteRequest) (*CreateRouteResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateRoute not implemented")
+}
+func (UnimplementedRouteServiceServer) UpsertRoute(context.Context, *UpsertRouteRequest) (*UpsertRouteResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpsertRoute not implemented")
 }
 func (UnimplementedRouteServiceServer) DeleteRoute(context.Context, *DeleteRouteRequest) (*DeleteRouteResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteRoute not implemented")
@@ -144,6 +158,24 @@ func _RouteService_CreateRoute_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
+func _RouteService_UpsertRoute_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpsertRouteRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RouteServiceServer).UpsertRoute(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/kong.admin.service.v1.RouteService/UpsertRoute",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RouteServiceServer).UpsertRoute(ctx, req.(*UpsertRouteRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _RouteService_DeleteRoute_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(DeleteRouteRequest)
 	if err := dec(in); err != nil {
@@ -194,6 +226,10 @@ var RouteService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CreateRoute",
 			Handler:    _RouteService_CreateRoute_Handler,
+		},
+		{
+			MethodName: "UpsertRoute",
+			Handler:    _RouteService_UpsertRoute_Handler,
 		},
 		{
 			MethodName: "DeleteRoute",

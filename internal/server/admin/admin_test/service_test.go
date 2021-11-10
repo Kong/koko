@@ -1,9 +1,11 @@
 package admin_test
 
 import (
+	"net/http"
 	"testing"
 
 	"github.com/gavv/httpexpect/v2"
+	"github.com/google/uuid"
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
 	"github.com/stretchr/testify/require"
 )
@@ -78,6 +80,87 @@ func TestServiceCreate(t *testing.T) {
 		})
 }
 
+func TestServiceUpsert(t *testing.T) {
+	s, cleanup := setup(t)
+	defer cleanup()
+	c := httpexpect.New(t, s.URL)
+	t.Run("upserts a valid service", func(t *testing.T) {
+		res := c.PUT("/v1/services/" + uuid.NewString()).
+			WithJSON(goodService()).
+			Expect()
+		res.Status(http.StatusOK)
+		body := res.JSON().Object()
+		validateGoodService(body)
+	})
+	t.Run("upserting an invalid service fails with 400", func(t *testing.T) {
+		svc := &v1.Service{
+			Name:           "foo",
+			Host:           "example.com",
+			Path:           "//foo", // invalid '//' sequence
+			ConnectTimeout: -2,      // invalid timeout
+		}
+		res := c.PUT("/v1/services/" + uuid.NewString()).
+			WithJSON(svc).
+			Expect()
+		res.Status(http.StatusBadRequest)
+		body := res.JSON().Object()
+		body.ValueEqual("message", "validation error")
+		body.Value("details").Array().Length().Equal(2)
+		errs := body.Value("details").Array()
+		var fields []string
+		for _, err := range errs.Iter() {
+			err.Object().ValueEqual("type", v1.ErrorType_ERROR_TYPE_FIELD.
+				String())
+			fields = append(fields, err.Object().Value("field").String().Raw())
+		}
+		require.ElementsMatch(t, []string{"path", "connect_timeout"}, fields)
+	})
+	t.Run("recreating the service with the same name but different id fails",
+		func(t *testing.T) {
+			svc := goodService()
+			res := c.PUT("/v1/services/" + uuid.NewString()).
+				WithJSON(svc).
+				Expect()
+			res.Status(http.StatusBadRequest)
+			body := res.JSON().Object()
+			body.ValueEqual("message", "data constraint error")
+			body.Value("details").Array().Length().Equal(1)
+			err := body.Value("details").Array().Element(0)
+			err.Object().ValueEqual("type", v1.ErrorType_ERROR_TYPE_REFERENCE.
+				String())
+			err.Object().ValueEqual("field", "name")
+		})
+	t.Run("upsert correctly updates a route", func(t *testing.T) {
+		sid := uuid.NewString()
+		svc := &v1.Service{
+			Id:   sid,
+			Name: "r1",
+			Host: "example.com",
+			Path: "/bar",
+		}
+		res := c.POST("/v1/services").
+			WithJSON(svc).
+			Expect()
+		res.Status(http.StatusCreated)
+
+		svc = &v1.Service{
+			Id:   sid,
+			Name: "r1",
+			Host: "new.example.com",
+			Path: "/bar-new",
+		}
+		res = c.PUT("/v1/services/" + sid).
+			WithJSON(svc).
+			Expect()
+		res.Status(http.StatusOK)
+
+		res = c.GET("/v1/services/" + sid).Expect()
+		res.Status(http.StatusOK)
+		res.JSON().Object().Value("host").Equal("new.example.com")
+		res.JSON().Object().Value("path").Equal("/bar-new")
+	})
+}
+
 func TestServiceDelete(t *testing.T) {
 	s, cleanup := setup(t)
 	defer cleanup()
@@ -111,7 +194,7 @@ func TestServiceRead(t *testing.T) {
 		c.GET("/v1/services/" + randomID).Expect().Status(404)
 	})
 	t.Run("reading a service return 200", func(t *testing.T) {
-		body := c.GET("/v1/services/" + id).Expect().Status(200).JSON().Object()
+		body := c.GET("/v1/services/" + id).Expect().Status(http.StatusOK).JSON().Object()
 		validateGoodService(body)
 	})
 	t.Run("read request without an ID returns 400", func(t *testing.T) {
@@ -137,7 +220,7 @@ func TestServiceList(t *testing.T) {
 	res.Status(201)
 
 	t.Run("list returns multiple services", func(t *testing.T) {
-		body := c.GET("/v1/services").Expect().Status(200).JSON().Object()
+		body := c.GET("/v1/services").Expect().Status(http.StatusOK).JSON().Object()
 		items := body.Value("items").Array()
 		items.Length().Equal(2)
 		var gotIDs []string

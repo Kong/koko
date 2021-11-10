@@ -56,6 +56,22 @@ func (s *ServiceService) CreateService(ctx context.Context,
 	}, nil
 }
 
+func (s *ServiceService) UpsertService(ctx context.Context,
+	req *v1.UpsertServiceRequest) (*v1.UpsertServiceResponse, error) {
+	db, err := s.CommonOpts.getDB(ctx, req.Cluster)
+	if err != nil {
+		return nil, err
+	}
+	res := resource.NewService()
+	res.Service = req.Item
+	if err := db.Upsert(ctx, res); err != nil {
+		return nil, s.err(err)
+	}
+	return &v1.UpsertServiceResponse{
+		Item: res.Service,
+	}, nil
+}
+
 func (s *ServiceService) DeleteService(ctx context.Context,
 	req *v1.DeleteServiceRequest) (*v1.DeleteServiceResponse, error) {
 	if req.Id == "" {

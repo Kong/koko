@@ -183,6 +183,50 @@
         ]
       }
     },
+    "/v1/routes/{item.id}": {
+      "put": {
+        "operationId": "RouteService_UpsertRoute",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/kong.admin.model.v1.Route"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "item.id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/kong.admin.model.v1.Route"
+            }
+          },
+          {
+            "name": "cluster.id",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "kong.admin.service.v1.RouteService"
+        ]
+      }
+    },
     "/v1/services": {
       "get": {
         "operationId": "ServiceService_ListServices",
@@ -306,6 +350,50 @@
             "in": "path",
             "required": true,
             "type": "string"
+          },
+          {
+            "name": "cluster.id",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "kong.admin.service.v1.ServiceService"
+        ]
+      }
+    },
+    "/v1/services/{item.id}": {
+      "put": {
+        "operationId": "ServiceService_UpsertService",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/kong.admin.model.v1.Service"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "item.id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/kong.admin.model.v1.Service"
+            }
           },
           {
             "name": "cluster.id",
@@ -617,6 +705,25 @@
           "items": {
             "$ref": "#/definitions/kong.admin.model.v1.Service"
           }
+        }
+      }
+    },
+    "kong.admin.service.v1.UpsertRouteResponse": {
+      "type": "object",
+      "properties": {
+        "item": {
+          "$ref": "#/definitions/kong.admin.model.v1.Route"
+        },
+        "cluster": {
+          "$ref": "#/definitions/kong.admin.model.v1.RequestCluster"
+        }
+      }
+    },
+    "kong.admin.service.v1.UpsertServiceResponse": {
+      "type": "object",
+      "properties": {
+        "item": {
+          "$ref": "#/definitions/kong.admin.model.v1.Service"
         }
       }
     },

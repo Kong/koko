@@ -20,6 +20,7 @@ const _ = grpc.SupportPackageIsVersion7
 type ServiceServiceClient interface {
 	GetService(ctx context.Context, in *GetServiceRequest, opts ...grpc.CallOption) (*GetServiceResponse, error)
 	CreateService(ctx context.Context, in *CreateServiceRequest, opts ...grpc.CallOption) (*CreateServiceResponse, error)
+	UpsertService(ctx context.Context, in *UpsertServiceRequest, opts ...grpc.CallOption) (*UpsertServiceResponse, error)
 	DeleteService(ctx context.Context, in *DeleteServiceRequest, opts ...grpc.CallOption) (*DeleteServiceResponse, error)
 	ListServices(ctx context.Context, in *ListServicesRequest, opts ...grpc.CallOption) (*ListServicesResponse, error)
 }
@@ -50,6 +51,15 @@ func (c *serviceServiceClient) CreateService(ctx context.Context, in *CreateServ
 	return out, nil
 }
 
+func (c *serviceServiceClient) UpsertService(ctx context.Context, in *UpsertServiceRequest, opts ...grpc.CallOption) (*UpsertServiceResponse, error) {
+	out := new(UpsertServiceResponse)
+	err := c.cc.Invoke(ctx, "/kong.admin.service.v1.ServiceService/UpsertService", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *serviceServiceClient) DeleteService(ctx context.Context, in *DeleteServiceRequest, opts ...grpc.CallOption) (*DeleteServiceResponse, error) {
 	out := new(DeleteServiceResponse)
 	err := c.cc.Invoke(ctx, "/kong.admin.service.v1.ServiceService/DeleteService", in, out, opts...)
@@ -74,6 +84,7 @@ func (c *serviceServiceClient) ListServices(ctx context.Context, in *ListService
 type ServiceServiceServer interface {
 	GetService(context.Context, *GetServiceRequest) (*GetServiceResponse, error)
 	CreateService(context.Context, *CreateServiceRequest) (*CreateServiceResponse, error)
+	UpsertService(context.Context, *UpsertServiceRequest) (*UpsertServiceResponse, error)
 	DeleteService(context.Context, *DeleteServiceRequest) (*DeleteServiceResponse, error)
 	ListServices(context.Context, *ListServicesRequest) (*ListServicesResponse, error)
 	mustEmbedUnimplementedServiceServiceServer()
@@ -88,6 +99,9 @@ func (UnimplementedServiceServiceServer) GetService(context.Context, *GetService
 }
 func (UnimplementedServiceServiceServer) CreateService(context.Context, *CreateServiceRequest) (*CreateServiceResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateService not implemented")
+}
+func (UnimplementedServiceServiceServer) UpsertService(context.Context, *UpsertServiceRequest) (*UpsertServiceResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpsertService not implemented")
 }
 func (UnimplementedServiceServiceServer) DeleteService(context.Context, *DeleteServiceRequest) (*DeleteServiceResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteService not implemented")
@@ -144,6 +158,24 @@ func _ServiceService_CreateService_Handler(srv interface{}, ctx context.Context,
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ServiceService_UpsertService_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpsertServiceRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ServiceServiceServer).UpsertService(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/kong.admin.service.v1.ServiceService/UpsertService",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ServiceServiceServer).UpsertService(ctx, req.(*UpsertServiceRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _ServiceService_DeleteService_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(DeleteServiceRequest)
 	if err := dec(in); err != nil {
@@ -194,6 +226,10 @@ var ServiceService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CreateService",
 			Handler:    _ServiceService_CreateService_Handler,
+		},
+		{
+			MethodName: "UpsertService",
+			Handler:    _ServiceService_UpsertService_Handler,
 		},
 		{
 			MethodName: "DeleteService",

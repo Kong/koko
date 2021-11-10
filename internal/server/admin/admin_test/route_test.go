@@ -1,6 +1,7 @@
 package admin_test
 
 import (
+	"net/http"
 	"testing"
 
 	"github.com/gavv/httpexpect/v2"
@@ -85,6 +86,99 @@ func TestRouteCreate(t *testing.T) {
 	})
 }
 
+func TestRouteUpsert(t *testing.T) {
+	s, cleanup := setup(t)
+	defer cleanup()
+	c := httpexpect.New(t, s.URL)
+	t.Run("upsert a valid route", func(t *testing.T) {
+		res := c.PUT("/v1/routes/" + uuid.NewString()).
+			WithJSON(goodRoute()).
+			Expect()
+		res.Status(http.StatusOK)
+		body := res.JSON().Object()
+		validateGoodRoute(body)
+	})
+	t.Run("re-upserting the same route with different id fails",
+		func(t *testing.T) {
+			route := goodRoute()
+			res := c.PUT("/v1/routes/" + uuid.NewString()).
+				WithJSON(route).
+				Expect()
+			res.Status(http.StatusBadRequest)
+			body := res.JSON().Object()
+			body.ValueEqual("message", "data constraint error")
+			body.Value("details").Array().Length().Equal(1)
+			err := body.Value("details").Array().Element(0)
+			err.Object().ValueEqual("type", v1.ErrorType_ERROR_TYPE_REFERENCE.String())
+			err.Object().ValueEqual("field", "name")
+		})
+	t.Run("upserting a route with a non-existent service fails", func(t *testing.T) {
+		route := &v1.Route{
+			Name:  "bar",
+			Paths: []string{"/"},
+			Service: &v1.Service{
+				Id: uuid.NewString(),
+			},
+		}
+		res := c.PUT("/v1/routes/" + uuid.NewString()).
+			WithJSON(route).
+			Expect()
+		res.Status(400)
+		body := res.JSON().Object()
+		body.ValueEqual("message", "data constraint error")
+		body.Value("details").Array().Length().Equal(1)
+		err := body.Value("details").Array().Element(0)
+		err.Object().ValueEqual("type", v1.ErrorType_ERROR_TYPE_REFERENCE.String())
+		err.Object().ValueEqual("field", "service.id")
+	})
+	t.Run("upserting a route with a valid service.id succeeds", func(t *testing.T) {
+		service := goodService()
+		sid := uuid.NewString()
+		res := c.PUT("/v1/services/" + sid).
+			WithJSON(service).
+			Expect()
+		res.Status(http.StatusOK)
+		route := &v1.Route{
+			Name:  "bar",
+			Paths: []string{"/"},
+			Service: &v1.Service{
+				Id: sid,
+			},
+		}
+		res = c.PUT("/v1/routes/" + uuid.NewString()).
+			WithJSON(route).
+			Expect()
+		res.Status(http.StatusOK)
+	})
+	t.Run("upsert correctly updates a route", func(t *testing.T) {
+		rid := uuid.NewString()
+		route := &v1.Route{
+			Id:    rid,
+			Name:  "r1",
+			Paths: []string{"/"},
+		}
+		res := c.POST("/v1/routes").
+			WithJSON(route).
+			Expect()
+		res.Status(http.StatusCreated)
+
+		route = &v1.Route{
+			Name:  "r1",
+			Paths: []string{"/new-value"},
+		}
+		res = c.PUT("/v1/routes/" + rid).
+			WithJSON(route).
+			Expect()
+		res.Status(http.StatusOK)
+
+		res = c.GET("/v1/routes/" + rid).Expect()
+		res.Status(http.StatusOK)
+		paths := res.JSON().Object().Value("paths").Array()
+		paths.Length().Equal(1)
+		paths.Element(0).String().Equal("/new-value")
+	})
+}
+
 func TestRouteDelete(t *testing.T) {
 	s, cleanup := setup(t)
 	defer cleanup()
@@ -118,7 +212,7 @@ func TestRouteRead(t *testing.T) {
 		c.GET("/v1/routes/" + randomID).Expect().Status(404)
 	})
 	t.Run("reading a route return 200", func(t *testing.T) {
-		body := c.GET("/v1/routes/" + id).Expect().Status(200).JSON().Object()
+		body := c.GET("/v1/routes/" + id).Expect().Status(http.StatusOK).JSON().Object()
 		validateGoodRoute(body)
 	})
 	t.Run("read request without an ID returns 400", func(t *testing.T) {
@@ -143,7 +237,7 @@ func TestRouteList(t *testing.T) {
 	res.Status(201)
 
 	t.Run("list returns multiple routes", func(t *testing.T) {
-		body := c.GET("/v1/routes").Expect().Status(200).JSON().Object()
+		body := c.GET("/v1/routes").Expect().Status(http.StatusOK).JSON().Object()
 		items := body.Value("items").Array()
 		items.Length().Equal(2)
 		var gotIDs []string

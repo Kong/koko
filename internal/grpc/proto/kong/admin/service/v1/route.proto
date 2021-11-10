@@ -22,6 +22,13 @@ service RouteService {
       response_body: "item"
     };
   }
+  rpc UpsertRoute(UpsertRouteRequest) returns (UpsertRouteResponse) {
+    option (google.api.http) = {
+      put: "/v1/routes/{item.id}"
+      body: "item"
+      response_body: "item"
+    };
+  }
   rpc DeleteRoute(DeleteRouteRequest) returns (DeleteRouteResponse) {
     option (google.api.http) = {
       delete: "/v1/routes/{id}"
@@ -49,6 +56,16 @@ message CreateRouteRequest{
 }
 
 message CreateRouteResponse{
+  model.v1.Route item = 1;
+  model.v1.RequestCluster cluster = 2;
+}
+
+message UpsertRouteRequest{
+  model.v1.Route item = 1;
+  model.v1.RequestCluster cluster = 2;
+}
+
+message UpsertRouteResponse{
   model.v1.Route item = 1;
   model.v1.RequestCluster cluster = 2;
 }

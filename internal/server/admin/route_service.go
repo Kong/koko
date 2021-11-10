@@ -56,6 +56,22 @@ func (s *RouteService) CreateRoute(ctx context.Context,
 	}, nil
 }
 
+func (s *RouteService) UpsertRoute(ctx context.Context,
+	req *v1.UpsertRouteRequest) (*v1.UpsertRouteResponse, error) {
+	db, err := s.CommonOpts.getDB(ctx, req.Cluster)
+	if err != nil {
+		return nil, err
+	}
+	res := resource.NewRoute()
+	res.Route = req.Item
+	if err := db.Upsert(ctx, res); err != nil {
+		return nil, s.err(err)
+	}
+	return &v1.UpsertRouteResponse{
+		Item: res.Route,
+	}, nil
+}
+
 func (s *RouteService) DeleteRoute(ctx context.Context,
 	req *v1.DeleteRouteRequest) (*v1.DeleteRouteResponse, error) {
 	if req.Id == "" {
