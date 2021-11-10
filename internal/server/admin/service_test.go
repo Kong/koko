@@ -1,4 +1,4 @@
-package admin_test
+package admin
 
 import (
 	"net/http"
