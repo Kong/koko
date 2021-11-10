@@ -12,6 +12,7 @@ import (
 	"github.com/kong/koko/internal/json"
 	"github.com/kong/koko/internal/model"
 	"github.com/kong/koko/internal/persistence"
+	"github.com/kong/koko/internal/resource"
 	"github.com/kong/koko/internal/store/event"
 	"go.uber.org/zap"
 )
@@ -112,7 +113,7 @@ func (s *ObjectStore) Create(ctx context.Context, object model.Object,
 		if err := s.createIndexes(ctx, tx, object); err != nil {
 			return err
 		}
-		if err := s.updateEvent(ctx, tx); err != nil {
+		if err := s.updateEvent(ctx, tx, object); err != nil {
 			return err
 		}
 		return tx.Put(ctx, id, value)
@@ -170,7 +171,7 @@ func (s *ObjectStore) Upsert(ctx context.Context, object model.Object,
 		}
 
 		// 3. fire off new update event
-		if err := s.updateEvent(ctx, tx); err != nil {
+		if err := s.updateEvent(ctx, tx, object); err != nil {
 			return err
 		}
 
@@ -179,7 +180,11 @@ func (s *ObjectStore) Upsert(ctx context.Context, object model.Object,
 	})
 }
 
-func (s *ObjectStore) updateEvent(ctx context.Context, tx persistence.Tx) error {
+func (s *ObjectStore) updateEvent(ctx context.Context, tx persistence.Tx,
+	object model.Object) error {
+	if object.Type() == resource.TypeNode {
+		return nil
+	}
 	event := event.Event{
 		StoreEvent: &nonPublic.StoreEvent{
 			Id:    s.clusterKey(event.ID),
@@ -276,7 +281,7 @@ func (s *ObjectStore) Delete(ctx context.Context,
 		if err := s.deleteIndexes(ctx, tx, object); err != nil {
 			return err
 		}
-		return s.updateEvent(ctx, tx)
+		return s.updateEvent(ctx, tx, object)
 	})
 }
 

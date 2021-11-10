@@ -569,6 +569,63 @@ func TestUpdateEvent(t *testing.T) {
 	})
 }
 
+func TestUpdateEventForNode(t *testing.T) {
+	persister, err := util.GetPersister()
+	require.Nil(t, err)
+	s := New(persister, log.Logger).ForCluster("default")
+	ctx := context.Background()
+	t.Run("creating node doesn't create an update event", func(t *testing.T) {
+		node := resource.NewNode()
+		id := uuid.NewString()
+		node.Node = &v1.Node{
+			Id:       id,
+			Hostname: "foo",
+			Version:  "bar",
+			Type:     resource.NodeTypeKongProxy,
+			LastPing: 42,
+		}
+		require.Nil(t, s.Create(ctx, node))
+		e := event.New()
+		err := s.Read(ctx, e, GetByID(event.ID))
+		require.Equal(t, ErrNotFound, err)
+	})
+	t.Run("upserting node doesn't create an update event", func(t *testing.T) {
+		node := resource.NewNode()
+		id := uuid.NewString()
+		node.Node = &v1.Node{
+			Id:       id,
+			Hostname: "foo",
+			Version:  "bar",
+			Type:     resource.NodeTypeKongProxy,
+			LastPing: 42,
+		}
+		require.Nil(t, s.Upsert(ctx, node))
+		e := event.New()
+		err := s.Read(ctx, e, GetByID(event.ID))
+		require.Equal(t, ErrNotFound, err)
+	})
+	t.Run("deleting node doesn't create an update event", func(t *testing.T) {
+		node := resource.NewNode()
+		id := uuid.NewString()
+		node.Node = &v1.Node{
+			Id:       id,
+			Hostname: "foo",
+			Version:  "bar",
+			Type:     resource.NodeTypeKongProxy,
+			LastPing: 42,
+		}
+		require.Nil(t, s.Upsert(ctx, node))
+		e := event.New()
+		err := s.Read(ctx, e, GetByID(event.ID))
+		require.Equal(t, ErrNotFound, err)
+
+		require.Nil(t, s.Delete(ctx, DeleteByID(id),
+			DeleteByType(resource.TypeNode)))
+		err = s.Read(ctx, e, GetByID(event.ID))
+		require.Equal(t, ErrNotFound, err)
+	})
+}
+
 func TestStoredValue(t *testing.T) {
 	t.Run("store value is a JSON string", func(t *testing.T) {
 		ctx := context.Background()
