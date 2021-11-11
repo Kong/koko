@@ -62,10 +62,6 @@ func (r Service) Validate() error {
 	return validation.Validate(string(TypeService), r.Service)
 }
 
-func (r Service) ValidateCompat() error {
-	return r.Validate()
-}
-
 func (r Service) ProcessDefaults() error {
 	if r.Service == nil {
 		return fmt.Errorf("invalid nil resource")

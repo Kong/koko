@@ -3,7 +3,6 @@ package resource
 import (
 	"testing"
 
-	"github.com/google/uuid"
 	model "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
 	"github.com/kong/koko/internal/model/json/validation"
 	"github.com/kong/koko/internal/model/json/validation/typedefs"
@@ -61,26 +60,6 @@ func TestService_ProcessDefaults(t *testing.T) {
 			WriteTimeout:   defaultTimeout,
 		}, r.Resource())
 	})
-}
-
-func TestValidate(t *testing.T) {
-	s := model.Service{
-		Id:             uuid.NewString(),
-		Name:           "foo",
-		Retries:        1<<15 - 1,
-		Tags:           []string{"foo"},
-		Protocol:       "http",
-		Host:           "foo.com",
-		Port:           80,
-		Path:           "/sf/bar/foo",
-		ConnectTimeout: 3,
-		ReadTimeout:    3,
-		WriteTimeout:   3,
-	}
-
-	svc := &Service{Service: &s}
-	err := svc.ValidateCompat()
-	require.Nil(t, err)
 }
 
 func goodService() Service {

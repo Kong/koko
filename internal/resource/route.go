@@ -82,10 +82,6 @@ func (r Route) Validate() error {
 	return validation.Validate(string(TypeRoute), r.Route)
 }
 
-func (r Route) ValidateCompat() error {
-	return r.Validate()
-}
-
 func (r Route) ProcessDefaults() error {
 	if r.Route == nil {
 		return fmt.Errorf("invalid nil resource")
