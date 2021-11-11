@@ -123,6 +123,8 @@ func init() {
 				Type:  "array",
 				Items: typedefs.ID,
 			},
+			"created_at": typedefs.UnixEpoch,
+			"updated_at": typedefs.UnixEpoch,
 		},
 		AdditionalProperties: false,
 		Required: []string{

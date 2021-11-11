@@ -92,6 +92,8 @@ func init() {
 				MinLength: 1,
 				MaxLength: maxVersionLength,
 			},
+			"created_at": typedefs.UnixEpoch,
+			"updated_at": typedefs.UnixEpoch,
 		},
 		AdditionalProperties: false,
 		Required: []string{

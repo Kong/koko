@@ -4,6 +4,10 @@
     "protocols"
   ],
   "properties": {
+    "created_at": {
+      "minimum": 1,
+      "type": "integer"
+    },
     "destinations": {
       "items": {
         "properties": {
@@ -247,6 +251,10 @@
       },
       "maxItems": 8,
       "type": "array"
+    },
+    "updated_at": {
+      "minimum": 1,
+      "type": "integer"
     }
   },
   "type": "object",

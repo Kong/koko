@@ -233,7 +233,9 @@ func init() {
 				Items: typedefs.CIDRPort,
 			},
 			// TODO "service": find a way to reference
-			"tags": typedefs.Tags,
+			"tags":       typedefs.Tags,
+			"created_at": typedefs.UnixEpoch,
+			"updated_at": typedefs.UnixEpoch,
 		},
 		AdditionalProperties: false,
 		Required: []string{

@@ -7,6 +7,10 @@
     "version"
   ],
   "properties": {
+    "created_at": {
+      "minimum": 1,
+      "type": "integer"
+    },
     "hostname": {
       "maxLength": 1024,
       "minLength": 1,
@@ -26,6 +30,10 @@
         "kong-proxy"
       ],
       "type": "string"
+    },
+    "updated_at": {
+      "minimum": 1,
+      "type": "integer"
     },
     "version": {
       "maxLength": 128,

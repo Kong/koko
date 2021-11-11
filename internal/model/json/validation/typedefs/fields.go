@@ -55,6 +55,11 @@ var Port = &generator.Schema{
 	Maximum: maxPort,
 }
 
+var UnixEpoch = &generator.Schema{
+	Type:    "integer",
+	Minimum: 1,
+}
+
 var Tags = &generator.Schema{
 	Type:     "array",
 	Items:    Name,

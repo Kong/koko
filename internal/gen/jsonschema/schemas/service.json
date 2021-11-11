@@ -22,6 +22,10 @@
       "minimum": 1,
       "type": "integer"
     },
+    "created_at": {
+      "minimum": 1,
+      "type": "integer"
+    },
     "host": {
       "pattern": "^[a-z0-9]([-a-z0-9]*[a-z0-9])?(.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$",
       "type": "string",
@@ -95,6 +99,10 @@
     },
     "tls_verify_depth": {
       "maximum": 64,
+      "type": "integer"
+    },
+    "updated_at": {
+      "minimum": 1,
       "type": "integer"
     },
     "write_timeout": {
