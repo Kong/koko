@@ -782,9 +782,6 @@
       "properties": {
         "item": {
           "$ref": "#/definitions/kong.admin.model.v1.Route"
-        },
-        "cluster": {
-          "$ref": "#/definitions/kong.admin.model.v1.RequestCluster"
         }
       }
     },
@@ -883,9 +880,6 @@
       "properties": {
         "item": {
           "$ref": "#/definitions/kong.admin.model.v1.Route"
-        },
-        "cluster": {
-          "$ref": "#/definitions/kong.admin.model.v1.RequestCluster"
         }
       }
     },

@@ -57,7 +57,6 @@ message CreateRouteRequest{
 
 message CreateRouteResponse{
   model.v1.Route item = 1;
-  model.v1.RequestCluster cluster = 2;
 }
 
 message UpsertRouteRequest{
@@ -67,7 +66,6 @@ message UpsertRouteRequest{
 
 message UpsertRouteResponse{
   model.v1.Route item = 1;
-  model.v1.RequestCluster cluster = 2;
 }
 
 message DeleteRouteRequest{
