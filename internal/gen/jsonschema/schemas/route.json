@@ -102,7 +102,7 @@
     "name": {
       "maxLength": 128,
       "minLength": 1,
-      "pattern": "^[0-9a-zA-Z.-_~]*$",
+      "pattern": "^[0-9a-zA-Z.\\-_~]*$",
       "type": "string"
     },
     "path_handling": {
@@ -246,7 +246,7 @@
       "items": {
         "maxLength": 128,
         "minLength": 1,
-        "pattern": "^[0-9a-zA-Z.-_~]*$",
+        "pattern": "^[0-9a-zA-Z.\\-_~]*$",
         "type": "string"
       },
       "maxItems": 8,

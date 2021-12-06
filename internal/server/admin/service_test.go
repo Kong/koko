@@ -78,6 +78,12 @@ func TestServiceCreate(t *testing.T) {
 				String())
 			err.Object().ValueEqual("field", "name")
 		})
+	t.Run("service with a '-' in name can be created", func(t *testing.T) {
+		svc := goodService()
+		svc.Name = "foo-with-dash"
+		res := c.POST("/v1/services").WithJSON(svc).Expect()
+		res.Status(201)
+	})
 }
 
 func TestServiceUpsert(t *testing.T) {

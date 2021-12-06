@@ -9,6 +9,7 @@ const (
 	maxPort       = 65535
 	maxTimeout    = (1 << 31) - 2 //nolint:gomnd
 	maxTags       = 8
+	namePattern   = `^[0-9a-zA-Z.\-_~]*$`
 )
 
 var ID = &generator.Schema{
@@ -19,7 +20,7 @@ var ID = &generator.Schema{
 
 var Name = &generator.Schema{
 	Type:      "string",
-	Pattern:   "^[0-9a-zA-Z.-_~]*$",
+	Pattern:   namePattern,
 	MinLength: 1,
 	MaxLength: maxNameLength,
 }
