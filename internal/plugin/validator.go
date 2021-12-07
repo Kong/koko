@@ -68,7 +68,7 @@ func validationErr(name string, e error) error {
 	if err != nil {
 		return fmt.Errorf("unmarshal kong plugin validation error: %v", err)
 	}
-	res := &validation.Error{}
+	res := validation.Error{}
 	// name error happens when plugin doesn't exist
 	if _, ok := errMap["name"]; ok {
 		res.Errs = append(res.Errs, &model.ErrorDetail{

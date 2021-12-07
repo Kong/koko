@@ -113,7 +113,7 @@ func TestValidate(t *testing.T) {
 			Protocols: []string{"http", "https"},
 			Enabled:   wrapperspb.Bool(true),
 		})
-		validationErr, ok := err.(*validation.Error)
+		validationErr, ok := err.(validation.Error)
 		require.True(t, ok)
 		expected := []*model.ErrorDetail{
 			{
@@ -149,7 +149,7 @@ func TestValidate(t *testing.T) {
 			Name: "no-auth",
 		})
 		require.NotNil(t, err)
-		validationErr, ok := err.(*validation.Error)
+		validationErr, ok := err.(validation.Error)
 		require.True(t, ok)
 		expected := []*model.ErrorDetail{
 			{
@@ -171,7 +171,7 @@ func TestValidate(t *testing.T) {
 			Enabled:   wrapperspb.Bool(true),
 		})
 		require.NotNil(t, err)
-		validationErr, ok := err.(*validation.Error)
+		validationErr, ok := err.(validation.Error)
 		require.True(t, ok)
 		expected := []*model.ErrorDetail{
 			{
