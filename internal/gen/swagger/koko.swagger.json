@@ -12,6 +12,9 @@
       "name": "NodeService"
     },
     {
+      "name": "PluginService"
+    },
+    {
       "name": "RouteService"
     },
     {
@@ -147,6 +150,186 @@
         ],
         "tags": [
           "kong.admin.service.v1.NodeService"
+        ]
+      }
+    },
+    "/v1/plugins": {
+      "get": {
+        "operationId": "PluginService_ListPlugins",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/kong.admin.service.v1.ListPluginsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "cluster.id",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "kong.admin.service.v1.PluginService"
+        ]
+      },
+      "post": {
+        "operationId": "PluginService_CreatePlugin",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/kong.admin.model.v1.Plugin"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/kong.admin.model.v1.Plugin"
+            }
+          },
+          {
+            "name": "cluster.id",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "kong.admin.service.v1.PluginService"
+        ]
+      }
+    },
+    "/v1/plugins/{id}": {
+      "get": {
+        "operationId": "PluginService_GetPlugin",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/kong.admin.model.v1.Plugin"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "cluster.id",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "kong.admin.service.v1.PluginService"
+        ]
+      },
+      "delete": {
+        "operationId": "PluginService_DeletePlugin",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/kong.admin.service.v1.DeletePluginResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "cluster.id",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "kong.admin.service.v1.PluginService"
+        ]
+      }
+    },
+    "/v1/plugins/{item.id}": {
+      "put": {
+        "operationId": "PluginService_UpsertPlugin",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/kong.admin.model.v1.Plugin"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "item.id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/kong.admin.model.v1.Plugin"
+            }
+          },
+          {
+            "name": "cluster.id",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "kong.admin.service.v1.PluginService"
         ]
       }
     },
@@ -521,6 +704,14 @@
       },
       "additionalProperties": {}
     },
+    "google.protobuf.NullValue": {
+      "type": "string",
+      "enum": [
+        "NULL_VALUE"
+      ],
+      "default": "NULL_VALUE",
+      "description": "`NullValue` is a singleton enumeration to represent the null value for the\n`Value` type union.\n\n The JSON representation for `NullValue` is JSON `null`.\n\n - NULL_VALUE: Null value."
+    },
     "google.rpc.Status": {
       "type": "object",
       "properties": {
@@ -588,6 +779,49 @@
         "updatedAt": {
           "type": "integer",
           "format": "int32"
+        }
+      }
+    },
+    "kong.admin.model.v1.Plugin": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "updatedAt": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "protocols": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "service": {
+          "$ref": "#/definitions/kong.admin.model.v1.Service"
+        },
+        "route": {
+          "$ref": "#/definitions/kong.admin.model.v1.Route"
+        },
+        "config": {
+          "type": "object"
         }
       }
     },
@@ -777,6 +1011,14 @@
         }
       }
     },
+    "kong.admin.service.v1.CreatePluginResponse": {
+      "type": "object",
+      "properties": {
+        "item": {
+          "$ref": "#/definitions/kong.admin.model.v1.Plugin"
+        }
+      }
+    },
     "kong.admin.service.v1.CreateRouteResponse": {
       "type": "object",
       "properties": {
@@ -796,6 +1038,9 @@
     "kong.admin.service.v1.DeleteNodeResponse": {
       "type": "object"
     },
+    "kong.admin.service.v1.DeletePluginResponse": {
+      "type": "object"
+    },
     "kong.admin.service.v1.DeleteRouteResponse": {
       "type": "object"
     },
@@ -807,6 +1052,14 @@
       "properties": {
         "item": {
           "$ref": "#/definitions/kong.admin.model.v1.Node"
+        }
+      }
+    },
+    "kong.admin.service.v1.GetPluginResponse": {
+      "type": "object",
+      "properties": {
+        "item": {
+          "$ref": "#/definitions/kong.admin.model.v1.Plugin"
         }
       }
     },
@@ -845,6 +1098,17 @@
         }
       }
     },
+    "kong.admin.service.v1.ListPluginsResponse": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/kong.admin.model.v1.Plugin"
+          }
+        }
+      }
+    },
     "kong.admin.service.v1.ListRoutesResponse": {
       "type": "object",
       "properties": {
@@ -872,6 +1136,14 @@
       "properties": {
         "item": {
           "$ref": "#/definitions/kong.admin.model.v1.Node"
+        }
+      }
+    },
+    "kong.admin.service.v1.UpsertPluginResponse": {
+      "type": "object",
+      "properties": {
+        "item": {
+          "$ref": "#/definitions/kong.admin.model.v1.Plugin"
         }
       }
     },

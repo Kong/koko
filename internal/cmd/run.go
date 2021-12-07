@@ -12,6 +12,8 @@ import (
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/service/v1"
 	relay "github.com/kong/koko/internal/gen/grpc/kong/relay/service/v1"
 	"github.com/kong/koko/internal/persistence"
+	"github.com/kong/koko/internal/plugin"
+	"github.com/kong/koko/internal/resource"
 	"github.com/kong/koko/internal/server"
 	"github.com/kong/koko/internal/server/admin"
 	"github.com/kong/koko/internal/server/health"
@@ -52,6 +54,16 @@ func Run(ctx context.Context, config ServerConfig) error {
 
 	store := store.New(persister, logger.With(zap.String("component",
 		"store"))).ForCluster("default")
+
+	validator, err := plugin.NewLuaValidator(plugin.Opts{Logger: logger})
+	if err != nil {
+		return err
+	}
+	err = validator.LoadSchemasFromEmbed(plugin.Schemas, "schemas")
+	if err != nil {
+		return err
+	}
+	resource.SetValidator(validator)
 
 	storeLoader := admin.DefaultStoreLoader{Store: store}
 	adminLogger := logger.With(zap.String("component", "admin-server"))

@@ -53,7 +53,9 @@ func (c CommonOpts) getDB(ctx context.Context,
 type services struct {
 	service v1.ServiceServiceServer
 	route   v1.RouteServiceServer
-	node    v1.NodeServiceServer
+	plugin  v1.PluginServiceServer
+
+	node v1.NodeServiceServer
 }
 
 func buildServices(opts HandlerOpts) services {
@@ -70,6 +72,13 @@ func buildServices(opts HandlerOpts) services {
 				storeLoader: opts.StoreLoader,
 				logger: opts.Logger.With(zap.String("admin-service",
 					"route")),
+			},
+		},
+		plugin: &PluginService{
+			CommonOpts: CommonOpts{
+				storeLoader: opts.StoreLoader,
+				logger: opts.Logger.With(zap.String("admin-service",
+					"plugin")),
 			},
 		},
 		node: &NodeService{
@@ -111,6 +120,12 @@ func NewHandler(opts HandlerOpts) (http.Handler, error) {
 		return nil, err
 	}
 
+	err = v1.RegisterPluginServiceHandlerServer(context.Background(),
+		mux, services.plugin)
+	if err != nil {
+		return nil, err
+	}
+
 	err = v1.RegisterNodeServiceHandlerServer(context.Background(),
 		mux, services.node)
 	if err != nil {
@@ -136,6 +151,7 @@ func NewGRPC(opts HandlerOpts) *grpc.Server {
 	v1.RegisterMetaServiceServer(server, &MetaService{})
 	v1.RegisterServiceServiceServer(server, services.service)
 	v1.RegisterRouteServiceServer(server, services.route)
+	v1.RegisterPluginServiceServer(server, services.plugin)
 	v1.RegisterNodeServiceServer(server, services.node)
 	return server
 }

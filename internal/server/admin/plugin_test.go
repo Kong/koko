@@ -1,0 +1,372 @@
+package admin
+
+import (
+	"net/http"
+	"testing"
+
+	"github.com/gavv/httpexpect/v2"
+	"github.com/google/uuid"
+	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
+	"github.com/kong/koko/internal/json"
+	"github.com/kong/koko/internal/log"
+	"github.com/kong/koko/internal/plugin"
+	"github.com/kong/koko/internal/resource"
+	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/types/known/structpb"
+	"google.golang.org/protobuf/types/known/wrapperspb"
+)
+
+func init() {
+	validator, err := plugin.NewLuaValidator(plugin.Opts{Logger: log.Logger})
+	if err != nil {
+		panic(err)
+	}
+
+	err = validator.LoadSchemasFromEmbed(plugin.Schemas, "schemas")
+	if err != nil {
+		panic(err)
+	}
+	resource.SetValidator(validator)
+}
+
+func goodKeyAuthPlugin() *v1.Plugin {
+	return &v1.Plugin{
+		Name: "key-auth",
+	}
+}
+
+func validateKeyAuthPlugin(body *httpexpect.Object) {
+	body.ContainsKey("id")
+	body.ValueEqual("name", "key-auth")
+	body.ContainsKey("created_at")
+	body.ContainsKey("updated_at")
+	body.Value("protocols").Array().ContainsOnly(
+		"http",
+		"https",
+		"grpc",
+		"grpcs")
+	body.ValueEqual("enabled", true)
+	config := body.Value("config").Object()
+	config.ValueEqual("anonymous", nil)
+	config.ValueEqual("key_in_body", false)
+	config.ValueEqual("hide_credentials", false)
+	config.ValueEqual("key_in_query", true)
+	config.ValueEqual("key_in_header", true)
+	config.ValueEqual("key_names", []string{"apikey"})
+	config.ValueEqual("run_on_preflight", true)
+}
+
+func TestPluginCreate(t *testing.T) {
+	s, cleanup := setup(t)
+	defer cleanup()
+	c := httpexpect.New(t, s.URL)
+	t.Run("creates a valid global plugin", func(t *testing.T) {
+		pluginBytes, err := json.Marshal(goodKeyAuthPlugin())
+		require.Nil(t, err)
+		res := c.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
+		res.Status(201)
+		res.Header("grpc-metadata-koko-status-code").Empty()
+		body := res.JSON().Object()
+		validateKeyAuthPlugin(body)
+	})
+	t.Run("recreating the same plugin fails", func(t *testing.T) {
+		pluginBytes, err := json.Marshal(goodKeyAuthPlugin())
+		require.Nil(t, err)
+		res := c.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
+		res.Status(400)
+		body := res.JSON().Object()
+		body.ValueEqual("message", "data constraint error")
+		body.Value("details").Array().Length().Equal(1)
+		resErr := body.Value("details").Array().Element(0)
+		resErr.Object().ValueEqual("type", v1.ErrorType_ERROR_TYPE_REFERENCE.String())
+		resErr.Object().ValueEqual("messages", []string{
+			"unique-plugin-per-entity (" +
+				"type: unique) constraint failed for value 'key-auth..': ",
+		})
+	})
+	t.Run("creating a plugin with a non-existent service fails", func(t *testing.T) {
+		plugin := &v1.Plugin{
+			Name: "key-auth",
+			Service: &v1.Service{
+				Id: uuid.NewString(),
+			},
+			Enabled:   wrapperspb.Bool(true),
+			Protocols: []string{"http", "https"},
+		}
+		pluginBytes, err := json.Marshal(plugin)
+		require.Nil(t, err)
+		res := c.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
+		res.Status(400)
+		body := res.JSON().Object()
+		body.ValueEqual("message", "data constraint error")
+		body.Value("details").Array().Length().Equal(1)
+		errRes := body.Value("details").Array().Element(0)
+		errRes.Object().ValueEqual("type",
+			v1.ErrorType_ERROR_TYPE_REFERENCE.String())
+		errRes.Object().ValueEqual("field", "service.id")
+	})
+	t.Run("creating a plugin with a valid service.id succeeds", func(t *testing.T) {
+		service := goodService()
+		service.Id = uuid.NewString()
+		res := c.POST("/v1/services").WithJSON(service).Expect()
+		res.Status(201)
+		plugin := &v1.Plugin{
+			Name: "key-auth",
+			Service: &v1.Service{
+				Id: service.Id,
+			},
+		}
+		pluginBytes, err := json.Marshal(plugin)
+		require.Nil(t, err)
+		res = c.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
+		res.Status(201)
+	})
+	t.Run("creating a plugin with a non-existent route fails", func(t *testing.T) {
+		plugin := &v1.Plugin{
+			Name: "key-auth",
+			Route: &v1.Route{
+				Id: uuid.NewString(),
+			},
+			Enabled:   wrapperspb.Bool(true),
+			Protocols: []string{"http", "https"},
+		}
+		pluginBytes, err := json.Marshal(plugin)
+		require.Nil(t, err)
+		res := c.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
+		res.Status(400)
+		body := res.JSON().Object()
+		body.ValueEqual("message", "data constraint error")
+		body.Value("details").Array().Length().Equal(1)
+		errRes := body.Value("details").Array().Element(0)
+		errRes.Object().ValueEqual("type",
+			v1.ErrorType_ERROR_TYPE_REFERENCE.String())
+		errRes.Object().ValueEqual("field", "route.id")
+	})
+	t.Run("creating a plugin with a valid route.id succeeds", func(t *testing.T) {
+		route := goodRoute()
+		route.Id = uuid.NewString()
+		res := c.POST("/v1/routes").WithJSON(route).Expect()
+		res.Status(201)
+		plugin := &v1.Plugin{
+			Name: "key-auth",
+			Route: &v1.Route{
+				Id: route.Id,
+			},
+		}
+		pluginBytes, err := json.Marshal(plugin)
+		require.Nil(t, err)
+		res = c.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
+		res.Status(201)
+	})
+	t.Run("creating a plugin with a valid route.id and service.id succeeds",
+		func(t *testing.T) {
+			service := goodService()
+			service.Id = uuid.NewString()
+			service.Name = "foo-plugin-service"
+			res := c.POST("/v1/services").WithJSON(service).Expect()
+			res.Status(201)
+
+			route := goodRoute()
+			route.Id = uuid.NewString()
+			route.Name = "foo-plugin-route"
+			res = c.POST("/v1/routes").WithJSON(route).Expect()
+			res.Status(201)
+
+			plugin := &v1.Plugin{
+				Name: "key-auth",
+				Route: &v1.Route{
+					Id: route.Id,
+				},
+				Service: &v1.Service{
+					Id: service.Id,
+				},
+			}
+			pluginBytes, err := json.Marshal(plugin)
+			require.Nil(t, err)
+			res = c.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
+			res.Status(201)
+		})
+	t.Run("creating a unknown plugin error",
+		func(t *testing.T) {
+			plugin := &v1.Plugin{
+				Name: "no-auth",
+			}
+			pluginBytes, err := json.Marshal(plugin)
+			require.Nil(t, err)
+			res := c.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
+			res.Status(400)
+			body := res.JSON().Object()
+			body.ValueEqual("message", "validation error")
+			body.Value("details").Array().Length().Equal(1)
+			errRes := body.Value("details").Array().Element(0)
+			errRes.Object().ValueEqual("type",
+				v1.ErrorType_ERROR_TYPE_FIELD.String())
+			errRes.Object().ValueEqual("field", "name")
+			errRes.Object().ValueEqual("messages", []string{
+				"plugin(no-auth) does not exist",
+			})
+		})
+}
+
+func TestPluginUpsert(t *testing.T) {
+	s, cleanup := setup(t)
+	defer cleanup()
+	c := httpexpect.New(t, s.URL)
+	t.Run("upsert a valid plugin", func(t *testing.T) {
+		pluginBytes, err := json.Marshal(goodKeyAuthPlugin())
+		require.Nil(t, err)
+		res := c.PUT("/v1/plugins/" + uuid.NewString()).
+			WithBytes(pluginBytes).
+			Expect()
+		res.Status(http.StatusOK)
+		body := res.JSON().Object()
+		validateKeyAuthPlugin(body)
+	})
+	t.Run("re-upserting the same plugin with different id fails",
+		func(t *testing.T) {
+			pluginBytes, err := json.Marshal(goodKeyAuthPlugin())
+			require.Nil(t, err)
+			res := c.PUT("/v1/plugins/" + uuid.NewString()).
+				WithBytes(pluginBytes).
+				Expect()
+			res.Status(http.StatusBadRequest)
+			body := res.JSON().Object()
+			body.ValueEqual("message", "data constraint error")
+			body.Value("details").Array().Length().Equal(1)
+			resErr := body.Value("details").Array().Element(0)
+			resErr.Object().ValueEqual("type",
+				v1.ErrorType_ERROR_TYPE_REFERENCE.String())
+			resErr.Object().ValueEqual("messages", []string{
+				"unique-plugin-per-entity (" +
+					"type: unique) constraint failed for value 'key-auth..': ",
+			})
+		})
+	t.Run("upserting a plugin with a non-existent service fails", func(t *testing.T) {
+		plugin := &v1.Plugin{
+			Name: "key-auth",
+			Service: &v1.Service{
+				Id: uuid.NewString(),
+			},
+		}
+		pluginBytes, err := json.Marshal(plugin)
+		require.Nil(t, err)
+		res := c.PUT("/v1/plugins/" + uuid.NewString()).
+			WithBytes(pluginBytes).
+			Expect()
+		res.Status(400)
+		body := res.JSON().Object()
+		body.ValueEqual("message", "data constraint error")
+		body.Value("details").Array().Length().Equal(1)
+		errRes := body.Value("details").Array().Element(0)
+		errRes.Object().ValueEqual("type",
+			v1.ErrorType_ERROR_TYPE_REFERENCE.String())
+		errRes.Object().ValueEqual("field", "service.id")
+	})
+	t.Run("upsert correctly updates a plugin", func(t *testing.T) {
+		pid := uuid.NewString()
+		config, err := structpb.NewStruct(map[string]interface{}{"second": 42})
+		require.Nil(t, err)
+		plugin := &v1.Plugin{
+			Id:     pid,
+			Name:   "rate-limiting",
+			Config: config,
+		}
+		res := c.POST("/v1/plugins").
+			WithJSON(plugin).
+			Expect()
+		res.Status(http.StatusCreated)
+		res.JSON().Path("$.config.second").Number().Equal(42)
+		res.JSON().Path("$.config.day").Null()
+
+		config, err = structpb.NewStruct(map[string]interface{}{"day": 42})
+		require.Nil(t, err)
+		plugin = &v1.Plugin{
+			Name:   "rate-limiting",
+			Config: config,
+		}
+		res = c.PUT("/v1/plugins/" + pid).
+			WithJSON(plugin).
+			Expect()
+		res.Status(http.StatusOK)
+
+		res = c.GET("/v1/plugins/" + pid).Expect()
+		res.Status(http.StatusOK)
+		res.JSON().Path("$.config.day").Number().Equal(42)
+		res.JSON().Path("$.config.second").Null()
+	})
+}
+
+func TestPluginDelete(t *testing.T) {
+	s, cleanup := setup(t)
+	defer cleanup()
+	c := httpexpect.New(t, s.URL)
+	pluginBytes, err := json.Marshal(goodKeyAuthPlugin())
+	require.Nil(t, err)
+	res := c.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
+	id := res.JSON().Object().Value("id").String().Raw()
+	res.Status(201)
+	t.Run("deleting a non-existent plugin returns 404", func(t *testing.T) {
+		randomID := "071f5040-3e4a-46df-9d98-451e79e318fd"
+		c.DELETE("/v1/plugins/" + randomID).Expect().Status(404)
+	})
+	t.Run("deleting a plugin return 204", func(t *testing.T) {
+		c.DELETE("/v1/plugins/" + id).Expect().Status(204)
+	})
+	t.Run("delete request without an ID returns 400", func(t *testing.T) {
+		c.DELETE("/v1/plugins/").Expect().Status(400)
+	})
+}
+
+func TestPluginRead(t *testing.T) {
+	s, cleanup := setup(t)
+	defer cleanup()
+	c := httpexpect.New(t, s.URL)
+	pluginBytes, err := json.Marshal(goodKeyAuthPlugin())
+	require.Nil(t, err)
+	res := c.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
+	res.Status(201)
+	id := res.JSON().Object().Value("id").String().Raw()
+	t.Run("reading a non-existent plugin returns 404", func(t *testing.T) {
+		randomID := "071f5040-3e4a-46df-9d98-451e79e318fd"
+		c.GET("/v1/plugins/" + randomID).Expect().Status(404)
+	})
+	t.Run("reading a plugin return 200", func(t *testing.T) {
+		body := c.GET("/v1/plugins/" + id).Expect().Status(http.StatusOK).JSON().Object()
+		validateKeyAuthPlugin(body)
+	})
+	t.Run("read request without an ID returns 400", func(t *testing.T) {
+		c.GET("/v1/plugins/").Expect().Status(400)
+	})
+}
+
+func TestPluginList(t *testing.T) {
+	s, cleanup := setup(t)
+	defer cleanup()
+	c := httpexpect.New(t, s.URL)
+	pluginBytes, err := json.Marshal(goodKeyAuthPlugin())
+	require.Nil(t, err)
+	res := c.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
+	id1 := res.JSON().Object().Value("id").String().Raw()
+	res.Status(201)
+	plugin := &v1.Plugin{
+		Name:      "request-transformer",
+		Enabled:   wrapperspb.Bool(true),
+		Protocols: []string{"http", "https"},
+	}
+	pluginBytes, err = json.Marshal(plugin)
+	require.Nil(t, err)
+	res = c.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
+	id2 := res.JSON().Object().Value("id").String().Raw()
+	res.Status(201)
+
+	t.Run("list returns multiple plugins", func(t *testing.T) {
+		body := c.GET("/v1/plugins").Expect().Status(http.StatusOK).JSON().Object()
+		items := body.Value("items").Array()
+		items.Length().Equal(2)
+		var gotIDs []string
+		for _, item := range items.Iter() {
+			gotIDs = append(gotIDs, item.Object().Value("id").String().Raw())
+		}
+		require.ElementsMatch(t, []string{id1, id2}, gotIDs)
+	})
+}

@@ -1,0 +1,86 @@
+syntax = "proto3";
+
+package kong.admin.service.v1;
+
+option go_package = "github.com/kong/koko/internal/gen/kong/admin/service/v1;v1";
+
+import "google/api/annotations.proto";
+import "kong/admin/model/v1/plugin.proto";
+import "kong/admin/model/v1/cluster.proto";
+
+service PluginService {
+  rpc GetPlugin(GetPluginRequest) returns (GetPluginResponse) {
+    option (google.api.http) = {
+      get: "/v1/plugins/{id}"
+      response_body: "item"
+    };
+  }
+  rpc CreatePlugin(CreatePluginRequest) returns (CreatePluginResponse) {
+    option (google.api.http) = {
+      post: "/v1/plugins"
+      body: "item"
+      response_body: "item"
+    };
+  }
+  rpc UpsertPlugin(UpsertPluginRequest) returns (UpsertPluginResponse) {
+    option (google.api.http) = {
+      put: "/v1/plugins/{item.id}"
+      body: "item"
+      response_body: "item"
+    };
+  }
+  rpc DeletePlugin(DeletePluginRequest) returns (DeletePluginResponse) {
+    option (google.api.http) = {
+      delete: "/v1/plugins/{id}"
+    };
+  }
+  rpc ListPlugins(ListPluginsRequest) returns (ListPluginsResponse) {
+    option (google.api.http) = {
+      get: "/v1/plugins"
+    };
+  }
+}
+
+message GetPluginRequest{
+  string id = 1;
+  model.v1.RequestCluster cluster = 2;
+}
+
+message GetPluginResponse{
+  model.v1.Plugin item = 1;
+}
+
+message CreatePluginRequest{
+  model.v1.Plugin item = 1;
+  model.v1.RequestCluster cluster = 2;
+}
+
+message CreatePluginResponse{
+  model.v1.Plugin item = 1;
+}
+
+
+message UpsertPluginRequest{
+  model.v1.Plugin item = 1;
+  model.v1.RequestCluster cluster = 2;
+}
+
+message UpsertPluginResponse{
+  model.v1.Plugin item = 1;
+}
+
+message DeletePluginRequest{
+  string id = 1;
+  model.v1.RequestCluster cluster = 2;
+}
+
+message DeletePluginResponse{
+}
+
+message ListPluginsRequest{
+  model.v1.RequestCluster cluster = 1;
+}
+
+message ListPluginsResponse{
+  repeated model.v1.Plugin items = 1;
+}

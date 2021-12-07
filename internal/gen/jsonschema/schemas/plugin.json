@@ -1,0 +1,60 @@
+{
+  "required": [
+    "name"
+  ],
+  "properties": {
+    "config": {
+      "additionalProperties": true,
+      "type": "object"
+    },
+    "created_at": {
+      "minimum": 1,
+      "type": "integer"
+    },
+    "enabled": {
+      "type": "boolean"
+    },
+    "id": {
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+      "type": "string",
+      "description": "must be a valid UUID"
+    },
+    "name": {
+      "maxLength": 128,
+      "minLength": 1,
+      "pattern": "^[0-9a-zA-Z.\\-_~]*$",
+      "type": "string"
+    },
+    "protocols": {
+      "maxLength": 8,
+      "items": {
+        "enum": [
+          "http",
+          "https",
+          "grpc",
+          "grpcs",
+          "tcp",
+          "udp",
+          "tls"
+        ],
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "tags": {
+      "items": {
+        "maxLength": 128,
+        "minLength": 1,
+        "pattern": "^[0-9a-zA-Z.\\-_~]*$",
+        "type": "string"
+      },
+      "maxItems": 8,
+      "type": "array"
+    },
+    "updated_at": {
+      "minimum": 1,
+      "type": "integer"
+    }
+  },
+  "type": "object"
+}
