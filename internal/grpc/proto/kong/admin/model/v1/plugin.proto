@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+option go_package = "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1;v1";
+
+package kong.admin.model.v1;
+
+import "kong/admin/model/v1/service.proto";
+import "kong/admin/model/v1/route.proto";
+import "google/protobuf/wrappers.proto";
+import "google/protobuf/struct.proto";
+
+message Plugin {
+  string id = 1;
+  string name = 2;
+  int32 created_at = 3;
+  int32 updated_at = 4;
+  google.protobuf.BoolValue enabled = 5;
+  repeated string protocols = 6;
+  repeated string tags = 7;
+  Service service = 8;
+  Route route = 9;
+  google.protobuf.Struct config = 10;
+}
