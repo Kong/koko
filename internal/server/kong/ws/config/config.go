@@ -6,18 +6,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"sync"
-
-	"github.com/kong/koko/internal/gen/wrpc/kong/model"
 )
 
-type Service struct {
-	*model.Service
-	Routes []*model.Route `json:"routes"`
-}
+type Map map[string]interface{}
 
 type Content struct {
-	FormatVersion string     `json:"_format_version"`
-	Services      []*Service `json:"services,omitempty"`
+	FormatVersion string `json:"_format_version"`
+	Services      []Map  `json:"services,omitempty"`
+	Routes        []Map  `json:"routes,omitempty"`
 }
 
 type Payload struct {

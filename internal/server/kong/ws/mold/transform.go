@@ -3,47 +3,61 @@ package mold
 import (
 	"fmt"
 
-	"github.com/kong/koko/internal/gen/wrpc/kong/model"
 	"github.com/kong/koko/internal/json"
 	"github.com/kong/koko/internal/server/kong/ws/config"
 )
+
+type Map map[string]interface{}
 
 func GrpcToWrpc(input GrpcContent) (config.Content, error) {
 	res := config.Content{
 		FormatVersion: "2.1",
 	}
-	// service ID to service
-	services := map[string]*config.Service{}
+
 	for _, service := range input.Services {
-		var res model.Service
-		err := convert(service, &res)
+		m, err := simplify(service)
 		if err != nil {
-			return config.Content{}, fmt.Errorf("convert service: %v", err)
+			return config.Content{}, err
 		}
-		services[res.Id] = &config.Service{
-			Service: &res,
-		}
+		res.Services = append(res.Services, m)
 	}
-
 	for _, route := range input.Routes {
-		var res model.Route
-		err := convert(route, &res)
+		m, err := simplify(route)
 		if err != nil {
-			return config.Content{}, fmt.Errorf("convert service: %v", err)
+			return config.Content{}, err
 		}
-
-		if res.Service != nil && res.Service.Id != "" {
-			service := services[res.Service.Id]
-			res.Service = nil
-			service.Routes = append(service.Routes, &res)
-		}
-		// TODO(hbagdi): handle service-less routes
+		res.Routes = append(res.Routes, m)
 	}
 
-	for _, service := range services {
-		res.Services = append(res.Services, service)
-	}
 	return res, nil
+}
+
+func flatten(m config.Map) {
+	flattenForeign(m, "service")
+}
+
+func flattenForeign(m config.Map, entityType string) {
+	if _, ok := m[entityType]; !ok {
+		return
+	}
+	entity, ok := m[entityType].(map[string]interface{})
+	if !ok {
+		panic(fmt.Sprintf("'%s' key is not a JSON object ("+
+			"map[string]interface{}", entityType))
+	}
+	if _, ok := entity["id"]; !ok {
+		panic(fmt.Sprintf("'%s.id' not found within a foreign relation", entityType))
+	}
+	m[entityType] = entity["id"]
+}
+
+func simplify(input interface{}) (config.Map, error) {
+	var m config.Map
+	if err := convert(input, &m); err != nil {
+		return nil, err
+	}
+	flatten(m)
+	return m, nil
 }
 
 // convert uses JSON marshal/unmarshal to convert between types.
