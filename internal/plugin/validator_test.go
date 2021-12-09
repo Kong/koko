@@ -182,4 +182,14 @@ func TestValidate(t *testing.T) {
 		}
 		require.Equal(t, expected, validationErr.Errs)
 	})
+	t.Run("prometheus plugin schema", func(t *testing.T) {
+		p := &model.Plugin{
+			Name:      "prometheus",
+			Protocols: []string{"http", "https"},
+			Enabled:   wrapperspb.Bool(true),
+		}
+		require.Nil(t, validator.ProcessDefaults(p))
+		err = validator.Validate(p)
+		require.Nil(t, err)
+	})
 }
