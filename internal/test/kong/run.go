@@ -47,6 +47,7 @@ var defaultEnvVars = map[string]string{
 	"KONG_NGINX_WORKER_PROCESSES": "1",
 	"KONG_CLUSTER_CONTROL_PLANE":  "localhost:3100",
 	"KONG_ANONYMOUS_REPORTS":      "off",
+	"KONG_NGINX_HTTP_INCLUDE":     "/conf/admin.conf",
 }
 
 var scripTemplate = `#!/bin/bash
@@ -73,6 +74,7 @@ docker run \
   -v "$DIR/cluster.crt:/certs/cluster.crt" \
   -v "$DIR/cluster-ca.crt:/certs/cluster-ca.crt" \
   -v "$DIR/cluster.key:/certs/cluster.key" \
+  -v "$DIR/admin.conf:/conf/admin.conf" \
 {{- if .Computed.CPHostname }}
   --add-host "{{- .Computed.CPHostname -}}:host-gateway" \
 {{- end -}}
@@ -150,6 +152,21 @@ func RunDP(ctx context.Context, input DockerInput) error {
 	return nil
 }
 
+var adminServerConf = []byte(`
+server {
+  listen 8001;
+  location / {
+    default_type application/json;
+    content_by_lua_block {
+      Kong.admin_content()
+    }
+    header_filter_by_lua_block {
+      Kong.admin_header_filter()
+    }
+  }
+}
+`)
+
 func setup(dir string, input DockerInput) (err error) {
 	err = os.WriteFile(dir+"/cluster.key", input.ClientKey, os.ModePerm)
 	if err != nil {
@@ -160,6 +177,10 @@ func setup(dir string, input DockerInput) (err error) {
 		return
 	}
 	err = os.WriteFile(dir+"/cluster-ca.crt", input.CACert, os.ModePerm)
+	if err != nil {
+		return
+	}
+	err = os.WriteFile(dir+"/admin.conf", adminServerConf, os.ModePerm)
 	if err != nil {
 		return
 	}
