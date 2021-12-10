@@ -12,21 +12,18 @@ service PluginService {
   rpc GetPlugin(GetPluginRequest) returns (GetPluginResponse) {
     option (google.api.http) = {
       get: "/v1/plugins/{id}"
-      response_body: "item"
     };
   }
   rpc CreatePlugin(CreatePluginRequest) returns (CreatePluginResponse) {
     option (google.api.http) = {
       post: "/v1/plugins"
       body: "item"
-      response_body: "item"
     };
   }
   rpc UpsertPlugin(UpsertPluginRequest) returns (UpsertPluginResponse) {
     option (google.api.http) = {
       put: "/v1/plugins/{item.id}"
       body: "item"
-      response_body: "item"
     };
   }
   rpc DeletePlugin(DeletePluginRequest) returns (DeletePluginResponse) {

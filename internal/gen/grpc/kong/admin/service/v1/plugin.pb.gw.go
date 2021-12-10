@@ -370,7 +370,7 @@ func RegisterPluginServiceHandlerServer(ctx context.Context, mux *runtime.ServeM
 			return
 		}
 
-		forward_PluginService_GetPlugin_0(ctx, mux, outboundMarshaler, w, req, response_PluginService_GetPlugin_0{resp}, mux.GetForwardResponseOptions()...)
+		forward_PluginService_GetPlugin_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -393,7 +393,7 @@ func RegisterPluginServiceHandlerServer(ctx context.Context, mux *runtime.ServeM
 			return
 		}
 
-		forward_PluginService_CreatePlugin_0(ctx, mux, outboundMarshaler, w, req, response_PluginService_CreatePlugin_0{resp}, mux.GetForwardResponseOptions()...)
+		forward_PluginService_CreatePlugin_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -416,7 +416,7 @@ func RegisterPluginServiceHandlerServer(ctx context.Context, mux *runtime.ServeM
 			return
 		}
 
-		forward_PluginService_UpsertPlugin_0(ctx, mux, outboundMarshaler, w, req, response_PluginService_UpsertPlugin_0{resp}, mux.GetForwardResponseOptions()...)
+		forward_PluginService_UpsertPlugin_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -523,7 +523,7 @@ func RegisterPluginServiceHandlerClient(ctx context.Context, mux *runtime.ServeM
 			return
 		}
 
-		forward_PluginService_GetPlugin_0(ctx, mux, outboundMarshaler, w, req, response_PluginService_GetPlugin_0{resp}, mux.GetForwardResponseOptions()...)
+		forward_PluginService_GetPlugin_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -543,7 +543,7 @@ func RegisterPluginServiceHandlerClient(ctx context.Context, mux *runtime.ServeM
 			return
 		}
 
-		forward_PluginService_CreatePlugin_0(ctx, mux, outboundMarshaler, w, req, response_PluginService_CreatePlugin_0{resp}, mux.GetForwardResponseOptions()...)
+		forward_PluginService_CreatePlugin_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -563,7 +563,7 @@ func RegisterPluginServiceHandlerClient(ctx context.Context, mux *runtime.ServeM
 			return
 		}
 
-		forward_PluginService_UpsertPlugin_0(ctx, mux, outboundMarshaler, w, req, response_PluginService_UpsertPlugin_0{resp}, mux.GetForwardResponseOptions()...)
+		forward_PluginService_UpsertPlugin_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -608,33 +608,6 @@ func RegisterPluginServiceHandlerClient(ctx context.Context, mux *runtime.ServeM
 	})
 
 	return nil
-}
-
-type response_PluginService_GetPlugin_0 struct {
-	proto.Message
-}
-
-func (m response_PluginService_GetPlugin_0) XXX_ResponseBody() interface{} {
-	response := m.Message.(*GetPluginResponse)
-	return response.Item
-}
-
-type response_PluginService_CreatePlugin_0 struct {
-	proto.Message
-}
-
-func (m response_PluginService_CreatePlugin_0) XXX_ResponseBody() interface{} {
-	response := m.Message.(*CreatePluginResponse)
-	return response.Item
-}
-
-type response_PluginService_UpsertPlugin_0 struct {
-	proto.Message
-}
-
-func (m response_PluginService_UpsertPlugin_0) XXX_ResponseBody() interface{} {
-	response := m.Message.(*UpsertPluginResponse)
-	return response.Item
 }
 
 var (

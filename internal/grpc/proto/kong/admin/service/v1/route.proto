@@ -12,21 +12,18 @@ service RouteService {
   rpc GetRoute(GetRouteRequest) returns (GetRouteResponse) {
     option (google.api.http) = {
       get: "/v1/routes/{id}"
-      response_body: "item"
     };
   }
   rpc CreateRoute(CreateRouteRequest) returns (CreateRouteResponse) {
     option (google.api.http) = {
       post: "/v1/routes"
       body: "item"
-      response_body: "item"
     };
   }
   rpc UpsertRoute(UpsertRouteRequest) returns (UpsertRouteResponse) {
     option (google.api.http) = {
       put: "/v1/routes/{item.id}"
       body: "item"
-      response_body: "item"
     };
   }
   rpc DeleteRoute(DeleteRouteRequest) returns (DeleteRouteResponse) {

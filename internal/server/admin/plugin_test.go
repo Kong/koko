@@ -66,7 +66,7 @@ func TestPluginCreate(t *testing.T) {
 		res := c.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
 		res.Status(201)
 		res.Header("grpc-metadata-koko-status-code").Empty()
-		body := res.JSON().Object()
+		body := res.JSON().Path("$.item").Object()
 		validateKeyAuthPlugin(body)
 	})
 	t.Run("recreating the same plugin fails", func(t *testing.T) {
@@ -219,7 +219,7 @@ func TestPluginUpsert(t *testing.T) {
 			WithBytes(pluginBytes).
 			Expect()
 		res.Status(http.StatusOK)
-		body := res.JSON().Object()
+		body := res.JSON().Path("$.item").Object()
 		validateKeyAuthPlugin(body)
 	})
 	t.Run("re-upserting the same plugin with different id fails",
@@ -275,8 +275,8 @@ func TestPluginUpsert(t *testing.T) {
 			WithJSON(plugin).
 			Expect()
 		res.Status(http.StatusCreated)
-		res.JSON().Path("$.config.second").Number().Equal(42)
-		res.JSON().Path("$.config.day").Null()
+		res.JSON().Path("$.item.config.second").Number().Equal(42)
+		res.JSON().Path("$.item.config.day").Null()
 
 		config, err = structpb.NewStruct(map[string]interface{}{"day": 42})
 		require.Nil(t, err)
@@ -291,8 +291,8 @@ func TestPluginUpsert(t *testing.T) {
 
 		res = c.GET("/v1/plugins/" + pid).Expect()
 		res.Status(http.StatusOK)
-		res.JSON().Path("$.config.day").Number().Equal(42)
-		res.JSON().Path("$.config.second").Null()
+		res.JSON().Path("$.item.config.day").Number().Equal(42)
+		res.JSON().Path("$.item.config.second").Null()
 	})
 }
 
@@ -303,7 +303,7 @@ func TestPluginDelete(t *testing.T) {
 	pluginBytes, err := json.Marshal(goodKeyAuthPlugin())
 	require.Nil(t, err)
 	res := c.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
-	id := res.JSON().Object().Value("id").String().Raw()
+	id := res.JSON().Path("$.item.id").String().Raw()
 	res.Status(201)
 	t.Run("deleting a non-existent plugin returns 404", func(t *testing.T) {
 		randomID := "071f5040-3e4a-46df-9d98-451e79e318fd"
@@ -325,13 +325,14 @@ func TestPluginRead(t *testing.T) {
 	require.Nil(t, err)
 	res := c.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
 	res.Status(201)
-	id := res.JSON().Object().Value("id").String().Raw()
+	id := res.JSON().Path("$.item.id").String().Raw()
 	t.Run("reading a non-existent plugin returns 404", func(t *testing.T) {
 		randomID := "071f5040-3e4a-46df-9d98-451e79e318fd"
 		c.GET("/v1/plugins/" + randomID).Expect().Status(404)
 	})
 	t.Run("reading a plugin return 200", func(t *testing.T) {
-		body := c.GET("/v1/plugins/" + id).Expect().Status(http.StatusOK).JSON().Object()
+		res := c.GET("/v1/plugins/" + id).Expect().Status(http.StatusOK)
+		body := res.JSON().Path("$.item").Object()
 		validateKeyAuthPlugin(body)
 	})
 	t.Run("read request without an ID returns 400", func(t *testing.T) {
@@ -346,7 +347,7 @@ func TestPluginList(t *testing.T) {
 	pluginBytes, err := json.Marshal(goodKeyAuthPlugin())
 	require.Nil(t, err)
 	res := c.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
-	id1 := res.JSON().Object().Value("id").String().Raw()
+	id1 := res.JSON().Path("$.item.id").String().Raw()
 	res.Status(201)
 	plugin := &v1.Plugin{
 		Name:      "request-transformer",
@@ -356,7 +357,7 @@ func TestPluginList(t *testing.T) {
 	pluginBytes, err = json.Marshal(plugin)
 	require.Nil(t, err)
 	res = c.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
-	id2 := res.JSON().Object().Value("id").String().Raw()
+	id2 := res.JSON().Path("$.item.id").String().Raw()
 	res.Status(201)
 
 	t.Run("list returns multiple plugins", func(t *testing.T) {

@@ -88,9 +88,9 @@
         "operationId": "NodeService_GetNode",
         "responses": {
           "200": {
-            "description": "",
+            "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/kong.admin.model.v1.Node"
+              "$ref": "#/definitions/kong.admin.service.v1.GetNodeResponse"
             }
           },
           "default": {
@@ -186,9 +186,9 @@
         "operationId": "PluginService_CreatePlugin",
         "responses": {
           "200": {
-            "description": "",
+            "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/kong.admin.model.v1.Plugin"
+              "$ref": "#/definitions/kong.admin.service.v1.CreatePluginResponse"
             }
           },
           "default": {
@@ -224,9 +224,9 @@
         "operationId": "PluginService_GetPlugin",
         "responses": {
           "200": {
-            "description": "",
+            "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/kong.admin.model.v1.Plugin"
+              "$ref": "#/definitions/kong.admin.service.v1.GetPluginResponse"
             }
           },
           "default": {
@@ -294,9 +294,9 @@
         "operationId": "PluginService_UpsertPlugin",
         "responses": {
           "200": {
-            "description": "",
+            "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/kong.admin.model.v1.Plugin"
+              "$ref": "#/definitions/kong.admin.service.v1.UpsertPluginResponse"
             }
           },
           "default": {
@@ -366,9 +366,9 @@
         "operationId": "RouteService_CreateRoute",
         "responses": {
           "200": {
-            "description": "",
+            "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/kong.admin.model.v1.Route"
+              "$ref": "#/definitions/kong.admin.service.v1.CreateRouteResponse"
             }
           },
           "default": {
@@ -404,9 +404,9 @@
         "operationId": "RouteService_GetRoute",
         "responses": {
           "200": {
-            "description": "",
+            "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/kong.admin.model.v1.Route"
+              "$ref": "#/definitions/kong.admin.service.v1.GetRouteResponse"
             }
           },
           "default": {
@@ -474,9 +474,9 @@
         "operationId": "RouteService_UpsertRoute",
         "responses": {
           "200": {
-            "description": "",
+            "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/kong.admin.model.v1.Route"
+              "$ref": "#/definitions/kong.admin.service.v1.UpsertRouteResponse"
             }
           },
           "default": {
@@ -546,9 +546,9 @@
         "operationId": "ServiceService_CreateService",
         "responses": {
           "200": {
-            "description": "",
+            "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/kong.admin.model.v1.Service"
+              "$ref": "#/definitions/kong.admin.service.v1.CreateServiceResponse"
             }
           },
           "default": {
@@ -584,9 +584,9 @@
         "operationId": "ServiceService_GetService",
         "responses": {
           "200": {
-            "description": "",
+            "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/kong.admin.model.v1.Service"
+              "$ref": "#/definitions/kong.admin.service.v1.GetServiceResponse"
             }
           },
           "default": {
@@ -654,9 +654,9 @@
         "operationId": "ServiceService_UpsertService",
         "responses": {
           "200": {
-            "description": "",
+            "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/kong.admin.model.v1.Service"
+              "$ref": "#/definitions/kong.admin.service.v1.UpsertServiceResponse"
             }
           },
           "default": {

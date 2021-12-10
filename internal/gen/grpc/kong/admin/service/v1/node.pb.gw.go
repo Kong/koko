@@ -232,7 +232,7 @@ func RegisterNodeServiceHandlerServer(ctx context.Context, mux *runtime.ServeMux
 			return
 		}
 
-		forward_NodeService_GetNode_0(ctx, mux, outboundMarshaler, w, req, response_NodeService_GetNode_0{resp}, mux.GetForwardResponseOptions()...)
+		forward_NodeService_GetNode_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -339,7 +339,7 @@ func RegisterNodeServiceHandlerClient(ctx context.Context, mux *runtime.ServeMux
 			return
 		}
 
-		forward_NodeService_GetNode_0(ctx, mux, outboundMarshaler, w, req, response_NodeService_GetNode_0{resp}, mux.GetForwardResponseOptions()...)
+		forward_NodeService_GetNode_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -384,15 +384,6 @@ func RegisterNodeServiceHandlerClient(ctx context.Context, mux *runtime.ServeMux
 	})
 
 	return nil
-}
-
-type response_NodeService_GetNode_0 struct {
-	proto.Message
-}
-
-func (m response_NodeService_GetNode_0) XXX_ResponseBody() interface{} {
-	response := m.Message.(*GetNodeResponse)
-	return response.Item
 }
 
 var (

@@ -41,7 +41,7 @@ func TestServiceCreate(t *testing.T) {
 		res := c.POST("/v1/services").WithJSON(goodService()).Expect()
 		res.Status(201)
 		res.Header("grpc-metadata-koko-status-code").Empty()
-		body := res.JSON().Object()
+		body := res.JSON().Path("$.item").Object()
 		validateGoodService(body)
 	})
 	t.Run("creating invalid service fails with 400", func(t *testing.T) {
@@ -95,7 +95,7 @@ func TestServiceUpsert(t *testing.T) {
 			WithJSON(goodService()).
 			Expect()
 		res.Status(http.StatusOK)
-		body := res.JSON().Object()
+		body := res.JSON().Path("$.item").Object()
 		validateGoodService(body)
 	})
 	t.Run("upserting an invalid service fails with 400", func(t *testing.T) {
@@ -162,8 +162,9 @@ func TestServiceUpsert(t *testing.T) {
 
 		res = c.GET("/v1/services/" + sid).Expect()
 		res.Status(http.StatusOK)
-		res.JSON().Object().Value("host").Equal("new.example.com")
-		res.JSON().Object().Value("path").Equal("/bar-new")
+		body := res.JSON().Path("$.item").Object()
+		body.Value("host").Equal("new.example.com")
+		body.Value("path").Equal("/bar-new")
 	})
 }
 
@@ -173,7 +174,7 @@ func TestServiceDelete(t *testing.T) {
 	c := httpexpect.New(t, s.URL)
 	svc := goodService()
 	res := c.POST("/v1/services").WithJSON(svc).Expect()
-	id := res.JSON().Object().Value("id").String().Raw()
+	id := res.JSON().Path("$.item.id").String().Raw()
 	res.Status(201)
 	t.Run("deleting a non-existent service returns 404", func(t *testing.T) {
 		randomID := "071f5040-3e4a-46df-9d98-451e79e318fd"
@@ -193,14 +194,15 @@ func TestServiceRead(t *testing.T) {
 	c := httpexpect.New(t, s.URL)
 	svc := goodService()
 	res := c.POST("/v1/services").WithJSON(svc).Expect()
-	id := res.JSON().Object().Value("id").String().Raw()
+	id := res.JSON().Path("$.item.id").String().Raw()
 	res.Status(201)
 	t.Run("reading a non-existent service returns 404", func(t *testing.T) {
 		randomID := "071f5040-3e4a-46df-9d98-451e79e318fd"
 		c.GET("/v1/services/" + randomID).Expect().Status(404)
 	})
 	t.Run("reading a service return 200", func(t *testing.T) {
-		body := c.GET("/v1/services/" + id).Expect().Status(http.StatusOK).JSON().Object()
+		res := c.GET("/v1/services/" + id).Expect().Status(http.StatusOK)
+		body := res.JSON().Path("$.item").Object()
 		validateGoodService(body)
 	})
 	t.Run("read request without an ID returns 400", func(t *testing.T) {
@@ -214,7 +216,7 @@ func TestServiceList(t *testing.T) {
 	c := httpexpect.New(t, s.URL)
 	svc := goodService()
 	res := c.POST("/v1/services").WithJSON(svc).Expect()
-	id1 := res.JSON().Object().Value("id").String().Raw()
+	id1 := res.JSON().Path("$.item.id").String().Raw()
 	res.Status(201)
 	svc = &v1.Service{
 		Name: "bar",
@@ -222,7 +224,7 @@ func TestServiceList(t *testing.T) {
 		Path: "/bar",
 	}
 	res = c.POST("/v1/services").WithJSON(svc).Expect()
-	id2 := res.JSON().Object().Value("id").String().Raw()
+	id2 := res.JSON().Path("$.item.id").String().Raw()
 	res.Status(201)
 
 	t.Run("list returns multiple services", func(t *testing.T) {

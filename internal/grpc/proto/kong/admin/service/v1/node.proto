@@ -12,7 +12,6 @@ service NodeService {
   rpc GetNode(GetNodeRequest) returns (GetNodeResponse) {
     option (google.api.http) = {
       get: "/v1/nodes/{id}"
-      response_body: "item"
     };
   }
 

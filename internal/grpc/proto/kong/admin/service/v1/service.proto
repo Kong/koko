@@ -12,21 +12,18 @@ service ServiceService {
   rpc GetService(GetServiceRequest) returns (GetServiceResponse) {
     option (google.api.http) = {
       get: "/v1/services/{id}"
-      response_body: "item"
     };
   }
   rpc CreateService(CreateServiceRequest) returns (CreateServiceResponse) {
     option (google.api.http) = {
       post: "/v1/services"
       body: "item"
-      response_body: "item"
     };
   }
   rpc UpsertService(UpsertServiceRequest) returns (UpsertServiceResponse) {
     option (google.api.http) = {
       put: "/v1/services/{item.id}"
       body: "item"
-      response_body: "item"
     };
   }
   rpc DeleteService(DeleteServiceRequest) returns (DeleteServiceResponse) {

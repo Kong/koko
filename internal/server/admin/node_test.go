@@ -224,7 +224,8 @@ func TestNodeRead(t *testing.T) {
 		c.GET("/v1/nodes/" + uuid.NewString()).Expect().Status(http.StatusNotFound)
 	})
 	t.Run("reading a node return 200", func(t *testing.T) {
-		body := c.GET("/v1/nodes/" + nodeID).Expect().Status(http.StatusOK).JSON().Object()
+		res := c.GET("/v1/nodes/" + nodeID).Expect().Status(http.StatusOK)
+		body := res.JSON().Path("$.item").Object()
 		body.ValueEqual("id", nodeID)
 		body.ValueEqual("hostname", "secure-server")
 		body.ValueEqual("version", "42.1.0")

@@ -370,7 +370,7 @@ func RegisterServiceServiceHandlerServer(ctx context.Context, mux *runtime.Serve
 			return
 		}
 
-		forward_ServiceService_GetService_0(ctx, mux, outboundMarshaler, w, req, response_ServiceService_GetService_0{resp}, mux.GetForwardResponseOptions()...)
+		forward_ServiceService_GetService_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -393,7 +393,7 @@ func RegisterServiceServiceHandlerServer(ctx context.Context, mux *runtime.Serve
 			return
 		}
 
-		forward_ServiceService_CreateService_0(ctx, mux, outboundMarshaler, w, req, response_ServiceService_CreateService_0{resp}, mux.GetForwardResponseOptions()...)
+		forward_ServiceService_CreateService_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -416,7 +416,7 @@ func RegisterServiceServiceHandlerServer(ctx context.Context, mux *runtime.Serve
 			return
 		}
 
-		forward_ServiceService_UpsertService_0(ctx, mux, outboundMarshaler, w, req, response_ServiceService_UpsertService_0{resp}, mux.GetForwardResponseOptions()...)
+		forward_ServiceService_UpsertService_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -523,7 +523,7 @@ func RegisterServiceServiceHandlerClient(ctx context.Context, mux *runtime.Serve
 			return
 		}
 
-		forward_ServiceService_GetService_0(ctx, mux, outboundMarshaler, w, req, response_ServiceService_GetService_0{resp}, mux.GetForwardResponseOptions()...)
+		forward_ServiceService_GetService_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -543,7 +543,7 @@ func RegisterServiceServiceHandlerClient(ctx context.Context, mux *runtime.Serve
 			return
 		}
 
-		forward_ServiceService_CreateService_0(ctx, mux, outboundMarshaler, w, req, response_ServiceService_CreateService_0{resp}, mux.GetForwardResponseOptions()...)
+		forward_ServiceService_CreateService_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -563,7 +563,7 @@ func RegisterServiceServiceHandlerClient(ctx context.Context, mux *runtime.Serve
 			return
 		}
 
-		forward_ServiceService_UpsertService_0(ctx, mux, outboundMarshaler, w, req, response_ServiceService_UpsertService_0{resp}, mux.GetForwardResponseOptions()...)
+		forward_ServiceService_UpsertService_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -608,33 +608,6 @@ func RegisterServiceServiceHandlerClient(ctx context.Context, mux *runtime.Serve
 	})
 
 	return nil
-}
-
-type response_ServiceService_GetService_0 struct {
-	proto.Message
-}
-
-func (m response_ServiceService_GetService_0) XXX_ResponseBody() interface{} {
-	response := m.Message.(*GetServiceResponse)
-	return response.Item
-}
-
-type response_ServiceService_CreateService_0 struct {
-	proto.Message
-}
-
-func (m response_ServiceService_CreateService_0) XXX_ResponseBody() interface{} {
-	response := m.Message.(*CreateServiceResponse)
-	return response.Item
-}
-
-type response_ServiceService_UpsertService_0 struct {
-	proto.Message
-}
-
-func (m response_ServiceService_UpsertService_0) XXX_ResponseBody() interface{} {
-	response := m.Message.(*UpsertServiceResponse)
-	return response.Item
 }
 
 var (

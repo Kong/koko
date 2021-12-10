@@ -370,7 +370,7 @@ func RegisterRouteServiceHandlerServer(ctx context.Context, mux *runtime.ServeMu
 			return
 		}
 
-		forward_RouteService_GetRoute_0(ctx, mux, outboundMarshaler, w, req, response_RouteService_GetRoute_0{resp}, mux.GetForwardResponseOptions()...)
+		forward_RouteService_GetRoute_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -393,7 +393,7 @@ func RegisterRouteServiceHandlerServer(ctx context.Context, mux *runtime.ServeMu
 			return
 		}
 
-		forward_RouteService_CreateRoute_0(ctx, mux, outboundMarshaler, w, req, response_RouteService_CreateRoute_0{resp}, mux.GetForwardResponseOptions()...)
+		forward_RouteService_CreateRoute_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -416,7 +416,7 @@ func RegisterRouteServiceHandlerServer(ctx context.Context, mux *runtime.ServeMu
 			return
 		}
 
-		forward_RouteService_UpsertRoute_0(ctx, mux, outboundMarshaler, w, req, response_RouteService_UpsertRoute_0{resp}, mux.GetForwardResponseOptions()...)
+		forward_RouteService_UpsertRoute_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -523,7 +523,7 @@ func RegisterRouteServiceHandlerClient(ctx context.Context, mux *runtime.ServeMu
 			return
 		}
 
-		forward_RouteService_GetRoute_0(ctx, mux, outboundMarshaler, w, req, response_RouteService_GetRoute_0{resp}, mux.GetForwardResponseOptions()...)
+		forward_RouteService_GetRoute_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -543,7 +543,7 @@ func RegisterRouteServiceHandlerClient(ctx context.Context, mux *runtime.ServeMu
 			return
 		}
 
-		forward_RouteService_CreateRoute_0(ctx, mux, outboundMarshaler, w, req, response_RouteService_CreateRoute_0{resp}, mux.GetForwardResponseOptions()...)
+		forward_RouteService_CreateRoute_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -563,7 +563,7 @@ func RegisterRouteServiceHandlerClient(ctx context.Context, mux *runtime.ServeMu
 			return
 		}
 
-		forward_RouteService_UpsertRoute_0(ctx, mux, outboundMarshaler, w, req, response_RouteService_UpsertRoute_0{resp}, mux.GetForwardResponseOptions()...)
+		forward_RouteService_UpsertRoute_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -608,33 +608,6 @@ func RegisterRouteServiceHandlerClient(ctx context.Context, mux *runtime.ServeMu
 	})
 
 	return nil
-}
-
-type response_RouteService_GetRoute_0 struct {
-	proto.Message
-}
-
-func (m response_RouteService_GetRoute_0) XXX_ResponseBody() interface{} {
-	response := m.Message.(*GetRouteResponse)
-	return response.Item
-}
-
-type response_RouteService_CreateRoute_0 struct {
-	proto.Message
-}
-
-func (m response_RouteService_CreateRoute_0) XXX_ResponseBody() interface{} {
-	response := m.Message.(*CreateRouteResponse)
-	return response.Item
-}
-
-type response_RouteService_UpsertRoute_0 struct {
-	proto.Message
-}
-
-func (m response_RouteService_UpsertRoute_0) XXX_ResponseBody() interface{} {
-	response := m.Message.(*UpsertRouteResponse)
-	return response.Item
 }
 
 var (
