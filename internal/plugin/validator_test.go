@@ -192,4 +192,67 @@ func TestValidate(t *testing.T) {
 		err = validator.Validate(p)
 		require.Nil(t, err)
 	})
+	t.Run("serverless plugin schema", func(t *testing.T) {
+		config, err := structpb.NewStruct(map[string]interface{}{
+			"access": []interface{}{
+				`
+   -- Get list of request headers
+   local custom_auth = kong.request.get_header("x-custom-auth")
+
+   -- Terminate request early if our custom authentication header
+   -- does not exist
+   if not custom_auth then
+     return kong.response.exit(401, "Invalid Credentials")
+   end
+
+   -- Remove custom authentication header from request
+   kong.service.request.clear_header('x-custom-auth')
+`,
+				`kong.log.err('Hi there Access!')`,
+			},
+			"header_filter": []interface{}{
+				`kong.log.err('Hi there header filter!')`,
+			},
+			"log": []interface{}{
+				`kong.log.err('Hi there Log!')`,
+			},
+		})
+		require.Nil(t, err)
+		p := &model.Plugin{
+			Name:      "pre-function",
+			Protocols: []string{"http", "https"},
+			Enabled:   wrapperspb.Bool(true),
+			Config:    config,
+		}
+		require.Nil(t, validator.ProcessDefaults(p))
+		err = validator.Validate(p)
+		require.Nil(t, err)
+
+		p = &model.Plugin{
+			Name:      "post-function",
+			Protocols: []string{"http", "https"},
+			Enabled:   wrapperspb.Bool(true),
+			Config:    config,
+		}
+		require.Nil(t, validator.ProcessDefaults(p))
+		err = validator.Validate(p)
+		require.Nil(t, err)
+	})
+	t.Run("serverless plugin schema accepts invalid lua-code", func(t *testing.T) {
+		config, err := structpb.NewStruct(map[string]interface{}{
+			"log": []interface{}{
+				"this is not valid lua !",
+			},
+		})
+		require.Nil(t, err)
+		p := &model.Plugin{
+			Name:      "pre-function",
+			Protocols: []string{"http", "https"},
+			Enabled:   wrapperspb.Bool(true),
+			Config:    config,
+		}
+		require.Nil(t, validator.ProcessDefaults(p))
+		err = validator.Validate(p)
+		require.Nil(t, err)
+	})
 }

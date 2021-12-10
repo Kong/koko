@@ -1,18 +1,11 @@
 local Schema = require "kong.db.schema"
 local typedefs = require "kong.db.schema.typedefs"
 
-local loadstring = loadstring
-
 local functions_deprecated = "[%s] 'config.functions' will be deprecated in favour of 'config.access'"
 
 local plugin_name = "post-function"
 
 local function validate_function(fun)
-  local _, err = loadstring(fun)
-  if err then
-    return false, "error parsing " .. plugin_name .. ": " .. err
-  end
-
   return true
 end
 
