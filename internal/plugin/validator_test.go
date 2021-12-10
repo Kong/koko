@@ -176,7 +176,7 @@ func TestValidate(t *testing.T) {
 		expected := []*model.ErrorDetail{
 			{
 				Type:     model.ErrorType_ERROR_TYPE_FIELD,
-				Field:    "config.add.headers.0",
+				Field:    "config.add.headers[0]",
 				Messages: []string{"invalid value: nokey"},
 			},
 		}

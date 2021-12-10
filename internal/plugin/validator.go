@@ -123,8 +123,13 @@ func entityErr(err interface{}) *model.ErrorDetail {
 	return nil
 }
 
+var flattenStyle = flatten.SeparatorStyle{
+	Middle:                   ".",
+	UseBracketsForArrayIndex: true,
+}
+
 func f(m map[string]interface{}) ([]*model.ErrorDetail, error) {
-	m, err := flatten.Flatten(m, "", flatten.DotStyle)
+	m, err := flatten.Flatten(m, "", flattenStyle)
 	if err != nil {
 		return nil, err
 	}

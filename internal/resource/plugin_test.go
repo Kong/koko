@@ -172,7 +172,7 @@ func TestPlugin_Validate(t *testing.T) {
 			Errs: []*model.ErrorDetail{
 				{
 					Type:  model.ErrorType_ERROR_TYPE_FIELD,
-					Field: "protocols.0",
+					Field: "protocols[0]",
 					Messages: []string{
 						"expected one of: grpc, grpcs, http, https",
 					},
