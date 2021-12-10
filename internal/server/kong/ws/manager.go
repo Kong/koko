@@ -145,7 +145,9 @@ func (m *Manager) broadcast() {
 type ConfigClient struct {
 	Service admin.ServiceServiceClient
 	Route   admin.RouteServiceClient
-	Node    admin.NodeServiceClient
+	Plugin  admin.PluginServiceClient
+
+	Node admin.NodeServiceClient
 
 	Event relay.EventServiceClient
 }
@@ -177,9 +179,14 @@ func (m *Manager) fetchContent(ctx context.Context) (mold.GrpcContent, error) {
 		return mold.GrpcContent{}, err
 	}
 
+	pluginsList, err := m.fetchPlugins(ctx)
+	if err != nil {
+		return mold.GrpcContent{}, err
+	}
 	return mold.GrpcContent{
 		Services: serviceList.Items,
 		Routes:   routesList.Items,
+		Plugins:  pluginsList.Items,
 	}, nil
 }
 
@@ -201,6 +208,18 @@ func (m *Manager) fetchRoutes(ctx context.Context) (*admin.
 	defer cancel()
 	return m.configClient.Route.ListRoutes(ctx,
 		&admin.ListRoutesRequest{
+			Cluster: &model.RequestCluster{
+				Id: m.cluster.Get(),
+			},
+		})
+}
+
+func (m *Manager) fetchPlugins(ctx context.Context) (*admin.
+	ListPluginsResponse, error) {
+	ctx, cancel := context.WithTimeout(ctx, defaultRequestTimeout)
+	defer cancel()
+	return m.configClient.Plugin.ListPlugins(ctx,
+		&admin.ListPluginsRequest{
 			Cluster: &model.RequestCluster{
 				Id: m.cluster.Get(),
 			},

@@ -29,6 +29,18 @@ func init() {
 	TestBackoff = backoff.WithMaxRetries(TestBackoff, maxRetriesInTests)
 }
 
+func WaitFunc(t *testing.T, fn func() error) {
+	err := backoff.RetryNotify(fn, TestBackoff, func(err error,
+		duration time.Duration) {
+		if err != nil {
+			t.Log("waiting for func to complete")
+		}
+	})
+	if err != nil {
+		t.Errorf("failed to complete operation: %v", err)
+	}
+}
+
 func WaitFor(t *testing.T, port int, method, path, component string,
 	wantHTTPCode int) error {
 	return backoff.RetryNotify(func() error {

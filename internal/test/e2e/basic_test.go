@@ -17,11 +17,13 @@ import (
 	"github.com/kong/koko/internal/crypto"
 	"github.com/kong/koko/internal/db"
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
+	"github.com/kong/koko/internal/json"
 	"github.com/kong/koko/internal/log"
 	"github.com/kong/koko/internal/test/certs"
 	"github.com/kong/koko/internal/test/kong"
 	"github.com/kong/koko/internal/test/util"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
 func TestSharedMTLS(t *testing.T) {
@@ -69,7 +71,6 @@ func TestSharedMTLS(t *testing.T) {
 	go func() {
 		_ = kong.RunDP(ctx, kong.GetKongConfForShared())
 	}()
-	testing.Verbose()
 	require.Nil(t, util.WaitForKong(t))
 
 	// test the route
@@ -264,4 +265,99 @@ func TestNodesEndpoint(t *testing.T) {
 	res.Status(http.StatusOK)
 	nodes := res.JSON().Object().Value("items").Array()
 	nodes.Length().Equal(1)
+}
+
+func TestPluginSync(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	cert, err := tls.X509KeyPair(certs.DefaultSharedCert, certs.DefaultSharedKey)
+	require.Nil(t, err)
+	go func() {
+		require.Nil(t, util.CleanDB())
+		require.Nil(t, cmd.Run(ctx, cmd.ServerConfig{
+			DPAuthCert: cert,
+			KongCPCert: cert,
+			Logger:     log.Logger,
+			Database: config.Database{
+				Dialect: db.DialectSQLite3,
+				SQLite: config.SQLite{
+					InMemory: true,
+				},
+			},
+		}))
+	}()
+	require.Nil(t, util.WaitForAdminAPI(t))
+
+	service := &v1.Service{
+		Id:   uuid.NewString(),
+		Name: "foo",
+		Host: "example.com",
+		Path: "/",
+	}
+	c := httpexpect.New(t, "http://localhost:3000")
+	res := c.POST("/v1/services").WithJSON(service).Expect()
+	res.Status(201)
+
+	route := &v1.Route{
+		Id:    uuid.NewString(),
+		Name:  "bar",
+		Paths: []string{"/bar"},
+		Service: &v1.Service{
+			Id: service.Id,
+		},
+	}
+	res = c.POST("/v1/routes").WithJSON(route).Expect()
+	res.Status(201)
+
+	plugin := &v1.Plugin{
+		Name:      "key-auth",
+		Enabled:   wrapperspb.Bool(true),
+		Service:   &v1.Service{Id: service.Id},
+		Protocols: []string{"http", "https"},
+	}
+	pluginBytes, err := json.Marshal(plugin)
+	require.Nil(t, err)
+	res = c.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
+	res.Status(201)
+
+	plugin = &v1.Plugin{
+		Name:      "basic-auth",
+		Enabled:   wrapperspb.Bool(true),
+		Route:     &v1.Route{Id: route.Id},
+		Protocols: []string{"http", "https"},
+	}
+	pluginBytes, err = json.Marshal(plugin)
+	require.Nil(t, err)
+	res = c.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
+	res.Status(201)
+
+	plugin = &v1.Plugin{
+		Name:      "request-transformer",
+		Enabled:   wrapperspb.Bool(true),
+		Protocols: []string{"http", "https"},
+	}
+	pluginBytes, err = json.Marshal(plugin)
+	require.Nil(t, err)
+	res = c.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
+	res.Status(201)
+
+	go func() {
+		_ = kong.RunDP(ctx, kong.GetKongConfForShared())
+	}()
+	require.Nil(t, util.WaitForKongPort(t, 8001))
+
+	// Kong's Admin API
+	c = httpexpect.New(t, "http://localhost:8001")
+
+	util.WaitFunc(t, func() error {
+		res = c.GET("/plugins").Expect()
+		res.Status(200)
+		data := res.JSON().Object().Value("data").Array()
+		count := data.Length().Raw()
+		if count != 3 {
+			return fmt.Errorf("expected 3 plugins but got %v", count)
+		}
+		return nil
+	})
 }

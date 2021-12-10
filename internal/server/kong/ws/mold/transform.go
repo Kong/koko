@@ -28,12 +28,21 @@ func GrpcToWrpc(input GrpcContent) (config.Content, error) {
 		}
 		res.Routes = append(res.Routes, m)
 	}
+	for _, plugin := range input.Plugins {
+		m, err := simplify(plugin)
+		delete(m, "updated_at")
+		if err != nil {
+			return config.Content{}, err
+		}
+		res.Plugins = append(res.Plugins, m)
+	}
 
 	return res, nil
 }
 
 func flatten(m config.Map) {
 	flattenForeign(m, "service")
+	flattenForeign(m, "route")
 }
 
 func flattenForeign(m config.Map, entityType string) {

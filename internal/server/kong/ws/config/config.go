@@ -14,6 +14,7 @@ type Content struct {
 	FormatVersion string `json:"_format_version"`
 	Services      []Map  `json:"services,omitempty"`
 	Routes        []Map  `json:"routes,omitempty"`
+	Plugins       []Map  `json:"plugins,omitempty"`
 }
 
 type Payload struct {

@@ -208,7 +208,9 @@ func setupRelayClient() (ws.ConfigClient, error) {
 	return ws.ConfigClient{
 		Service: v1.NewServiceServiceClient(cc),
 		Route:   v1.NewRouteServiceClient(cc),
-		Node:    v1.NewNodeServiceClient(cc),
+		Plugin:  v1.NewPluginServiceClient(cc),
+
+		Node: v1.NewNodeServiceClient(cc),
 
 		Event: relay.NewEventServiceClient(cc),
 	}, nil
