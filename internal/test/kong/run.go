@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"fmt"
 	"os"
 	"os/exec"
 	"strings"
@@ -58,7 +59,6 @@ cleanup () {
 }
 DIR=$(dirname "$0")
 trap cleanup SIGINT
-docker rm -f koko-dp
 docker run \
   --rm \
   --name koko-dp \
@@ -88,6 +88,15 @@ func init() {
 }
 
 func RunDP(ctx context.Context, input DockerInput) error {
+	c := exec.Command("docker", "rm", "-f", "koko-dp")
+	err := c.Start()
+	if err != nil {
+		return fmt.Errorf("removing docker container: %v", err)
+	}
+	err = c.Wait()
+	if err != nil {
+		return fmt.Errorf("removing docker container: %v", err)
+	}
 	dockerInput := addDefaults(input)
 	dir, err := os.MkdirTemp("", "koko-dp-*")
 	if err != nil {
