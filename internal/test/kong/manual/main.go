@@ -13,7 +13,7 @@ func main() {
 	ctx := context.Background()
 	ctx, stop := signal.NotifyContext(ctx, os.Interrupt)
 	defer stop()
-	err := kong.RunDP(ctx, kong.DockerInput{Version: "2.5.0"})
+	err := kong.RunDP(ctx, kong.DockerInput{Image: "2.5.0"})
 	if err != nil {
 		fmt.Printf("%v\n", err)
 		defer os.Exit(1)

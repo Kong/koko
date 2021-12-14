@@ -33,7 +33,7 @@ type Computed struct {
 }
 
 type DockerInput struct {
-	Version    string
+	Image      string
 	EnvVars    map[string]string
 	AuthMode   AuthMode
 	ClientCert []byte
@@ -78,7 +78,7 @@ docker run \
 {{- if .Computed.CPHostname }}
   --add-host "{{- .Computed.CPHostname -}}:host-gateway" \
 {{- end -}}
-  --network host kong:{{ .Version }}
+  --network host {{ .Image }}
 `
 
 var t *template.Template
@@ -209,7 +209,7 @@ func setup(dir string, input DockerInput) (err error) {
 func addDefaults(input DockerInput) DockerInput {
 	res := input
 
-	if res.Version == "" {
+	if res.Image == "" {
 		panic("no version set")
 	}
 	if res.EnvVars == nil {
@@ -232,15 +232,15 @@ func addDefaults(input DockerInput) DockerInput {
 }
 
 func GetKongConfForShared() DockerInput {
-	kongVersion := os.Getenv("KOKO_TEST_KONG_DP_VERSION")
-	if kongVersion == "" {
-		panic("no KOKO_TEST_KONG_DP_VERSION set")
+	kongImage := os.Getenv("KOKO_TEST_KONG_DP_IMAGE")
+	if kongImage == "" {
+		panic("no KOKO_TEST_KONG_DP_IMAGE set")
 	}
 	res := DockerInput{
 		EnvVars: map[string]string{
 			"KONG_CLUSTER_MTLS": "shared",
 		},
-		Version: kongVersion,
+		Image: kongImage,
 	}
 	if testing.Verbose() {
 		k := "KONG_LOG_LEVEL"

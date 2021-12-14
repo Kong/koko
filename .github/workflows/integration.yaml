@@ -5,13 +5,14 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        kong_version:
-        - '2.3.3'
-        - '2.4.1'
-        - '2.5.1'
-        - '2.6.0'
+        kong_image:
+        - 'kong:2.3.3'
+        - 'kong:2.4.1'
+        - 'kong:2.5.1'
+        - 'kong:2.6.0'
+        - 'kong/kong:latest' # tracks mainline branch of kong/kong
     env:
-      KOKO_TEST_KONG_DP_VERSION: ${{ matrix.kong_version }}
+      KOKO_TEST_KONG_DP_IMAGE: ${{ matrix.kong_image }}
     steps:
     - name: Setup go
       uses: actions/setup-go@v2
