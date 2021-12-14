@@ -3,6 +3,7 @@ package mold
 import (
 	"fmt"
 
+	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
 	"github.com/kong/koko/internal/json"
 	"github.com/kong/koko/internal/server/kong/ws/config"
 )
@@ -23,6 +24,10 @@ func GrpcToWrpc(input GrpcContent) (config.Content, error) {
 	}
 	for _, route := range input.Routes {
 		m, err := simplify(route)
+		if err != nil {
+			return config.Content{}, err
+		}
+		translateRouteHeaders(route, m)
 		if err != nil {
 			return config.Content{}, err
 		}
@@ -81,4 +86,15 @@ func convert(from, to interface{}) error {
 		return fmt.Errorf("jsonpb unmarshal: %v", err)
 	}
 	return nil
+}
+
+func translateRouteHeaders(route *v1.Route, m config.Map) {
+	if route.Headers == nil {
+		return
+	}
+	res := map[string][]string{}
+	for k, v := range route.Headers {
+		res[k] = v.Values
+	}
+	m["headers"] = res
 }

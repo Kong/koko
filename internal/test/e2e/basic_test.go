@@ -12,6 +12,7 @@ import (
 	"github.com/cenkalti/backoff/v4"
 	"github.com/gavv/httpexpect/v2"
 	"github.com/google/uuid"
+	kongClient "github.com/kong/go-kong/kong"
 	"github.com/kong/koko/internal/cmd"
 	"github.com/kong/koko/internal/config"
 	"github.com/kong/koko/internal/crypto"
@@ -258,6 +259,7 @@ func TestNodesEndpoint(t *testing.T) {
 }
 
 func TestPluginSync(t *testing.T) {
+	// ensure that plugins can be synced to Kong gateway
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -351,5 +353,82 @@ func TestPluginSync(t *testing.T) {
 		err := util.EnsureConfig(expectedConfig)
 		t.Log("configuration mismatch", err)
 		return err
+	})
+}
+
+func TestRouteHeader(t *testing.T) {
+	// ensure that routes with headers can be synced to Kong gateway
+	// this is done because the data-structures for headers in Koko and Kong
+	// are different
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	cert, err := tls.X509KeyPair(certs.DefaultSharedCert, certs.DefaultSharedKey)
+	require.Nil(t, err)
+	go func() {
+		require.Nil(t, util.CleanDB())
+		require.Nil(t, cmd.Run(ctx, cmd.ServerConfig{
+			DPAuthCert: cert,
+			KongCPCert: cert,
+			Logger:     log.Logger,
+			Database: config.Database{
+				Dialect: db.DialectSQLite3,
+				SQLite: config.SQLite{
+					InMemory: true,
+				},
+			},
+		}))
+	}()
+	require.Nil(t, util.WaitForAdminAPI(t))
+
+	service := &v1.Service{
+		Id:   uuid.NewString(),
+		Name: "foo",
+		Host: "httpbin.org",
+		Path: "/",
+	}
+	c := httpexpect.New(t, "http://localhost:3000")
+	res := c.POST("/v1/services").WithJSON(service).Expect()
+	res.Status(201)
+	route := &v1.Route{
+		Name:  "bar",
+		Paths: []string{"/"},
+		Headers: map[string]*v1.HeaderValues{
+			"foo": {
+				Values: []string{"bar", "baz"},
+			},
+		},
+		Service: &v1.Service{
+			Id: service.Id,
+		},
+	}
+	res = c.POST("/v1/routes").WithJSON(route).Expect()
+	res.Status(201)
+
+	go func() {
+		_ = kong.RunDP(ctx, kong.GetKongConfForShared())
+	}()
+
+	require.Nil(t, util.WaitForKongPort(t, 8001))
+	util.WaitFunc(t, func() error {
+		ctx := context.Background()
+		client, err := kongClient.NewClient(util.BasedKongAdminAPIAddr, nil)
+		if err != nil {
+			return fmt.Errorf("create go client for kong: %v", err)
+		}
+		routes, err := client.Routes.ListAll(ctx)
+		if err != nil {
+			return fmt.Errorf("fetch routes: %v", err)
+		}
+		if len(routes) != 1 {
+			return fmt.Errorf("expected %v routes but got %v routes", 1,
+				len(routes))
+		}
+		route := routes[0]
+		if len(route.Headers["foo"]) != 2 {
+			return fmt.Errorf("expected route.Headers."+
+				"foo to have 2 values but got %v", len(route.Headers["foo"]))
+		}
+		return nil
 	})
 }

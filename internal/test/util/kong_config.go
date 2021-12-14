@@ -23,11 +23,11 @@ func EnsureConfig(expectedConfig *model.TestingConfig) error {
 	return err
 }
 
-var baseAddr = kong.String("http://localhost:8001")
+var BasedKongAdminAPIAddr = kong.String("http://localhost:8001")
 
 func fetchKongConfig() (KongConfig, error) {
 	ctx := context.Background()
-	client, err := kong.NewClient(baseAddr, nil)
+	client, err := kong.NewClient(BasedKongAdminAPIAddr, nil)
 	if err != nil {
 		return KongConfig{}, fmt.Errorf("create go client for kong: %v", err)
 	}
