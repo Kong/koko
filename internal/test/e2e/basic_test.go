@@ -71,20 +71,16 @@ func TestSharedMTLS(t *testing.T) {
 	go func() {
 		_ = kong.RunDP(ctx, kong.GetKongConfForShared())
 	}()
-	require.Nil(t, util.WaitForKong(t))
 
-	// test the route
-	require.Nil(t, backoff.Retry(func() error {
-		res, err := http.Get("http://localhost:8000/headers")
-		if err != nil {
-			return err
-		}
-		defer res.Body.Close()
-		if res.StatusCode != http.StatusOK {
-			return fmt.Errorf("unexpected status code: %v", res.StatusCode)
-		}
-		return nil
-	}, util.TestBackoff))
+	require.Nil(t, util.WaitForKongPort(t, 8001))
+
+	expectedConfig := &v1.TestingConfig{
+		Services: []*v1.Service{service},
+		Routes:   []*v1.Route{route},
+	}
+	util.WaitFunc(t, func() error {
+		return util.EnsureConfig(expectedConfig)
+	})
 }
 
 func TestPKIMTLS(t *testing.T) {
@@ -138,21 +134,16 @@ func TestPKIMTLS(t *testing.T) {
 	go func() {
 		_ = kong.RunDP(ctx, kong.GetKongConf())
 	}()
-	testing.Verbose()
-	require.Nil(t, util.WaitForKong(t))
 
-	// test the route
-	require.Nil(t, backoff.Retry(func() error {
-		res, err := http.Get("http://localhost:8000/headers")
-		if err != nil {
-			return err
-		}
-		defer res.Body.Close()
-		if res.StatusCode != http.StatusOK {
-			return fmt.Errorf("unexpected status code: %v", res.StatusCode)
-		}
-		return nil
-	}, util.TestBackoff))
+	require.Nil(t, util.WaitForKongPort(t, 8001))
+
+	expectedConfig := &v1.TestingConfig{
+		Services: []*v1.Service{service},
+		Routes:   []*v1.Route{route},
+	}
+	util.WaitFunc(t, func() error {
+		return util.EnsureConfig(expectedConfig)
+	})
 }
 
 func TestHealthEndpointOnCPPort(t *testing.T) {
@@ -248,19 +239,18 @@ func TestNodesEndpoint(t *testing.T) {
 	testing.Verbose()
 	require.Nil(t, util.WaitForKong(t))
 
-	// test the route
-	require.Nil(t, backoff.Retry(func() error {
-		res, err := http.Get("http://localhost:8000/headers")
-		if err != nil {
-			return err
-		}
-		defer res.Body.Close()
-		if res.StatusCode != http.StatusOK {
-			return fmt.Errorf("unexpected status code: %v", res.StatusCode)
-		}
-		return nil
-	}, util.TestBackoff))
+	// ensure kong node is up
+	require.Nil(t, util.WaitForKongPort(t, 8001))
 
+	expectedConfig := &v1.TestingConfig{
+		Services: []*v1.Service{service},
+		Routes:   []*v1.Route{route},
+	}
+	util.WaitFunc(t, func() error {
+		return util.EnsureConfig(expectedConfig)
+	})
+
+	// once node is up, check the status endpoint
 	res = c.GET("/v1/nodes").Expect()
 	res.Status(http.StatusOK)
 	nodes := res.JSON().Object().Value("items").Array()
@@ -310,6 +300,7 @@ func TestPluginSync(t *testing.T) {
 	res = c.POST("/v1/routes").WithJSON(route).Expect()
 	res.Status(201)
 
+	var expectedPlugins []*v1.Plugin
 	plugin := &v1.Plugin{
 		Name:      "key-auth",
 		Enabled:   wrapperspb.Bool(true),
@@ -320,6 +311,7 @@ func TestPluginSync(t *testing.T) {
 	require.Nil(t, err)
 	res = c.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
 	res.Status(201)
+	expectedPlugins = append(expectedPlugins, plugin)
 
 	plugin = &v1.Plugin{
 		Name:      "basic-auth",
@@ -331,6 +323,7 @@ func TestPluginSync(t *testing.T) {
 	require.Nil(t, err)
 	res = c.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
 	res.Status(201)
+	expectedPlugins = append(expectedPlugins, plugin)
 
 	plugin = &v1.Plugin{
 		Name:      "request-transformer",
@@ -341,23 +334,22 @@ func TestPluginSync(t *testing.T) {
 	require.Nil(t, err)
 	res = c.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
 	res.Status(201)
+	expectedPlugins = append(expectedPlugins, plugin)
 
 	go func() {
 		_ = kong.RunDP(ctx, kong.GetKongConfForShared())
 	}()
+
 	require.Nil(t, util.WaitForKongPort(t, 8001))
 
-	// Kong's Admin API
-	c = httpexpect.New(t, "http://localhost:8001")
-
+	expectedConfig := &v1.TestingConfig{
+		Services: []*v1.Service{service},
+		Routes:   []*v1.Route{route},
+		Plugins:  expectedPlugins,
+	}
 	util.WaitFunc(t, func() error {
-		res = c.GET("/plugins").Expect()
-		res.Status(200)
-		data := res.JSON().Object().Value("data").Array()
-		count := data.Length().Raw()
-		if count != 3 {
-			return fmt.Errorf("expected 3 plugins but got %v", count)
-		}
-		return nil
+		err := util.EnsureConfig(expectedConfig)
+		t.Log("configuration mismatch", err)
+		return err
 	})
 }

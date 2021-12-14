@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+option go_package = "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1;v1";
+
+package kong.admin.model.v1;
+
+import "kong/admin/model/v1/service.proto";
+import "kong/admin/model/v1/route.proto";
+import "kong/admin/model/v1/plugin.proto";
+
+message TestingConfig {
+  repeated Service services = 1;
+  repeated Route routes = 2;
+  repeated Plugin plugins = 3;
+}
