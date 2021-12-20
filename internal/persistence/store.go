@@ -27,7 +27,7 @@ type CRUD interface {
 	// If key is not found, an ErrNotFound error is returned.
 	Delete(ctx context.Context, key string) error
 	// List returns all keys with prefix.
-	List(ctx context.Context, prefix string) ([][]byte, error)
+	List(ctx context.Context, prefix string) ([][2][]byte, error)
 }
 
 type Tx interface {

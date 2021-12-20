@@ -115,8 +115,9 @@ func (s *Postgres) Delete(ctx context.Context, key string) error {
 	})
 }
 
-func (s *Postgres) List(ctx context.Context, prefix string) ([][]byte, error) {
-	var res [][]byte
+func (s *Postgres) List(ctx context.Context, prefix string) ([][2][]byte,
+	error) {
+	var res [][2][]byte
 	err := s.withinTx(ctx, func(tx persistence.Tx) error {
 		var err error
 		res, err = tx.List(ctx, prefix)
@@ -192,8 +193,9 @@ func (t *sqliteTx) Delete(ctx context.Context, key string) error {
 	return nil
 }
 
-func (t *sqliteTx) List(ctx context.Context, prefix string) ([][]byte, error) {
-	var res [][]byte
+func (t *sqliteTx) List(ctx context.Context, prefix string) ([][2][]byte,
+	error) {
+	var res [][2][]byte
 	rows, err := t.tx.QueryContext(ctx, listQuery(prefix))
 	if err != nil {
 		return nil, err
@@ -206,13 +208,15 @@ func (t *sqliteTx) List(ctx context.Context, prefix string) ([][]byte, error) {
 		return nil, err
 	}
 	for rows.Next() {
-		var resKey string
-		var value []byte
-		err := rows.Scan(&resKey, &value)
+		var (
+			key   []byte
+			value []byte
+		)
+		err := rows.Scan(&key, &value)
 		if err != nil {
 			return nil, err
 		}
-		res = append(res, value)
+		res = append(res, [2][]byte{key, value})
 	}
 	return res, nil
 }

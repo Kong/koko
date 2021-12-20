@@ -79,25 +79,33 @@ func TestPersister(t *testing.T) {
 	})
 	t.Run("List()", func(t *testing.T) {
 		t.Run("lists all keys with prefix", func(t *testing.T) {
-			var expected []string
+			var expectedValues, expectedKeys []string
 			for i := 0; i < 1000; i++ {
 				value := []byte(fmt.Sprintf("prefix-value-%d", i))
-				require.Nil(t, p.Put(
-					context.Background(),
-					fmt.Sprintf("prefix/key%d", i),
-					value))
-				expected = append(expected, string(value))
+				key := fmt.Sprintf("prefix/key%d", i)
+				require.Nil(t, p.Put(context.Background(), key, value))
+				expectedKeys = append(expectedKeys, key)
+				expectedValues = append(expectedValues, string(value))
 			}
-			values, err := p.List(context.Background(), "prefix/")
+			kvs, err := p.List(context.Background(), "prefix/")
 			require.Nil(t, err)
-			require.Len(t, values, 1000)
+			require.Len(t, kvs, 1000)
+
 			var valuesAsStrings []string
-			for _, value := range values {
-				valuesAsStrings = append(valuesAsStrings, string(value))
+			var keysAsStrings []string
+			for _, kv := range kvs {
+				key := string(kv[0])
+				value := string(kv[1])
+				keysAsStrings = append(keysAsStrings, key)
+				valuesAsStrings = append(valuesAsStrings, value)
 			}
+			sort.Strings(keysAsStrings)
+			sort.Strings(expectedKeys)
 			sort.Strings(valuesAsStrings)
-			sort.Strings(expected)
-			require.Equal(t, expected, valuesAsStrings)
+			sort.Strings(expectedValues)
+
+			require.Equal(t, expectedKeys, keysAsStrings)
+			require.Equal(t, expectedValues, valuesAsStrings)
 		})
 		t.Run("other prefixes are left as is", func(t *testing.T) {
 			var expected []string
@@ -120,7 +128,7 @@ func TestPersister(t *testing.T) {
 			require.Len(t, values, 1000)
 			var valuesAsStrings []string
 			for _, value := range values {
-				valuesAsStrings = append(valuesAsStrings, string(value))
+				valuesAsStrings = append(valuesAsStrings, string(value[1]))
 			}
 			sort.Strings(valuesAsStrings)
 			sort.Strings(expected)

@@ -289,11 +289,12 @@ func (s *ObjectStore) List(ctx context.Context, list model.ObjectList, opts ...L
 	ctx, cancel := context.WithTimeout(ctx, DefaultDBQueryTimeout)
 	defer cancel()
 	typ := list.Type()
-	values, err := s.store.List(ctx, s.listKey(typ))
+	kvs, err := s.store.List(ctx, s.listKey(typ))
 	if err != nil {
 		return err
 	}
-	for _, value := range values {
+	for _, kv := range kvs {
+		value := kv[1]
 		object, err := model.NewObject(typ)
 		if err != nil {
 			return err
