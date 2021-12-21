@@ -55,7 +55,8 @@ type services struct {
 	route   v1.RouteServiceServer
 	plugin  v1.PluginServiceServer
 
-	node v1.NodeServiceServer
+	status v1.StatusServiceServer
+	node   v1.NodeServiceServer
 }
 
 func buildServices(opts HandlerOpts) services {
@@ -82,6 +83,13 @@ func buildServices(opts HandlerOpts) services {
 			},
 		},
 		node: &NodeService{
+			CommonOpts: CommonOpts{
+				storeLoader: opts.StoreLoader,
+				logger: opts.Logger.With(zap.String("admin-service",
+					"node")),
+			},
+		},
+		status: &StatusService{
 			CommonOpts: CommonOpts{
 				storeLoader: opts.StoreLoader,
 				logger: opts.Logger.With(zap.String("admin-service",
@@ -131,7 +139,11 @@ func NewHandler(opts HandlerOpts) (http.Handler, error) {
 	if err != nil {
 		return nil, err
 	}
-
+	err = v1.RegisterStatusServiceHandlerServer(context.Background(),
+		mux, services.status)
+	if err != nil {
+		return nil, err
+	}
 	return mux, nil
 }
 
@@ -153,5 +165,6 @@ func NewGRPC(opts HandlerOpts) *grpc.Server {
 	v1.RegisterRouteServiceServer(server, services.route)
 	v1.RegisterPluginServiceServer(server, services.plugin)
 	v1.RegisterNodeServiceServer(server, services.node)
+	v1.RegisterStatusServiceServer(server, services.status)
 	return server
 }

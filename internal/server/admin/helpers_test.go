@@ -15,10 +15,14 @@ func setup(t *testing.T) (*httptest.Server, func()) {
 	require.Nil(t, err)
 	objectStore := store.New(p, log.Logger)
 
+	return setupWithDB(t, objectStore.ForCluster("default"))
+}
+
+func setupWithDB(t *testing.T, store store.Store) (*httptest.Server, func()) {
 	handler, err := NewHandler(HandlerOpts{
 		Logger: log.Logger,
 		StoreLoader: DefaultStoreLoader{
-			Store: objectStore.ForCluster("default"),
+			Store: store,
 		},
 	})
 	if err != nil {
