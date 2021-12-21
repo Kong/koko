@@ -53,6 +53,24 @@ func DeleteByType(typ model.Type) DeleteOptsFunc {
 	}
 }
 
-type ListOpts struct{}
+type ListOpts struct {
+	ReferenceType model.Type
+	ReferenceID   string
+}
 
 type ListOptsFunc func(*ListOpts)
+
+func NewListOpts(fns ...ListOptsFunc) *ListOpts {
+	res := &ListOpts{}
+	for _, fn := range fns {
+		fn(res)
+	}
+	return res
+}
+
+func ListFor(typ model.Type, id string) ListOptsFunc {
+	return func(opt *ListOpts) {
+		opt.ReferenceType = typ
+		opt.ReferenceID = id
+	}
+}

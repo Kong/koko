@@ -289,6 +289,11 @@ func (s *ObjectStore) List(ctx context.Context, list model.ObjectList, opts ...L
 	ctx, cancel := context.WithTimeout(ctx, DefaultDBQueryTimeout)
 	defer cancel()
 	typ := list.Type()
+	opt := NewListOpts(opts...)
+	if opt != nil && opt.ReferenceType != "" && opt.ReferenceID != "" {
+		return s.referencedList(ctx, list, opt)
+	}
+
 	kvs, err := s.store.List(ctx, s.listKey(typ))
 	if err != nil {
 		return err
@@ -306,6 +311,47 @@ func (s *ObjectStore) List(ctx context.Context, list model.ObjectList, opts ...L
 		list.Add(object)
 	}
 	return nil
+}
+
+func (s *ObjectStore) referencedList(ctx context.Context, list model.ObjectList, opt *ListOpts) error {
+	typ := list.Type()
+	err := s.withTx(ctx, func(tx persistence.Tx) error {
+		keyPrefix := s.referencedListKey(typ, opt)
+		kvs, err := tx.List(ctx, keyPrefix)
+		if err != nil {
+			return err
+		}
+		keyPrefixLen := len(keyPrefix)
+		for _, kv := range kvs {
+			key := string(kv[0])
+			value := string(kv[1])
+			if value != "1" {
+				panic(fmt.Sprintf("unexpected value for a foreign index: %v",
+					value))
+			}
+
+			id, err := s.genID(typ, key[keyPrefixLen:])
+			if err != nil {
+				return err
+			}
+			object, err := model.NewObject(typ)
+			if err != nil {
+				return err
+			}
+			err = s.readByTypeID(ctx, tx, id, object)
+			if err != nil {
+				return err
+			}
+			list.Add(object)
+		}
+		return nil
+	})
+	return err
+}
+
+func (s *ObjectStore) referencedListKey(typ model.Type, opt *ListOpts) string {
+	return s.clusterKey(fmt.Sprintf("ix/f/%s/%s/%s/",
+		opt.ReferenceType, opt.ReferenceID, typ))
 }
 
 func (s *ObjectStore) listKey(typ model.Type) string {

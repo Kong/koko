@@ -429,6 +429,62 @@ func TestList(t *testing.T) {
 		require.Nil(t, err)
 		require.Len(t, svcs.GetAll(), 2)
 	})
+	t.Run("list returns elements referenced via foreign index", func(t *testing.T) {
+		ctx := context.Background()
+		svc := resource.NewService()
+		sid := uuid.NewString()
+		svc.Service = &v1.Service{
+			Id:   sid,
+			Name: "s2",
+			Host: "foo.com",
+			Path: "/bar",
+		}
+		err := s.Create(ctx, svc)
+		require.Nil(t, err)
+
+		route := resource.NewRoute()
+		route.Route = &v1.Route{
+			Name:  "r0",
+			Hosts: []string{"example.com"},
+			Service: &v1.Service{
+				Id: sid,
+			},
+		}
+		require.Nil(t, s.Create(ctx, route))
+
+		route = resource.NewRoute()
+		route.Route = &v1.Route{
+			Name:  "r1",
+			Hosts: []string{"example.com"},
+			Service: &v1.Service{
+				Id: sid,
+			},
+		}
+		require.Nil(t, s.Create(ctx, route))
+
+		routesForService := resource.NewList(resource.TypeRoute)
+		err = s.List(ctx, routesForService, ListFor(resource.TypeService, sid))
+		require.Nil(t, err)
+		require.Len(t, routesForService.GetAll(), 2)
+	})
+	t.Run("list returns no error when no foreign resources exists", func(t *testing.T) {
+		ctx := context.Background()
+		svc := resource.NewService()
+		sid := uuid.NewString()
+		svc.Service = &v1.Service{
+			Id:   sid,
+			Name: "s3",
+			Host: "foo.com",
+			Path: "/bar",
+		}
+		err := s.Create(ctx, svc)
+		require.Nil(t, err)
+
+		routesForService := resource.NewList(resource.TypeRoute)
+		err = s.List(ctx, routesForService, ListFor(resource.TypeService, sid))
+		require.Nil(t, err)
+		require.Len(t, routesForService.GetAll(), 0)
+	})
 }
 
 func TestNew(t *testing.T) {
