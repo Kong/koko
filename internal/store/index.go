@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/kong/koko/internal/model"
 	"github.com/kong/koko/internal/persistence"
@@ -164,16 +165,22 @@ func (s *ObjectStore) deleteIndexes(ctx context.Context, tx persistence.Tx,
 func (s *ObjectStore) checkForeignIndexesForDelete(ctx context.Context,
 	tx persistence.Tx,
 	object model.Object) error {
-	// TODO(hbagdi): change the tx.List to return keys and values
-	// this is required in other places as well, then use the keys
-	// to build an index and return a more informative error back
-	key := fmt.Sprintf("ix/f/%s/%s", object.Type(), object.ID())
-	values, err := tx.List(ctx, s.clusterKey(key))
+	key := s.clusterKey(fmt.Sprintf("ix/f/%s/%s", object.Type(), object.ID()))
+	kvs, err := tx.List(ctx, key)
 	if err != nil {
 		return err
 	}
-	if len(values) > 0 {
-		return ErrConstraint{Message: "foreign references exist"}
+	if len(kvs) > 0 {
+		refTypeID := strings.TrimPrefix(string(kvs[0][0]), key+"/")
+		typeAndID := strings.Split(refTypeID, "/")
+		return ErrConstraint{
+			Index: model.Index{
+				Type:  model.IndexForeign,
+				Value: object.ID(),
+			},
+			Message: fmt.Sprintf("foreign reference exist: %s (id: %s)",
+				typeAndID[0], typeAndID[1]),
+		}
 	}
 	return nil
 }

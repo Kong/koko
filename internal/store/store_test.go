@@ -3,6 +3,7 @@ package store
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/google/uuid"
@@ -181,7 +182,9 @@ func TestDelete(t *testing.T) {
 		require.NotNil(t, err)
 		constraintErr, ok := err.(ErrConstraint)
 		require.True(t, ok)
-		require.Equal(t, "foreign references exist", constraintErr.Message)
+		errMessage := fmt.Sprintf("foreign reference exist: %s (id: %s)",
+			"route", rid)
+		require.Equal(t, errMessage, constraintErr.Message)
 	})
 }
 
