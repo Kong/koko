@@ -122,6 +122,36 @@ func TestCreate(t *testing.T) {
 	})
 }
 
+func TestRead(t *testing.T) {
+	persister, err := util.GetPersister()
+	require.Nil(t, err)
+	ctx := context.Background()
+	s := New(persister, log.Logger).ForCluster("default")
+	svc := resource.NewService()
+	sid := uuid.NewString()
+	svc.Service = &v1.Service{
+		Id:   sid,
+		Name: "s0",
+		Host: "foo.com",
+		Path: "/bar",
+	}
+	err = s.Create(ctx, svc)
+	require.Nil(t, err)
+	t.Run("reading an  object succeeds", func(t *testing.T) {
+		svc := resource.NewService()
+		err := s.Read(context.Background(), svc, GetByID(sid))
+		require.Nil(t, err)
+		require.Equal(t, "s0", svc.Service.Name)
+		require.Equal(t, "foo.com", svc.Service.Host)
+		require.Equal(t, "/bar", svc.Service.Path)
+	})
+	t.Run("deleting a non-existent object fails", func(t *testing.T) {
+		svc := resource.NewService()
+		err := s.Read(context.Background(), svc, GetByID(uuid.NewString()))
+		require.IsType(t, ErrNotFound, err)
+	})
+}
+
 func TestDelete(t *testing.T) {
 	persister, err := util.GetPersister()
 	require.Nil(t, err)
@@ -704,13 +734,15 @@ func TestStoredValue(t *testing.T) {
 		require.Nil(t, err)
 		value, err := persister.Get(ctx, key)
 		require.Nil(t, err)
-		var v map[string]interface{}
+		var v valueWrapper
 		err = json.Unmarshal(value, &v)
 		require.Nil(t, err)
+		object, ok := v.Object.(map[string]interface{})
+		require.True(t, ok)
 
-		require.Equal(t, "bar", v["name"])
-		require.Equal(t, id, v["id"])
-		require.Equal(t, "foo.com", v["host"])
-		require.Equal(t, "/bar", v["path"])
+		require.Equal(t, "bar", object["name"])
+		require.Equal(t, id, object["id"])
+		require.Equal(t, "foo.com", object["host"])
+		require.Equal(t, "/bar", object["path"])
 	})
 }

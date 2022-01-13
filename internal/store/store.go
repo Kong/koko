@@ -9,7 +9,6 @@ import (
 
 	"github.com/google/uuid"
 	nonPublic "github.com/kong/koko/internal/gen/grpc/kong/nonpublic/v1"
-	"github.com/kong/koko/internal/json"
 	"github.com/kong/koko/internal/model"
 	"github.com/kong/koko/internal/persistence"
 	"github.com/kong/koko/internal/resource"
@@ -104,7 +103,7 @@ func (s *ObjectStore) Create(ctx context.Context, object model.Object,
 	if err != nil {
 		return err
 	}
-	value, err := json.Marshal(object.Resource())
+	value, err := wrapObject(object)
 	if err != nil {
 		return err
 	}
@@ -135,7 +134,7 @@ func (s *ObjectStore) Upsert(ctx context.Context, object model.Object,
 	if err != nil {
 		return err
 	}
-	value, err := json.Marshal(object.Resource())
+	value, err := wrapObject(object)
 	if err != nil {
 		return err
 	}
@@ -191,7 +190,7 @@ func (s *ObjectStore) updateEvent(ctx context.Context, tx persistence.Tx,
 			Value: s.clock(),
 		},
 	}
-	value, err := json.Marshal(event.Resource())
+	value, err := wrapObject(event)
 	if err != nil {
 		return fmt.Errorf("proto marshal update event: %v", err)
 	}
@@ -243,7 +242,7 @@ func (s *ObjectStore) readByTypeID(ctx context.Context, tx persistence.Tx,
 		}
 		return err
 	}
-	err = json.Unmarshal(value, object.Resource())
+	err = unwrapObject(value, object)
 	if err != nil {
 		return err
 	}
@@ -304,7 +303,8 @@ func (s *ObjectStore) List(ctx context.Context, list model.ObjectList, opts ...L
 		if err != nil {
 			return err
 		}
-		err = json.Unmarshal(value, object.Resource())
+
+		err = unwrapObject(value, object)
 		if err != nil {
 			return err
 		}
@@ -324,10 +324,9 @@ func (s *ObjectStore) referencedList(ctx context.Context, list model.ObjectList,
 		keyPrefixLen := len(keyPrefix)
 		for _, kv := range kvs {
 			key := string(kv[0])
-			value := string(kv[1])
-			if value != "1" {
-				panic(fmt.Sprintf("unexpected value for a foreign index: %v",
-					value))
+			value := kv[1]
+			if err := verifyForeignValue(value); err != nil {
+				panic(err)
 			}
 
 			id, err := s.genID(typ, key[keyPrefixLen:])

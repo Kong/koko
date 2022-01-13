@@ -12,22 +12,32 @@ import (
 )
 
 func (s *ObjectStore) indexKV(index model.Index, object model.Object) (string,
-	[]byte) {
+	[]byte, error) {
 	if index.Name == "" || index.Value == "" {
-		return "", nil
+		return "", nil, nil
 	}
 	switch index.Type {
 	case model.IndexUnique:
 		key := fmt.Sprintf("ix/u/%s/%s/%s", object.Type(), index.Name,
 			index.Value)
-		value := object.ID()
-		return s.clusterKey(key), []byte(value)
+		value, err := wrapUniqueIndex(object.ID())
+		if err != nil {
+			return "", nil, err
+		}
+
+		return s.clusterKey(key), value, nil
+
 	case model.IndexForeign:
 		key := fmt.Sprintf("ix/f/%s/%s/%s/%s",
 			index.ForeignType, index.Value,
 			object.Type(), object.ID())
-		value := []byte{'1'}
-		return s.clusterKey(key), value
+		value, err := wrapForeignIndex()
+		if err != nil {
+			return "", nil, err
+		}
+
+		return s.clusterKey(key), value, nil
+
 	default:
 		panic("invalid index type")
 	}
@@ -49,11 +59,15 @@ func (s *ObjectStore) createIndexes(ctx context.Context,
 	for _, index := range indexes {
 		switch index.Type {
 		case model.IndexUnique:
-			key, value := s.indexKV(index, object)
+			key, value, err := s.indexKV(index, object)
+			if err != nil {
+				return fmt.Errorf("render indexes: %v", err)
+			}
 			if key == "" {
 				continue
 			}
-			err := s.checkIndex(ctx, tx, index, key)
+
+			err = s.checkIndex(ctx, tx, index, key)
 			if err != nil {
 				return err
 			}
@@ -64,11 +78,15 @@ func (s *ObjectStore) createIndexes(ctx context.Context,
 					index.Type, object.Type())
 			}
 		case model.IndexForeign:
-			key, value := s.indexKV(index, object)
+			key, value, err := s.indexKV(index, object)
+			if err != nil {
+				return fmt.Errorf("render indexes: %v", err)
+			}
 			if key == "" {
 				continue
 			}
-			err := s.checkIndex(ctx, tx, index, key)
+
+			err = s.checkIndex(ctx, tx, index, key)
 			if err != nil {
 				return err
 			}
@@ -126,11 +144,14 @@ func (s *ObjectStore) deleteIndexes(ctx context.Context, tx persistence.Tx,
 	for _, index := range indexes {
 		switch index.Type {
 		case model.IndexUnique:
-			key, _ := s.indexKV(index, object)
+			key, _, err := s.indexKV(index, object)
+			if err != nil {
+				return fmt.Errorf("render indexes: %v", err)
+			}
 			if key == "" {
 				continue
 			}
-			err := tx.Delete(ctx, key)
+			err = tx.Delete(ctx, key)
 			if err != nil {
 				s.logger.With(
 					zap.Error(err),
@@ -141,11 +162,14 @@ func (s *ObjectStore) deleteIndexes(ctx context.Context, tx persistence.Tx,
 				).Error("delete index failed, possible data integrity issue")
 			}
 		case model.IndexForeign:
-			key, _ := s.indexKV(index, object)
+			key, _, err := s.indexKV(index, object)
+			if err != nil {
+				return fmt.Errorf("render indexes: %v", err)
+			}
 			if key == "" {
 				continue
 			}
-			err := tx.Delete(ctx, key)
+			err = tx.Delete(ctx, key)
 			if err != nil {
 				s.logger.With(
 					zap.Error(err),

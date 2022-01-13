@@ -1,1 +1,1 @@
-create table if not exists store(key text PRIMARY KEY, value bytea);
+create table if not exists store(key text PRIMARY KEY, value jsonb);
