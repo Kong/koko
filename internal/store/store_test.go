@@ -2,13 +2,13 @@ package store
 
 import (
 	"context"
+	encodingJSON "encoding/json"
 	"errors"
 	"fmt"
 	"testing"
 
 	"github.com/google/uuid"
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
-	"github.com/kong/koko/internal/json"
 	"github.com/kong/koko/internal/log"
 	"github.com/kong/koko/internal/model"
 	"github.com/kong/koko/internal/model/json/validation"
@@ -16,6 +16,7 @@ import (
 	"github.com/kong/koko/internal/store/event"
 	"github.com/kong/koko/internal/test/util"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
 func TestCreate(t *testing.T) {
@@ -716,33 +717,31 @@ func TestUpdateEventForNode(t *testing.T) {
 }
 
 func TestStoredValue(t *testing.T) {
-	t.Run("store value is a JSON string", func(t *testing.T) {
+	t.Run("stored value is a protobuf aware JSON", func(t *testing.T) {
 		ctx := context.Background()
 		persister, err := util.GetPersister()
 		require.Nil(t, err)
 		s := New(persister, log.Logger).ForCluster("default")
-		svc := resource.NewService()
+		route := resource.NewRoute()
 		id := uuid.NewString()
-		svc.Service = &v1.Service{
-			Id:   id,
-			Name: "bar",
-			Host: "foo.com",
-			Path: "/bar",
+		route.Route = &v1.Route{
+			Id:               id,
+			Name:             "bar",
+			Paths:            []string{"/"},
+			RequestBuffering: wrapperspb.Bool(true),
 		}
-		require.Nil(t, s.Create(ctx, svc))
-		key, err := s.genID(resource.TypeService, id)
+		require.Nil(t, s.Create(ctx, route))
+		key, err := s.genID(resource.TypeRoute, id)
 		require.Nil(t, err)
 		value, err := persister.Get(ctx, key)
 		require.Nil(t, err)
-		var v valueWrapper
-		err = json.Unmarshal(value, &v)
+		var v struct {
+			Object map[string]interface{} `json:"object"`
+		}
+		err = encodingJSON.Unmarshal(value, &v)
 		require.Nil(t, err)
-		object, ok := v.Object.(map[string]interface{})
-		require.True(t, ok)
-
-		require.Equal(t, "bar", object["name"])
-		require.Equal(t, id, object["id"])
-		require.Equal(t, "foo.com", object["host"])
-		require.Equal(t, "/bar", object["path"])
+		// check a wrapper type was rendered correctly,
+		// this fails if a protobuf unaware parser is used
+		require.True(t, v.Object["request_buffering"].(bool))
 	})
 }

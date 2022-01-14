@@ -1,6 +1,7 @@
 package store
 
 import (
+	encodingJSON "encoding/json"
 	"fmt"
 
 	protoJSON "github.com/kong/koko/internal/json"
@@ -14,13 +15,13 @@ const (
 )
 
 type valueWrapper struct {
-	Type   int         `json:"type,omitempty"`
-	Object interface{} `json:"object,omitempty"`
-	RefID  string      `json:"ref_id,omitempty"`
+	Type   int                     `json:"type,omitempty"`
+	Object encodingJSON.RawMessage `json:"object,omitempty"`
+	RefID  string                  `json:"ref_id,omitempty"`
 }
 
 func wrapUniqueIndex(refID string) ([]byte, error) {
-	value, err := protoJSON.Marshal(valueWrapper{
+	value, err := encodingJSON.Marshal(valueWrapper{
 		Type:  valueTypeIndexUnique,
 		RefID: refID,
 	})
@@ -31,7 +32,7 @@ func wrapUniqueIndex(refID string) ([]byte, error) {
 }
 
 func wrapForeignIndex() ([]byte, error) {
-	value, err := protoJSON.Marshal(valueWrapper{
+	value, err := encodingJSON.Marshal(valueWrapper{
 		Type: valueTypeIndexForeign,
 	})
 	if err != nil {
@@ -42,7 +43,7 @@ func wrapForeignIndex() ([]byte, error) {
 
 func verifyForeignValue(value []byte) error {
 	var indexValue valueWrapper
-	err := protoJSON.Unmarshal(value, &indexValue)
+	err := encodingJSON.Unmarshal(value, &indexValue)
 	if err != nil {
 		return err
 	}
@@ -54,9 +55,13 @@ func verifyForeignValue(value []byte) error {
 }
 
 func wrapObject(object model.Object) ([]byte, error) {
-	value, err := protoJSON.Marshal(valueWrapper{
+	jsonObject, err := protoJSON.Marshal(object.Resource())
+	if err != nil {
+		return nil, err
+	}
+	value, err := encodingJSON.Marshal(valueWrapper{
 		Type:   valueTypeObject,
-		Object: object.Resource(),
+		Object: jsonObject,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("json marshal object: %v", err)
@@ -66,9 +71,12 @@ func wrapObject(object model.Object) ([]byte, error) {
 
 func unwrapObject(value []byte, object model.Object) error {
 	var wrappedValue valueWrapper
-	wrappedValue.Object = object.Resource()
 
-	err := protoJSON.Unmarshal(value, &wrappedValue)
+	err := encodingJSON.Unmarshal(value, &wrappedValue)
+	if err != nil {
+		return fmt.Errorf("json unmarshal wrapperValue: %v", err)
+	}
+	err = protoJSON.Unmarshal(wrappedValue.Object, object.Resource())
 	if err != nil {
 		return fmt.Errorf("json unmarshal object: %v", err)
 	}
