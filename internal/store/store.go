@@ -130,10 +130,6 @@ func (s *ObjectStore) Upsert(ctx context.Context, object model.Object,
 		return err
 	}
 
-	id, err := s.genID(object.Type(), object.ID())
-	if err != nil {
-		return err
-	}
 	value, err := wrapObject(object)
 	if err != nil {
 		return err
@@ -142,12 +138,12 @@ func (s *ObjectStore) Upsert(ctx context.Context, object model.Object,
 	return s.withTx(ctx, func(tx persistence.Tx) error {
 		// 1.delete old indexes if they exist
 		// no need to delete the object itself since it will be overwritten
-		// anyways
+		// anyway
 		oldObject, err := model.NewObject(object.Type())
 		if err != nil {
 			return err
 		}
-		err = s.readByTypeID(ctx, tx, id, oldObject)
+		err = s.readByTypeID(ctx, tx, object.Type(), object.ID(), oldObject)
 		switch err {
 		case nil:
 			// TODO(hbagdi): perf: drop and rebuild index only if changed
@@ -175,7 +171,11 @@ func (s *ObjectStore) Upsert(ctx context.Context, object model.Object,
 		}
 
 		// 4. write the object
-		return tx.Put(ctx, id, value)
+		key, err := s.genID(object.Type(), object.ID())
+		if err != nil {
+			return err
+		}
+		return tx.Put(ctx, key, value)
 	})
 }
 
@@ -226,12 +226,8 @@ func (s *ObjectStore) Read(ctx context.Context, object model.Object,
 	opt := NewReadOpts(opts...)
 	switch {
 	case opt.id != "":
-		id, err := s.genID(object.Type(), opt.id)
-		if err != nil {
-			return err
-		}
 		return s.withTx(ctx, func(tx persistence.Tx) error {
-			return s.readByTypeID(ctx, tx, id, object)
+			return s.readByTypeID(ctx, tx, object.Type(), opt.id, object)
 		})
 	case opt.name != "":
 		return s.withTx(ctx, func(tx persistence.Tx) error {
@@ -244,7 +240,7 @@ func (s *ObjectStore) Read(ctx context.Context, object model.Object,
 
 func (s *ObjectStore) readByTypeName(ctx context.Context, tx persistence.Tx,
 	typ model.Type, name string, object model.Object) error {
-	key := s.clusterKey(fmt.Sprintf("ix/u/%s/%s/%s", typ, "name", name))
+	key := s.uniqueIndexKey(typ, "name", name)
 	value, err := tx.Get(ctx, key)
 	if err != nil {
 		if errors.As(err, &persistence.ErrNotFound{}) {
@@ -256,11 +252,7 @@ func (s *ObjectStore) readByTypeName(ctx context.Context, tx persistence.Tx,
 	if err != nil {
 		return err
 	}
-	id, err := s.genID(typ, refID)
-	if err != nil {
-		return err
-	}
-	err = s.readByTypeID(ctx, tx, id, object)
+	err = s.readByTypeID(ctx, tx, typ, refID, object)
 	if err != nil {
 		return err
 	}
@@ -268,7 +260,11 @@ func (s *ObjectStore) readByTypeName(ctx context.Context, tx persistence.Tx,
 }
 
 func (s *ObjectStore) readByTypeID(ctx context.Context, tx persistence.Tx,
-	typeID string, object model.Object) error {
+	typ model.Type, id string, object model.Object) error {
+	typeID, err := s.genID(typ, id)
+	if err != nil {
+		return err
+	}
 	value, err := tx.Get(ctx, typeID)
 	if err != nil {
 		if errors.As(err, &persistence.ErrNotFound{}) {
@@ -288,26 +284,27 @@ func (s *ObjectStore) Delete(ctx context.Context,
 	ctx, cancel := context.WithTimeout(ctx, DefaultDBQueryTimeout)
 	defer cancel()
 	opt := NewDeleteOpts(opts...)
-	id, err := s.genID(opt.typ, opt.id)
-	if err != nil {
-		return err
-	}
 	object, err := model.NewObject(opt.typ)
 	if err != nil {
 		return err
 	}
 	return s.withTx(ctx, func(tx persistence.Tx) error {
-		err = s.readByTypeID(ctx, tx, id, object)
+		err = s.readByTypeID(ctx, tx, opt.typ, opt.id, object)
 		if err != nil {
 			return err
 		}
 
-		err := s.checkForeignIndexesForDelete(ctx, tx, object)
+		err = s.checkForeignIndexesForDelete(ctx, tx, object)
 		if err != nil {
 			return err
 		}
 
-		err = tx.Delete(ctx, id)
+		key, err := s.genID(opt.typ, opt.id)
+		if err != nil {
+			return err
+		}
+
+		err = tx.Delete(ctx, key)
 		if err != nil {
 			return err
 		}
@@ -363,15 +360,11 @@ func (s *ObjectStore) referencedList(ctx context.Context, list model.ObjectList,
 				panic(err)
 			}
 
-			id, err := s.genID(typ, key[keyPrefixLen:])
-			if err != nil {
-				return err
-			}
 			object, err := model.NewObject(typ)
 			if err != nil {
 				return err
 			}
-			err = s.readByTypeID(ctx, tx, id, object)
+			err = s.readByTypeID(ctx, tx, typ, key[keyPrefixLen:], object)
 			if err != nil {
 				return err
 			}

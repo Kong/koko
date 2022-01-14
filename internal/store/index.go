@@ -11,6 +11,27 @@ import (
 	"go.uber.org/zap"
 )
 
+func (s *ObjectStore) uniqueIndexKey(typ model.Type, indexName, indexValue string) string {
+	if typ == "" || indexName == "" || indexValue == "" {
+		panic("unique index must have a typ, name and a value")
+	}
+	key := fmt.Sprintf("ix/u/%s/%s/%s", typ, indexName,
+		indexValue)
+	return s.clusterKey(key)
+}
+
+func (s *ObjectStore) foreignIndexKey(foreignType model.Type,
+	foreignValue string, objectType model.Type, objectID string) string {
+	if foreignType == "" || foreignValue == "" ||
+		objectType == "" || objectID == "" {
+		panic("foreign index with invalid values")
+	}
+	key := fmt.Sprintf("ix/f/%s/%s/%s/%s",
+		foreignType, foreignValue,
+		objectType, objectID)
+	return s.clusterKey(key)
+}
+
 func (s *ObjectStore) indexKV(index model.Index, object model.Object) (string,
 	[]byte, error) {
 	if index.Name == "" || index.Value == "" {
@@ -18,25 +39,22 @@ func (s *ObjectStore) indexKV(index model.Index, object model.Object) (string,
 	}
 	switch index.Type {
 	case model.IndexUnique:
-		key := fmt.Sprintf("ix/u/%s/%s/%s", object.Type(), index.Name,
-			index.Value)
+		key := s.uniqueIndexKey(object.Type(), index.Name, index.Value)
 		value, err := wrapUniqueIndex(object.ID())
 		if err != nil {
 			return "", nil, err
 		}
 
-		return s.clusterKey(key), value, nil
+		return key, value, nil
 
 	case model.IndexForeign:
-		key := fmt.Sprintf("ix/f/%s/%s/%s/%s",
-			index.ForeignType, index.Value,
+		key := s.foreignIndexKey(index.ForeignType, index.Value,
 			object.Type(), object.ID())
 		value, err := wrapForeignIndex()
 		if err != nil {
 			return "", nil, err
 		}
-
-		return s.clusterKey(key), value, nil
+		return key, value, nil
 
 	default:
 		panic("invalid index type")
