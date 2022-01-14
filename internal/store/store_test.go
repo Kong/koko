@@ -138,7 +138,7 @@ func TestRead(t *testing.T) {
 	}
 	err = s.Create(ctx, svc)
 	require.Nil(t, err)
-	t.Run("reading an  object succeeds", func(t *testing.T) {
+	t.Run("reading an object by id succeeds", func(t *testing.T) {
 		svc := resource.NewService()
 		err := s.Read(context.Background(), svc, GetByID(sid))
 		require.Nil(t, err)
@@ -146,9 +146,23 @@ func TestRead(t *testing.T) {
 		require.Equal(t, "foo.com", svc.Service.Host)
 		require.Equal(t, "/bar", svc.Service.Path)
 	})
-	t.Run("deleting a non-existent object fails", func(t *testing.T) {
+	t.Run("reading an object by name succeeds", func(t *testing.T) {
+		svc := resource.NewService()
+		err := s.Read(context.Background(), svc, GetByName("s0"))
+		require.Nil(t, err)
+		require.Equal(t, sid, svc.Service.Id)
+		require.Equal(t, "s0", svc.Service.Name)
+		require.Equal(t, "foo.com", svc.Service.Host)
+		require.Equal(t, "/bar", svc.Service.Path)
+	})
+	t.Run("reading a non-existent object by id returns ErrNotFound", func(t *testing.T) {
 		svc := resource.NewService()
 		err := s.Read(context.Background(), svc, GetByID(uuid.NewString()))
+		require.IsType(t, ErrNotFound, err)
+	})
+	t.Run("reading a non-existent object by name returns ErrNotFound", func(t *testing.T) {
+		svc := resource.NewService()
+		err := s.Read(context.Background(), svc, GetByName("does-not-exist"))
 		require.IsType(t, ErrNotFound, err)
 	})
 }

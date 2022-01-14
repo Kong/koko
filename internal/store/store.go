@@ -224,13 +224,47 @@ func (s *ObjectStore) Read(ctx context.Context, object model.Object,
 	ctx, cancel := context.WithTimeout(ctx, DefaultDBQueryTimeout)
 	defer cancel()
 	opt := NewReadOpts(opts...)
-	id, err := s.genID(object.Type(), opt.id)
+	switch {
+	case opt.id != "":
+		id, err := s.genID(object.Type(), opt.id)
+		if err != nil {
+			return err
+		}
+		return s.withTx(ctx, func(tx persistence.Tx) error {
+			return s.readByTypeID(ctx, tx, id, object)
+		})
+	case opt.name != "":
+		return s.withTx(ctx, func(tx persistence.Tx) error {
+			return s.readByTypeName(ctx, tx, object.Type(), opt.name, object)
+		})
+	default:
+		return fmt.Errorf("invalid opt")
+	}
+}
+
+func (s *ObjectStore) readByTypeName(ctx context.Context, tx persistence.Tx,
+	typ model.Type, name string, object model.Object) error {
+	key := s.clusterKey(fmt.Sprintf("ix/u/%s/%s/%s", typ, "name", name))
+	value, err := tx.Get(ctx, key)
+	if err != nil {
+		if errors.As(err, &persistence.ErrNotFound{}) {
+			return ErrNotFound
+		}
+		return err
+	}
+	refID, err := unwrapUniqueIndex(value)
 	if err != nil {
 		return err
 	}
-	return s.withTx(ctx, func(tx persistence.Tx) error {
-		return s.readByTypeID(ctx, tx, id, object)
-	})
+	id, err := s.genID(typ, refID)
+	if err != nil {
+		return err
+	}
+	err = s.readByTypeID(ctx, tx, id, object)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (s *ObjectStore) readByTypeID(ctx context.Context, tx persistence.Tx,

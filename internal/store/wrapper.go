@@ -31,6 +31,18 @@ func wrapUniqueIndex(refID string) ([]byte, error) {
 	return value, nil
 }
 
+func unwrapUniqueIndex(value []byte) (string, error) {
+	var v valueWrapper
+	err := encodingJSON.Unmarshal(value, &v)
+	if err != nil {
+		return "", fmt.Errorf("json unmarshal unique index: %v", err)
+	}
+	if v.RefID == "" {
+		panic("invalid unique index value")
+	}
+	return v.RefID, nil
+}
+
 func wrapForeignIndex() ([]byte, error) {
 	value, err := encodingJSON.Marshal(valueWrapper{
 		Type: valueTypeIndexForeign,
