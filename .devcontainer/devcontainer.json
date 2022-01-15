@@ -28,6 +28,7 @@
 	// Set environment settings for container
 	"remoteEnv": {
 		"PATH": "${containerEnv:PATH}:/go/bin:/workspace/koko/scripts",
+    "KOKO_TEST_KONG_DP_IMAGE": "kong/kong-gateway:latest",
 	},
 
 	// Add the IDs of extensions you want installed when the container is created.

@@ -20,6 +20,11 @@ RUN sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt/ `lsb_release -cs`-
     && su -c "psql -c \"CREATE USER koko WITH SUPERUSER PASSWORD 'koko';\"" - postgres \
     && su -c "psql -c \"CREATE DATABASE koko;\"" - postgres
 
+# Force Docker storage driver to vfs
+RUN echo '{\n\
+  "storage-driver": "vfs"\n\
+}'\n >> //etc/docker/daemon.json
+
 # Modify the 'vscode' user to be 'koko'
 RUN usermod -l koko vscode \
     && usermod -d /home/vscode -m koko \
