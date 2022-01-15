@@ -160,4 +160,23 @@ func TestStatusList(t *testing.T) {
 		}
 		require.ElementsMatch(t, []string{id1, id2}, gotIDs)
 	})
+	t.Run("list returns status by type id", func(t *testing.T) {
+		body := c.GET("/v1/statuses").
+			WithQuery("ref_type", "route").
+			WithQuery("ref_id", contextID).
+			Expect().
+			Status(http.StatusOK).
+			JSON().Object()
+		items := body.Value("items").Array()
+		items.Length().Equal(1)
+	})
+	t.Run("list returns 200 with no results on no match", func(t *testing.T) {
+		body := c.GET("/v1/statuses").
+			WithQuery("ref_type", "route").
+			WithQuery("ref_id", uuid.NewString()).
+			Expect().
+			Status(http.StatusOK).
+			JSON().Object()
+		body.Empty()
+	})
 }

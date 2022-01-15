@@ -45,6 +45,8 @@ message DeleteStatusResponse{
 
 message ListStatusesRequest{
   model.v1.RequestCluster cluster = 1;
+  string ref_type = 2;
+  string ref_id = 3;
 }
 
 message ListStatusesResponse{

@@ -2,9 +2,12 @@ package admin
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
+	"regexp"
 
+	"github.com/google/uuid"
 	pbModel "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/service/v1"
 	"github.com/kong/koko/internal/model"
@@ -63,6 +66,11 @@ func (s *StatusService) ListStatuses(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
+
+	if req.RefType != "" && req.RefId != "" {
+		return s.listStatusForEntity(ctx, db, req.RefType, req.RefId)
+	}
+
 	list := resource.NewList(resource.TypeStatus)
 	if err := db.List(ctx, list); err != nil {
 		return nil, s.err(err)
@@ -74,6 +82,40 @@ func (s *StatusService) ListStatuses(ctx context.Context,
 
 func (s *StatusService) err(err error) error {
 	return util.HandleErr(s.logger, err)
+}
+
+// TODO(hbagdi): change this regex to either include '-' or '_'.
+var typeRegex = regexp.MustCompile("^[a-z]{1,16}$")
+
+func validateRefs(refType, refID string) error {
+	if _, err := uuid.Parse(refID); err != nil {
+		return util.ErrClient{Message: "invalid id"}
+	}
+	if !typeRegex.MatchString(refType) {
+		return util.ErrClient{Message: "invalid type"}
+	}
+	return nil
+}
+
+func (s *StatusService) listStatusForEntity(ctx context.Context,
+	db store.Store, refType, refID string) (*v1.ListStatusesResponse, error) {
+	if err := validateRefs(refType, refID); err != nil {
+		return nil, err
+	}
+
+	result := resource.NewStatus()
+	err := db.Read(ctx, result, store.GetByIndex("ctx_ref",
+		model.MultiValueIndex(refType, refID)))
+	if err == nil {
+		return &v1.ListStatusesResponse{
+			Items: []*pbModel.Status{result.Status},
+		}, nil
+	} else if errors.Is(err, store.ErrNotFound) {
+		return &v1.ListStatusesResponse{
+			Items: []*pbModel.Status{},
+		}, nil
+	}
+	return nil, s.err(err)
 }
 
 func statusesFromObjects(objects []model.Object) []*pbModel.Status {

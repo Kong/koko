@@ -719,6 +719,18 @@
             "in": "query",
             "required": false,
             "type": "string"
+          },
+          {
+            "name": "refType",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "refId",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [
