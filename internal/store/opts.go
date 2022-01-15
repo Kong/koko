@@ -9,6 +9,8 @@ type CreateOptsFunc func(*CreateOpts)
 type ReadOpts struct {
 	id   string
 	name string
+
+	idxName, idxValue string
 }
 
 type ReadOptsFunc func(*ReadOpts)
@@ -30,6 +32,13 @@ func GetByID(id string) ReadOptsFunc {
 func GetByName(name string) ReadOptsFunc {
 	return func(opt *ReadOpts) {
 		opt.name = name
+	}
+}
+
+func GetByIndex(indexName, indexValue string) ReadOptsFunc {
+	return func(opt *ReadOpts) {
+		opt.idxName = indexName
+		opt.idxValue = indexValue
 	}
 }
 

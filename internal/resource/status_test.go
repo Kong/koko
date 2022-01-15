@@ -5,6 +5,7 @@ import (
 
 	"github.com/google/uuid"
 	model "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
+	pbModel "github.com/kong/koko/internal/model"
 	"github.com/kong/koko/internal/model/json/validation"
 	"github.com/stretchr/testify/require"
 )
@@ -309,4 +310,30 @@ func TestStatus_Validate(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestStatusIndexes(t *testing.T) {
+	s := NewStatus()
+	refID := uuid.NewString()
+	s.Status = &model.Status{
+		Id: uuid.NewString(),
+		ContextReference: &model.EntityReference{
+			Type: string(TypeRoute),
+			Id:   refID,
+		},
+		Conditions: []*model.Condition{
+			{
+				Code:     "borked",
+				Message:  "foo bar",
+				Severity: SeverityError,
+			},
+		},
+	}
+	ixs := s.Indexes()
+	require.Equal(t, 1, len(ixs))
+	require.Equal(t, pbModel.Index{
+		Name:  "ctx_ref",
+		Type:  pbModel.IndexUnique,
+		Value: "route:" + refID,
+	}, ixs[0])
 }

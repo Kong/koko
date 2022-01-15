@@ -59,8 +59,14 @@ func (r Status) ProcessDefaults() error {
 }
 
 func (r Status) Indexes() []model.Index {
-	// TODO(hbagdi): add dynamic indexes
-	return []model.Index{}
+	return []model.Index{
+		{
+			Name: "ctx_ref",
+			Type: model.IndexUnique,
+			Value: model.MultiValueIndex(r.Status.ContextReference.Type,
+				r.Status.ContextReference.Id),
+		},
+	}
 }
 
 func init() {

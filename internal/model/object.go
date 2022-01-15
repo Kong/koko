@@ -1,6 +1,9 @@
 package model
 
 import (
+	"bytes"
+	"fmt"
+
 	"google.golang.org/protobuf/proto"
 )
 
@@ -46,4 +49,25 @@ type ObjectList interface {
 	Type() Type
 	Add(Object)
 	GetAll() []Object
+}
+
+func MultiValueIndex(values ...string) string {
+	switch len(values) {
+	case 0:
+		return ""
+	case 1:
+		return values[0]
+	case 2: //nolint:gomnd
+		return fmt.Sprintf("%s:%s", values[0], values[1])
+	default:
+		var buf bytes.Buffer
+		l := len(values)
+		for i, value := range values {
+			buf.WriteString(value)
+			if i+1 != l {
+				buf.WriteRune(':')
+			}
+		}
+		return buf.String()
+	}
 }

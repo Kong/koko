@@ -231,16 +231,20 @@ func (s *ObjectStore) Read(ctx context.Context, object model.Object,
 		})
 	case opt.name != "":
 		return s.withTx(ctx, func(tx persistence.Tx) error {
-			return s.readByTypeName(ctx, tx, object.Type(), opt.name, object)
+			return s.readByName(ctx, tx, opt.name, object)
+		})
+	case opt.idxName != "" && opt.idxValue != "":
+		return s.withTx(ctx, func(tx persistence.Tx) error {
+			return s.readByIdx(ctx, tx, opt.idxName, opt.idxValue, object)
 		})
 	default:
 		return fmt.Errorf("invalid opt")
 	}
 }
 
-func (s *ObjectStore) readByTypeName(ctx context.Context, tx persistence.Tx,
-	typ model.Type, name string, object model.Object) error {
-	key := s.uniqueIndexKey(typ, "name", name)
+func (s *ObjectStore) readByIdx(ctx context.Context, tx persistence.Tx,
+	idxName, idxValue string, object model.Object) error {
+	key := s.uniqueIndexKey(object.Type(), idxName, idxValue)
 	value, err := tx.Get(ctx, key)
 	if err != nil {
 		if errors.As(err, &persistence.ErrNotFound{}) {
@@ -252,11 +256,16 @@ func (s *ObjectStore) readByTypeName(ctx context.Context, tx persistence.Tx,
 	if err != nil {
 		return err
 	}
-	err = s.readByTypeID(ctx, tx, typ, refID, object)
+	err = s.readByTypeID(ctx, tx, object.Type(), refID, object)
 	if err != nil {
 		return err
 	}
 	return nil
+}
+
+func (s *ObjectStore) readByName(ctx context.Context, tx persistence.Tx,
+	name string, object model.Object) error {
+	return s.readByIdx(ctx, tx, "name", name, object)
 }
 
 func (s *ObjectStore) readByTypeID(ctx context.Context, tx persistence.Tx,
