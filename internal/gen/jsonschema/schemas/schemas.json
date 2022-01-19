@@ -1,0 +1,14 @@
+{
+  "required": [
+    "name"
+  ],
+  "properties": {
+    "name": {
+      "maxLength": 128,
+      "minLength": 1,
+      "pattern": "^[0-9a-zA-Z.\\-_~]*$",
+      "type": "string"
+    }
+  },
+  "type": "object"
+}

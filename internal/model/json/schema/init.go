@@ -2,6 +2,7 @@ package schema
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"sync"
@@ -11,8 +12,9 @@ import (
 )
 
 var (
-	schemas = map[string]*jsonschema.Schema{}
-	once    sync.Once
+	schemas     = map[string]*jsonschema.Schema{}
+	schemasJSON = map[string]string{}
+	once        sync.Once
 )
 
 // initSchemas reads and compiles schemas.
@@ -42,6 +44,13 @@ func initSchemas() {
 			panic(err)
 		}
 		schemas[schemaName] = compiler.MustCompile("internal://" + schemaName)
+
+		// Store the JSON schema in a compact format
+		buffer := new(bytes.Buffer)
+		if err := json.Compact(buffer, schema); err != nil {
+			panic(err)
+		}
+		schemasJSON[schemaName] = buffer.String()
 	}
 }
 
@@ -49,7 +58,16 @@ func Get(name string) (*jsonschema.Schema, error) {
 	once.Do(initSchemas)
 	schema, ok := schemas[name]
 	if !ok {
-		return nil, fmt.Errorf("schema not found: '%v'", name)
+		return nil, fmt.Errorf("schema not found: '%s'", name)
 	}
 	return schema, nil
+}
+
+func GetJSONFields(name string) (string, error) {
+	once.Do(initSchemas)
+	schemaJSON, ok := schemasJSON[name]
+	if !ok {
+		return "", fmt.Errorf("JSON schema not found: '%s'", name)
+	}
+	return schemaJSON, nil
 }

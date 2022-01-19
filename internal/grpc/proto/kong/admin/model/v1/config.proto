@@ -7,9 +7,11 @@ package kong.admin.model.v1;
 import "kong/admin/model/v1/service.proto";
 import "kong/admin/model/v1/route.proto";
 import "kong/admin/model/v1/plugin.proto";
+import "kong/admin/model/v1/schemas.proto";
 
 message TestingConfig {
   repeated Service services = 1;
   repeated Route routes = 2;
   repeated Plugin plugins = 3;
+  repeated Schemas schemas = 4;
 }
