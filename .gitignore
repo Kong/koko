@@ -8,3 +8,5 @@ koko
 *.db*
 dist/
 bin
+cluster.crt
+cluster.key

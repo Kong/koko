@@ -13,7 +13,6 @@ docker version > /dev/null 2>&1
 if [[ $? -ne 0 ]];
 then
   echo "Please install docker on the system."
-  :wqa
   exit 1
 fi
 

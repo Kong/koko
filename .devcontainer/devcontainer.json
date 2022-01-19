@@ -1,0 +1,48 @@
+{
+	"name": "Go",
+	"build": {
+		"dockerfile": "Dockerfile",
+	},
+	"runArgs": [ "--cap-add=SYS_PTRACE", "--security-opt", "seccomp=unconfined", "--privileged", "--init" ],
+
+	// Set *default* container specific settings.json values on container create.
+	"settings": {
+		"files.eol": "\n",
+		"go.toolsManagement.checkForUpdates": "local",
+		"go.useLanguageServer": true,
+		"go.gopath": "/go",
+		"go.goroot": "/usr/local/go"
+	},
+
+	// Override default workspace folder to be consistent and accessible in the
+	// Dockerfile
+	"workspaceMount": "source=${localWorkspaceFolder},target=/workspace/koko,type=bind",
+	"workspaceFolder": "/workspace/koko",
+
+	// Set environment settings for container
+	"remoteEnv": {
+		"PATH": "${containerEnv:PATH}:/go/bin:/workspace/koko/scripts",
+    "KOKO_TEST_KONG_DP_IMAGE": "kong/kong-gateway:latest",
+	},
+
+	// Add the IDs of extensions you want installed when the container is created.
+	"extensions": [
+		"golang.Go",
+		"streetsidesoftware.code-spell-checker",
+		"eamodio.gitlens",
+		"shardulm94.trailing-spaces",
+		"Gruntfuggly.todo-tree",
+		"timonwong.shellcheck",
+	],
+
+	// Use 'forwardPorts' to make a list of ports inside the container available locally.
+	// "forwardPorts": [],
+
+	// Use 'postCreateCommand' to run commands after the container is created.
+	"postCreateCommand": "/workspace/koko/.devcontainer/commands/post-create-command.sh",
+	"postAttachCommand": "/workspace/koko/.devcontainer/commands/post-attach-command.sh",
+	"waitFor": "postCreateCommand",
+
+	// Comment out to connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root.
+	"remoteUser": "koko"
+}
