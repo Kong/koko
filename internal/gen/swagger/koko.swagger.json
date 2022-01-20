@@ -521,12 +521,13 @@
     },
     "/v1/schemas/json/{name}": {
       "get": {
+        "summary": "buf:lint:ignore RPC_RESPONSE_STANDARD_NAME",
         "operationId": "SchemasService_GetSchemas",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/kong.admin.service.v1.GetSchemasResponse"
+              "type": "object"
             }
           },
           "default": {
@@ -541,12 +542,6 @@
             "name": "name",
             "in": "path",
             "required": true,
-            "type": "string"
-          },
-          {
-            "name": "cluster.id",
-            "in": "query",
-            "required": false,
             "type": "string"
           }
         ],
@@ -1275,14 +1270,6 @@
       "properties": {
         "item": {
           "$ref": "#/definitions/kong.admin.model.v1.Route"
-        }
-      }
-    },
-    "kong.admin.service.v1.GetSchemasResponse": {
-      "type": "object",
-      "properties": {
-        "schema": {
-          "type": "string"
         }
       }
     },

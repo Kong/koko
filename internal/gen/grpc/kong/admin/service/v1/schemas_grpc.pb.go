@@ -7,6 +7,7 @@ import (
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
+	structpb "google.golang.org/protobuf/types/known/structpb"
 )
 
 // This is a compile-time assertion to ensure that this generated file
@@ -18,7 +19,8 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type SchemasServiceClient interface {
-	GetSchemas(ctx context.Context, in *GetSchemasRequest, opts ...grpc.CallOption) (*GetSchemasResponse, error)
+	// buf:lint:ignore RPC_RESPONSE_STANDARD_NAME
+	GetSchemas(ctx context.Context, in *GetSchemasRequest, opts ...grpc.CallOption) (*structpb.Struct, error)
 }
 
 type schemasServiceClient struct {
@@ -29,8 +31,8 @@ func NewSchemasServiceClient(cc grpc.ClientConnInterface) SchemasServiceClient {
 	return &schemasServiceClient{cc}
 }
 
-func (c *schemasServiceClient) GetSchemas(ctx context.Context, in *GetSchemasRequest, opts ...grpc.CallOption) (*GetSchemasResponse, error) {
-	out := new(GetSchemasResponse)
+func (c *schemasServiceClient) GetSchemas(ctx context.Context, in *GetSchemasRequest, opts ...grpc.CallOption) (*structpb.Struct, error) {
+	out := new(structpb.Struct)
 	err := c.cc.Invoke(ctx, "/kong.admin.service.v1.SchemasService/GetSchemas", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -42,7 +44,8 @@ func (c *schemasServiceClient) GetSchemas(ctx context.Context, in *GetSchemasReq
 // All implementations must embed UnimplementedSchemasServiceServer
 // for forward compatibility
 type SchemasServiceServer interface {
-	GetSchemas(context.Context, *GetSchemasRequest) (*GetSchemasResponse, error)
+	// buf:lint:ignore RPC_RESPONSE_STANDARD_NAME
+	GetSchemas(context.Context, *GetSchemasRequest) (*structpb.Struct, error)
 	mustEmbedUnimplementedSchemasServiceServer()
 }
 
@@ -50,7 +53,7 @@ type SchemasServiceServer interface {
 type UnimplementedSchemasServiceServer struct {
 }
 
-func (UnimplementedSchemasServiceServer) GetSchemas(context.Context, *GetSchemasRequest) (*GetSchemasResponse, error) {
+func (UnimplementedSchemasServiceServer) GetSchemas(context.Context, *GetSchemasRequest) (*structpb.Struct, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetSchemas not implemented")
 }
 func (UnimplementedSchemasServiceServer) mustEmbedUnimplementedSchemasServiceServer() {}

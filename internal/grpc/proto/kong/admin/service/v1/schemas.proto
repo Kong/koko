@@ -5,11 +5,11 @@ package kong.admin.service.v1;
 option go_package = "github.com/kong/koko/internal/gen/kong/admin/service/v1;v1";
 
 import "google/api/annotations.proto";
-import "kong/admin/model/v1/schemas.proto";
-import "kong/admin/model/v1/cluster.proto";
+import "google/protobuf/struct.proto";
 
 service SchemasService {
-  rpc GetSchemas(GetSchemasRequest) returns (GetSchemasResponse) {
+  // buf:lint:ignore RPC_RESPONSE_STANDARD_NAME
+  rpc GetSchemas(GetSchemasRequest) returns (.google.protobuf.Struct) {
     option (google.api.http) = {
       get: "/v1/schemas/json/{name}"
     };
@@ -18,9 +18,4 @@ service SchemasService {
 
 message GetSchemasRequest{
   string name = 1;
-  model.v1.RequestCluster cluster = 2;
-}
-
-message GetSchemasResponse{
-  string schema = 1;
 }
