@@ -23,11 +23,15 @@ func (s *SchemasService) GetSchemas(ctx context.Context,
 	if req.Name == "" {
 		return nil, s.err(util.ErrClient{Message: "required name is missing"})
 	}
+
+	// Retrieve the raw JSON based on entity name
 	s.logger.With(zap.String("name", req.Name)).Debug("reading schemas by name")
 	rawJSONSchema, err := schema.GetRawJSONSchema(req.Name)
 	if err != nil {
 		return nil, status.Errorf(codes.NotFound, "no entity named '%s'", req.Name)
 	}
+
+	// Convert the raw JSON into a map/struct and return response
 	jsonSchema := &structpb.Struct{}
 	err = json.Unmarshal(rawJSONSchema, jsonSchema)
 	if err != nil {
