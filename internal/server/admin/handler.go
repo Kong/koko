@@ -84,11 +84,7 @@ func buildServices(opts HandlerOpts) services {
 			},
 		},
 		schemas: &SchemasService{
-			CommonOpts: CommonOpts{
-				storeLoader: opts.StoreLoader,
-				logger: opts.Logger.With(zap.String("admin-service",
-					"schemas")),
-			},
+			logger: opts.Logger.With(zap.String("admin-service", "schemas")),
 		},
 		node: &NodeService{
 			CommonOpts: CommonOpts{
