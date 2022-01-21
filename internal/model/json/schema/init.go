@@ -2,6 +2,7 @@ package schema
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"sync"
@@ -11,8 +12,9 @@ import (
 )
 
 var (
-	schemas = map[string]*jsonschema.Schema{}
-	once    sync.Once
+	schemas        = map[string]*jsonschema.Schema{}
+	rawJSONSchemas = map[string][]byte{}
+	once           sync.Once
 )
 
 // initSchemas reads and compiles schemas.
@@ -42,6 +44,13 @@ func initSchemas() {
 			panic(err)
 		}
 		schemas[schemaName] = compiler.MustCompile("internal://" + schemaName)
+
+		// Store the raw JSON schema in a compact format
+		buffer := new(bytes.Buffer)
+		if err := json.Compact(buffer, schema); err != nil {
+			panic(err)
+		}
+		rawJSONSchemas[schemaName] = buffer.Bytes()
 	}
 }
 
@@ -49,7 +58,16 @@ func Get(name string) (*jsonschema.Schema, error) {
 	once.Do(initSchemas)
 	schema, ok := schemas[name]
 	if !ok {
-		return nil, fmt.Errorf("schema not found: '%v'", name)
+		return nil, fmt.Errorf("schema not found: '%s'", name)
 	}
 	return schema, nil
+}
+
+func GetRawJSONSchema(name string) ([]byte, error) {
+	once.Do(initSchemas)
+	rawJSONSchema, ok := rawJSONSchemas[name]
+	if !ok {
+		return []byte{}, fmt.Errorf("raw JSON schema not found: '%s'", name)
+	}
+	return rawJSONSchema, nil
 }
