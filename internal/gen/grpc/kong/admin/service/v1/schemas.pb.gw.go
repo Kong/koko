@@ -108,7 +108,7 @@ func RegisterSchemasServiceHandlerServer(ctx context.Context, mux *runtime.Serve
 			return
 		}
 
-		forward_SchemasService_GetSchemas_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_SchemasService_GetSchemas_0(ctx, mux, outboundMarshaler, w, req, response_SchemasService_GetSchemas_0{resp}, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -169,11 +169,20 @@ func RegisterSchemasServiceHandlerClient(ctx context.Context, mux *runtime.Serve
 			return
 		}
 
-		forward_SchemasService_GetSchemas_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_SchemasService_GetSchemas_0(ctx, mux, outboundMarshaler, w, req, response_SchemasService_GetSchemas_0{resp}, mux.GetForwardResponseOptions()...)
 
 	})
 
 	return nil
+}
+
+type response_SchemasService_GetSchemas_0 struct {
+	proto.Message
+}
+
+func (m response_SchemasService_GetSchemas_0) XXX_ResponseBody() interface{} {
+	response := m.Message.(*GetSchemasResponse)
+	return response.Schema
 }
 
 var (

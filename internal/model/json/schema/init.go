@@ -12,9 +12,9 @@ import (
 )
 
 var (
-	schemas     = map[string]*jsonschema.Schema{}
-	schemasJSON = map[string]string{}
-	once        sync.Once
+	schemas        = map[string]*jsonschema.Schema{}
+	rawJSONSchemas = map[string][]byte{}
+	once           sync.Once
 )
 
 // initSchemas reads and compiles schemas.
@@ -45,12 +45,12 @@ func initSchemas() {
 		}
 		schemas[schemaName] = compiler.MustCompile("internal://" + schemaName)
 
-		// Store the JSON schema in a compact format
+		// Store the raw JSON schema in a compact format
 		buffer := new(bytes.Buffer)
 		if err := json.Compact(buffer, schema); err != nil {
 			panic(err)
 		}
-		schemasJSON[schemaName] = buffer.String()
+		rawJSONSchemas[schemaName] = buffer.Bytes()
 	}
 }
 
@@ -63,11 +63,11 @@ func Get(name string) (*jsonschema.Schema, error) {
 	return schema, nil
 }
 
-func GetJSONFields(name string) (string, error) {
+func GetRawJSONSchema(name string) ([]byte, error) {
 	once.Do(initSchemas)
-	schemaJSON, ok := schemasJSON[name]
+	rawJSONSchema, ok := rawJSONSchemas[name]
 	if !ok {
-		return "", fmt.Errorf("JSON schema not found: '%s'", name)
+		return []byte{}, fmt.Errorf("raw JSON schema not found: '%s'", name)
 	}
-	return schemaJSON, nil
+	return rawJSONSchema, nil
 }

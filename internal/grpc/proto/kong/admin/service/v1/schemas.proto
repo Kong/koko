@@ -8,14 +8,18 @@ import "google/api/annotations.proto";
 import "google/protobuf/struct.proto";
 
 service SchemasService {
-  // buf:lint:ignore RPC_RESPONSE_STANDARD_NAME
-  rpc GetSchemas(GetSchemasRequest) returns (.google.protobuf.Struct) {
+  rpc GetSchemas(GetSchemasRequest) returns (GetSchemasResponse) {
     option (google.api.http) = {
       get: "/v1/schemas/json/{name}"
+      response_body: "schema"
     };
   }
 }
 
 message GetSchemasRequest{
   string name = 1;
+}
+
+message GetSchemasResponse{
+  google.protobuf.Struct schema = 1;
 }

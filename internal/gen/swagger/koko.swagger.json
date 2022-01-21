@@ -521,11 +521,10 @@
     },
     "/v1/schemas/json/{name}": {
       "get": {
-        "summary": "buf:lint:ignore RPC_RESPONSE_STANDARD_NAME",
         "operationId": "SchemasService_GetSchemas",
         "responses": {
           "200": {
-            "description": "A successful response.",
+            "description": "",
             "schema": {
               "type": "object"
             }
@@ -1270,6 +1269,14 @@
       "properties": {
         "item": {
           "$ref": "#/definitions/kong.admin.model.v1.Route"
+        }
+      }
+    },
+    "kong.admin.service.v1.GetSchemasResponse": {
+      "type": "object",
+      "properties": {
+        "schema": {
+          "type": "object"
         }
       }
     },
