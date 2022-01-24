@@ -12,5 +12,6 @@ message Node {
   string type = 5;
   int32 created_at = 6;
   int32 updated_at = 7;
+  string config_hash = 8;
   // int32 last_config = 8;
 }

@@ -14,6 +14,16 @@ func (s sum) String() string {
 	return string(s[:])
 }
 
+// If the string has more than 32 bytes, the trailing bytes get truncated.
+func fromString(s32 string) sum {
+	s := sum{}
+	nodeHash := []byte(s32)
+	for i := 0; i < sha256.Size; i++ {
+		s[i] = nodeHash[i]
+	}
+	return s
+}
+
 type Node struct {
 	ID       string
 	Version  string
