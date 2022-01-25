@@ -89,7 +89,12 @@ func (m *Manager) setupPingHandler(node Node) {
 		} else if e, ok := err.(net.Error); ok && e.Temporary() {
 			return nil
 		}
-		node.hash = fromString(appData)
+		m.logger.Debug("appData is:", zap.String("hash", appData))
+		node.hash, err = truncateHash(appData)
+		if err != nil {
+			// Logging for now
+			m.logger.With(zap.Error(err), zap.String("appData", appData)).Error("invalid hash input")
+		}
 		m.updateNodeStatus(node)
 
 		return err

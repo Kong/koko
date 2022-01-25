@@ -251,11 +251,28 @@ func TestNodesEndpoint(t *testing.T) {
 		return util.EnsureConfig(expectedConfig)
 	})
 
-	// once node is up, check the status endpoint
+	// ensure kong node is up
+	require.Nil(t, util.WaitForKongPort(t, 8001))
+
+	util.WaitFunc(t, func() error {
+		// once node is up, check the status endpoint
+		res = c.GET("/v1/nodes").Expect()
+		res.Status(http.StatusOK)
+		nodes := res.JSON().Object().Value("items").Array()
+		nodes.Length().Equal(1)
+		nodes.Element(0).Object().Value("config_hash").String().Length().Equal(32)
+
+		cHashGot := nodes.Element(0).Object().Value("config_hash").String().Raw()
+		if cHashGot == "00000000000000000000000000000000" {
+			return fmt.Errorf("Input Hash is \"00000000000000000000000000000000\"")
+		}
+		return nil
+	})
+	// Confirm in case we got timed-out
 	res = c.GET("/v1/nodes").Expect()
 	res.Status(http.StatusOK)
 	nodes := res.JSON().Object().Value("items").Array()
-	nodes.Length().Equal(1)
+	nodes.Element(0).Object().Value("config_hash").String().NotEqual("00000000000000000000000000000000")
 }
 
 func TestPluginSync(t *testing.T) {
