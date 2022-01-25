@@ -268,11 +268,6 @@ func TestNodesEndpoint(t *testing.T) {
 		}
 		return nil
 	})
-	// Confirm in case we got timed-out
-	res = c.GET("/v1/nodes").Expect()
-	res.Status(http.StatusOK)
-	nodes := res.JSON().Object().Value("items").Array()
-	nodes.Element(0).Object().Value("config_hash").String().NotEqual("00000000000000000000000000000000")
 }
 
 func TestPluginSync(t *testing.T) {

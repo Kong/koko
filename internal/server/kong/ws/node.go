@@ -11,7 +11,9 @@ import (
 
 type sum [sha256.Size]byte
 
-const hashRegexPat = `[a-zA-Z0-9]`
+const hashRegexPat = `^[a-zA-Z0-9]+$`
+
+var hashRegex = regexp.MustCompile(hashRegexPat)
 
 func (s sum) String() string {
 	return string(s[:])
@@ -21,12 +23,9 @@ func (s sum) String() string {
 func truncateHash(s32 string) (sum, error) {
 	s := sum{}
 	nodeHash := []byte(s32)
-	matched, err := regexp.Match(hashRegexPat, nodeHash)
+	matched := hashRegex.Match(nodeHash)
 	if !matched || len(nodeHash) > sha256.Size {
 		return s, fmt.Errorf("hash input is invalid")
-	}
-	if err != nil {
-		return s, err
 	}
 	for i := 0; i < sha256.Size; i++ {
 		s[i] = nodeHash[i]
