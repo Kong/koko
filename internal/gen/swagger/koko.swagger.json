@@ -952,6 +952,9 @@
         "updatedAt": {
           "type": "integer",
           "format": "int32"
+        },
+        "configHash": {
+          "type": "string"
         }
       }
     },

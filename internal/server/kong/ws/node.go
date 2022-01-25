@@ -3,6 +3,7 @@ package ws
 import (
 	"crypto/sha256"
 	"fmt"
+	"regexp"
 
 	"github.com/gorilla/websocket"
 	"go.uber.org/zap"
@@ -10,8 +11,26 @@ import (
 
 type sum [sha256.Size]byte
 
+const hashRegexPat = `^[a-zA-Z0-9]+$`
+
+var hashRegex = regexp.MustCompile(hashRegexPat)
+
 func (s sum) String() string {
 	return string(s[:])
+}
+
+// If the string has more than 32 bytes, the trailing bytes get truncated.
+func truncateHash(s32 string) (sum, error) {
+	s := sum{}
+	nodeHash := []byte(s32)
+	matched := hashRegex.Match(nodeHash)
+	if !matched || len(nodeHash) > sha256.Size {
+		return s, fmt.Errorf("hash input is invalid")
+	}
+	for i := 0; i < sha256.Size; i++ {
+		s[i] = nodeHash[i]
+	}
+	return s, nil
 }
 
 type Node struct {
