@@ -4,6 +4,7 @@ jobs:
   integration:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         kong_image:
         - 'kong:2.3.3'
