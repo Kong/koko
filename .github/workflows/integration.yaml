@@ -10,6 +10,7 @@ jobs:
         - 'kong:2.4.1'
         - 'kong:2.5.1'
         - 'kong:2.6.0'
+        - 'kong:2.7.0'
         - 'kong/kong:latest' # tracks mainline branch of kong/kong
     env:
       KOKO_TEST_KONG_DP_IMAGE: ${{ matrix.kong_image }}
