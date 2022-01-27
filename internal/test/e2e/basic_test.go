@@ -7,6 +7,7 @@ import (
 	"crypto/tls"
 	"fmt"
 	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/cenkalti/backoff/v4"
@@ -24,6 +25,7 @@ import (
 	"github.com/kong/koko/internal/test/kong"
 	"github.com/kong/koko/internal/test/util"
 	"github.com/stretchr/testify/require"
+	"github.com/tidwall/gjson"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
@@ -258,13 +260,14 @@ func TestNodesEndpoint(t *testing.T) {
 		// once node is up, check the status endpoint
 		res = c.GET("/v1/nodes").Expect()
 		res.Status(http.StatusOK)
-		nodes := res.JSON().Object().Value("items").Array()
-		nodes.Length().Equal(1)
-		nodes.Element(0).Object().Value("config_hash").String().Length().Equal(32)
-
-		cHashGot := nodes.Element(0).Object().Value("config_hash").String().Raw()
-		if cHashGot == "00000000000000000000000000000000" {
-			return fmt.Errorf("Input Hash is \"00000000000000000000000000000000\"")
+		body := gjson.Parse(res.Body().Raw())
+		hash := body.Get("items.0.config_hash").String()
+		if len(hash) != 32 {
+			return fmt.Errorf(
+				"expected config hash to be 32 character long")
+		}
+		if hash == strings.Repeat("0", 32) {
+			return fmt.Errorf("expected hash to not be a string of 0s")
 		}
 		return nil
 	})
