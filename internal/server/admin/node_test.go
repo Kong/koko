@@ -13,6 +13,7 @@ import (
 	service "github.com/kong/koko/internal/gen/grpc/kong/admin/service/v1"
 	"github.com/kong/koko/internal/log"
 	"github.com/kong/koko/internal/resource"
+	serverUtil "github.com/kong/koko/internal/server/util"
 	"github.com/kong/koko/internal/store"
 	"github.com/kong/koko/internal/test/util"
 	"github.com/stretchr/testify/require"
@@ -35,7 +36,7 @@ func TestNodeCreateUpsert(t *testing.T) {
 	require.Nil(t, err)
 	objectStore := store.New(p, log.Logger)
 
-	storeLoader := DefaultStoreLoader{
+	storeLoader := serverUtil.DefaultStoreLoader{
 		Store: objectStore.ForCluster("default"),
 	}
 	nodeService := &NodeService{
@@ -122,7 +123,7 @@ func TestNodeDelete(t *testing.T) {
 	require.Nil(t, err)
 	objectStore := store.New(p, log.Logger)
 
-	storeLoader := DefaultStoreLoader{
+	storeLoader := serverUtil.DefaultStoreLoader{
 		Store: objectStore.ForCluster("default"),
 	}
 	nodeService := &NodeService{
@@ -153,7 +154,7 @@ func TestNodeDelete(t *testing.T) {
 
 	handler, err := NewHandler(HandlerOpts{
 		Logger: log.Logger,
-		StoreLoader: DefaultStoreLoader{
+		StoreLoader: serverUtil.DefaultStoreLoader{
 			Store: objectStore.ForCluster("default"),
 		},
 	})
@@ -179,7 +180,7 @@ func TestNodeRead(t *testing.T) {
 	require.Nil(t, err)
 	objectStore := store.New(p, log.Logger)
 
-	storeLoader := DefaultStoreLoader{
+	storeLoader := serverUtil.DefaultStoreLoader{
 		Store: objectStore.ForCluster("default"),
 	}
 	nodeService := &NodeService{
@@ -210,7 +211,7 @@ func TestNodeRead(t *testing.T) {
 
 	handler, err := NewHandler(HandlerOpts{
 		Logger: log.Logger,
-		StoreLoader: DefaultStoreLoader{
+		StoreLoader: serverUtil.DefaultStoreLoader{
 			Store: objectStore.ForCluster("default"),
 		},
 	})
@@ -242,7 +243,7 @@ func TestNodeList(t *testing.T) {
 	require.Nil(t, err)
 	objectStore := store.New(p, log.Logger)
 
-	storeLoader := DefaultStoreLoader{
+	storeLoader := serverUtil.DefaultStoreLoader{
 		Store: objectStore.ForCluster("default"),
 	}
 	nodeService := &NodeService{
@@ -284,7 +285,7 @@ func TestNodeList(t *testing.T) {
 
 	handler, err := NewHandler(HandlerOpts{
 		Logger: log.Logger,
-		StoreLoader: DefaultStoreLoader{
+		StoreLoader: serverUtil.DefaultStoreLoader{
 			Store: objectStore.ForCluster("default"),
 		},
 	})

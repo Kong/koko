@@ -29,20 +29,20 @@ type ContextKey struct{}
 type HandlerOpts struct {
 	Logger *zap.Logger
 
-	StoreLoader StoreLoader
+	StoreLoader util.StoreLoader
 }
 
 type CommonOpts struct {
 	logger *zap.Logger
 
-	storeLoader StoreLoader
+	storeLoader util.StoreLoader
 }
 
 func (c CommonOpts) getDB(ctx context.Context,
 	cluster *model.RequestCluster) (store.Store, error) {
 	store, err := c.storeLoader.Load(ctx, cluster)
 	if err != nil {
-		if storeLoadErr, ok := err.(StoreLoadErr); ok {
+		if storeLoadErr, ok := err.(util.StoreLoadErr); ok {
 			return nil, status.Error(storeLoadErr.Code, storeLoadErr.Message)
 		}
 		return nil, err

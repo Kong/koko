@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/kong/koko/internal/log"
+	serverUtil "github.com/kong/koko/internal/server/util"
 	"github.com/kong/koko/internal/store"
 	"github.com/kong/koko/internal/test/util"
 	"github.com/stretchr/testify/require"
@@ -21,7 +22,7 @@ func setup(t *testing.T) (*httptest.Server, func()) {
 func setupWithDB(t *testing.T, store store.Store) (*httptest.Server, func()) {
 	handler, err := NewHandler(HandlerOpts{
 		Logger: log.Logger,
-		StoreLoader: DefaultStoreLoader{
+		StoreLoader: serverUtil.DefaultStoreLoader{
 			Store: store,
 		},
 	})
