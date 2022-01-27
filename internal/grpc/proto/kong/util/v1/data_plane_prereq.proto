@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+option go_package = "github.com/kong/koko/internal/private/gen/grpc/kong/util/v1;v1";
+
+package kong.util.v1;
+
+message DataPlanePrerequisite {
+  oneof config{
+    RequiredPluginsFilter required_plugins = 2;
+  }
+}
+
+message RequiredPluginsFilter {
+  repeated string required_plugins = 1;
+}

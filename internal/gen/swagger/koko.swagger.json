@@ -28,6 +28,9 @@
     },
     {
       "name": "EventService"
+    },
+    {
+      "name": "StatusService"
     }
   ],
   "consumes": [
@@ -1394,8 +1397,19 @@
         }
       }
     },
+    "kong.relay.service.v1.ClearStatusResponse": {
+      "type": "object"
+    },
     "kong.relay.service.v1.FetchReconfigureEventsResponse": {
       "type": "object"
+    },
+    "kong.relay.service.v1.UpdateStatusResponse": {
+      "type": "object",
+      "properties": {
+        "item": {
+          "$ref": "#/definitions/kong.admin.model.v1.Status"
+        }
+      }
     }
   }
 }
