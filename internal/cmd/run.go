@@ -19,6 +19,7 @@ import (
 	"github.com/kong/koko/internal/server/health"
 	"github.com/kong/koko/internal/server/kong/ws"
 	relayImpl "github.com/kong/koko/internal/server/relay"
+	serverUtil "github.com/kong/koko/internal/server/util"
 	"github.com/kong/koko/internal/store"
 	"github.com/kong/koko/internal/util"
 	"go.uber.org/zap"
@@ -65,7 +66,7 @@ func Run(ctx context.Context, config ServerConfig) error {
 	}
 	resource.SetValidator(validator)
 
-	storeLoader := admin.DefaultStoreLoader{Store: store}
+	storeLoader := serverUtil.DefaultStoreLoader{Store: store}
 	adminLogger := logger.With(zap.String("component", "admin-server"))
 	h, err := admin.NewHandler(admin.HandlerOpts{
 		Logger:      adminLogger,
