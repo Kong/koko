@@ -149,7 +149,7 @@ func RunDP(ctx context.Context, input DockerInput) error {
 	go func() {
 		defer wg.Done()
 		<-ctx.Done()
-		_ = cmd.Process.Signal(os.Interrupt)
+		_ = cmd.Process.Signal(os.Kill)
 	}()
 
 	err = cmd.Wait()
