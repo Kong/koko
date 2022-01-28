@@ -11,6 +11,7 @@ import (
 	"github.com/kong/koko/internal/db"
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/service/v1"
 	relay "github.com/kong/koko/internal/gen/grpc/kong/relay/service/v1"
+	grpcKongUtil "github.com/kong/koko/internal/gen/grpc/kong/util/v1"
 	"github.com/kong/koko/internal/persistence"
 	"github.com/kong/koko/internal/plugin"
 	"github.com/kong/koko/internal/resource"
@@ -104,15 +105,17 @@ func Run(ctx context.Context, config ServerConfig) error {
 	if err != nil {
 		return err
 	}
-	relayService := relayImpl.NewEventService(ctx,
+	eventService := relayImpl.NewEventService(ctx,
 		relayImpl.EventServiceOpts{
 			Store:  store,
 			Logger: logger.With(zap.String("component", "relay-server")),
 		})
-	relay.RegisterEventServiceServer(rawGRPCServer, relayService)
-	if err != nil {
-		return err
-	}
+	relay.RegisterEventServiceServer(rawGRPCServer, eventService)
+	statusService := relayImpl.NewStatusService(relayImpl.StatusServiceOpts{
+		StoreLoader: storeLoader,
+		Logger:      logger.With(zap.String("component", "relay-server")),
+	})
+	relay.RegisterStatusServiceServer(rawGRPCServer, statusService)
 	g.AddWithCtxE(grpcServer.Run)
 
 	// setup relay client
@@ -128,6 +131,18 @@ func Run(ctx context.Context, config ServerConfig) error {
 		Logger:  controlLogger,
 		Client:  configClient,
 		Cluster: ws.DefaultCluster{},
+		// TODO(hbagdi): make this configurable
+		Config: ws.ManagerConfig{
+			DataPlaneRequisites: []*grpcKongUtil.DataPlanePrerequisite{
+				{
+					Config: &grpcKongUtil.DataPlanePrerequisite_RequiredPlugins{
+						RequiredPlugins: &grpcKongUtil.RequiredPluginsFilter{
+							RequiredPlugins: []string{"rate-limiting"},
+						},
+					},
+				},
+			},
+		},
 	})
 	var authFn ws.AuthFn
 	switch config.DPAuthMode {
@@ -213,7 +228,8 @@ func setupRelayClient() (ws.ConfigClient, error) {
 
 		Node: v1.NewNodeServiceClient(cc),
 
-		Event: relay.NewEventServiceClient(cc),
+		Event:  relay.NewEventServiceClient(cc),
+		Status: relay.NewStatusServiceClient(cc),
 	}, nil
 }
 

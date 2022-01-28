@@ -2,6 +2,8 @@ package ws
 
 import (
 	"context"
+	encodingJSON "encoding/json"
+	"fmt"
 	"io"
 	"net"
 	"sync"
@@ -12,6 +14,7 @@ import (
 	model "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
 	admin "github.com/kong/koko/internal/gen/grpc/kong/admin/service/v1"
 	relay "github.com/kong/koko/internal/gen/grpc/kong/relay/service/v1"
+	grpcKongUtil "github.com/kong/koko/internal/gen/grpc/kong/util/v1"
 	"github.com/kong/koko/internal/resource"
 	"github.com/kong/koko/internal/server/kong/ws/config"
 	"github.com/kong/koko/internal/server/kong/ws/mold"
@@ -22,6 +25,7 @@ type ManagerOpts struct {
 	Client  ConfigClient
 	Cluster Cluster
 	Logger  *zap.Logger
+	Config  ManagerConfig
 }
 
 type Cluster interface {
@@ -41,7 +45,12 @@ func NewManager(opts ManagerOpts) *Manager {
 		logger:       opts.Logger,
 		payload:      &config.Payload{},
 		nodes:        &NodeList{},
+		config:       opts.Config,
 	}
+}
+
+type ManagerConfig struct {
+	DataPlaneRequisites []*grpcKongUtil.DataPlanePrerequisite
 }
 
 type Manager struct {
@@ -53,27 +62,66 @@ type Manager struct {
 	nodes   *NodeList
 
 	broadcastMutex sync.Mutex
+
+	config   ManagerConfig
+	configMu sync.RWMutex
+}
+
+func (m *Manager) reqCluster() *model.RequestCluster {
+	return &model.RequestCluster{Id: m.cluster.Get()}
+}
+
+func (m *Manager) UpdateConfig(c ManagerConfig) {
+	m.configMu.Lock()
+	defer m.configMu.Unlock()
+	m.config = c
+}
+
+func (m *Manager) ReadConfig() ManagerConfig {
+	m.configMu.RLock()
+	defer m.configMu.RUnlock()
+	return m.config
 }
 
 func (m *Manager) updateNodeStatus(node Node) {
-	const timeout = 5 * time.Second
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	m.writeNode(node)
+	// TODO(hbagdi): Make this robust
+	// assuming happy state once a valid ping is received
+	// instead compare received hash with expected hash and update status
+	// accordingly
+	ctx, cancel := context.WithTimeout(context.Background(), defaultRequestTimeout)
 	defer cancel()
-	_, err := m.configClient.Node.UpsertNode(ctx, &admin.UpsertNodeRequest{
-		Item: &model.Node{
-			Id:         node.ID,
-			Version:    node.Version,
-			Hostname:   node.Hostname,
-			Type:       resource.NodeTypeKongProxy,
-			LastPing:   int32(time.Now().Unix()),
-			ConfigHash: node.hash.String(),
+	_, err := m.configClient.Status.ClearStatus(ctx, &relay.ClearStatusRequest{
+		ContextReference: &model.EntityReference{
+			Id:   node.ID,
+			Type: string(resource.TypeNode),
 		},
-		Cluster: &model.RequestCluster{
-			Id: m.cluster.Get(),
-		},
+		Cluster: m.reqCluster(),
 	})
 	if err != nil {
-		m.logger.With(zap.Error(err)).Error("update kong node status")
+		m.logger.Error("failed to clear status", zap.Error(err),
+			zap.String("node-id", node.ID))
+	}
+}
+
+func (m *Manager) writeNode(node Node) {
+	ctx, cancel := context.WithTimeout(context.Background(), defaultRequestTimeout)
+	defer cancel()
+	_, err := m.configClient.Node.UpsertNode(ctx,
+		&admin.UpsertNodeRequest{
+			Item: &model.Node{
+				Id:         node.ID,
+				Version:    node.Version,
+				Hostname:   node.Hostname,
+				Type:       resource.NodeTypeKongProxy,
+				LastPing:   int32(time.Now().Unix()),
+				ConfigHash: node.hash.String(),
+			},
+			Cluster: m.reqCluster(),
+		})
+	if err != nil {
+		m.logger.Error("update kong node resource", zap.Error(err),
+			zap.String("node-id", node.ID))
 	}
 }
 
@@ -105,6 +153,24 @@ func (m *Manager) setupPingHandler(node Node) {
 func (m *Manager) AddNode(node Node) {
 	loggerWithNode := m.logger.With(zap.String("client-ip",
 		node.conn.RemoteAddr().String()))
+	// track each authenticated node
+	m.writeNode(node)
+	// check if node is compatible
+	err := m.validateNode(node)
+	if err != nil {
+		// node has failed to meet the pre-requisites, close the connection
+		// TODO(hbagdi): send an error to Kong DP once wRPC is supported
+		m.logger.With(
+			zap.Error(err),
+			zap.String("node-id", node.ID),
+		).Info("kong DP node rejected")
+		err := node.conn.Close()
+		if err != nil {
+			m.logger.With(zap.Error(err)).Error(
+				"failed to close websocket connection")
+		}
+		return
+	}
 	m.setupPingHandler(node)
 	if err := m.nodes.Add(node); err != nil {
 		m.logger.With(zap.Error(err)).Error("track node")
@@ -124,7 +190,7 @@ func (m *Manager) AddNode(node Node) {
 				Error("remove node")
 		}
 	}()
-	err := m.reconcilePayload(context.Background())
+	err = m.reconcilePayload(context.Background())
 	if err != nil {
 		m.logger.With(zap.Error(err)).
 			Error("reconcile configuration")
@@ -154,8 +220,8 @@ type ConfigClient struct {
 	Service admin.ServiceServiceClient
 	Route   admin.RouteServiceClient
 	Plugin  admin.PluginServiceClient
-
-	Node admin.NodeServiceClient
+	Status  relay.StatusServiceClient
+	Node    admin.NodeServiceClient
 
 	Event relay.EventServiceClient
 }
@@ -204,9 +270,7 @@ func (m *Manager) fetchServices(ctx context.Context) (*admin.
 	defer cancel()
 	return m.configClient.Service.ListServices(ctx,
 		&admin.ListServicesRequest{
-			Cluster: &model.RequestCluster{
-				Id: m.cluster.Get(),
-			},
+			Cluster: m.reqCluster(),
 		})
 }
 
@@ -216,9 +280,7 @@ func (m *Manager) fetchRoutes(ctx context.Context) (*admin.
 	defer cancel()
 	return m.configClient.Route.ListRoutes(ctx,
 		&admin.ListRoutesRequest{
-			Cluster: &model.RequestCluster{
-				Id: m.cluster.Get(),
-			},
+			Cluster: m.reqCluster(),
 		})
 }
 
@@ -228,9 +290,7 @@ func (m *Manager) fetchPlugins(ctx context.Context) (*admin.
 	defer cancel()
 	return m.configClient.Plugin.ListPlugins(ctx,
 		&admin.ListPluginsRequest{
-			Cluster: &model.RequestCluster{
-				Id: m.cluster.Get(),
-			},
+			Cluster: m.reqCluster(),
 		})
 }
 
@@ -258,9 +318,7 @@ func (m *Manager) setupStream(ctx context.Context) (relay.
 		var err error
 		stream, err = m.configClient.Event.FetchReconfigureEvents(ctx,
 			&relay.FetchReconfigureEventsRequest{
-				Cluster: &model.RequestCluster{
-					Id: m.cluster.Get(),
-				},
+				Cluster: m.reqCluster(),
 			})
 		// triggers backoff if err != nil
 		return err
@@ -316,6 +374,75 @@ func (m *Manager) streamUpdateEvents(ctx context.Context, stream relay.
 			go m.broadcast()
 		}
 	}
+}
+
+type basicInfoPlugin struct {
+	Name    string `json:"name,omitempty"`
+	Version string `json:"version,omitempty"`
+}
+
+type basicInfo struct {
+	Type    string            `json:"type,omitempty"`
+	Plugins []basicInfoPlugin `json:"plugins,omitempty"`
+}
+
+type nodeAttributes struct {
+	Plugins []string
+	Version string
+}
+
+func (m *Manager) getPluginList(node Node) ([]string, error) {
+	messageType, message, err := node.conn.ReadMessage()
+	if err != nil {
+		return nil, fmt.Errorf("read websocket message: %v", err)
+	}
+	if messageType != websocket.BinaryMessage {
+		return nil, fmt.Errorf("kong data-plane sent a message of type %v, "+
+			"expected %v", messageType, websocket.BinaryMessage)
+	}
+	var info basicInfo
+	err = encodingJSON.Unmarshal(message, &info)
+	if err != nil {
+		return nil, fmt.Errorf("unmarshal basic-info json message: %v", err)
+	}
+	var plugins []string
+	for _, p := range info.Plugins {
+		plugins = append(plugins, p.Name)
+	}
+	return plugins, nil
+}
+
+func (m *Manager) validateNode(node Node) error {
+	pluginList, err := m.getPluginList(node)
+	if err != nil {
+		return err
+	}
+	mConfig := m.ReadConfig()
+	conditions := checkPreReqs(nodeAttributes{
+		Plugins: pluginList,
+		Version: node.Version,
+	}, mConfig.DataPlaneRequisites)
+	if len(conditions) == 0 {
+		return nil
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), defaultRequestTimeout)
+	defer cancel()
+	// update status before returning
+	_, err = m.configClient.Status.UpdateStatus(ctx,
+		&relay.UpdateStatusRequest{
+			Item: &model.Status{
+				ContextReference: &model.EntityReference{
+					Id:   node.ID,
+					Type: string(resource.TypeNode),
+				},
+				Conditions: conditions,
+			},
+			Cluster: m.reqCluster(),
+		})
+	if err != nil {
+		m.logger.Error("failed to update status of a node", zap.Error(err))
+	}
+	return fmt.Errorf("node failed to meet pre-requisites")
 }
 
 const (
