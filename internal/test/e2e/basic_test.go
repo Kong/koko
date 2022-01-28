@@ -433,3 +433,72 @@ func TestRouteHeader(t *testing.T) {
 		return nil
 	})
 }
+
+func TestDataPlanePluginCheck(t *testing.T) {
+	// ensure that a data-plane that doesn't meet the pre-requisites is
+	// tracked as a node and has a corresponding status entry
+
+	cert, err := tls.X509KeyPair(certs.DefaultSharedCert, certs.DefaultSharedKey)
+	require.Nil(t, err)
+
+	require.Nil(t, util.CleanDB())
+	cleanup := run.Koko(t, cmd.ServerConfig{
+		DPAuthCert: cert,
+		KongCPCert: cert,
+		Logger:     log.Logger,
+		Database: config.Database{
+			Dialect: db.DialectSQLite3,
+			SQLite: config.SQLite{
+				InMemory: true,
+			},
+		},
+	})
+	defer cleanup()
+
+	require.Nil(t, util.WaitForAdminAPI(t))
+
+	conf := kong.GetKongConfForShared()
+	conf.EnvVars["KONG_PLUGINS"] = "datadog,acl"
+	dpCleanup := run.KongDP(conf)
+	defer dpCleanup()
+
+	require.Nil(t, util.WaitForKongPort(t, 8001))
+	c := httpexpect.New(t, "http://localhost:3000")
+
+	util.WaitFunc(t, func() error {
+		res := c.GET("/v1/nodes").Expect()
+		res.Status(http.StatusOK)
+		body := gjson.Parse(res.Body().Raw())
+		nodeID := body.Get("items.0.id").String()
+		if nodeID == "" {
+			return fmt.Errorf("expected a node entry")
+		}
+
+		res = c.GET("/v1/statuses").Expect()
+		res.Status(http.StatusOK)
+		body = gjson.Parse(res.Body().Raw())
+		refType := body.Get("items.0.context_reference.type").String()
+		if refType != "node" {
+			return fmt.Errorf("expected a status entry for node")
+		}
+
+		refID := body.Get("items.0.context_reference.id").String()
+		if refType != "node" {
+			return fmt.Errorf("expected a status entry for node")
+		}
+		if refID != nodeID {
+			return fmt.Errorf("expected node ID and status' reference id to match" +
+				" up")
+		}
+
+		conditionCode := body.Get("items.0.conditions.0.code").String()
+		if conditionCode != "DP001" {
+			return fmt.Errorf("expected condition code to be DP001")
+		}
+		conditionMessage := body.Get("items.0.conditions.0.message").String()
+		if conditionMessage != "kong data-plane node missing plugin[DP001]: rate-limiting" {
+			return fmt.Errorf("unexpected condition code")
+		}
+		return nil
+	})
+}
