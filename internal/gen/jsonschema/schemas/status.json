@@ -67,5 +67,6 @@
       "type": "integer"
     }
   },
+  "additionalProperties": false,
   "type": "object"
 }

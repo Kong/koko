@@ -187,6 +187,73 @@ func TestNode_Validate(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "node with config_hash does not error",
+			Node: func() Node {
+				node := NewNode()
+				node.Node = &model.Node{
+					Id:         uuid.NewString(),
+					Version:    "1.1a",
+					Hostname:   "secure-server",
+					LastPing:   42,
+					ConfigHash: strings.Repeat("0", 32),
+					Type:       NodeTypeKongProxy,
+				}
+				return node
+			},
+			wantErr: false,
+		},
+		{
+			name: "node with a long config_hash errors",
+			Node: func() Node {
+				node := NewNode()
+				node.Node = &model.Node{
+					Id:         uuid.NewString(),
+					Version:    "1.1a",
+					Hostname:   "secure-server",
+					LastPing:   42,
+					ConfigHash: strings.Repeat("0", 42),
+					Type:       NodeTypeKongProxy,
+				}
+				return node
+			},
+			wantErr: true,
+			Errs: []*model.ErrorDetail{
+				{
+					Type:  model.ErrorType_ERROR_TYPE_FIELD,
+					Field: "config_hash",
+					Messages: []string{
+						"length must be <= 32, but got 42",
+					},
+				},
+			},
+		},
+		{
+			name: "node with invalid hash errors",
+			Node: func() Node {
+				node := NewNode()
+				node.Node = &model.Node{
+					Id:         uuid.NewString(),
+					Version:    "1.1a",
+					Hostname:   "secure-server",
+					LastPing:   42,
+					ConfigHash: "${{ jndi.foo }}",
+					Type:       NodeTypeKongProxy,
+				}
+				return node
+			},
+			wantErr: true,
+			Errs: []*model.ErrorDetail{
+				{
+					Type:  model.ErrorType_ERROR_TYPE_FIELD,
+					Field: "config_hash",
+					Messages: []string{
+						"length must be >= 32, but got 15",
+						"must match pattern '[a-z0-9]{32}'",
+					},
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

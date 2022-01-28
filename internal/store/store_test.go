@@ -94,7 +94,8 @@ func TestCreate(t *testing.T) {
 				Id: sid,
 			},
 		}
-		require.Nil(t, s.Create(ctx, route))
+		err = s.Create(ctx, route)
+		require.Nil(t, err)
 	})
 	t.Run("creating an object with invalid foreign reference fails", func(t *testing.T) {
 		route := resource.NewRoute()

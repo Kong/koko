@@ -7,6 +7,12 @@
     "version"
   ],
   "properties": {
+    "config_hash": {
+      "maxLength": 32,
+      "minLength": 32,
+      "pattern": "[a-z0-9]{32}",
+      "type": "string"
+    },
     "created_at": {
       "minimum": 1,
       "type": "integer"
@@ -41,5 +47,6 @@
       "type": "string"
     }
   },
+  "additionalProperties": false,
   "type": "object"
 }

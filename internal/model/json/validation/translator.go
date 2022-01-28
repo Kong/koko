@@ -127,6 +127,10 @@ func (t ErrorTranslator) getErr(schemaErr jsonschema.Detailed,
 			fallthrough
 		case "maxItems":
 			fallthrough
+		case "additionalProperties":
+			fallthrough
+		case "minLength":
+			fallthrough
 		case "maxLength":
 			message = schemaErr.Error
 		default:
