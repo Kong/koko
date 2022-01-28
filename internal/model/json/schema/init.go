@@ -81,6 +81,11 @@ func GetEntityRawJSON(name string) ([]byte, error) {
 	return rawJSONSchema, nil
 }
 
+// This method should only be called from tests.
+func ClearPluginJSONSchema() {
+	plugin.rawJSONSchemas = make(map[string][]byte)
+}
+
 func AddPluginJSONSchema(name string, schema string) error {
 	if _, found := plugin.rawJSONSchemas[name]; found {
 		return fmt.Errorf("schema for plugin '%s' already exists", name)
