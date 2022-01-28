@@ -1,6 +1,7 @@
 package ws
 
 import (
+	"bytes"
 	"context"
 	encodingJSON "encoding/json"
 	"fmt"
@@ -104,19 +105,26 @@ func (m *Manager) updateNodeStatus(node Node) {
 	}
 }
 
+var emptySum sum
+
 func (m *Manager) writeNode(node Node) {
 	ctx, cancel := context.WithTimeout(context.Background(), defaultRequestTimeout)
 	defer cancel()
+
+	nodeToUpsert := &model.Node{
+		Id:       node.ID,
+		Version:  node.Version,
+		Hostname: node.Hostname,
+		Type:     resource.NodeTypeKongProxy,
+		LastPing: int32(time.Now().Unix()),
+	}
+	if !bytes.Equal(node.hash[:], emptySum[:]) {
+		nodeToUpsert.ConfigHash = node.hash.String()
+	}
+
 	_, err := m.configClient.Node.UpsertNode(ctx,
 		&admin.UpsertNodeRequest{
-			Item: &model.Node{
-				Id:         node.ID,
-				Version:    node.Version,
-				Hostname:   node.Hostname,
-				Type:       resource.NodeTypeKongProxy,
-				LastPing:   int32(time.Now().Unix()),
-				ConfigHash: node.hash.String(),
-			},
+			Item:    nodeToUpsert,
 			Cluster: m.reqCluster(),
 		})
 	if err != nil {
