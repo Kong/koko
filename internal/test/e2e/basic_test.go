@@ -23,6 +23,7 @@ import (
 	"github.com/kong/koko/internal/log"
 	"github.com/kong/koko/internal/test/certs"
 	"github.com/kong/koko/internal/test/kong"
+	"github.com/kong/koko/internal/test/run"
 	"github.com/kong/koko/internal/test/util"
 	"github.com/stretchr/testify/require"
 	"github.com/tidwall/gjson"
@@ -31,25 +32,23 @@ import (
 
 func TestSharedMTLS(t *testing.T) {
 	// ensure that Kong Gateway can connect using Shared MTLS mode
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
 	cert, err := tls.X509KeyPair(certs.DefaultSharedCert, certs.DefaultSharedKey)
 	require.Nil(t, err)
-	go func() {
-		require.Nil(t, util.CleanDB())
-		require.Nil(t, cmd.Run(ctx, cmd.ServerConfig{
-			DPAuthCert: cert,
-			KongCPCert: cert,
-			Logger:     log.Logger,
-			Database: config.Database{
-				Dialect: db.DialectSQLite3,
-				SQLite: config.SQLite{
-					InMemory: true,
-				},
+
+	require.Nil(t, util.CleanDB())
+	cleanup := run.Koko(t, cmd.ServerConfig{
+		DPAuthCert: cert,
+		KongCPCert: cert,
+		DPAuthMode: cmd.DPAuthSharedMTLS,
+		Logger:     log.Logger,
+		Database: config.Database{
+			Dialect: db.DialectSQLite3,
+			SQLite: config.SQLite{
+				InMemory: true,
 			},
-		}))
-	}()
+		},
+	})
+	defer cleanup()
 	require.Nil(t, util.WaitForAdminAPI(t))
 
 	service := &v1.Service{
@@ -71,9 +70,8 @@ func TestSharedMTLS(t *testing.T) {
 	res = c.POST("/v1/routes").WithJSON(route).Expect()
 	res.Status(201)
 
-	go func() {
-		_ = kong.RunDP(ctx, kong.GetKongConfForShared())
-	}()
+	dpCleanup := run.KongDP(kong.GetKongConfForShared())
+	defer dpCleanup()
 
 	require.Nil(t, util.WaitForKongPort(t, 8001))
 
@@ -82,37 +80,38 @@ func TestSharedMTLS(t *testing.T) {
 		Routes:   []*v1.Route{route},
 	}
 	util.WaitFunc(t, func() error {
-		return util.EnsureConfig(expectedConfig)
+		err := util.EnsureConfig(expectedConfig)
+		return err
 	})
 }
 
 func TestPKIMTLS(t *testing.T) {
 	// ensure that Kong Gateway can connect using PKI MTLS mode
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
 
 	cpCert, err := tls.X509KeyPair(certs.CPCert, certs.CPKey)
 	require.Nil(t, err)
 
 	dpCACert, err := crypto.ParsePEMCerts(certs.DPTree1CACert)
 	require.Nil(t, err)
-	go func() {
-		require.Nil(t, util.CleanDB())
-		require.Nil(t, cmd.Run(ctx, cmd.ServerConfig{
-			Logger: log.Logger,
 
-			KongCPCert: cpCert,
+	require.Nil(t, util.CleanDB())
 
-			DPAuthMode:    cmd.DPAuthPKIMTLS,
-			DPAuthCACerts: dpCACert,
-			Database: config.Database{
-				Dialect: db.DialectSQLite3,
-				SQLite: config.SQLite{
-					InMemory: true,
-				},
+	cleanup := run.Koko(t, cmd.ServerConfig{
+		Logger: log.Logger,
+
+		KongCPCert: cpCert,
+
+		DPAuthMode:    cmd.DPAuthPKIMTLS,
+		DPAuthCACerts: dpCACert,
+		Database: config.Database{
+			Dialect: db.DialectSQLite3,
+			SQLite: config.SQLite{
+				InMemory: true,
 			},
-		}))
-	}()
+		},
+	})
+	defer cleanup()
+
 	require.Nil(t, util.WaitForAdminAPI(t))
 
 	service := &v1.Service{
@@ -134,9 +133,8 @@ func TestPKIMTLS(t *testing.T) {
 	res = c.POST("/v1/routes").WithJSON(route).Expect()
 	res.Status(201)
 
-	go func() {
-		_ = kong.RunDP(ctx, kong.GetKongConf())
-	}()
+	dpCleanup := run.KongDP(kong.GetKongConf())
+	defer dpCleanup()
 
 	require.Nil(t, util.WaitForKongPort(t, 8001))
 
@@ -151,25 +149,25 @@ func TestPKIMTLS(t *testing.T) {
 
 func TestHealthEndpointOnCPPort(t *testing.T) {
 	// ensure that health-check is enabled on the CP port
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
 
 	cert, err := tls.X509KeyPair(certs.DefaultSharedCert, certs.DefaultSharedKey)
 	require.Nil(t, err)
-	go func() {
-		require.Nil(t, util.CleanDB())
-		require.Nil(t, cmd.Run(ctx, cmd.ServerConfig{
-			DPAuthCert: cert,
-			KongCPCert: cert,
-			Logger:     log.Logger,
-			Database: config.Database{
-				Dialect: db.DialectSQLite3,
-				SQLite: config.SQLite{
-					InMemory: true,
-				},
+
+	require.Nil(t, util.CleanDB())
+
+	cleanup := run.Koko(t, cmd.ServerConfig{
+		DPAuthCert: cert,
+		KongCPCert: cert,
+		Logger:     log.Logger,
+		Database: config.Database{
+			Dialect: db.DialectSQLite3,
+			SQLite: config.SQLite{
+				InMemory: true,
 			},
-		}))
-	}()
+		},
+	})
+	defer cleanup()
+
 	// test the endpoint
 	require.Nil(t, backoff.Retry(func() error {
 		client := insecureHTTPClient()
@@ -196,25 +194,22 @@ func insecureHTTPClient() *http.Client {
 
 func TestNodesEndpoint(t *testing.T) {
 	// ensure that gateway nodes are tracked in database
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
 
 	cert, err := tls.X509KeyPair(certs.DefaultSharedCert, certs.DefaultSharedKey)
 	require.Nil(t, err)
-	go func() {
-		require.Nil(t, util.CleanDB())
-		require.Nil(t, cmd.Run(ctx, cmd.ServerConfig{
-			DPAuthCert: cert,
-			KongCPCert: cert,
-			Logger:     log.Logger,
-			Database: config.Database{
-				Dialect: db.DialectSQLite3,
-				SQLite: config.SQLite{
-					InMemory: true,
-				},
+	require.Nil(t, util.CleanDB())
+	cleanup := run.Koko(t, cmd.ServerConfig{
+		DPAuthCert: cert,
+		KongCPCert: cert,
+		Logger:     log.Logger,
+		Database: config.Database{
+			Dialect: db.DialectSQLite3,
+			SQLite: config.SQLite{
+				InMemory: true,
 			},
-		}))
-	}()
+		},
+	})
+	defer cleanup()
 	require.Nil(t, util.WaitForAdminAPI(t))
 
 	service := &v1.Service{
@@ -236,10 +231,9 @@ func TestNodesEndpoint(t *testing.T) {
 	res = c.POST("/v1/routes").WithJSON(route).Expect()
 	res.Status(201)
 
-	go func() {
-		_ = kong.RunDP(ctx, kong.GetKongConfForShared())
-	}()
-	testing.Verbose()
+	dpCleanup := run.KongDP(kong.GetKongConfForShared())
+	defer dpCleanup()
+
 	require.Nil(t, util.WaitForKong(t))
 
 	// ensure kong node is up
@@ -252,9 +246,6 @@ func TestNodesEndpoint(t *testing.T) {
 	util.WaitFunc(t, func() error {
 		return util.EnsureConfig(expectedConfig)
 	})
-
-	// ensure kong node is up
-	require.Nil(t, util.WaitForKongPort(t, 8001))
 
 	util.WaitFunc(t, func() error {
 		// once node is up, check the status endpoint
@@ -275,25 +266,24 @@ func TestNodesEndpoint(t *testing.T) {
 
 func TestPluginSync(t *testing.T) {
 	// ensure that plugins can be synced to Kong gateway
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
 
 	cert, err := tls.X509KeyPair(certs.DefaultSharedCert, certs.DefaultSharedKey)
 	require.Nil(t, err)
-	go func() {
-		require.Nil(t, util.CleanDB())
-		require.Nil(t, cmd.Run(ctx, cmd.ServerConfig{
-			DPAuthCert: cert,
-			KongCPCert: cert,
-			Logger:     log.Logger,
-			Database: config.Database{
-				Dialect: db.DialectSQLite3,
-				SQLite: config.SQLite{
-					InMemory: true,
-				},
+
+	require.Nil(t, util.CleanDB())
+	cleanup := run.Koko(t, cmd.ServerConfig{
+		DPAuthCert: cert,
+		KongCPCert: cert,
+		Logger:     log.Logger,
+		Database: config.Database{
+			Dialect: db.DialectSQLite3,
+			SQLite: config.SQLite{
+				InMemory: true,
 			},
-		}))
-	}()
+		},
+	})
+	defer cleanup()
+
 	require.Nil(t, util.WaitForAdminAPI(t))
 
 	service := &v1.Service{
@@ -353,9 +343,8 @@ func TestPluginSync(t *testing.T) {
 	res.Status(201)
 	expectedPlugins = append(expectedPlugins, plugin)
 
-	go func() {
-		_ = kong.RunDP(ctx, kong.GetKongConfForShared())
-	}()
+	dpCleanup := run.KongDP(kong.GetKongConfForShared())
+	defer dpCleanup()
 
 	require.Nil(t, util.WaitForKongPort(t, 8001))
 
@@ -375,25 +364,23 @@ func TestRouteHeader(t *testing.T) {
 	// ensure that routes with headers can be synced to Kong gateway
 	// this is done because the data-structures for headers in Koko and Kong
 	// are different
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
 
 	cert, err := tls.X509KeyPair(certs.DefaultSharedCert, certs.DefaultSharedKey)
 	require.Nil(t, err)
-	go func() {
-		require.Nil(t, util.CleanDB())
-		require.Nil(t, cmd.Run(ctx, cmd.ServerConfig{
-			DPAuthCert: cert,
-			KongCPCert: cert,
-			Logger:     log.Logger,
-			Database: config.Database{
-				Dialect: db.DialectSQLite3,
-				SQLite: config.SQLite{
-					InMemory: true,
-				},
+
+	require.Nil(t, util.CleanDB())
+	cleanup := run.Koko(t, cmd.ServerConfig{
+		DPAuthCert: cert,
+		KongCPCert: cert,
+		Logger:     log.Logger,
+		Database: config.Database{
+			Dialect: db.DialectSQLite3,
+			SQLite: config.SQLite{
+				InMemory: true,
 			},
-		}))
-	}()
+		},
+	})
+	defer cleanup()
 	require.Nil(t, util.WaitForAdminAPI(t))
 
 	service := &v1.Service{
@@ -420,9 +407,8 @@ func TestRouteHeader(t *testing.T) {
 	res = c.POST("/v1/routes").WithJSON(route).Expect()
 	res.Status(201)
 
-	go func() {
-		_ = kong.RunDP(ctx, kong.GetKongConfForShared())
-	}()
+	dpCleanup := run.KongDP(kong.GetKongConfForShared())
+	defer dpCleanup()
 
 	require.Nil(t, util.WaitForKongPort(t, 8001))
 	util.WaitFunc(t, func() error {
