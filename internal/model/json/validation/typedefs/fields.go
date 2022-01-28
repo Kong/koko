@@ -18,6 +18,16 @@ var ID = &generator.Schema{
 	Pattern:     "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
 }
 
+var falsy = false
+
+var ReferenceObject = &generator.Schema{
+	Type: "object",
+	Properties: map[string]*generator.Schema{
+		"id": ID,
+	},
+	AdditionalProperties: &falsy,
+}
+
 var Name = &generator.Schema{
 	Type:      "string",
 	Pattern:   namePattern,

@@ -41,6 +41,28 @@
       },
       "type": "array"
     },
+    "route": {
+      "properties": {
+        "id": {
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+          "type": "string",
+          "description": "must be a valid UUID"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "service": {
+      "properties": {
+        "id": {
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+          "type": "string",
+          "description": "must be a valid UUID"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
     "tags": {
       "items": {
         "maxLength": 128,
@@ -56,5 +78,6 @@
       "type": "integer"
     }
   },
+  "additionalProperties": false,
   "type": "object"
 }

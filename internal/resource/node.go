@@ -13,10 +13,17 @@ import (
 const (
 	maxVersionLength  = 128
 	maxHostnameLength = 1024
+	hashLength        = 32
+	hashPattern       = "[a-z0-9]{32}"
 
 	TypeNode = model.Type("node")
 
 	NodeTypeKongProxy = "kong-proxy"
+)
+
+var (
+	truthy = true
+	falsy  = false
 )
 
 func NewNode() Node {
@@ -87,6 +94,12 @@ func init() {
 				Type:    "integer",
 				Minimum: 1,
 			},
+			"config_hash": {
+				Type:      "string",
+				MinLength: hashLength,
+				MaxLength: hashLength,
+				Pattern:   hashPattern,
+			},
 			"version": {
 				Type:      "string",
 				MinLength: 1,
@@ -95,7 +108,7 @@ func init() {
 			"created_at": typedefs.UnixEpoch,
 			"updated_at": typedefs.UnixEpoch,
 		},
-		AdditionalProperties: false,
+		AdditionalProperties: &falsy,
 		Required: []string{
 			"id",
 			"hostname",

@@ -167,7 +167,7 @@ func init() {
 			},
 			"headers": {
 				Type:                 "object",
-				AdditionalProperties: false,
+				AdditionalProperties: &falsy,
 				PatternProperties: map[string]*generator.Schema{
 					"^[Hh][Oo][Ss][Tt]$": {
 						Not: &generator.Schema{
@@ -236,8 +236,9 @@ func init() {
 			"tags":       typedefs.Tags,
 			"created_at": typedefs.UnixEpoch,
 			"updated_at": typedefs.UnixEpoch,
+			"service":    typedefs.ReferenceObject,
 		},
-		AdditionalProperties: false,
+		AdditionalProperties: &falsy,
 		Required: []string{
 			"id",
 			"protocols",

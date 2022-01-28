@@ -128,10 +128,12 @@ func init() {
 			},
 			"config": {
 				Type:                 "object",
-				AdditionalProperties: true,
+				AdditionalProperties: &truthy,
 			},
+			"service": typedefs.ReferenceObject,
+			"route":   typedefs.ReferenceObject,
 		},
-		AdditionalProperties: false,
+		AdditionalProperties: &falsy,
 		Required: []string{
 			"name",
 		},

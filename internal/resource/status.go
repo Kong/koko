@@ -128,7 +128,7 @@ func init() {
 			"created_at": typedefs.UnixEpoch,
 			"updated_at": typedefs.UnixEpoch,
 		},
-		AdditionalProperties: false,
+		AdditionalProperties: &falsy,
 		Required: []string{
 			"id",
 			"context_reference",
