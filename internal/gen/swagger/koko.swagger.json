@@ -552,6 +552,36 @@
         ]
       }
     },
+    "/v1/schemas/plugins/json/{name}": {
+      "get": {
+        "operationId": "SchemasService_GetSchemasPlugin",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "object"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "kong.admin.service.v1.SchemasService"
+        ]
+      }
+    },
     "/v1/services": {
       "get": {
         "operationId": "ServiceService_ListServices",
@@ -1275,6 +1305,14 @@
       "properties": {
         "item": {
           "$ref": "#/definitions/kong.admin.model.v1.Route"
+        }
+      }
+    },
+    "kong.admin.service.v1.GetSchemasPluginResponse": {
+      "type": "object",
+      "properties": {
+        "schema": {
+          "type": "object"
         }
       }
     },

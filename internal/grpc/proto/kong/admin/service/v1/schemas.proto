@@ -14,12 +14,27 @@ service SchemasService {
       response_body: "schema"
     };
   }
+
+  rpc GetSchemasPlugin(GetSchemasPluginRequest) returns (GetSchemasPluginResponse) {
+    option (google.api.http) = {
+      get: "/v1/schemas/plugins/json/{name}"
+      response_body: "schema"
+    };
+  }
 }
 
-message GetSchemasRequest{
+message GetSchemasRequest {
   string name = 1;
 }
 
-message GetSchemasResponse{
+message GetSchemasResponse {
+  google.protobuf.Struct schema = 1;
+}
+
+message GetSchemasPluginRequest {
+  string name = 1;
+}
+
+message GetSchemasPluginResponse {
   google.protobuf.Struct schema = 1;
 }

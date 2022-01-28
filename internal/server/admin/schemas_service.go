@@ -26,7 +26,7 @@ func (s *SchemasService) GetSchemas(ctx context.Context,
 
 	// Retrieve the raw JSON based on entity name
 	s.logger.With(zap.String("name", req.Name)).Debug("reading schemas by name")
-	rawJSONSchema, err := schema.GetRawJSONSchema(req.Name)
+	rawJSONSchema, err := schema.GetEntityRawJSON(req.Name)
 	if err != nil {
 		return nil, status.Errorf(codes.NotFound, "no entity named '%s'", req.Name)
 	}
@@ -38,6 +38,30 @@ func (s *SchemasService) GetSchemas(ctx context.Context,
 		return nil, s.err(err)
 	}
 	return &v1.GetSchemasResponse{
+		Schema: jsonSchema,
+	}, nil
+}
+
+func (s *SchemasService) GetSchemasPlugin(ctx context.Context,
+	req *v1.GetSchemasPluginRequest) (*v1.GetSchemasPluginResponse, error) {
+	if req.Name == "" {
+		return nil, s.err(util.ErrClient{Message: "required name is missing"})
+	}
+
+	// Retrieve the raw JSON based on plugin name
+	s.logger.With(zap.String("name", req.Name)).Debug("reading schemas by name")
+	rawJSONSchema, err := schema.GetPluginRawJSON(req.Name)
+	if err != nil {
+		return nil, status.Errorf(codes.NotFound, "no plugin named '%s'", req.Name)
+	}
+
+	// Convert the raw JSON into a map/struct and return response
+	jsonSchema := &structpb.Struct{}
+	err = json.Unmarshal(rawJSONSchema, jsonSchema)
+	if err != nil {
+		return nil, s.err(err)
+	}
+	return &v1.GetSchemasPluginResponse{
 		Schema: jsonSchema,
 	}, nil
 }
