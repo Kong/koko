@@ -97,23 +97,23 @@ func readTLSCertificate(r *http.Request) (*x509.Certificate, error) {
 			Message:    err.Error(),
 		}
 	}
-
-	if peerCert == nil {
-		if r.TLS == nil {
-			return nil, ErrAuth{
-				HTTPStatus: http.StatusBadRequest,
-				Message:    "invalid non-TLS request",
-			}
-		}
-		if len(r.TLS.PeerCertificates) == 0 {
-			return nil, ErrAuth{
-				HTTPStatus: http.StatusUnauthorized,
-				Message:    "no client certificate provided in request",
-			}
-		}
-		peerCert = r.TLS.PeerCertificates[0]
+	if peerCert != nil {
+		return peerCert, nil
 	}
-	return peerCert, nil
+
+	if r.TLS == nil {
+		return nil, ErrAuth{
+			HTTPStatus: http.StatusBadRequest,
+			Message:    "invalid non-TLS request",
+		}
+	}
+	if len(r.TLS.PeerCertificates) == 0 {
+		return nil, ErrAuth{
+			HTTPStatus: http.StatusUnauthorized,
+			Message:    "no client certificate provided in request",
+		}
+	}
+	return r.TLS.PeerCertificates[0], nil
 }
 
 func AuthFnSharedTLS(cert tls.Certificate) (AuthFn, error) {
