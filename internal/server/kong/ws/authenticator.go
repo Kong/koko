@@ -79,7 +79,7 @@ func readPassthroughCertificate(r *http.Request) (*x509.Certificate, error) {
 
 	block, _ := pem.Decode([]byte(pemCert))
 	if block == nil {
-		return nil, fmt.Errorf("failed to parse PEM certificate from '%s' header", clientCertHeaderKey)
+		return nil, fmt.Errorf("failed to decode PEM certificate from '%s' header", clientCertHeaderKey)
 	}
 
 	cert, err := x509.ParseCertificate(block.Bytes)
