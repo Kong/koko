@@ -84,7 +84,7 @@ func readPassthroughCertificate(r *http.Request) (*x509.Certificate, error) {
 
 	cert, err := x509.ParseCertificate(block.Bytes)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse certificate from '%s' header. %s", clientCertHeaderKey, err)
+		return nil, fmt.Errorf("failed to parse certificate from '%s' header: %s", clientCertHeaderKey, err)
 	}
 	return cert, nil
 }
