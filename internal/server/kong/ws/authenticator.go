@@ -74,7 +74,7 @@ func readPassthroughCertificate(r *http.Request) (*x509.Certificate, error) {
 
 	pemCert, err := url.QueryUnescape(encodedCert)
 	if err != nil {
-		return nil, fmt.Errorf("failed to url decode client certificate from '%s' header. %s", clientCertHeaderKey, err)
+		return nil, fmt.Errorf("failed to url decode client certificate from '%s' header: %s", clientCertHeaderKey, err)
 	}
 
 	block, _ := pem.Decode([]byte(pemCert))
