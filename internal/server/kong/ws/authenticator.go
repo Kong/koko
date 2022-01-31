@@ -89,6 +89,33 @@ func readPassthroughCertificate(r *http.Request) (*x509.Certificate, error) {
 	return cert, nil
 }
 
+func readTLSCertificate(r *http.Request) (*x509.Certificate, error) {
+	peerCert, err := readPassthroughCertificate(r)
+	if err != nil && !errors.Is(err, PassthruCertNotFound{}) {
+		return nil, ErrAuth{
+			HTTPStatus: http.StatusBadRequest,
+			Message:    err.Error(),
+		}
+	}
+
+	if peerCert == nil {
+		if r.TLS == nil {
+			return nil, ErrAuth{
+				HTTPStatus: http.StatusBadRequest,
+				Message:    "invalid non-TLS request",
+			}
+		}
+		if len(r.TLS.PeerCertificates) == 0 {
+			return nil, ErrAuth{
+				HTTPStatus: http.StatusUnauthorized,
+				Message:    "no client certificate provided in request",
+			}
+		}
+		peerCert = r.TLS.PeerCertificates[0]
+	}
+	return peerCert, nil
+}
+
 func AuthFnSharedTLS(cert tls.Certificate) (AuthFn, error) {
 	var sharedCert []byte
 	switch len(cert.Certificate) {
@@ -101,37 +128,11 @@ func AuthFnSharedTLS(cert tls.Certificate) (AuthFn, error) {
 		return nil, fmt.Errorf("only one shared certificate must be provided")
 	}
 	return func(r *http.Request) error {
-		passthroughCert, err := readPassthroughCertificate(r)
-		if err != nil && !errors.Is(err, PassthruCertNotFound{}) {
-			return ErrAuth{
-				HTTPStatus: http.StatusBadRequest,
-				Message:    err.Error(),
-			}
-		}
-		if passthroughCert != nil {
-			if !bytes.Equal(passthroughCert.Raw, sharedCert) {
-				return ErrAuth{
-					HTTPStatus: http.StatusUnauthorized,
-					Message:    "client certificate authentication failed",
-				}
-			}
-			// authorized
-			return nil
+		peerCert, err := readTLSCertificate(r)
+		if err != nil {
+			return err
 		}
 
-		if r.TLS == nil {
-			return ErrAuth{
-				HTTPStatus: http.StatusBadRequest,
-				Message:    "invalid non-TLS request",
-			}
-		}
-		if len(r.TLS.PeerCertificates) == 0 {
-			return ErrAuth{
-				HTTPStatus: http.StatusUnauthorized,
-				Message:    "no client certificate provided in request",
-			}
-		}
-		peerCert := r.TLS.PeerCertificates[0]
 		if !bytes.Equal(peerCert.Raw, sharedCert) {
 			return ErrAuth{
 				HTTPStatus: http.StatusUnauthorized,
@@ -156,43 +157,16 @@ func AuthFnPKITLS(rootCAs []*x509.Certificate) (AuthFn, error) {
 		caCertPool.AddCert(ca)
 	}
 	return func(r *http.Request) error {
-		passthroughCert, err := readPassthroughCertificate(r)
-		if err != nil && !errors.Is(err, PassthruCertNotFound{}) {
-			return ErrAuth{
-				HTTPStatus: http.StatusBadRequest,
-				Message:    err.Error(),
-			}
+		peerCert, err := readTLSCertificate(r)
+		if err != nil {
+			return err
 		}
 
-		peerCert := passthroughCert
 		var intermediates *x509.CertPool
-		if peerCert == nil {
-			if r.TLS == nil {
-				return ErrAuth{
-					HTTPStatus: http.StatusBadRequest,
-					Message:    "invalid non-TLS request",
-				}
-			}
-			if len(r.TLS.PeerCertificates) == 0 {
-				return ErrAuth{
-					HTTPStatus: http.StatusUnauthorized,
-					Message:    "no client certificate provided in request",
-				}
-			}
-
-			peerCert = r.TLS.PeerCertificates[0]
-			if len(r.TLS.PeerCertificates) > 1 {
-				intermediates = x509.NewCertPool()
-				for _, cert := range r.TLS.PeerCertificates[1:] {
-					intermediates.AddCert(cert)
-				}
-			}
-		}
-
-		if peerCert == nil {
-			return ErrAuth{
-				HTTPStatus: http.StatusBadRequest,
-				Message:    "invalid non-TLS request",
+		if r.TLS != nil && len(r.TLS.PeerCertificates) > 1 {
+			intermediates = x509.NewCertPool()
+			for _, cert := range r.TLS.PeerCertificates[1:] {
+				intermediates.AddCert(cert)
 			}
 		}
 
