@@ -19,7 +19,7 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type SchemasServiceClient interface {
 	GetSchemas(ctx context.Context, in *GetSchemasRequest, opts ...grpc.CallOption) (*GetSchemasResponse, error)
-	GetSchemasPlugin(ctx context.Context, in *GetSchemasPluginRequest, opts ...grpc.CallOption) (*GetSchemasPluginResponse, error)
+	GetLuaSchemasPlugin(ctx context.Context, in *GetLuaSchemasPluginRequest, opts ...grpc.CallOption) (*GetLuaSchemasPluginResponse, error)
 }
 
 type schemasServiceClient struct {
@@ -39,9 +39,9 @@ func (c *schemasServiceClient) GetSchemas(ctx context.Context, in *GetSchemasReq
 	return out, nil
 }
 
-func (c *schemasServiceClient) GetSchemasPlugin(ctx context.Context, in *GetSchemasPluginRequest, opts ...grpc.CallOption) (*GetSchemasPluginResponse, error) {
-	out := new(GetSchemasPluginResponse)
-	err := c.cc.Invoke(ctx, "/kong.admin.service.v1.SchemasService/GetSchemasPlugin", in, out, opts...)
+func (c *schemasServiceClient) GetLuaSchemasPlugin(ctx context.Context, in *GetLuaSchemasPluginRequest, opts ...grpc.CallOption) (*GetLuaSchemasPluginResponse, error) {
+	out := new(GetLuaSchemasPluginResponse)
+	err := c.cc.Invoke(ctx, "/kong.admin.service.v1.SchemasService/GetLuaSchemasPlugin", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -53,7 +53,7 @@ func (c *schemasServiceClient) GetSchemasPlugin(ctx context.Context, in *GetSche
 // for forward compatibility
 type SchemasServiceServer interface {
 	GetSchemas(context.Context, *GetSchemasRequest) (*GetSchemasResponse, error)
-	GetSchemasPlugin(context.Context, *GetSchemasPluginRequest) (*GetSchemasPluginResponse, error)
+	GetLuaSchemasPlugin(context.Context, *GetLuaSchemasPluginRequest) (*GetLuaSchemasPluginResponse, error)
 	mustEmbedUnimplementedSchemasServiceServer()
 }
 
@@ -64,8 +64,8 @@ type UnimplementedSchemasServiceServer struct {
 func (UnimplementedSchemasServiceServer) GetSchemas(context.Context, *GetSchemasRequest) (*GetSchemasResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetSchemas not implemented")
 }
-func (UnimplementedSchemasServiceServer) GetSchemasPlugin(context.Context, *GetSchemasPluginRequest) (*GetSchemasPluginResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetSchemasPlugin not implemented")
+func (UnimplementedSchemasServiceServer) GetLuaSchemasPlugin(context.Context, *GetLuaSchemasPluginRequest) (*GetLuaSchemasPluginResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetLuaSchemasPlugin not implemented")
 }
 func (UnimplementedSchemasServiceServer) mustEmbedUnimplementedSchemasServiceServer() {}
 
@@ -98,20 +98,20 @@ func _SchemasService_GetSchemas_Handler(srv interface{}, ctx context.Context, de
 	return interceptor(ctx, in, info, handler)
 }
 
-func _SchemasService_GetSchemasPlugin_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetSchemasPluginRequest)
+func _SchemasService_GetLuaSchemasPlugin_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetLuaSchemasPluginRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(SchemasServiceServer).GetSchemasPlugin(ctx, in)
+		return srv.(SchemasServiceServer).GetLuaSchemasPlugin(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/kong.admin.service.v1.SchemasService/GetSchemasPlugin",
+		FullMethod: "/kong.admin.service.v1.SchemasService/GetLuaSchemasPlugin",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SchemasServiceServer).GetSchemasPlugin(ctx, req.(*GetSchemasPluginRequest))
+		return srv.(SchemasServiceServer).GetLuaSchemasPlugin(ctx, req.(*GetLuaSchemasPluginRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -128,8 +128,8 @@ var SchemasService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _SchemasService_GetSchemas_Handler,
 		},
 		{
-			MethodName: "GetSchemasPlugin",
-			Handler:    _SchemasService_GetSchemasPlugin_Handler,
+			MethodName: "GetLuaSchemasPlugin",
+			Handler:    _SchemasService_GetLuaSchemasPlugin_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

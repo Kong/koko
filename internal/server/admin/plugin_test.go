@@ -9,7 +9,6 @@ import (
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
 	"github.com/kong/koko/internal/json"
 	"github.com/kong/koko/internal/log"
-	"github.com/kong/koko/internal/model/json/schema"
 	"github.com/kong/koko/internal/plugin"
 	"github.com/kong/koko/internal/resource"
 	"github.com/stretchr/testify/require"
@@ -23,7 +22,7 @@ func init() {
 		panic(err)
 	}
 
-	schema.ClearPluginJSONSchema()
+	plugin.ClearLuaSchemas()
 	err = validator.LoadSchemasFromEmbed(plugin.Schemas, "schemas")
 	if err != nil {
 		panic(err)

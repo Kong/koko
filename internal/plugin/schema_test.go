@@ -1,4 +1,4 @@
-package schema
+package plugin
 
 import (
 	"encoding/json"
@@ -20,26 +20,26 @@ func TestPluginJSONSchema(t *testing.T) {
 	}
 	for _, pluginName := range pluginNames {
 		jsonSchmea := fmt.Sprintf("{\"plugin_name\": \"%s\"}", pluginName)
-		err := AddPluginJSONSchema(pluginName, jsonSchmea)
+		err := AddLuaSchema(pluginName, jsonSchmea)
 		require.Nil(t, err)
 	}
 
 	t.Run("ensure error adding the same plugin name", func(t *testing.T) {
-		err := AddPluginJSONSchema("two", "{}")
+		err := AddLuaSchema("two", "{}")
 		require.EqualError(t, err, "schema for plugin 'two' already exists")
 	})
 
 	t.Run("ensure error adding an empty schema", func(t *testing.T) {
-		err := AddPluginJSONSchema("empty", "")
+		err := AddLuaSchema("empty", "")
 		require.EqualError(t, err, "schema cannot be empty")
-		err = AddPluginJSONSchema("empty", "       ")
+		err = AddLuaSchema("empty", "       ")
 		require.EqualError(t, err, "schema cannot be empty")
 	})
 
 	t.Run("validate plugin JSON schema", func(t *testing.T) {
 		for _, pluginName := range pluginNames {
 			var pluginSchema testPluginSchema
-			rawJSONSchmea, err := GetPluginRawJSON(pluginName)
+			rawJSONSchmea, err := GetRawLuaSchema(pluginName)
 			require.Nil(t, err)
 			require.Nil(t, json.Unmarshal(rawJSONSchmea, &pluginSchema))
 			require.EqualValues(t, pluginName, pluginSchema.Name)
@@ -47,7 +47,7 @@ func TestPluginJSONSchema(t *testing.T) {
 	})
 
 	t.Run("ensure error retrieving unknown plugin JSON schema", func(t *testing.T) {
-		rawJSONSchema, err := GetPluginRawJSON("invalid-plugin")
+		rawJSONSchema, err := GetRawLuaSchema("invalid-plugin")
 		require.Empty(t, rawJSONSchema)
 		require.Errorf(t, err, "raw JSON schema not found for plugin: 'invalid-plugin'")
 	})

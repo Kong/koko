@@ -9,7 +9,6 @@ import (
 	goksPlugin "github.com/kong/goks/plugin"
 	model "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
 	"github.com/kong/koko/internal/json"
-	jsonSchema "github.com/kong/koko/internal/model/json/schema"
 	"github.com/kong/koko/internal/model/json/validation"
 	"go.uber.org/zap"
 )
@@ -191,7 +190,7 @@ func (v *LuaValidator) LoadSchemasFromEmbed(fs embed.FS, dirName string) error {
 		if err != nil {
 			return err
 		}
-		err = jsonSchema.AddPluginJSONSchema(pluginName, pluginSchema)
+		err = AddLuaSchema(pluginName, pluginSchema)
 		if err != nil {
 			return err
 		}

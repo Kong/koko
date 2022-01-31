@@ -68,7 +68,7 @@ func TestSchemasGetPlugin(t *testing.T) {
 		}
 
 		for _, path := range paths {
-			res := c.GET(fmt.Sprintf("/v1/schemas/plugins/json/%s", path)).Expect()
+			res := c.GET(fmt.Sprintf("/v1/schemas/plugins/lua/%s", path)).Expect()
 			res.Status(200)
 			value := res.JSON().Path("$..config.required").Array()
 			value.ContainsOnly(true) // all config objects are required for plugins
@@ -84,7 +84,7 @@ func TestSchemasGetPlugin(t *testing.T) {
 		}
 
 		for _, path := range paths {
-			res := c.GET(fmt.Sprintf("/v1/schemas/plugins/json/%s", path)).Expect()
+			res := c.GET(fmt.Sprintf("/v1/schemas/plugins/lua/%s", path)).Expect()
 			res.Status(404)
 			message := res.JSON().Path("$.message").String()
 			message.Equal(fmt.Sprintf("no plugin named '%s'", path))
@@ -92,7 +92,7 @@ func TestSchemasGetPlugin(t *testing.T) {
 	})
 
 	t.Run("ensure the path/name is present", func(t *testing.T) {
-		res := c.GET("/v1/schemas/plugins/json/").Expect()
+		res := c.GET("/v1/schemas/plugins/lua/").Expect()
 		res.Status(400)
 		message := res.JSON().Path("$.message").String()
 		message.Equal("required name is missing")

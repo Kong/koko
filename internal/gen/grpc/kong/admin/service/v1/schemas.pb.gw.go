@@ -83,8 +83,8 @@ func local_request_SchemasService_GetSchemas_0(ctx context.Context, marshaler ru
 
 }
 
-func request_SchemasService_GetSchemasPlugin_0(ctx context.Context, marshaler runtime.Marshaler, client SchemasServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetSchemasPluginRequest
+func request_SchemasService_GetLuaSchemasPlugin_0(ctx context.Context, marshaler runtime.Marshaler, client SchemasServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq GetLuaSchemasPluginRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -104,13 +104,13 @@ func request_SchemasService_GetSchemasPlugin_0(ctx context.Context, marshaler ru
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "name", err)
 	}
 
-	msg, err := client.GetSchemasPlugin(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	msg, err := client.GetLuaSchemasPlugin(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
 
 }
 
-func local_request_SchemasService_GetSchemasPlugin_0(ctx context.Context, marshaler runtime.Marshaler, server SchemasServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq GetSchemasPluginRequest
+func local_request_SchemasService_GetLuaSchemasPlugin_0(ctx context.Context, marshaler runtime.Marshaler, server SchemasServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq GetLuaSchemasPluginRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -130,7 +130,7 @@ func local_request_SchemasService_GetSchemasPlugin_0(ctx context.Context, marsha
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "name", err)
 	}
 
-	msg, err := server.GetSchemasPlugin(ctx, &protoReq)
+	msg, err := server.GetLuaSchemasPlugin(ctx, &protoReq)
 	return msg, metadata, err
 
 }
@@ -164,18 +164,18 @@ func RegisterSchemasServiceHandlerServer(ctx context.Context, mux *runtime.Serve
 
 	})
 
-	mux.Handle("GET", pattern_SchemasService_GetSchemasPlugin_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_SchemasService_GetLuaSchemasPlugin_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kong.admin.service.v1.SchemasService/GetSchemasPlugin", runtime.WithHTTPPathPattern("/v1/schemas/plugins/json/{name}"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kong.admin.service.v1.SchemasService/GetLuaSchemasPlugin", runtime.WithHTTPPathPattern("/v1/schemas/plugins/lua/{name}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_SchemasService_GetSchemasPlugin_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_SchemasService_GetLuaSchemasPlugin_0(rctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -183,7 +183,7 @@ func RegisterSchemasServiceHandlerServer(ctx context.Context, mux *runtime.Serve
 			return
 		}
 
-		forward_SchemasService_GetSchemasPlugin_0(ctx, mux, outboundMarshaler, w, req, response_SchemasService_GetSchemasPlugin_0{resp}, mux.GetForwardResponseOptions()...)
+		forward_SchemasService_GetLuaSchemasPlugin_0(ctx, mux, outboundMarshaler, w, req, response_SchemasService_GetLuaSchemasPlugin_0{resp}, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -248,23 +248,23 @@ func RegisterSchemasServiceHandlerClient(ctx context.Context, mux *runtime.Serve
 
 	})
 
-	mux.Handle("GET", pattern_SchemasService_GetSchemasPlugin_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_SchemasService_GetLuaSchemasPlugin_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kong.admin.service.v1.SchemasService/GetSchemasPlugin", runtime.WithHTTPPathPattern("/v1/schemas/plugins/json/{name}"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kong.admin.service.v1.SchemasService/GetLuaSchemasPlugin", runtime.WithHTTPPathPattern("/v1/schemas/plugins/lua/{name}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_SchemasService_GetSchemasPlugin_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_SchemasService_GetLuaSchemasPlugin_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_SchemasService_GetSchemasPlugin_0(ctx, mux, outboundMarshaler, w, req, response_SchemasService_GetSchemasPlugin_0{resp}, mux.GetForwardResponseOptions()...)
+		forward_SchemasService_GetLuaSchemasPlugin_0(ctx, mux, outboundMarshaler, w, req, response_SchemasService_GetLuaSchemasPlugin_0{resp}, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -280,23 +280,23 @@ func (m response_SchemasService_GetSchemas_0) XXX_ResponseBody() interface{} {
 	return response.Schema
 }
 
-type response_SchemasService_GetSchemasPlugin_0 struct {
+type response_SchemasService_GetLuaSchemasPlugin_0 struct {
 	proto.Message
 }
 
-func (m response_SchemasService_GetSchemasPlugin_0) XXX_ResponseBody() interface{} {
-	response := m.Message.(*GetSchemasPluginResponse)
+func (m response_SchemasService_GetLuaSchemasPlugin_0) XXX_ResponseBody() interface{} {
+	response := m.Message.(*GetLuaSchemasPluginResponse)
 	return response.Schema
 }
 
 var (
 	pattern_SchemasService_GetSchemas_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"v1", "schemas", "json", "name"}, ""))
 
-	pattern_SchemasService_GetSchemasPlugin_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"v1", "schemas", "plugins", "json", "name"}, ""))
+	pattern_SchemasService_GetLuaSchemasPlugin_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"v1", "schemas", "plugins", "lua", "name"}, ""))
 )
 
 var (
 	forward_SchemasService_GetSchemas_0 = runtime.ForwardResponseMessage
 
-	forward_SchemasService_GetSchemasPlugin_0 = runtime.ForwardResponseMessage
+	forward_SchemasService_GetLuaSchemasPlugin_0 = runtime.ForwardResponseMessage
 )

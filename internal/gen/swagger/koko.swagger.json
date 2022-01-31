@@ -552,9 +552,9 @@
         ]
       }
     },
-    "/v1/schemas/plugins/json/{name}": {
+    "/v1/schemas/plugins/lua/{name}": {
       "get": {
-        "operationId": "SchemasService_GetSchemasPlugin",
+        "operationId": "SchemasService_GetLuaSchemasPlugin",
         "responses": {
           "200": {
             "description": "",
@@ -1284,6 +1284,14 @@
     "kong.admin.service.v1.DeleteStatusResponse": {
       "type": "object"
     },
+    "kong.admin.service.v1.GetLuaSchemasPluginResponse": {
+      "type": "object",
+      "properties": {
+        "schema": {
+          "type": "object"
+        }
+      }
+    },
     "kong.admin.service.v1.GetNodeResponse": {
       "type": "object",
       "properties": {
@@ -1305,14 +1313,6 @@
       "properties": {
         "item": {
           "$ref": "#/definitions/kong.admin.model.v1.Route"
-        }
-      }
-    },
-    "kong.admin.service.v1.GetSchemasPluginResponse": {
-      "type": "object",
-      "properties": {
-        "schema": {
-          "type": "object"
         }
       }
     },

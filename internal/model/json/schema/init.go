@@ -11,25 +11,16 @@ import (
 	"github.com/santhosh-tekuri/jsonschema/v5"
 )
 
-type entitySchema struct {
-	once           sync.Once
-	rawJSONSchemas map[string][]byte
-	schemas        map[string]*jsonschema.Schema
-}
-
-type pluginSchema struct {
-	rawJSONSchemas map[string][]byte
-}
-
 var (
-	entity entitySchema
-	plugin pluginSchema
+	schemas        = map[string]*jsonschema.Schema{}
+	rawJSONSchemas = map[string][]byte{}
+	once           sync.Once
 )
 
-// initEntitySchemas reads and compiles schemas.
+// initSchemas reads and compiles schemas.
 // This is not done in a traditional init() to avoid circular dependency on the
 // generated JSON schemas.
-func initEntitySchemas() {
+func initSchemas() {
 	const dir = "schemas"
 	schemaFS := genJSONSchema.KongSchemas
 	files, err := schemaFS.ReadDir(dir)
@@ -52,62 +43,31 @@ func initEntitySchemas() {
 		if err != nil {
 			panic(err)
 		}
-		entity.schemas[schemaName] = compiler.MustCompile("internal://" + schemaName)
+		schemas[schemaName] = compiler.MustCompile("internal://" + schemaName)
 
 		// Store the raw JSON schema in a compact format
 		buffer := new(bytes.Buffer)
 		if err := json.Compact(buffer, schema); err != nil {
 			panic(err)
 		}
-		entity.rawJSONSchemas[schemaName] = buffer.Bytes()
+		rawJSONSchemas[schemaName] = buffer.Bytes()
 	}
 }
 
-func GetEntity(name string) (*jsonschema.Schema, error) {
-	entity.once.Do(initEntitySchemas)
-	schema, ok := entity.schemas[name]
+func Get(name string) (*jsonschema.Schema, error) {
+	once.Do(initSchemas)
+	schema, ok := schemas[name]
 	if !ok {
 		return nil, fmt.Errorf("schema not found for entity: '%s'", name)
 	}
 	return schema, nil
 }
 
-func GetEntityRawJSON(name string) ([]byte, error) {
-	entity.once.Do(initEntitySchemas)
-	rawJSONSchema, ok := entity.rawJSONSchemas[name]
+func GetRawJSON(name string) ([]byte, error) {
+	once.Do(initSchemas)
+	rawJSONSchema, ok := rawJSONSchemas[name]
 	if !ok {
 		return []byte{}, fmt.Errorf("raw JSON schema not found for entity: '%s'", name)
 	}
 	return rawJSONSchema, nil
-}
-
-// This method should only be called from tests.
-func ClearPluginJSONSchema() {
-	plugin.rawJSONSchemas = make(map[string][]byte)
-}
-
-func AddPluginJSONSchema(name string, schema string) error {
-	if _, found := plugin.rawJSONSchemas[name]; found {
-		return fmt.Errorf("schema for plugin '%s' already exists", name)
-	}
-	trimmedSchema := strings.TrimSpace(schema)
-	if len(trimmedSchema) == 0 {
-		return fmt.Errorf("schema cannot be empty")
-	}
-	plugin.rawJSONSchemas[name] = []byte(schema)
-	return nil
-}
-
-func GetPluginRawJSON(name string) ([]byte, error) {
-	rawJSONSchema, ok := plugin.rawJSONSchemas[name]
-	if !ok {
-		return []byte{}, fmt.Errorf("raw JSON schema not found for plugin: '%s'", name)
-	}
-	return rawJSONSchema, nil
-}
-
-func init() {
-	entity.rawJSONSchemas = make(map[string][]byte)
-	entity.schemas = make(map[string]*jsonschema.Schema)
-	plugin.rawJSONSchemas = make(map[string][]byte)
 }

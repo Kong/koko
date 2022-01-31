@@ -8,7 +8,6 @@ import (
 	model "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
 	"github.com/kong/koko/internal/log"
 	internalModel "github.com/kong/koko/internal/model"
-	"github.com/kong/koko/internal/model/json/schema"
 	"github.com/kong/koko/internal/model/json/validation"
 	"github.com/kong/koko/internal/plugin"
 	"github.com/stretchr/testify/require"
@@ -44,7 +43,7 @@ func setupLuaValidator(t *testing.T) {
 
 func TestPlugin_ProcessDefaults(t *testing.T) {
 	setupLuaValidator(t)
-	defer schema.ClearPluginJSONSchema()
+	defer plugin.ClearLuaSchemas()
 	t.Run("defaults are correctly injected", func(t *testing.T) {
 		r := NewPlugin()
 		r.Plugin.Name = "basic-auth"
@@ -77,7 +76,7 @@ func TestPlugin_ProcessDefaults(t *testing.T) {
 
 func TestPlugin_Validate(t *testing.T) {
 	setupLuaValidator(t)
-	schema.ClearPluginJSONSchema()
+	plugin.ClearLuaSchemas()
 	tests := []struct {
 		name    string
 		Plugin  func() Plugin

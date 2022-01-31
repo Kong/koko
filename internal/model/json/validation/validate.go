@@ -21,7 +21,7 @@ func Validate(typ string, message proto.Message) error {
 	if err != nil {
 		return err
 	}
-	schema, err := schema.GetEntity(typ)
+	schema, err := schema.Get(typ)
 	if err != nil {
 		panic(err)
 	}

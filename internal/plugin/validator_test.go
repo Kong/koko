@@ -10,7 +10,6 @@ import (
 	model "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
 	"github.com/kong/koko/internal/json"
 	"github.com/kong/koko/internal/log"
-	"github.com/kong/koko/internal/model/json/schema"
 	"github.com/kong/koko/internal/model/json/validation"
 	"github.com/stretchr/testify/require"
 	lua "github.com/yuin/gopher-lua"
@@ -22,7 +21,7 @@ import (
 var badSchemaFS embed.FS
 
 func TestLoadSchemasFromEmbed(t *testing.T) {
-	defer schema.ClearPluginJSONSchema()
+	defer ClearLuaSchemas()
 	validator, err := NewLuaValidator(Opts{Logger: log.Logger})
 	require.Nil(t, err)
 	t.Run("errors when dir doesn't exist", func(t *testing.T) {
@@ -50,7 +49,7 @@ func TestProcessAutoFields(t *testing.T) {
 	require.Nil(t, err)
 
 	err = validator.LoadSchemasFromEmbed(Schemas, "schemas")
-	defer schema.ClearPluginJSONSchema()
+	defer ClearLuaSchemas()
 	require.Nil(t, err)
 	t.Run("injects default fields for a plugin", func(t *testing.T) {
 		config, err := structpb.NewStruct(map[string]interface{}{
@@ -104,7 +103,7 @@ func TestValidate(t *testing.T) {
 	require.Nil(t, err)
 
 	err = validator.LoadSchemasFromEmbed(Schemas, "schemas")
-	defer schema.ClearPluginJSONSchema()
+	defer ClearLuaSchemas()
 	require.Nil(t, err)
 	t.Run("test with entity errors", func(t *testing.T) {
 		config, err := structpb.NewStruct(map[string]interface{}{

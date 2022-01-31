@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/kong/koko/internal/cmd"
+	"github.com/kong/koko/internal/plugin"
 	"github.com/kong/koko/internal/test/kong"
 	"github.com/stretchr/testify/require"
 )
@@ -21,6 +22,7 @@ func Koko(t *testing.T, serverConfig cmd.ServerConfig) func() {
 	}()
 	return func() {
 		cancel()
+		plugin.ClearLuaSchemas()
 		wg.Wait()
 	}
 }

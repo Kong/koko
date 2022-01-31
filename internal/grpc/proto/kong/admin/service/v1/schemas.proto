@@ -15,9 +15,9 @@ service SchemasService {
     };
   }
 
-  rpc GetSchemasPlugin(GetSchemasPluginRequest) returns (GetSchemasPluginResponse) {
+  rpc GetLuaSchemasPlugin(GetLuaSchemasPluginRequest) returns (GetLuaSchemasPluginResponse) {
     option (google.api.http) = {
-      get: "/v1/schemas/plugins/json/{name}"
+      get: "/v1/schemas/plugins/lua/{name}"
       response_body: "schema"
     };
   }
@@ -31,10 +31,10 @@ message GetSchemasResponse {
   google.protobuf.Struct schema = 1;
 }
 
-message GetSchemasPluginRequest {
+message GetLuaSchemasPluginRequest {
   string name = 1;
 }
 
-message GetSchemasPluginResponse {
+message GetLuaSchemasPluginResponse {
   google.protobuf.Struct schema = 1;
 }
