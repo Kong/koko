@@ -27,9 +27,9 @@ func (e ErrAuth) Error() string {
 	return fmt.Sprintf("%s (code %d)", e.Message, e.HTTPStatus)
 }
 
-type PassthruCertNotFound struct{}
+type passthruCertNotFound struct{}
 
-func (e PassthruCertNotFound) Error() string {
+func (e passthruCertNotFound) Error() string {
 	return fmt.Sprintf("passthrough certificate not found in the http header '%s'", clientCertHeaderKey)
 }
 
@@ -69,7 +69,7 @@ func (d *DefaultAuthenticator) Authenticate(r *http.Request) (*Manager, error) {
 func readPassthroughCertificate(r *http.Request) (*x509.Certificate, error) {
 	encodedCert := r.Header.Get(clientCertHeaderKey)
 	if len(encodedCert) == 0 {
-		return nil, PassthruCertNotFound{}
+		return nil, passthruCertNotFound{}
 	}
 
 	pemCert, err := url.QueryUnescape(encodedCert)
@@ -91,7 +91,7 @@ func readPassthroughCertificate(r *http.Request) (*x509.Certificate, error) {
 
 func readTLSCertificate(r *http.Request) (*x509.Certificate, error) {
 	peerCert, err := readPassthroughCertificate(r)
-	if err != nil && !errors.Is(err, PassthruCertNotFound{}) {
+	if err != nil && !errors.Is(err, passthruCertNotFound{}) {
 		return nil, ErrAuth{
 			HTTPStatus: http.StatusBadRequest,
 			Message:    err.Error(),

@@ -30,7 +30,7 @@ func TestReadPassthroughCertificate(t *testing.T) {
 			})
 			require.Nil(t, cert)
 			require.NotNil(t, err)
-			require.EqualError(t, err, "failed to parse PEM certificate from 'x-client-cert' header")
+			require.EqualError(t, err, "failed to decode PEM certificate from 'x-client-cert' header")
 		})
 	t.Run("invalid urlencoding returns an error",
 		func(t *testing.T) {
@@ -42,7 +42,7 @@ func TestReadPassthroughCertificate(t *testing.T) {
 			require.Nil(t, cert)
 			require.NotNil(t, err)
 			require.EqualError(t, err,
-				"failed to url decode client certificate from 'x-client-cert' header. invalid URL escape \"%%c\"")
+				"failed to url decode client certificate from 'x-client-cert' header: invalid URL escape \"%%c\"")
 		})
 }
 
