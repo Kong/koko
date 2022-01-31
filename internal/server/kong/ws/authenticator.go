@@ -30,7 +30,7 @@ func (e ErrAuth) Error() string {
 type PassthruCertNotFound struct{}
 
 func (e PassthruCertNotFound) Error() string {
-	return fmt.Sprintf("passthrough certificate not found in the http header '%s'", clientCertHeader)
+	return fmt.Sprintf("passthrough certificate not found in the http header '%s'", clientCertHeaderKey)
 }
 
 type AuthFn func(http *http.Request) error
@@ -67,24 +67,24 @@ func (d *DefaultAuthenticator) Authenticate(r *http.Request) (*Manager, error) {
 }
 
 func readPassthroughCertificate(r *http.Request) (*x509.Certificate, error) {
-	encodedCert := r.Header.Get(clientCertHeader)
+	encodedCert := r.Header.Get(clientCertHeaderKey)
 	if len(encodedCert) == 0 {
 		return nil, PassthruCertNotFound{}
 	}
 
 	pemCert, err := url.QueryUnescape(encodedCert)
 	if err != nil {
-		return nil, fmt.Errorf("failed to url decode client certificate from '%s' header. %s", clientCertHeader, err)
+		return nil, fmt.Errorf("failed to url decode client certificate from '%s' header. %s", clientCertHeaderKey, err)
 	}
 
 	block, _ := pem.Decode([]byte(pemCert))
 	if block == nil {
-		return nil, fmt.Errorf("failed to parse PEM certificate from '%s' header", clientCertHeader)
+		return nil, fmt.Errorf("failed to parse PEM certificate from '%s' header", clientCertHeaderKey)
 	}
 
 	cert, err := x509.ParseCertificate(block.Bytes)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse certificate from '%s' header. %s", clientCertHeader, err)
+		return nil, fmt.Errorf("failed to parse certificate from '%s' header. %s", clientCertHeaderKey, err)
 	}
 	return cert, nil
 }

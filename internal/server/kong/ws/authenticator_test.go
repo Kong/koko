@@ -24,7 +24,7 @@ func TestReadPassthroughCertificate(t *testing.T) {
 	t.Run("invalid certificate returns an error",
 		func(t *testing.T) {
 			header := http.Header{}
-			header.Set(clientCertHeader, "invalid")
+			header.Set(clientCertHeaderKey, "invalid")
 			cert, err := readPassthroughCertificate(&http.Request{
 				Header: header,
 			})
@@ -35,7 +35,7 @@ func TestReadPassthroughCertificate(t *testing.T) {
 	t.Run("invalid urlencoding returns an error",
 		func(t *testing.T) {
 			header := http.Header{}
-			header.Set(clientCertHeader, "invalid%%cert")
+			header.Set(clientCertHeaderKey, "invalid%%cert")
 			cert, err := readPassthroughCertificate(&http.Request{
 				Header: header,
 			})
@@ -64,7 +64,7 @@ func TestAuthFnSharedTLSWithPassThruCert(t *testing.T) {
 				require.NotNil(t, encodedCert)
 
 				header := http.Header{}
-				header.Set(clientCertHeader, encodedCert)
+				header.Set(clientCertHeaderKey, encodedCert)
 				err = fn(&http.Request{
 					Header: header,
 				})
@@ -81,7 +81,7 @@ func TestAuthFnSharedTLSWithPassThruCert(t *testing.T) {
 				require.NotNil(t, encodedCert)
 
 				header := http.Header{}
-				header.Set(clientCertHeader, encodedCert)
+				header.Set(clientCertHeaderKey, encodedCert)
 				err = fn(&http.Request{
 					Header: header,
 				})
@@ -107,7 +107,7 @@ func TestAuthFnPKITLSWithPassThruCert(t *testing.T) {
 				require.NotNil(t, encodedCert)
 
 				header := http.Header{}
-				header.Set(clientCertHeader, encodedCert)
+				header.Set(clientCertHeaderKey, encodedCert)
 				err = fn(&http.Request{
 					Header: header,
 				})
@@ -124,7 +124,7 @@ func TestAuthFnPKITLSWithPassThruCert(t *testing.T) {
 				require.NotNil(t, encodedCert)
 
 				header := http.Header{}
-				header.Set(clientCertHeader, encodedCert)
+				header.Set(clientCertHeaderKey, encodedCert)
 				err = fn(&http.Request{
 					Header: header,
 				})
