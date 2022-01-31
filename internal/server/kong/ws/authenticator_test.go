@@ -19,7 +19,7 @@ func TestReadPassthroughCertificate(t *testing.T) {
 				Header: http.Header{},
 			})
 			require.Nil(t, cert)
-			require.Nil(t, err)
+			require.Equal(t, "passthrough certificate not found in the http header 'x-client-cert'", err.Error())
 		})
 	t.Run("invalid certificate returns an error",
 		func(t *testing.T) {
@@ -41,7 +41,8 @@ func TestReadPassthroughCertificate(t *testing.T) {
 			})
 			require.Nil(t, cert)
 			require.NotNil(t, err)
-			require.EqualError(t, err, "failed to url decode client certificate from 'x-client-cert' header. invalid URL escape \"%%c\"")
+			require.EqualError(t, err,
+				"failed to url decode client certificate from 'x-client-cert' header. invalid URL escape \"%%c\"")
 		})
 }
 
@@ -58,7 +59,7 @@ func TestAuthFnSharedTLSWithPassThruCert(t *testing.T) {
 
 		t.Run("request with non-matching certificate fails",
 			func(t *testing.T) {
-				encodedCert, err := loadUrlEncodedCert("testdata/shared/mismatched_cert.crt")
+				encodedCert, err := loadURLEncodedCert("testdata/shared/mismatched_cert.crt")
 				require.Nil(t, err)
 				require.NotNil(t, encodedCert)
 
@@ -75,7 +76,7 @@ func TestAuthFnSharedTLSWithPassThruCert(t *testing.T) {
 			})
 		t.Run("request with valid/matching certificate succeeds",
 			func(t *testing.T) {
-				encodedCert, err := loadUrlEncodedCert("testdata/shared/shared.crt")
+				encodedCert, err := loadURLEncodedCert("testdata/shared/shared.crt")
 				require.Nil(t, err)
 				require.NotNil(t, encodedCert)
 
@@ -101,7 +102,7 @@ func TestAuthFnPKITLSWithPassThruCert(t *testing.T) {
 
 		t.Run("request with the wrong passthrough certificate errors",
 			func(t *testing.T) {
-				encodedCert, err := loadUrlEncodedCert("testdata/shared/mismatched_cert.crt")
+				encodedCert, err := loadURLEncodedCert("testdata/shared/mismatched_cert.crt")
 				require.Nil(t, err)
 				require.NotNil(t, encodedCert)
 
@@ -118,7 +119,7 @@ func TestAuthFnPKITLSWithPassThruCert(t *testing.T) {
 			})
 		t.Run("request with the right passthrough certificate succeeds",
 			func(t *testing.T) {
-				encodedCert, err := loadUrlEncodedCert("testdata/pki/valid_client.crt")
+				encodedCert, err := loadURLEncodedCert("testdata/pki/valid_client.crt")
 				require.Nil(t, err)
 				require.NotNil(t, encodedCert)
 
@@ -294,7 +295,7 @@ func loadCertFile(filepath string) ([]byte, error) {
 	return certPEM, err
 }
 
-func loadUrlEncodedCert(filepath string) (string, error) {
+func loadURLEncodedCert(filepath string) (string, error) {
 	certPEM, err := loadCertFile(filepath)
 	if err != nil {
 		return "", err

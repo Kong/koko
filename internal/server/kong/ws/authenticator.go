@@ -6,6 +6,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/pem"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -24,6 +25,12 @@ type ErrAuth struct {
 
 func (e ErrAuth) Error() string {
 	return fmt.Sprintf("%s (code %d)", e.Message, e.HTTPStatus)
+}
+
+type PassthruCertNotFound struct{}
+
+func (e PassthruCertNotFound) Error() string {
+	return fmt.Sprintf("passthrough certificate not found in the http header '%s'", clientCertHeader)
 }
 
 type AuthFn func(http *http.Request) error
@@ -62,7 +69,7 @@ func (d *DefaultAuthenticator) Authenticate(r *http.Request) (*Manager, error) {
 func readPassthroughCertificate(r *http.Request) (*x509.Certificate, error) {
 	encodedCert := r.Header.Get(clientCertHeader)
 	if len(encodedCert) == 0 {
-		return nil, nil
+		return nil, PassthruCertNotFound{}
 	}
 
 	pemCert, err := url.QueryUnescape(encodedCert)
@@ -95,7 +102,7 @@ func AuthFnSharedTLS(cert tls.Certificate) (AuthFn, error) {
 	}
 	return func(r *http.Request) error {
 		passthroughCert, err := readPassthroughCertificate(r)
-		if err != nil {
+		if err != nil && !errors.Is(err, PassthruCertNotFound{}) {
 			return ErrAuth{
 				HTTPStatus: http.StatusBadRequest,
 				Message:    err.Error(),
@@ -150,14 +157,14 @@ func AuthFnPKITLS(rootCAs []*x509.Certificate) (AuthFn, error) {
 	}
 	return func(r *http.Request) error {
 		passthroughCert, err := readPassthroughCertificate(r)
-		if err != nil {
+		if err != nil && !errors.Is(err, PassthruCertNotFound{}) {
 			return ErrAuth{
 				HTTPStatus: http.StatusBadRequest,
 				Message:    err.Error(),
 			}
 		}
 
-		var peerCert *x509.Certificate = passthroughCert
+		peerCert := passthroughCert
 		var intermediates *x509.CertPool
 		if peerCert == nil {
 			if r.TLS == nil {
