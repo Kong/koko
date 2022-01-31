@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	clientCertHeader = "x-client-cert"
+	clientCertHeaderKey = "x-client-cert"
 )
 
 type ErrAuth struct {
