@@ -21,3 +21,11 @@ func NewObject(typ Type) (Object, error) {
 	}
 	return fn(), nil
 }
+
+func AllTypes() []Type {
+	var res []Type
+	for t := range types {
+		res = append(res, t)
+	}
+	return res
+}
