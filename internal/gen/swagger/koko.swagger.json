@@ -628,14 +628,14 @@
             "type": "string"
           },
           {
-            "name": "limit",
+            "name": "pageSize",
             "in": "query",
             "required": false,
             "type": "integer",
             "format": "int32"
           },
           {
-            "name": "offset",
+            "name": "page",
             "in": "query",
             "required": false,
             "type": "integer",
@@ -1827,6 +1827,14 @@
           "items": {
             "$ref": "#/definitions/kong.admin.model.v1.Service"
           }
+        },
+        "pageSize": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "page": {
+          "type": "integer",
+          "format": "int32"
         }
       }
     },

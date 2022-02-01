@@ -76,10 +76,12 @@ message DeleteServiceResponse{
 
 message ListServicesRequest{
   model.v1.RequestCluster cluster = 1;
-  int32 limit = 2;
-  int32 offset = 3;
+  int32 page_size = 2;
+  int32 page = 3;
 }
 
 message ListServicesResponse{
   repeated model.v1.Service items = 1;
+  int32 page_size = 2;
+  int32 page = 3;
 }

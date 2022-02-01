@@ -335,8 +335,24 @@ func (s *ObjectStore) List(ctx context.Context, list model.ObjectList, opts ...L
 
 	var kvs [][2][]byte
 	var err error
-	if opt != nil && (opt.PageSize != 0 || opt.Offset != 0) {
-		kvs, err = s.store.ListWithPaging(ctx, s.listKey(typ), opt.PageSize, opt.Offset)
+	if opt != nil && (opt.PageSize != 0 || opt.Page != 0) {
+		pagesize, page := getPagingDefaults(opt.PageSize, opt.Page)
+
+		// Convert the Page into offsets
+		// Offset in database are zero indexed
+		// Page = 1, PageSize = 5; offset = 0
+		// Page = 2, PageSize = 5; offset must be 5
+		// Page = 3, PageSize = 5; offset must be 10 (PS -1) * P
+		// Page = 1, PageSize = 1; offset = 0
+		// Page = 2, PageSize = 1; offset = 1
+		var offset int
+		if page == 1 || page == 0 {
+			offset = 0
+		} else {
+			offset = pagesize * (page - 1)
+		}
+
+		kvs, err = s.store.ListWithPaging(ctx, s.listKey(typ), opt.PageSize, offset)
 	} else {
 		kvs, err = s.store.List(ctx, s.listKey(typ))
 	}

@@ -97,11 +97,14 @@ func (s *ServiceService) ListServices(ctx context.Context,
 		return nil, err
 	}
 	list := resource.NewList(resource.TypeService)
-	if err := db.List(ctx, list, store.ListWithPaging(int(req.Limit), int(req.Offset))); err != nil {
+	pagesize, page := getPagingDefaults(req.PageSize, req.Page)
+	if err := db.List(ctx, list, store.ListWithPaging(int(pagesize), int(page))); err != nil {
 		return nil, s.err(err)
 	}
 	return &v1.ListServicesResponse{
-		Items: servicesFromObjects(list.GetAll()),
+		Items:    servicesFromObjects(list.GetAll()),
+		Page:     page,
+		PageSize: pagesize,
 	}, nil
 }
 
@@ -120,4 +123,17 @@ func servicesFromObjects(objects []model.Object) []*pbModel.Service {
 		res = append(res, service)
 	}
 	return res
+}
+
+func getPagingDefaults(pagesize int32, page int32) (int32, int32) {
+	if pagesize == 0 && page == 0 {
+		return 0, 0
+	}
+	if pagesize <= 0 {
+		pagesize = 100
+	}
+	if page <= 0 {
+		page = 1
+	}
+	return pagesize, page
 }

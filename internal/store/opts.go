@@ -73,7 +73,7 @@ type ListOpts struct {
 	ReferenceType model.Type
 	ReferenceID   string
 	PageSize      int
-	Offset        int
+	Page          int
 }
 
 type ListOptsFunc func(*ListOpts)
@@ -93,9 +93,20 @@ func ListFor(typ model.Type, id string) ListOptsFunc {
 	}
 }
 
-func ListWithPaging(pagesize int, offset int) ListOptsFunc {
+func ListWithPaging(pagesize int, page int) ListOptsFunc {
 	return func(opt *ListOpts) {
+		pagesize, page = getPagingDefaults(pagesize, page)
 		opt.PageSize = pagesize
-		opt.Offset = offset
+		opt.Page = page
 	}
+}
+
+func getPagingDefaults(pagesize int, page int) (int, int) {
+	if pagesize <= 0 {
+		pagesize = 100
+	}
+	if page <= 0 {
+		page = 1
+	}
+	return pagesize, page
 }
