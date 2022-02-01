@@ -76,6 +76,8 @@ message DeleteServiceResponse{
 
 message ListServicesRequest{
   model.v1.RequestCluster cluster = 1;
+  int32 limit = 2;
+  int32 offset = 3;
 }
 
 message ListServicesResponse{

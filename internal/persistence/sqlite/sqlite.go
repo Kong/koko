@@ -23,6 +23,11 @@ type SQLite struct {
 	db *sql.DB
 }
 
+func (s *SQLite) ListWithPaging(ctx context.Context, prefix string, limit int, offset int) ([][2][]byte, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
 type Opts struct {
 	Filename string
 	InMemory bool
@@ -126,6 +131,11 @@ func (s *SQLite) Tx(ctx context.Context) (persistence.Tx, error) {
 
 type sqliteTx struct {
 	tx *sql.Tx
+}
+
+func (t *sqliteTx) ListWithPaging(ctx context.Context, prefix string, limit int, offset int) ([][2][]byte, error) {
+	//TODO implement me
+	panic("implement me")
 }
 
 func (t *sqliteTx) Commit() error {

@@ -28,6 +28,8 @@ type CRUD interface {
 	Delete(ctx context.Context, key string) error
 	// List returns all keys with prefix.
 	List(ctx context.Context, prefix string) ([][2][]byte, error)
+	// ListWithPaging returns limit keys and values starting from offset matching prefix
+	ListWithPaging(ctx context.Context, prefix string, limit int, offset int) ([][2][]byte, error)
 }
 
 type Tx interface {

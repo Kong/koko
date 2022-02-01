@@ -333,7 +333,14 @@ func (s *ObjectStore) List(ctx context.Context, list model.ObjectList, opts ...L
 		return s.referencedList(ctx, list, opt)
 	}
 
-	kvs, err := s.store.List(ctx, s.listKey(typ))
+	var kvs [][2][]byte
+	var err error
+	if opt != nil && (opt.PageSize != 0 || opt.Offset != 0) {
+		kvs, err = s.store.ListWithPaging(ctx, s.listKey(typ), opt.PageSize, opt.Offset)
+	} else {
+		kvs, err = s.store.List(ctx, s.listKey(typ))
+	}
+
 	if err != nil {
 		return err
 	}

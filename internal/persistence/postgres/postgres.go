@@ -22,6 +22,11 @@ var listQuery = func(prefix string) string {
 	return fmt.Sprintf(`SELECT * FROM store WHERE key LIKE '%s%%';`, prefix)
 }
 
+var listQueryPaging = func(prefix string, limit int, offset int) string {
+	return fmt.Sprintf(`SELECT * FROM store WHERE key LIKE '%s%%' order by key limit %d offset %d;`,
+		prefix, limit, offset)
+}
+
 type Postgres struct {
 	db *sql.DB
 }
@@ -126,6 +131,18 @@ func (s *Postgres) List(ctx context.Context, prefix string) ([][2][]byte,
 	return res, err
 }
 
+// ListWithPaging returns limit keys and values starting from offset matching prefix
+func (s *Postgres) ListWithPaging(ctx context.Context, prefix string, limit int, offset int) ([][2][]byte, error) {
+	var res [][2][]byte
+	err := s.withinTx(ctx, func(tx persistence.Tx) error {
+		var err error
+		res, err = tx.ListWithPaging(ctx, prefix, limit, offset)
+		return err
+	})
+	return res, err
+
+}
+
 func (s *Postgres) Tx(ctx context.Context) (persistence.Tx, error) {
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -197,6 +214,34 @@ func (t *sqliteTx) List(ctx context.Context, prefix string) ([][2][]byte,
 	error) {
 	var res [][2][]byte
 	rows, err := t.tx.QueryContext(ctx, listQuery(prefix))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	if rows.Err() != nil {
+		return nil, rows.Err()
+	}
+	if err != nil {
+		return nil, err
+	}
+	for rows.Next() {
+		var (
+			key   []byte
+			value []byte
+		)
+		err := rows.Scan(&key, &value)
+		if err != nil {
+			return nil, err
+		}
+		res = append(res, [2][]byte{key, value})
+	}
+	return res, nil
+}
+
+func (t *sqliteTx) ListWithPaging(ctx context.Context, prefix string, limit int, offset int) ([][2][]byte,
+	error) {
+	var res [][2][]byte
+	rows, err := t.tx.QueryContext(ctx, listQueryPaging(prefix, limit, offset))
 	if err != nil {
 		return nil, err
 	}

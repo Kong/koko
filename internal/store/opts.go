@@ -72,6 +72,8 @@ func DeleteByType(typ model.Type) DeleteOptsFunc {
 type ListOpts struct {
 	ReferenceType model.Type
 	ReferenceID   string
+	PageSize      int
+	Offset        int
 }
 
 type ListOptsFunc func(*ListOpts)
@@ -88,5 +90,12 @@ func ListFor(typ model.Type, id string) ListOptsFunc {
 	return func(opt *ListOpts) {
 		opt.ReferenceType = typ
 		opt.ReferenceID = id
+	}
+}
+
+func ListWithPaging(pagesize int, offset int) ListOptsFunc {
+	return func(opt *ListOpts) {
+		opt.PageSize = pagesize
+		opt.Offset = offset
 	}
 }

@@ -97,7 +97,7 @@ func (s *ServiceService) ListServices(ctx context.Context,
 		return nil, err
 	}
 	list := resource.NewList(resource.TypeService)
-	if err := db.List(ctx, list); err != nil {
+	if err := db.List(ctx, list, store.ListWithPaging(int(req.Limit), int(req.Offset))); err != nil {
 		return nil, s.err(err)
 	}
 	return &v1.ListServicesResponse{
