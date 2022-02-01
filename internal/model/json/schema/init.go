@@ -32,7 +32,7 @@ func initSchemas() {
 	for _, file := range files {
 		name := file.Name()
 		if !strings.HasSuffix(name, ".json") {
-			panic(fmt.Sprintf("expected a JSON file for entity but got: %v", name))
+			panic(fmt.Sprintf("expected a JSON file but got: %v", name))
 		}
 		schemaName := strings.TrimSuffix(name, ".json")
 		schema, err := schemaFS.ReadFile(fmt.Sprintf("%s/%s", dir, name))
@@ -58,12 +58,12 @@ func Get(name string) (*jsonschema.Schema, error) {
 	once.Do(initSchemas)
 	schema, ok := schemas[name]
 	if !ok {
-		return nil, fmt.Errorf("schema not found for entity: '%s'", name)
+		return nil, fmt.Errorf("schema not found: '%s'", name)
 	}
 	return schema, nil
 }
 
-func GetRawJSON(name string) ([]byte, error) {
+func GetRawJSONSchema(name string) ([]byte, error) {
 	once.Do(initSchemas)
 	rawJSONSchema, ok := rawJSONSchemas[name]
 	if !ok {

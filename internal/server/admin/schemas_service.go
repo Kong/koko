@@ -28,7 +28,7 @@ func (s *SchemasService) GetSchemas(ctx context.Context,
 
 	// Retrieve the raw JSON based on entity name
 	s.logger.With(zap.String("name", req.Name)).Debug("reading schemas by name")
-	rawJSONSchema, err := schema.GetRawJSON(req.Name)
+	rawJSONSchema, err := schema.GetRawJSONSchema(req.Name)
 	if err != nil {
 		return nil, status.Errorf(codes.NotFound, "no entity named '%s'", req.Name)
 	}
