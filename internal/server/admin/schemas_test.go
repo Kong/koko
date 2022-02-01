@@ -70,7 +70,10 @@ func TestSchemasGetPlugin(t *testing.T) {
 		for _, path := range paths {
 			res := c.GET(fmt.Sprintf("/v1/schemas/plugins/lua/%s", path)).Expect()
 			res.Status(200)
-			value := res.JSON().Path("$..config.required").Array()
+			value := res.JSON().Path("$..protocols").Array()
+			value.NotEmpty()
+			value = res.JSON().Path("$..config.required").Array()
+			value.Length().Equal(1)
 			value.ContainsOnly(true) // all config objects are required for plugins
 		}
 	})

@@ -16,7 +16,8 @@ import (
 
 type SchemasService struct {
 	v1.UnimplementedSchemasServiceServer
-	logger *zap.Logger
+	logger          *zap.Logger
+	getRawLuaSchema plugin.GetRawLuaSchema
 }
 
 func (s *SchemasService) GetSchemas(ctx context.Context,
@@ -51,7 +52,7 @@ func (s *SchemasService) GetLuaSchemasPlugin(ctx context.Context,
 
 	// Retrieve the raw JSON based on plugin name
 	s.logger.With(zap.String("name", req.Name)).Debug("reading Lua plugin schema by name")
-	rawLuaSchema, err := plugin.GetRawLuaSchema(req.Name)
+	rawLuaSchema, err := s.getRawLuaSchema(req.Name)
 	if err != nil {
 		return nil, status.Errorf(codes.NotFound, "no plugin named '%s'", req.Name)
 	}

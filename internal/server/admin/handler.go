@@ -9,6 +9,7 @@ import (
 	model "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/service/v1"
 	"github.com/kong/koko/internal/json"
+	"github.com/kong/koko/internal/plugin"
 	"github.com/kong/koko/internal/server"
 	"github.com/kong/koko/internal/server/util"
 	"github.com/kong/koko/internal/store"
@@ -30,6 +31,8 @@ type HandlerOpts struct {
 	Logger *zap.Logger
 
 	StoreLoader util.StoreLoader
+
+	GetRawLuaSchema plugin.GetRawLuaSchema
 }
 
 type CommonOpts struct {
@@ -84,7 +87,8 @@ func buildServices(opts HandlerOpts) services {
 			},
 		},
 		schemas: &SchemasService{
-			logger: opts.Logger.With(zap.String("admin-service", "schemas")),
+			logger:          opts.Logger.With(zap.String("admin-service", "schemas")),
+			getRawLuaSchema: opts.GetRawLuaSchema,
 		},
 		node: &NodeService{
 			CommonOpts: CommonOpts{

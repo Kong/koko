@@ -3,6 +3,7 @@ package plugin
 import (
 	"embed"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/jeremywohl/flatten"
@@ -16,6 +17,8 @@ import (
 type Validator interface {
 	Validate(*model.Plugin) error
 	ProcessDefaults(*model.Plugin) error
+	AddLuaSchema(name string, schema string) error
+	GetRawLuaSchema(name string) ([]byte, error)
 }
 
 type Opts struct {
@@ -23,9 +26,12 @@ type Opts struct {
 }
 
 type LuaValidator struct {
-	goksV  *goksPlugin.Validator
-	logger *zap.Logger
+	goksV         *goksPlugin.Validator
+	logger        *zap.Logger
+	rawLuaSchemas map[string][]byte
 }
+
+type GetRawLuaSchema func(name string) ([]byte, error)
 
 func NewLuaValidator(opts Opts) (*LuaValidator, error) {
 	if opts.Logger == nil {
@@ -36,8 +42,9 @@ func NewLuaValidator(opts Opts) (*LuaValidator, error) {
 		return nil, err
 	}
 	return &LuaValidator{
-		goksV:  validator,
-		logger: opts.Logger,
+		goksV:         validator,
+		logger:        opts.Logger,
+		rawLuaSchemas: map[string][]byte{},
 	}, nil
 }
 
@@ -190,7 +197,7 @@ func (v *LuaValidator) LoadSchemasFromEmbed(fs embed.FS, dirName string) error {
 		if err != nil {
 			return err
 		}
-		err = AddLuaSchema(pluginName, pluginSchema)
+		err = v.AddLuaSchema(pluginName, pluginSchema)
 		if err != nil {
 			return err
 		}
@@ -200,4 +207,24 @@ func (v *LuaValidator) LoadSchemasFromEmbed(fs embed.FS, dirName string) error {
 		With(zap.Duration("loading-time", t2.Sub(t1))).
 		Debug("plugin schemas loaded")
 	return nil
+}
+
+func (v *LuaValidator) AddLuaSchema(name string, schema string) error {
+	if _, found := v.rawLuaSchemas[name]; found {
+		return fmt.Errorf("schema for plugin '%s' already exists", name)
+	}
+	trimmedSchema := strings.TrimSpace(schema)
+	if len(trimmedSchema) == 0 {
+		return fmt.Errorf("schema cannot be empty")
+	}
+	v.rawLuaSchemas[name] = []byte(schema)
+	return nil
+}
+
+func (v *LuaValidator) GetRawLuaSchema(name string) ([]byte, error) {
+	rawLuaSchema, ok := v.rawLuaSchemas[name]
+	if !ok {
+		return []byte{}, fmt.Errorf("raw Lua schema not found for plugin: '%s'", name)
+	}
+	return rawLuaSchema, nil
 }

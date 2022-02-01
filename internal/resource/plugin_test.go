@@ -43,7 +43,6 @@ func setupLuaValidator(t *testing.T) {
 
 func TestPlugin_ProcessDefaults(t *testing.T) {
 	setupLuaValidator(t)
-	defer plugin.ClearLuaSchemas()
 	t.Run("defaults are correctly injected", func(t *testing.T) {
 		r := NewPlugin()
 		r.Plugin.Name = "basic-auth"
@@ -76,7 +75,6 @@ func TestPlugin_ProcessDefaults(t *testing.T) {
 
 func TestPlugin_Validate(t *testing.T) {
 	setupLuaValidator(t)
-	plugin.ClearLuaSchemas()
 	tests := []struct {
 		name    string
 		Plugin  func() Plugin

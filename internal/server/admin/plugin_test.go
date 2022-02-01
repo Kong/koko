@@ -22,7 +22,6 @@ func init() {
 		panic(err)
 	}
 
-	plugin.ClearLuaSchemas()
 	err = validator.LoadSchemasFromEmbed(plugin.Schemas, "schemas")
 	if err != nil {
 		panic(err)

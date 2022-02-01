@@ -70,8 +70,9 @@ func Run(ctx context.Context, config ServerConfig) error {
 	storeLoader := serverUtil.DefaultStoreLoader{Store: store}
 	adminLogger := logger.With(zap.String("component", "admin-server"))
 	h, err := admin.NewHandler(admin.HandlerOpts{
-		Logger:      adminLogger,
-		StoreLoader: storeLoader,
+		Logger:          adminLogger,
+		StoreLoader:     storeLoader,
+		GetRawLuaSchema: validator.GetRawLuaSchema,
 	})
 	if err != nil {
 		return err
