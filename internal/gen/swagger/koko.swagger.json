@@ -552,7 +552,7 @@
         ]
       }
     },
-    "/v1/schemas/plugins/lua/{name}": {
+    "/v1/schemas/lua/plugins/{name}": {
       "get": {
         "operationId": "SchemasService_GetLuaSchemasPlugin",
         "responses": {

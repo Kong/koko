@@ -17,7 +17,7 @@ service SchemasService {
 
   rpc GetLuaSchemasPlugin(GetLuaSchemasPluginRequest) returns (GetLuaSchemasPluginResponse) {
     option (google.api.http) = {
-      get: "/v1/schemas/plugins/lua/{name}"
+      get: "/v1/schemas/lua/plugins/{name}"
       response_body: "schema"
     };
   }

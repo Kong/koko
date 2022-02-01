@@ -170,7 +170,7 @@ func RegisterSchemasServiceHandlerServer(ctx context.Context, mux *runtime.Serve
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kong.admin.service.v1.SchemasService/GetLuaSchemasPlugin", runtime.WithHTTPPathPattern("/v1/schemas/plugins/lua/{name}"))
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kong.admin.service.v1.SchemasService/GetLuaSchemasPlugin", runtime.WithHTTPPathPattern("/v1/schemas/lua/plugins/{name}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -252,7 +252,7 @@ func RegisterSchemasServiceHandlerClient(ctx context.Context, mux *runtime.Serve
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kong.admin.service.v1.SchemasService/GetLuaSchemasPlugin", runtime.WithHTTPPathPattern("/v1/schemas/plugins/lua/{name}"))
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kong.admin.service.v1.SchemasService/GetLuaSchemasPlugin", runtime.WithHTTPPathPattern("/v1/schemas/lua/plugins/{name}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -292,7 +292,7 @@ func (m response_SchemasService_GetLuaSchemasPlugin_0) XXX_ResponseBody() interf
 var (
 	pattern_SchemasService_GetSchemas_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"v1", "schemas", "json", "name"}, ""))
 
-	pattern_SchemasService_GetLuaSchemasPlugin_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"v1", "schemas", "plugins", "lua", "name"}, ""))
+	pattern_SchemasService_GetLuaSchemasPlugin_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"v1", "schemas", "lua", "plugins", "name"}, ""))
 )
 
 var (
