@@ -272,19 +272,19 @@ func TestPluginLuaSchema(t *testing.T) {
 	}
 	for _, pluginName := range pluginNames {
 		jsonSchmea := fmt.Sprintf("{\"plugin_name\": \"%s\"}", pluginName)
-		err := validator.AddLuaSchema(pluginName, jsonSchmea)
+		err := addLuaSchema(pluginName, jsonSchmea, validator.rawLuaSchemas)
 		require.Nil(t, err)
 	}
 
 	t.Run("ensure error adding the same plugin name", func(t *testing.T) {
-		err := validator.AddLuaSchema("two", "{}")
+		err := addLuaSchema("two", "{}", validator.rawLuaSchemas)
 		require.EqualError(t, err, "schema for plugin 'two' already exists")
 	})
 
 	t.Run("ensure error adding an empty schema", func(t *testing.T) {
-		err := validator.AddLuaSchema("empty", "")
+		err := addLuaSchema("empty", "", validator.rawLuaSchemas)
 		require.EqualError(t, err, "schema cannot be empty")
-		err = validator.AddLuaSchema("empty", "       ")
+		err = addLuaSchema("empty", "       ", validator.rawLuaSchemas)
 		require.EqualError(t, err, "schema cannot be empty")
 	})
 

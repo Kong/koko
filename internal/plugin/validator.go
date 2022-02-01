@@ -17,7 +17,6 @@ import (
 type Validator interface {
 	Validate(*model.Plugin) error
 	ProcessDefaults(*model.Plugin) error
-	AddLuaSchema(name string, schema string) error
 	GetRawLuaSchema(name string) ([]byte, error)
 }
 
@@ -30,8 +29,6 @@ type LuaValidator struct {
 	logger        *zap.Logger
 	rawLuaSchemas map[string][]byte
 }
-
-type GetRawLuaSchema func(name string) ([]byte, error)
 
 func NewLuaValidator(opts Opts) (*LuaValidator, error) {
 	if opts.Logger == nil {
@@ -197,7 +194,7 @@ func (v *LuaValidator) LoadSchemasFromEmbed(fs embed.FS, dirName string) error {
 		if err != nil {
 			return err
 		}
-		err = v.AddLuaSchema(pluginName, pluginSchema)
+		err = addLuaSchema(pluginName, pluginSchema, v.rawLuaSchemas)
 		if err != nil {
 			return err
 		}
@@ -209,22 +206,22 @@ func (v *LuaValidator) LoadSchemasFromEmbed(fs embed.FS, dirName string) error {
 	return nil
 }
 
-func (v *LuaValidator) AddLuaSchema(name string, schema string) error {
-	if _, found := v.rawLuaSchemas[name]; found {
-		return fmt.Errorf("schema for plugin '%s' already exists", name)
-	}
-	trimmedSchema := strings.TrimSpace(schema)
-	if len(trimmedSchema) == 0 {
-		return fmt.Errorf("schema cannot be empty")
-	}
-	v.rawLuaSchemas[name] = []byte(schema)
-	return nil
-}
-
 func (v *LuaValidator) GetRawLuaSchema(name string) ([]byte, error) {
 	rawLuaSchema, ok := v.rawLuaSchemas[name]
 	if !ok {
 		return []byte{}, fmt.Errorf("raw Lua schema not found for plugin: '%s'", name)
 	}
 	return rawLuaSchema, nil
+}
+
+func addLuaSchema(name string, schema string, rawLuaSchemas map[string][]byte) error {
+	if _, found := rawLuaSchemas[name]; found {
+		return fmt.Errorf("schema for plugin '%s' already exists", name)
+	}
+	trimmedSchema := strings.TrimSpace(schema)
+	if len(trimmedSchema) == 0 {
+		return fmt.Errorf("schema cannot be empty")
+	}
+	rawLuaSchemas[name] = []byte(schema)
+	return nil
 }

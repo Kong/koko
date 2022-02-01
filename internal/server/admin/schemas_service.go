@@ -6,7 +6,6 @@ import (
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/service/v1"
 	"github.com/kong/koko/internal/json"
 	"github.com/kong/koko/internal/model/json/schema"
-	"github.com/kong/koko/internal/plugin"
 	"github.com/kong/koko/internal/server/util"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
@@ -17,7 +16,7 @@ import (
 type SchemasService struct {
 	v1.UnimplementedSchemasServiceServer
 	logger          *zap.Logger
-	getRawLuaSchema plugin.GetRawLuaSchema
+	getRawLuaSchema func(name string) ([]byte, error)
 }
 
 func (s *SchemasService) GetSchemas(ctx context.Context,

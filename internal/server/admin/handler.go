@@ -9,7 +9,6 @@ import (
 	model "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/service/v1"
 	"github.com/kong/koko/internal/json"
-	"github.com/kong/koko/internal/plugin"
 	"github.com/kong/koko/internal/server"
 	"github.com/kong/koko/internal/server/util"
 	"github.com/kong/koko/internal/store"
@@ -32,7 +31,7 @@ type HandlerOpts struct {
 
 	StoreLoader util.StoreLoader
 
-	GetRawLuaSchema plugin.GetRawLuaSchema
+	GetRawLuaSchema func(name string) ([]byte, error)
 }
 
 type CommonOpts struct {
