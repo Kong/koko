@@ -14,12 +14,27 @@ service SchemasService {
       response_body: "schema"
     };
   }
+
+  rpc GetLuaSchemasPlugin(GetLuaSchemasPluginRequest) returns (GetLuaSchemasPluginResponse) {
+    option (google.api.http) = {
+      get: "/v1/schemas/lua/plugins/{name}"
+      response_body: "schema"
+    };
+  }
 }
 
-message GetSchemasRequest{
+message GetSchemasRequest {
   string name = 1;
 }
 
-message GetSchemasResponse{
+message GetSchemasResponse {
+  google.protobuf.Struct schema = 1;
+}
+
+message GetLuaSchemasPluginRequest {
+  string name = 1;
+}
+
+message GetLuaSchemasPluginResponse {
   google.protobuf.Struct schema = 1;
 }

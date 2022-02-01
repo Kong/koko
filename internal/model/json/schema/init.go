@@ -67,7 +67,7 @@ func GetRawJSONSchema(name string) ([]byte, error) {
 	once.Do(initSchemas)
 	rawJSONSchema, ok := rawJSONSchemas[name]
 	if !ok {
-		return []byte{}, fmt.Errorf("raw JSON schema not found: '%s'", name)
+		return []byte{}, fmt.Errorf("raw JSON schema not found for entity: '%s'", name)
 	}
 	return rawJSONSchema, nil
 }

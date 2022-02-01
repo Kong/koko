@@ -2,6 +2,7 @@ package plugin
 
 import (
 	"embed"
+	"fmt"
 	"io/fs"
 	"testing"
 	"time"
@@ -254,5 +255,52 @@ func TestValidate(t *testing.T) {
 		require.Nil(t, validator.ProcessDefaults(p))
 		err = validator.Validate(p)
 		require.Nil(t, err)
+	})
+}
+
+type testPluginSchema struct {
+	Name string `json:"plugin_name,omitempty" yaml:"plugin_name,omitempty"`
+}
+
+func TestPluginLuaSchema(t *testing.T) {
+	validator, err := NewLuaValidator(Opts{Logger: log.Logger})
+	require.Nil(t, err)
+	pluginNames := []string{
+		"one",
+		"two",
+		"three",
+	}
+	for _, pluginName := range pluginNames {
+		jsonSchmea := fmt.Sprintf("{\"plugin_name\": \"%s\"}", pluginName)
+		err := addLuaSchema(pluginName, jsonSchmea, validator.rawLuaSchemas)
+		require.Nil(t, err)
+	}
+
+	t.Run("ensure error adding the same plugin name", func(t *testing.T) {
+		err := addLuaSchema("two", "{}", validator.rawLuaSchemas)
+		require.EqualError(t, err, "schema for plugin 'two' already exists")
+	})
+
+	t.Run("ensure error adding an empty schema", func(t *testing.T) {
+		err := addLuaSchema("empty", "", validator.rawLuaSchemas)
+		require.EqualError(t, err, "schema cannot be empty")
+		err = addLuaSchema("empty", "       ", validator.rawLuaSchemas)
+		require.EqualError(t, err, "schema cannot be empty")
+	})
+
+	t.Run("validate plugin JSON schema", func(t *testing.T) {
+		for _, pluginName := range pluginNames {
+			var pluginSchema testPluginSchema
+			rawJSONSchmea, err := validator.GetRawLuaSchema(pluginName)
+			require.Nil(t, err)
+			require.Nil(t, json.Unmarshal(rawJSONSchmea, &pluginSchema))
+			require.EqualValues(t, pluginName, pluginSchema.Name)
+		}
+	})
+
+	t.Run("ensure error retrieving unknown plugin JSON schema", func(t *testing.T) {
+		rawJSONSchema, err := validator.GetRawLuaSchema("invalid-plugin")
+		require.Empty(t, rawJSONSchema)
+		require.Errorf(t, err, "raw JSON schema not found for plugin: 'invalid-plugin'")
 	})
 }

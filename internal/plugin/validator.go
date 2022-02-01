@@ -3,6 +3,7 @@ package plugin
 import (
 	"embed"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/jeremywohl/flatten"
@@ -16,6 +17,7 @@ import (
 type Validator interface {
 	Validate(*model.Plugin) error
 	ProcessDefaults(*model.Plugin) error
+	GetRawLuaSchema(name string) ([]byte, error)
 }
 
 type Opts struct {
@@ -23,8 +25,9 @@ type Opts struct {
 }
 
 type LuaValidator struct {
-	goksV  *goksPlugin.Validator
-	logger *zap.Logger
+	goksV         *goksPlugin.Validator
+	logger        *zap.Logger
+	rawLuaSchemas map[string][]byte
 }
 
 func NewLuaValidator(opts Opts) (*LuaValidator, error) {
@@ -36,8 +39,9 @@ func NewLuaValidator(opts Opts) (*LuaValidator, error) {
 		return nil, err
 	}
 	return &LuaValidator{
-		goksV:  validator,
-		logger: opts.Logger,
+		goksV:         validator,
+		logger:        opts.Logger,
+		rawLuaSchemas: map[string][]byte{},
 	}, nil
 }
 
@@ -180,7 +184,17 @@ func (v *LuaValidator) LoadSchemasFromEmbed(fs embed.FS, dirName string) error {
 		if err != nil {
 			return err
 		}
-		err = v.goksV.LoadSchema(string(schema))
+		pluginName, err := v.goksV.LoadSchema(string(schema))
+		if err != nil {
+			return err
+		}
+
+		// Get the JSON schema for the plugin that was loaded and store it in mem
+		pluginSchema, err := v.goksV.SchemaAsJSON(pluginName)
+		if err != nil {
+			return err
+		}
+		err = addLuaSchema(pluginName, pluginSchema, v.rawLuaSchemas)
 		if err != nil {
 			return err
 		}
@@ -189,5 +203,25 @@ func (v *LuaValidator) LoadSchemasFromEmbed(fs embed.FS, dirName string) error {
 	v.logger.
 		With(zap.Duration("loading-time", t2.Sub(t1))).
 		Debug("plugin schemas loaded")
+	return nil
+}
+
+func (v *LuaValidator) GetRawLuaSchema(name string) ([]byte, error) {
+	rawLuaSchema, ok := v.rawLuaSchemas[name]
+	if !ok {
+		return []byte{}, fmt.Errorf("raw Lua schema not found for plugin: '%s'", name)
+	}
+	return rawLuaSchema, nil
+}
+
+func addLuaSchema(name string, schema string, rawLuaSchemas map[string][]byte) error {
+	if _, found := rawLuaSchemas[name]; found {
+		return fmt.Errorf("schema for plugin '%s' already exists", name)
+	}
+	trimmedSchema := strings.TrimSpace(schema)
+	if len(trimmedSchema) == 0 {
+		return fmt.Errorf("schema cannot be empty")
+	}
+	rawLuaSchemas[name] = []byte(schema)
 	return nil
 }

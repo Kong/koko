@@ -15,7 +15,8 @@ import (
 
 type SchemasService struct {
 	v1.UnimplementedSchemasServiceServer
-	logger *zap.Logger
+	logger          *zap.Logger
+	getRawLuaSchema func(name string) ([]byte, error)
 }
 
 func (s *SchemasService) GetSchemas(ctx context.Context,
@@ -39,6 +40,30 @@ func (s *SchemasService) GetSchemas(ctx context.Context,
 	}
 	return &v1.GetSchemasResponse{
 		Schema: jsonSchema,
+	}, nil
+}
+
+func (s *SchemasService) GetLuaSchemasPlugin(ctx context.Context,
+	req *v1.GetLuaSchemasPluginRequest) (*v1.GetLuaSchemasPluginResponse, error) {
+	if req.Name == "" {
+		return nil, s.err(util.ErrClient{Message: "required name is missing"})
+	}
+
+	// Retrieve the raw JSON based on plugin name
+	s.logger.With(zap.String("name", req.Name)).Debug("reading Lua plugin schema by name")
+	rawLuaSchema, err := s.getRawLuaSchema(req.Name)
+	if err != nil {
+		return nil, status.Errorf(codes.NotFound, "no plugin named '%s'", req.Name)
+	}
+
+	// Convert the raw Lua (JSON) into a map/struct and return response
+	luaSchema := &structpb.Struct{}
+	err = json.Unmarshal(rawLuaSchema, luaSchema)
+	if err != nil {
+		return nil, s.err(err)
+	}
+	return &v1.GetLuaSchemasPluginResponse{
+		Schema: luaSchema,
 	}, nil
 }
 

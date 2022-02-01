@@ -30,6 +30,8 @@ type HandlerOpts struct {
 	Logger *zap.Logger
 
 	StoreLoader util.StoreLoader
+
+	GetRawLuaSchema func(name string) ([]byte, error)
 }
 
 type CommonOpts struct {
@@ -84,7 +86,8 @@ func buildServices(opts HandlerOpts) services {
 			},
 		},
 		schemas: &SchemasService{
-			logger: opts.Logger.With(zap.String("admin-service", "schemas")),
+			logger:          opts.Logger.With(zap.String("admin-service", "schemas")),
+			getRawLuaSchema: opts.GetRawLuaSchema,
 		},
 		node: &NodeService{
 			CommonOpts: CommonOpts{

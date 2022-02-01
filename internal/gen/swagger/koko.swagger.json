@@ -552,6 +552,36 @@
         ]
       }
     },
+    "/v1/schemas/lua/plugins/{name}": {
+      "get": {
+        "operationId": "SchemasService_GetLuaSchemasPlugin",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "type": "object"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "kong.admin.service.v1.SchemasService"
+        ]
+      }
+    },
     "/v1/services": {
       "get": {
         "operationId": "ServiceService_ListServices",
@@ -1253,6 +1283,14 @@
     },
     "kong.admin.service.v1.DeleteStatusResponse": {
       "type": "object"
+    },
+    "kong.admin.service.v1.GetLuaSchemasPluginResponse": {
+      "type": "object",
+      "properties": {
+        "schema": {
+          "type": "object"
+        }
+      }
     },
     "kong.admin.service.v1.GetNodeResponse": {
       "type": "object",

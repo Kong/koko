@@ -5,6 +5,8 @@ import (
 	"testing"
 
 	"github.com/kong/koko/internal/log"
+	"github.com/kong/koko/internal/plugin"
+	"github.com/kong/koko/internal/resource"
 	serverUtil "github.com/kong/koko/internal/server/util"
 	"github.com/kong/koko/internal/store"
 	"github.com/kong/koko/internal/test/util"
@@ -20,11 +22,20 @@ func setup(t *testing.T) (*httptest.Server, func()) {
 }
 
 func setupWithDB(t *testing.T, store store.Store) (*httptest.Server, func()) {
+	validator, err := plugin.NewLuaValidator(plugin.Opts{Logger: log.Logger})
+	require.Nil(t, err)
+	err = validator.LoadSchemasFromEmbed(plugin.Schemas, "schemas")
+	if err != nil {
+		panic(err)
+	}
+	resource.SetValidator(validator)
+
 	handler, err := NewHandler(HandlerOpts{
 		Logger: log.Logger,
 		StoreLoader: serverUtil.DefaultStoreLoader{
 			Store: store,
 		},
+		GetRawLuaSchema: validator.GetRawLuaSchema,
 	})
 	if err != nil {
 		t.Fatalf("creating httptest.Server: %v", err)
