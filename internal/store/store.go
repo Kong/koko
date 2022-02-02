@@ -328,34 +328,37 @@ func (s *ObjectStore) List(ctx context.Context, list model.ObjectList, opts ...L
 	ctx, cancel := context.WithTimeout(ctx, DefaultDBQueryTimeout)
 	defer cancel()
 	typ := list.Type()
-	opt := NewListOpts(opts...)
+	opt := NewListOpts(opts...) // This is store.ListOpts
 	if opt != nil && opt.ReferenceType != "" && opt.ReferenceID != "" {
 		return s.referencedList(ctx, list, opt)
 	}
 
 	var kvs [][2][]byte
 	var err error
-	if opt != nil && (opt.PageSize != 0 || opt.Page != 0) {
-		pagesize, page := getPagingDefaults(opt.PageSize, opt.Page)
 
-		// Convert the Page into offsets
-		// Offset in database are zero indexed
-		// Page = 1, PageSize = 5; offset = 0
-		// Page = 2, PageSize = 5; offset must be 5
-		// Page = 3, PageSize = 5; offset must be 10 (PS -1) * P
-		// Page = 1, PageSize = 1; offset = 0
-		// Page = 2, PageSize = 1; offset = 1
-		var offset int
-		if page == 1 || page == 0 {
-			offset = 0
-		} else {
-			offset = pagesize * (page - 1)
-		}
+	kvs, err = s.store.List(ctx, s.listKey(typ), persistence.ListOpts{Page: opt.Page, PageSize: opt.PageSize})
 
-		kvs, err = s.store.ListWithPaging(ctx, s.listKey(typ), opt.PageSize, offset)
-	} else {
-		kvs, err = s.store.List(ctx, s.listKey(typ))
-	}
+	//if opt != nil && (opt.PageSize != 0 || opt.Page != 0) {
+	//	pagesize, page := getPagingDefaults(opt.PageSize, opt.Page)
+	//
+	//	// Convert the Page into offsets
+	//	// Offset in database are zero indexed
+	//	// Page = 1, PageSize = 5; offset = 0
+	//	// Page = 2, PageSize = 5; offset must be 5
+	//	// Page = 3, PageSize = 5; offset must be 10 (PS -1) * P
+	//	// Page = 1, PageSize = 1; offset = 0
+	//	// Page = 2, PageSize = 1; offset = 1
+	//	var offset int
+	//	if page == 1 || page == 0 {
+	//		offset = 0
+	//	} else {
+	//		offset = pagesize * (page - 1)
+	//	}
+	//
+	//	kvs, err = s.store.ListWithPaging(ctx, s.listKey(typ), opt.PageSize, offset)
+	//} else {
+	//	kvs, err = s.store.List(ctx, s.listKey(typ))
+	//}
 
 	if err != nil {
 		return err
@@ -380,7 +383,7 @@ func (s *ObjectStore) referencedList(ctx context.Context, list model.ObjectList,
 	typ := list.Type()
 	err := s.withTx(ctx, func(tx persistence.Tx) error {
 		keyPrefix := s.referencedListKey(typ, opt)
-		kvs, err := tx.List(ctx, keyPrefix)
+		kvs, err := tx.List(ctx, keyPrefix, persistence.ListOpts{}) // FIXME: rajkong
 		if err != nil {
 			return err
 		}

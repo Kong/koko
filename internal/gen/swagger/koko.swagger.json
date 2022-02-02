@@ -628,14 +628,14 @@
             "type": "string"
           },
           {
-            "name": "pageSize",
+            "name": "listOptions.pageSize",
             "in": "query",
             "required": false,
             "type": "integer",
             "format": "int32"
           },
           {
-            "name": "page",
+            "name": "listOptions.page",
             "in": "query",
             "required": false,
             "type": "integer",
@@ -1265,6 +1265,19 @@
         "threshold": {
           "type": "number",
           "format": "float"
+        }
+      }
+    },
+    "kong.admin.model.v1.ListOpts": {
+      "type": "object",
+      "properties": {
+        "pageSize": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "page": {
+          "type": "integer",
+          "format": "int32"
         }
       }
     },

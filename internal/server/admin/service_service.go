@@ -3,6 +3,7 @@ package admin
 import (
 	"context"
 	"fmt"
+	"github.com/kong/koko/internal/persistence"
 	"net/http"
 
 	pbModel "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
@@ -97,14 +98,26 @@ func (s *ServiceService) ListServices(ctx context.Context,
 		return nil, err
 	}
 	list := resource.NewList(resource.TypeService)
-	pagesize, page := getPagingDefaults(req.PageSize, req.Page)
-	if err := db.List(ctx, list, store.ListWithPaging(int(pagesize), int(page))); err != nil {
+	listOpts := req.ListOptions
+	if listOpts == nil {
+		listOpts = &pbModel.ListOpts{Page: persistence.DEFAULT_PAGE, PageSize: persistence.DEFAULT_PAGE_SIZE}
+	}
+	// Validate what we got
+	if listOpts.Page < 1 {
+		return nil, fmt.Errorf("invalid page:%d", listOpts.Page)
+	}
+	if listOpts.PageSize < 1 || listOpts.PageSize > 1000 {
+		return nil, fmt.Errorf("invalid page_size:%d", listOpts.PageSize)
+	}
+	if err := db.List(ctx, list, store.ListWithPageNum(int(listOpts.Page)),
+		store.ListWithPageSize(int(listOpts.PageSize))); err != nil {
 		return nil, s.err(err)
 	}
+
 	return &v1.ListServicesResponse{
 		Items:    servicesFromObjects(list.GetAll()),
-		Page:     page,
-		PageSize: pagesize,
+		Page:     listOpts.Page,
+		PageSize: listOpts.PageSize,
 	}, nil
 }
 
@@ -123,17 +136,4 @@ func servicesFromObjects(objects []model.Object) []*pbModel.Service {
 		res = append(res, service)
 	}
 	return res
-}
-
-func getPagingDefaults(pagesize int32, page int32) (int32, int32) {
-	if pagesize == 0 && page == 0 {
-		return 0, 0
-	}
-	if pagesize <= 0 {
-		pagesize = 100
-	}
-	if page <= 0 {
-		page = 1
-	}
-	return pagesize, page
 }

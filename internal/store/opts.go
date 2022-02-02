@@ -93,11 +93,15 @@ func ListFor(typ model.Type, id string) ListOptsFunc {
 	}
 }
 
-func ListWithPaging(pagesize int, page int) ListOptsFunc {
+func ListWithPageNum(page int) ListOptsFunc {
 	return func(opt *ListOpts) {
-		pagesize, page = getPagingDefaults(pagesize, page)
-		opt.PageSize = pagesize
 		opt.Page = page
+	}
+}
+
+func ListWithPageSize(pageSize int) ListOptsFunc {
+	return func(opt *ListOpts) {
+		opt.PageSize = pageSize
 	}
 }
 

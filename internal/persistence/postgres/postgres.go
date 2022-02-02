@@ -120,12 +120,12 @@ func (s *Postgres) Delete(ctx context.Context, key string) error {
 	})
 }
 
-func (s *Postgres) List(ctx context.Context, prefix string) ([][2][]byte,
+func (s *Postgres) List(ctx context.Context, prefix string, opts persistence.ListOpts) ([][2][]byte,
 	error) {
 	var res [][2][]byte
 	err := s.withinTx(ctx, func(tx persistence.Tx) error {
 		var err error
-		res, err = tx.List(ctx, prefix)
+		res, err = tx.List(ctx, prefix, opts)
 		return err
 	})
 	return res, err
@@ -210,10 +210,10 @@ func (t *sqliteTx) Delete(ctx context.Context, key string) error {
 	return nil
 }
 
-func (t *sqliteTx) List(ctx context.Context, prefix string) ([][2][]byte,
+func (t *sqliteTx) List(ctx context.Context, prefix string, opts persistence.ListOpts) ([][2][]byte,
 	error) {
 	var res [][2][]byte
-	rows, err := t.tx.QueryContext(ctx, listQuery(prefix))
+	rows, err := t.tx.QueryContext(ctx, listQueryPaging(prefix, opts.PageSize, persistence.ToOffset(opts)))
 	if err != nil {
 		return nil, err
 	}
