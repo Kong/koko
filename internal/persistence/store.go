@@ -72,8 +72,8 @@ func ToOffset(opts *ListOpts) int {
 }
 
 func ToLastPage(pageSize int, count int) int {
-	if count%2 == 0 {
-		return (count / pageSize) - 1
+	if pageSize >= count {
+		return 1
 	}
 	return count / pageSize
 }
