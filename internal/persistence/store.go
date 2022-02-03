@@ -27,18 +27,22 @@ type CRUD interface {
 	// If key is not found, an ErrNotFound error is returned.
 	Delete(ctx context.Context, key string) error
 	// List returns all keys with prefix.
-	List(ctx context.Context, prefix string, opts ListOpts) ([][2][]byte, error)
-	// ListWithPaging returns limit keys and values starting from offset matching prefix
-	ListWithPaging(ctx context.Context, prefix string, limit int, offset int) ([][2][]byte, error)
+	List(ctx context.Context, prefix string, opts *ListOpts) ([]*KVResult, error)
+}
+
+type KVResult struct {
+	Key        []byte
+	Value      []byte
+	TotalCount int
 }
 
 const (
-	DEFAULT_PAGE      = 1
-	DEFAULT_PAGE_SIZE = 100
+	DefaultPage     = 1
+	DefaultPageSize = 1000
 )
 
 func NewDefaultListOpts() *ListOpts {
-	return &ListOpts{Page: DEFAULT_PAGE, PageSize: DEFAULT_PAGE_SIZE}
+	return &ListOpts{Page: DefaultPage, PageSize: DefaultPageSize}
 }
 
 type ListOpts struct {
@@ -60,10 +64,16 @@ func (e ErrNotFound) Error() string {
 	return fmt.Sprintf("%v not found", e.Key)
 }
 
-func ToOffset(opts ListOpts) int {
+func ToOffset(opts *ListOpts) int {
 	if opts.Page == 1 || opts.Page == 0 {
 		return 0
-	} else {
-		return opts.PageSize * (opts.Page - 1)
 	}
+	return opts.PageSize * (opts.Page - 1)
+}
+
+func ToLastPage(pageSize int, count int) int {
+	if count%2 == 0 {
+		return (count / pageSize) - 1
+	}
+	return count / pageSize
 }

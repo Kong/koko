@@ -15,12 +15,13 @@ const (
 	deleteQuery = `delete from store where key=$1`
 )
 
-var listQuery = func(prefix string) string {
-	return fmt.Sprintf(`SELECT * from store where key glob '%s*'`, prefix)
-}
+// var listQuery = func(prefix string) string {
+//	return fmt.Sprintf(`SELECT * from store where key glob '%s*'`, prefix)
+//}
 
 var listQueryPaging = func(prefix string, limit int, offset int) string {
-	return fmt.Sprintf(`SELECT * FROM store where key glob '%s*' order by key limit %d offset %d;`,
+	return fmt.Sprintf(`SELECT key, value, count(*) OVER() as full_count FROM 
+                               store where key glob '%s*' order by key limit %d offset %d;`,
 		prefix, limit, offset)
 }
 
@@ -111,21 +112,11 @@ func (s *SQLite) Delete(ctx context.Context, key string) error {
 	})
 }
 
-func (s *SQLite) List(ctx context.Context, prefix string, opts persistence.ListOpts) ([][2][]byte, error) {
-	var res [][2][]byte
+func (s *SQLite) List(ctx context.Context, prefix string, opts *persistence.ListOpts) ([]*persistence.KVResult, error) {
+	var res []*persistence.KVResult
 	err := s.withinTx(ctx, func(tx persistence.Tx) error {
 		var err error
 		res, err = tx.List(ctx, prefix, opts)
-		return err
-	})
-	return res, err
-}
-
-func (s *SQLite) ListWithPaging(ctx context.Context, prefix string, limit int, offset int) ([][2][]byte, error) {
-	var res [][2][]byte
-	err := s.withinTx(ctx, func(tx persistence.Tx) error {
-		var err error
-		res, err = tx.ListWithPaging(ctx, prefix, limit, offset)
 		return err
 	})
 	return res, err
@@ -198,9 +189,9 @@ func (t *sqliteTx) Delete(ctx context.Context, key string) error {
 	return nil
 }
 
-func (t *sqliteTx) List(ctx context.Context, prefix string, opts persistence.ListOpts) ([][2][]byte,
+func (t *sqliteTx) List(ctx context.Context, prefix string, opts *persistence.ListOpts) ([]*persistence.KVResult,
 	error) {
-	var res [][2][]byte
+	res := make([]*persistence.KVResult, 0, opts.PageSize)
 	rows, err := t.tx.QueryContext(ctx, listQueryPaging(prefix, opts.PageSize, persistence.ToOffset(opts)))
 	if err != nil {
 		return nil, err
@@ -213,42 +204,12 @@ func (t *sqliteTx) List(ctx context.Context, prefix string, opts persistence.Lis
 		return nil, err
 	}
 	for rows.Next() {
-		var (
-			resKey []byte
-			value  []byte
-		)
-		err := rows.Scan(&resKey, &value)
+		var kvr persistence.KVResult
+		err := rows.Scan(&kvr.Key, &kvr.Value, &kvr.TotalCount)
 		if err != nil {
 			return nil, err
 		}
-		res = append(res, [2][]byte{resKey, value})
-	}
-	return res, nil
-}
-
-func (t *sqliteTx) ListWithPaging(ctx context.Context, prefix string, limit int, offset int) ([][2][]byte, error) {
-	var res [][2][]byte
-	rows, err := t.tx.QueryContext(ctx, listQueryPaging(prefix, limit, offset))
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	if rows.Err() != nil {
-		return nil, rows.Err()
-	}
-	if err != nil {
-		return nil, err
-	}
-	for rows.Next() {
-		var (
-			resKey []byte
-			value  []byte
-		)
-		err := rows.Scan(&resKey, &value)
-		if err != nil {
-			return nil, err
-		}
-		res = append(res, [2][]byte{resKey, value})
+		res = append(res, &kvr)
 	}
 	return res, nil
 }

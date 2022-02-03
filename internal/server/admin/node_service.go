@@ -4,10 +4,12 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strconv"
 
 	pbModel "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/service/v1"
 	"github.com/kong/koko/internal/model"
+	"github.com/kong/koko/internal/persistence"
 	"github.com/kong/koko/internal/resource"
 	"github.com/kong/koko/internal/server/util"
 	"github.com/kong/koko/internal/store"
@@ -96,12 +98,25 @@ func (s *NodeService) ListNodes(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
+	listOpts := req.ListOptions
+	if listOpts == nil {
+		listOpts = &pbModel.ListOpts{Page: persistence.DefaultPage, PageSize: persistence.DefaultPageSize}
+	}
+	// Validate what we got
+	if listOpts.Page < 1 {
+		return nil, fmt.Errorf("invalid page:%d", listOpts.Page)
+	}
+	if listOpts.PageSize < 1 || listOpts.PageSize > 1000 {
+		return nil, fmt.Errorf("invalid page_size:%d", listOpts.PageSize)
+	}
 	list := resource.NewList(resource.TypeNode)
-	if err := db.List(ctx, list); err != nil {
+	if err := db.List(ctx, list, store.ListWithPageNum(int(listOpts.Page)),
+		store.ListWithPageSize(int(listOpts.PageSize))); err != nil {
 		return nil, s.err(err)
 	}
 	return &v1.ListNodesResponse{
-		Items: nodesFromObjects(list.GetAll()),
+		Items:  nodesFromObjects(list.GetAll()),
+		Offset: strconv.Itoa(persistence.ToLastPage(int(listOpts.PageSize), list.GetCount())),
 	}, nil
 }
 

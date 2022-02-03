@@ -49,6 +49,8 @@ type ObjectList interface {
 	Type() Type
 	Add(Object)
 	GetAll() []Object
+	GetCount() int
+	SetCount(count int)
 }
 
 func MultiValueIndex(values ...string) string {

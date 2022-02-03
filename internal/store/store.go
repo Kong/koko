@@ -333,38 +333,16 @@ func (s *ObjectStore) List(ctx context.Context, list model.ObjectList, opts ...L
 		return s.referencedList(ctx, list, opt)
 	}
 
-	var kvs [][2][]byte
+	var kvs []*persistence.KVResult
 	var err error
 
-	kvs, err = s.store.List(ctx, s.listKey(typ), persistence.ListOpts{Page: opt.Page, PageSize: opt.PageSize})
-
-	//if opt != nil && (opt.PageSize != 0 || opt.Page != 0) {
-	//	pagesize, page := getPagingDefaults(opt.PageSize, opt.Page)
-	//
-	//	// Convert the Page into offsets
-	//	// Offset in database are zero indexed
-	//	// Page = 1, PageSize = 5; offset = 0
-	//	// Page = 2, PageSize = 5; offset must be 5
-	//	// Page = 3, PageSize = 5; offset must be 10 (PS -1) * P
-	//	// Page = 1, PageSize = 1; offset = 0
-	//	// Page = 2, PageSize = 1; offset = 1
-	//	var offset int
-	//	if page == 1 || page == 0 {
-	//		offset = 0
-	//	} else {
-	//		offset = pagesize * (page - 1)
-	//	}
-	//
-	//	kvs, err = s.store.ListWithPaging(ctx, s.listKey(typ), opt.PageSize, offset)
-	//} else {
-	//	kvs, err = s.store.List(ctx, s.listKey(typ))
-	//}
+	kvs, err = s.store.List(ctx, s.listKey(typ), &persistence.ListOpts{Page: opt.Page, PageSize: opt.PageSize})
 
 	if err != nil {
 		return err
 	}
 	for _, kv := range kvs {
-		value := kv[1]
+		value := kv.Value
 		object, err := model.NewObject(typ)
 		if err != nil {
 			return err
@@ -375,6 +353,7 @@ func (s *ObjectStore) List(ctx context.Context, list model.ObjectList, opts ...L
 			return err
 		}
 		list.Add(object)
+		list.SetCount(kv.TotalCount)
 	}
 	return nil
 }
@@ -383,14 +362,14 @@ func (s *ObjectStore) referencedList(ctx context.Context, list model.ObjectList,
 	typ := list.Type()
 	err := s.withTx(ctx, func(tx persistence.Tx) error {
 		keyPrefix := s.referencedListKey(typ, opt)
-		kvs, err := tx.List(ctx, keyPrefix, persistence.ListOpts{}) // FIXME: rajkong
+		kvs, err := tx.List(ctx, keyPrefix, persistence.NewDefaultListOpts()) // FIXME: rajkong
 		if err != nil {
 			return err
 		}
 		keyPrefixLen := len(keyPrefix)
 		for _, kv := range kvs {
-			key := string(kv[0])
-			value := kv[1]
+			key := string(kv.Key)
+			value := kv.Value
 			if err := verifyForeignValue(value); err != nil {
 				panic(err)
 			}

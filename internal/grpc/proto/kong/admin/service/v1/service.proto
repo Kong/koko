@@ -82,6 +82,5 @@ message ListServicesRequest{
 
 message ListServicesResponse{
   repeated model.v1.Service items = 1;
-  int32 page_size = 2;
-  int32 page = 3;
+  string offset = 2;
 }

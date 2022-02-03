@@ -3,12 +3,13 @@ package admin
 import (
 	"context"
 	"fmt"
-	"github.com/kong/koko/internal/persistence"
 	"net/http"
+	"strconv"
 
 	pbModel "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/service/v1"
 	"github.com/kong/koko/internal/model"
+	"github.com/kong/koko/internal/persistence"
 	"github.com/kong/koko/internal/resource"
 	"github.com/kong/koko/internal/server/util"
 	"github.com/kong/koko/internal/store"
@@ -100,7 +101,7 @@ func (s *ServiceService) ListServices(ctx context.Context,
 	list := resource.NewList(resource.TypeService)
 	listOpts := req.ListOptions
 	if listOpts == nil {
-		listOpts = &pbModel.ListOpts{Page: persistence.DEFAULT_PAGE, PageSize: persistence.DEFAULT_PAGE_SIZE}
+		listOpts = &pbModel.ListOpts{Page: persistence.DefaultPage, PageSize: persistence.DefaultPageSize}
 	}
 	// Validate what we got
 	if listOpts.Page < 1 {
@@ -115,9 +116,8 @@ func (s *ServiceService) ListServices(ctx context.Context,
 	}
 
 	return &v1.ListServicesResponse{
-		Items:    servicesFromObjects(list.GetAll()),
-		Page:     listOpts.Page,
-		PageSize: listOpts.PageSize,
+		Items:  servicesFromObjects(list.GetAll()),
+		Offset: strconv.Itoa(persistence.ToLastPage(int(listOpts.PageSize), list.GetCount())),
 	}, nil
 }
 

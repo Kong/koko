@@ -105,15 +105,15 @@ func TestPersister(t *testing.T) {
 				expectedKeys = append(expectedKeys, key)
 				expectedValues = append(expectedValues, string(value))
 			}
-			kvs, err := p.List(context.Background(), "prefix/")
+			kvs, err := p.List(context.Background(), "prefix/", persistence.NewDefaultListOpts())
 			require.Nil(t, err)
 			require.Len(t, kvs, 1000)
 
 			var valuesAsStrings []string
 			var keysAsStrings []string
 			for _, kv := range kvs {
-				key := string(kv[0])
-				value := string(kv[1])
+				key := string(kv.Key)
+				value := string(kv.Value)
 				keysAsStrings = append(keysAsStrings, key)
 				value = strings.ReplaceAll(value, " ", "")
 				valuesAsStrings = append(valuesAsStrings, value)
@@ -142,12 +142,12 @@ func TestPersister(t *testing.T) {
 					fmt.Sprintf("ix/prefix/key%d", i),
 					value))
 			}
-			values, err := p.List(context.Background(), "prefix/")
+			values, err := p.List(context.Background(), "prefix/", persistence.NewDefaultListOpts())
 			require.Nil(t, err)
 			require.Len(t, values, 1000)
 			var valuesAsStrings []string
 			for _, value := range values {
-				valuesAsStrings = append(valuesAsStrings, string(value[1]))
+				valuesAsStrings = append(valuesAsStrings, string(value.Value))
 			}
 			sort.Strings(valuesAsStrings)
 			sort.Strings(expected)

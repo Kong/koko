@@ -7,6 +7,7 @@ option go_package = "github.com/kong/koko/internal/gen/kong/admin/service/v1;v1"
 import "google/api/annotations.proto";
 import "kong/admin/model/v1/status.proto";
 import "kong/admin/model/v1/cluster.proto";
+import "kong/admin/model/v1/pagination.proto";
 
 service StatusService {
   rpc GetStatus(GetStatusRequest) returns (GetStatusResponse) {
@@ -47,8 +48,10 @@ message ListStatusesRequest{
   model.v1.RequestCluster cluster = 1;
   string ref_type = 2;
   string ref_id = 3;
+  model.v1.ListOpts list_options = 4;
 }
 
 message ListStatusesResponse{
   repeated model.v1.Status items = 1;
+  string offset = 2;
 }

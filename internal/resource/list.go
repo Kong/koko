@@ -5,6 +5,15 @@ import "github.com/kong/koko/internal/model"
 type List struct {
 	typ     model.Type
 	objects []model.Object
+	count   int
+}
+
+func (l *List) SetCount(count int) {
+	l.count = count
+}
+
+func (l *List) GetCount() int {
+	return l.count
 }
 
 func NewList(typ model.Type) model.ObjectList {

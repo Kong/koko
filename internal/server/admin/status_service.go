@@ -6,11 +6,13 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
+	"strconv"
 
 	"github.com/google/uuid"
 	pbModel "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/service/v1"
 	"github.com/kong/koko/internal/model"
+	"github.com/kong/koko/internal/persistence"
 	"github.com/kong/koko/internal/resource"
 	"github.com/kong/koko/internal/server/util"
 	"github.com/kong/koko/internal/store"
@@ -71,12 +73,27 @@ func (s *StatusService) ListStatuses(ctx context.Context,
 		return s.listStatusForEntity(ctx, db, req.RefType, req.RefId)
 	}
 
+	listOpts := req.ListOptions
+	if listOpts == nil {
+		listOpts = &pbModel.ListOpts{Page: persistence.DefaultPage, PageSize: persistence.DefaultPageSize}
+	}
+	// Validate what we got
+	if listOpts.Page < 1 {
+		return nil, fmt.Errorf("invalid page:%d", listOpts.Page)
+	}
+	if listOpts.PageSize < 1 || listOpts.PageSize > 1000 {
+		return nil, fmt.Errorf("invalid page_size:%d", listOpts.PageSize)
+	}
+
 	list := resource.NewList(resource.TypeStatus)
-	if err := db.List(ctx, list); err != nil {
+	if err := db.List(ctx, list, store.ListWithPageNum(int(listOpts.Page)),
+		store.ListWithPageSize(int(listOpts.PageSize))); err != nil {
 		return nil, s.err(err)
 	}
+
 	return &v1.ListStatusesResponse{
-		Items: statusesFromObjects(list.GetAll()),
+		Items:  statusesFromObjects(list.GetAll()),
+		Offset: strconv.Itoa(persistence.ToLastPage(int(listOpts.PageSize), list.GetCount())),
 	}, nil
 }
 
