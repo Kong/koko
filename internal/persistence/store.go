@@ -75,5 +75,8 @@ func ToLastPage(pageSize int, count int) int {
 	if pageSize >= count {
 		return 1
 	}
-	return count / pageSize
+	if count%pageSize == 0 {
+		return count / pageSize
+	}
+	return (count / pageSize) + 1
 }
