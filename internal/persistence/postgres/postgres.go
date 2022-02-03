@@ -18,13 +18,9 @@ const (
 	DefaultPort    = 5432
 )
 
-// var listQuery = func(prefix string) string {
-//	return fmt.Sprintf(`SELECT * FROM store WHERE key LIKE '%s%%';`, prefix)
-//}
-
 var listQueryPaging = func(prefix string, limit int, offset int) string {
-	return fmt.Sprintf("SELECT key, value, count(*) OVER() as full_count FROM store WHERE key "+
-		"LIKE '%s%%' order by key limit %d offset %d;", prefix, limit, offset)
+	return fmt.Sprintf("SELECT key, value, COUNT(*) OVER() AS full_count FROM store WHERE key "+
+		"LIKE '%s%%' ORDER BY key LIMIT %d OFFSET %d;", prefix, limit, offset)
 }
 
 type Postgres struct {

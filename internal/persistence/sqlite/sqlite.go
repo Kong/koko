@@ -15,13 +15,9 @@ const (
 	deleteQuery = `delete from store where key=$1`
 )
 
-// var listQuery = func(prefix string) string {
-//	return fmt.Sprintf(`SELECT * from store where key glob '%s*'`, prefix)
-//}
-
 var listQueryPaging = func(prefix string, limit int, offset int) string {
-	return fmt.Sprintf(`SELECT key, value, count(*) OVER() as full_count FROM 
-                               store where key glob '%s*' order by key limit %d offset %d;`,
+	return fmt.Sprintf(`SELECT key, value, COUNT(*) OVER() AS full_count FROM 
+                               store WHERE key GLOB '%s*' ORDER BY key LIMIT %d OFFSET %d;`,
 		prefix, limit, offset)
 }
 

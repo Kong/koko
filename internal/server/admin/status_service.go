@@ -78,11 +78,8 @@ func (s *StatusService) ListStatuses(ctx context.Context,
 		listOpts = &pbModel.ListOpts{Page: persistence.DefaultPage, PageSize: persistence.DefaultPageSize}
 	}
 	// Validate what we got
-	if listOpts.Page < 1 {
-		return nil, fmt.Errorf("invalid page:%d", listOpts.Page)
-	}
-	if listOpts.PageSize < 1 || listOpts.PageSize > 1000 {
-		return nil, fmt.Errorf("invalid page_size:%d", listOpts.PageSize)
+	if err = validateListOptions(listOpts); err != nil {
+		return nil, err
 	}
 
 	list := resource.NewList(resource.TypeStatus)
