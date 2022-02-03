@@ -180,6 +180,7 @@ func (v *LuaValidator) LoadSchemasFromEmbed(fs embed.FS, dirName string) error {
 	t1 := time.Now()
 	for _, entry := range dirEntries {
 		name := entry.Name()
+		v.logger.With(zap.String("name", name)).Debug("reading/loading plugin schema")
 		schema, err := fs.ReadFile(dirName + "/" + name)
 		if err != nil {
 			return err
