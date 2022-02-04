@@ -1,4 +1,7 @@
 {
+  "required": [
+    "id"
+  ],
   "properties": {
     "created_at": {
       "minimum": 1,

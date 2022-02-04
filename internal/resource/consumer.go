@@ -87,6 +87,7 @@ func init() {
 			"tags":       typedefs.Tags,
 		},
 		AdditionalProperties: &falsy,
+		Required:             []string{"id"},
 		AnyOf: []*generator.Schema{
 			{
 				Required: []string{"custom_id", "username"},
