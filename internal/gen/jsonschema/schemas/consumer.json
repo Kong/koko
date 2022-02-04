@@ -1,0 +1,48 @@
+{
+  "properties": {
+    "created_at": {
+      "minimum": 1,
+      "type": "integer"
+    },
+    "custom_id": {
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+      "type": "string",
+      "description": "must be a valid UUID"
+    },
+    "id": {
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+      "type": "string",
+      "description": "must be a valid UUID"
+    },
+    "tags": {
+      "items": {
+        "maxLength": 128,
+        "minLength": 1,
+        "pattern": "^[0-9a-zA-Z.\\-_~]*$",
+        "type": "string"
+      },
+      "maxItems": 8,
+      "type": "array"
+    },
+    "updated_at": {
+      "minimum": 1,
+      "type": "integer"
+    },
+    "username": {
+      "maxLength": 128,
+      "minLength": 1,
+      "pattern": "^[0-9a-zA-Z.\\-_~]*$",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "type": "object",
+  "anyOf": [
+    {
+      "required": [
+        "custom_id",
+        "username"
+      ]
+    }
+  ]
+}
