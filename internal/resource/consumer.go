@@ -52,20 +52,27 @@ func (c Consumer) Resource() model.Resource {
 }
 
 func (c Consumer) Indexes() []model.Index {
-	return []model.Index{
-		{
+	maxIdxSize := 2
+	idx := make([]model.Index, 0, maxIdxSize)
+	if c.Consumer.Username != "" {
+		userIdx := model.Index{
 			Name:      "username",
 			Type:      model.IndexUnique,
 			Value:     c.Consumer.Username,
 			FieldName: "username",
-		},
-		{
+		}
+		idx = append(idx, userIdx)
+	}
+	if c.Consumer.CustomId != "" {
+		custIdx := model.Index{
 			Name:      "custom_id",
 			Type:      model.IndexUnique,
 			Value:     c.Consumer.CustomId,
 			FieldName: "custom_id",
-		},
+		}
+		idx = append(idx, custIdx)
 	}
+	return idx
 }
 
 func init() {
@@ -90,10 +97,12 @@ func init() {
 		Required:             []string{"id"},
 		AnyOf: []*generator.Schema{
 			{
-				Required: []string{"custom_id"},
+				Description: "at-least one of custom_id or username must be set",
+				Required:    []string{"custom_id"},
 			},
 			{
-				Required: []string{"username"},
+				Description: "at-least one of custom_id or username must be set",
+				Required:    []string{"username"},
 			},
 		},
 	}
