@@ -35,11 +35,6 @@ func TestService_ProcessDefaults(t *testing.T) {
 		err := r.ProcessDefaults()
 		require.Nil(t, err)
 		require.True(t, validUUID(r.ID()))
-		// empty out the id for equality comparison
-		r.Service.Id = ""
-		r.Service.CreatedAt = 0
-		r.Service.UpdatedAt = 0
-		require.Equal(t, r.Resource(), defaultService)
 	})
 	t.Run("defaults do not override explicit values", func(t *testing.T) {
 		r := NewService()

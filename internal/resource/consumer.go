@@ -83,14 +83,17 @@ func init() {
 			"username":   typedefs.Name,
 			"created_at": typedefs.UnixEpoch,
 			"updated_at": typedefs.UnixEpoch,
-			"custom_id":  typedefs.ID,
+			"custom_id":  typedefs.Name, // Not a UUID
 			"tags":       typedefs.Tags,
 		},
 		AdditionalProperties: &falsy,
 		Required:             []string{"id"},
 		AnyOf: []*generator.Schema{
 			{
-				Required: []string{"custom_id", "username"},
+				Required: []string{"custom_id"},
+			},
+			{
+				Required: []string{"username"},
 			},
 		},
 	}
