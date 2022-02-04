@@ -48,23 +48,6 @@ func TestConsumer_Validate(t *testing.T) {
 				Type: model.ErrorType_ERROR_TYPE_ENTITY,
 				Messages: []string{
 					"missing properties: 'id'",
-					"missing properties: 'custom_id', 'username'",
-				},
-			},
-		}
-		require.ElementsMatch(t, verr.Errs, e)
-	})
-	t.Run("empty consumer must fail", func(t *testing.T) {
-		c := NewConsumer()
-		err := c.Validate()
-		require.Error(t, err)
-		verr, ok := err.(validation.Error)
-		require.True(t, ok)
-		e := []*model.ErrorDetail{
-			{
-				Type: model.ErrorType_ERROR_TYPE_ENTITY,
-				Messages: []string{
-					"missing properties: 'id'",
 					"missing properties: 'custom_id'",
 					"missing properties: 'username'",
 				},
