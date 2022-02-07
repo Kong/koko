@@ -18,10 +18,8 @@ const (
 	DefaultPort    = 5432
 )
 
-var listQueryPaging = func(prefix string, limit int, offset int) string {
-	return fmt.Sprintf("SELECT key, value, COUNT(*) OVER() AS full_count FROM store WHERE key "+
-		"LIKE '%s%%' ORDER BY key LIMIT %d OFFSET %d;", prefix, limit, offset)
-}
+var listQueryPaging = `SELECT key, value, COUNT(*) OVER() AS full_count FROM store WHERE key
+                       LIKE $1 || '%%' ORDER BY key LIMIT $2 OFFSET $3;`
 
 type Postgres struct {
 	db *sql.DB
@@ -197,7 +195,7 @@ func (t *sqliteTx) Delete(ctx context.Context, key string) error {
 func (t *sqliteTx) List(ctx context.Context, prefix string, opts *persistence.ListOpts) ([]*persistence.KVResult,
 	error) {
 	res := make([]*persistence.KVResult, 0, opts.PageSize)
-	rows, err := t.tx.QueryContext(ctx, listQueryPaging(prefix, opts.PageSize, persistence.ToOffset(opts)))
+	rows, err := t.tx.QueryContext(ctx, listQueryPaging, prefix, opts.PageSize, persistence.ToOffset(opts))
 	if err != nil {
 		return nil, err
 	}
