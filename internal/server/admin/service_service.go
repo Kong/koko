@@ -105,7 +105,7 @@ func (s *ServiceService) ListServices(ctx context.Context,
 	}
 	// Validate what we got
 	if err = validateListOptions(listOpts); err != nil {
-		return nil, err
+		return nil, s.err(util.ErrClient{Message: err.Error()})
 	}
 
 	if err := db.List(ctx, list, store.ListWithPageNum(int(listOpts.Page)),

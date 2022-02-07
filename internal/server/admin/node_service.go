@@ -104,7 +104,7 @@ func (s *NodeService) ListNodes(ctx context.Context,
 	}
 	// Validate what we got
 	if err = validateListOptions(listOpts); err != nil {
-		return nil, err
+		return nil, s.err(util.ErrClient{Message: err.Error()})
 	}
 
 	list := resource.NewList(resource.TypeNode)

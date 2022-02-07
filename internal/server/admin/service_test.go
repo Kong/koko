@@ -413,8 +413,8 @@ func TestServiceListPaginaton(t *testing.T) {
 			WithQuery("cluster.id", "default").
 			WithQuery("list_options.page_size", "0").
 			WithQuery("list_options.page", "1").
-			Expect().Status(http.StatusInternalServerError).JSON().Object()
-		body.Value("code").Number().Equal(2)
+			Expect().Status(http.StatusBadRequest).JSON().Object()
+		body.Value("code").Number().Equal(3)
 		body.Value("message").String().Equal("invalid page_size '0', must be within range [1 - 1000]")
 	})
 	t.Run("list page_size 10 and page 0 returns error", func(t *testing.T) {
@@ -423,8 +423,8 @@ func TestServiceListPaginaton(t *testing.T) {
 			WithQuery("cluster.id", "default").
 			WithQuery("list_options.page_size", "10").
 			WithQuery("list_options.page", "0").
-			Expect().Status(http.StatusInternalServerError).JSON().Object()
-		body.Value("code").Number().Equal(2)
+			Expect().Status(http.StatusBadRequest).JSON().Object()
+		body.Value("code").Number().Equal(3)
 		body.Value("message").String().Equal("invalid page '0', page must be >= 1")
 	})
 }
