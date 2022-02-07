@@ -38,7 +38,8 @@ type KVResult struct {
 
 const (
 	DefaultPage     = 1
-	DefaultPageSize = 1000
+	DefaultPageSize = 100
+	MaxPageSize     = 1000
 )
 
 func NewDefaultListOpts() *ListOpts {

@@ -98,7 +98,7 @@ func TestPersister(t *testing.T) {
 	t.Run("List()", func(t *testing.T) {
 		t.Run("lists all keys with prefix", func(t *testing.T) {
 			var expectedValues, expectedKeys []string
-			for i := 0; i < 1000; i++ {
+			for i := 0; i < 100; i++ {
 				value := json(fmt.Sprintf("prefix-value-%d", i))
 				key := fmt.Sprintf("prefix/key%d", i)
 				require.Nil(t, p.Put(context.Background(), key, value))
@@ -107,7 +107,7 @@ func TestPersister(t *testing.T) {
 			}
 			kvs, err := p.List(context.Background(), "prefix/", persistence.NewDefaultListOpts())
 			require.Nil(t, err)
-			require.Len(t, kvs, 1000)
+			require.Len(t, kvs, 100)
 
 			var valuesAsStrings []string
 			var keysAsStrings []string
@@ -128,7 +128,7 @@ func TestPersister(t *testing.T) {
 		})
 		t.Run("other prefixes are left as is", func(t *testing.T) {
 			var expected []string
-			for i := 0; i < 1000; i++ {
+			for i := 0; i < 100; i++ {
 				value := json(fmt.Sprintf("prefix-value-%d", i))
 				require.Nil(t, p.Put(
 					context.Background(),
@@ -144,7 +144,7 @@ func TestPersister(t *testing.T) {
 			}
 			values, err := p.List(context.Background(), "prefix/", persistence.NewDefaultListOpts())
 			require.Nil(t, err)
-			require.Len(t, values, 1000)
+			require.Len(t, values, 100)
 			var valuesAsStrings []string
 			for _, value := range values {
 				valuesAsStrings = append(valuesAsStrings, string(value.Value))
