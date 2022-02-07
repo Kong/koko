@@ -6,6 +6,7 @@ import (
 	"github.com/kong/koko/internal/persistence"
 )
 
+// returns the full list despite pagination.
 func getFullList(ctx context.Context, tx persistence.Tx, keyPrefix string) ([]*persistence.KVResult, error) {
 	kvs, err := tx.List(ctx, keyPrefix, persistence.NewDefaultListOpts())
 	if err != nil {
