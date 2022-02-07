@@ -1,7 +1,9 @@
 package admin
 
 import (
+	"encoding/base64"
 	"fmt"
+	"strconv"
 
 	pbModel "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
 )
@@ -14,4 +16,12 @@ func validateListOptions(listOpts *pbModel.ListOpts) error {
 		return fmt.Errorf("invalid page_size '%d', must be within range [1 - 1000]", listOpts.PageSize)
 	}
 	return nil
+}
+
+func getOffset(totalCount int) string {
+	if totalCount == 0 {
+		return ""
+	}
+	// Converting to string first offset may not be int
+	return base64.StdEncoding.EncodeToString([]byte(strconv.Itoa(totalCount)))
 }

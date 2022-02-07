@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"strconv"
 
 	pbModel "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/service/v1"
@@ -114,7 +113,7 @@ func (s *NodeService) ListNodes(ctx context.Context,
 	}
 	return &v1.ListNodesResponse{
 		Items:  nodesFromObjects(list.GetAll()),
-		Offset: strconv.Itoa(persistence.ToLastPage(int(listOpts.PageSize), list.GetCount())),
+		Offset: getOffset(list.GetCount()),
 	}, nil
 }
 

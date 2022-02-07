@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
-	"strconv"
 
 	"github.com/google/uuid"
 	pbModel "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
@@ -90,7 +89,7 @@ func (s *StatusService) ListStatuses(ctx context.Context,
 
 	return &v1.ListStatusesResponse{
 		Items:  statusesFromObjects(list.GetAll()),
-		Offset: strconv.Itoa(persistence.ToLastPage(int(listOpts.PageSize), list.GetCount())),
+		Offset: getOffset(list.GetCount()),
 	}, nil
 }
 
