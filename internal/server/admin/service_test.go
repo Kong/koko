@@ -255,24 +255,22 @@ func TestServiceListPaginaton(t *testing.T) {
 	}
 	var tailID string
 	var headID string
-	t.Run("default list returns ten services with offset=1", func(t *testing.T) {
-		body := c.GET("/v1/services").Expect().Status(http.StatusOK).JSON().Object()
-		items := body.Value("items").Array()
-		items.Length().Equal(10)
-		// Get the head's id so that we can make sure that it is consistent
-		headID = items.Element(0).Object().Value("id").String().Raw()
-		require.NotEmpty(t, headID)
-		// Get the tail's id so that we can make sure that it is consistent
-		tailID = items.Element(9).Object().Value("id").String().Raw()
-		require.NotEmpty(t, tailID)
-		body.Value("offset").String().Equal("MTA=")
-	})
+	body := c.GET("/v1/services").Expect().Status(http.StatusOK).JSON().Object()
+	items := body.Value("items").Array()
+	items.Length().Equal(10)
+	// Get the head's id so that we can make sure that it is consistent
+	headID = items.Element(0).Object().Value("id").String().Raw()
+	require.NotEmpty(t, headID)
+	// Get the tail's id so that we can make sure that it is consistent
+	tailID = items.Element(9).Object().Value("id").String().Raw()
+	require.NotEmpty(t, tailID)
+	body.Value("offset").String().Equal("MTA=")
 	t.Run("list page_size 1 and page 10 returns 1 services with offset=10", func(t *testing.T) {
 		// Get First Page
 		body := c.GET("/v1/services").
 			WithQuery("cluster.id", "default").
-			WithQuery("list_options.page_size", "1").
-			WithQuery("list_options.page", "1").
+			WithQuery("pagination.size", "1").
+			WithQuery("pagination.page", "1").
 			Expect().Status(http.StatusOK).JSON().Object()
 		items := body.Value("items").Array()
 		items.Length().Equal(1)
@@ -283,8 +281,8 @@ func TestServiceListPaginaton(t *testing.T) {
 		// Go to last page and get the last element
 		body = c.GET("/v1/services").
 			WithQuery("cluster.id", "default").
-			WithQuery("list_options.page_size", "1").
-			WithQuery("list_options.page", "10").
+			WithQuery("pagination.size", "1").
+			WithQuery("pagination.page", "10").
 			Expect().Status(http.StatusOK).JSON().Object()
 		items = body.Value("items").Array()
 		items.Length().Equal(1)
@@ -297,8 +295,8 @@ func TestServiceListPaginaton(t *testing.T) {
 		// Get First Page
 		body := c.GET("/v1/services").
 			WithQuery("cluster.id", "default").
-			WithQuery("list_options.page_size", "2").
-			WithQuery("list_options.page", "1").
+			WithQuery("pagination.size", "2").
+			WithQuery("pagination.page", "1").
 			Expect().Status(http.StatusOK).JSON().Object()
 		items := body.Value("items").Array()
 		items.Length().Equal(2)
@@ -309,8 +307,8 @@ func TestServiceListPaginaton(t *testing.T) {
 		// Go to last page and get the last element
 		body = c.GET("/v1/services").
 			WithQuery("cluster.id", "default").
-			WithQuery("list_options.page_size", "2").
-			WithQuery("list_options.page", "5").
+			WithQuery("pagination.size", "2").
+			WithQuery("pagination.page", "5").
 			Expect().Status(http.StatusOK).JSON().Object()
 		items = body.Value("items").Array()
 		items.Length().Equal(2)
@@ -323,8 +321,8 @@ func TestServiceListPaginaton(t *testing.T) {
 		// Get First Page
 		body := c.GET("/v1/services").
 			WithQuery("cluster.id", "default").
-			WithQuery("list_options.page_size", "3").
-			WithQuery("list_options.page", "1").
+			WithQuery("pagination.size", "3").
+			WithQuery("pagination.page", "1").
 			Expect().Status(http.StatusOK).JSON().Object()
 		items := body.Value("items").Array()
 		items.Length().Equal(3)
@@ -335,8 +333,8 @@ func TestServiceListPaginaton(t *testing.T) {
 		// Go to last page and get the last element
 		body = c.GET("/v1/services").
 			WithQuery("cluster.id", "default").
-			WithQuery("list_options.page_size", "3").
-			WithQuery("list_options.page", "4").
+			WithQuery("pagination.size", "3").
+			WithQuery("pagination.page", "4").
 			Expect().Status(http.StatusOK).JSON().Object()
 		items = body.Value("items").Array()
 		items.Length().Equal(1)
@@ -349,8 +347,8 @@ func TestServiceListPaginaton(t *testing.T) {
 		// Get First Page
 		body := c.GET("/v1/services").
 			WithQuery("cluster.id", "default").
-			WithQuery("list_options.page_size", "4").
-			WithQuery("list_options.page", "1").
+			WithQuery("pagination.size", "4").
+			WithQuery("pagination.page", "1").
 			Expect().Status(http.StatusOK).JSON().Object()
 		items := body.Value("items").Array()
 		items.Length().Equal(4)
@@ -361,8 +359,8 @@ func TestServiceListPaginaton(t *testing.T) {
 		// Go to last page and get the last element
 		body = c.GET("/v1/services").
 			WithQuery("cluster.id", "default").
-			WithQuery("list_options.page_size", "4").
-			WithQuery("list_options.page", "3").
+			WithQuery("pagination.size", "4").
+			WithQuery("pagination.page", "3").
 			Expect().Status(http.StatusOK).JSON().Object()
 		items = body.Value("items").Array()
 		items.Length().Equal(2)
@@ -375,8 +373,8 @@ func TestServiceListPaginaton(t *testing.T) {
 		// Get First Page
 		body := c.GET("/v1/services").
 			WithQuery("cluster.id", "default").
-			WithQuery("list_options.page_size", "10").
-			WithQuery("list_options.page", "1").
+			WithQuery("pagination.size", "10").
+			WithQuery("pagination.page", "1").
 			Expect().Status(http.StatusOK).JSON().Object()
 		items := body.Value("items").Array()
 		items.Length().Equal(10)
@@ -393,8 +391,8 @@ func TestServiceListPaginaton(t *testing.T) {
 		// Get First Page
 		body := c.GET("/v1/services").
 			WithQuery("cluster.id", "default").
-			WithQuery("list_options.page_size", "11").
-			WithQuery("list_options.page", "1").
+			WithQuery("pagination.size", "11").
+			WithQuery("pagination.page", "1").
 			Expect().Status(http.StatusOK).JSON().Object()
 		items := body.Value("items").Array()
 		items.Length().Equal(10)
@@ -411,8 +409,8 @@ func TestServiceListPaginaton(t *testing.T) {
 		// Get First Page
 		body := c.GET("/v1/services").
 			WithQuery("cluster.id", "default").
-			WithQuery("list_options.page_size", "0").
-			WithQuery("list_options.page", "1").
+			WithQuery("pagination.size", "0").
+			WithQuery("pagination.page", "1").
 			Expect().Status(http.StatusBadRequest).JSON().Object()
 		body.Value("code").Number().Equal(3)
 		body.Value("message").String().Equal("invalid page_size '0', must be within range [1 - 1000]")
@@ -421,8 +419,8 @@ func TestServiceListPaginaton(t *testing.T) {
 		// Get First Page
 		body := c.GET("/v1/services").
 			WithQuery("cluster.id", "default").
-			WithQuery("list_options.page_size", "10").
-			WithQuery("list_options.page", "0").
+			WithQuery("pagination.size", "10").
+			WithQuery("pagination.page", "0").
 			Expect().Status(http.StatusBadRequest).JSON().Object()
 		body.Value("code").Number().Equal(3)
 		body.Value("message").String().Equal("invalid page '0', page must be >= 1")

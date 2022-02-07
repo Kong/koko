@@ -97,7 +97,7 @@ func (s *NodeService) ListNodes(ctx context.Context,
 		return nil, err
 	}
 	list := resource.NewList(resource.TypeNode)
-	listOptFns, err := listOptsFromReq(req.ListOptions)
+	listOptFns, err := listOptsFromReq(req.Pagination)
 	if err != nil {
 		return nil, s.err(util.ErrClient{Message: err.Error()})
 	}

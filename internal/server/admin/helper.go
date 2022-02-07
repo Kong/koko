@@ -10,17 +10,17 @@ import (
 	"github.com/kong/koko/internal/store"
 )
 
-func validateListOptions(listOpts *pbModel.ListOpts) error {
+func validateListOptions(listOpts *pbModel.Pagination) error {
 	if listOpts.Page < 1 {
 		return fmt.Errorf("invalid page '%d', page must be >= 1", listOpts.Page)
 	}
-	if listOpts.PageSize < 1 || listOpts.PageSize > persistence.MaxPageSize {
-		return fmt.Errorf("invalid page_size '%d', must be within range [1 - 1000]", listOpts.PageSize)
+	if listOpts.Size < 1 || listOpts.Size > persistence.MaxPageSize {
+		return fmt.Errorf("invalid page_size '%d', must be within range [1 - 1000]", listOpts.Size)
 	}
 	return nil
 }
 
-func listOptsFromReq(listOpts *pbModel.ListOpts) ([]store.ListOptsFunc, error) {
+func listOptsFromReq(listOpts *pbModel.Pagination) ([]store.ListOptsFunc, error) {
 	if listOpts == nil {
 		return []store.ListOptsFunc{}, nil
 	}
@@ -31,7 +31,7 @@ func listOptsFromReq(listOpts *pbModel.ListOpts) ([]store.ListOptsFunc, error) {
 
 	listOptFns := []store.ListOptsFunc{
 		store.ListWithPageNum(int(listOpts.Page)),
-		store.ListWithPageSize(int(listOpts.PageSize)),
+		store.ListWithPageSize(int(listOpts.Size)),
 	}
 	return listOptFns, nil
 }

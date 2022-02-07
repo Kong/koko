@@ -48,7 +48,7 @@ message ListStatusesRequest{
   model.v1.RequestCluster cluster = 1;
   string ref_type = 2;
   string ref_id = 3;
-  model.v1.ListOpts list_options = 4;
+  model.v1.Pagination pagination = 4;
 }
 
 message ListStatusesResponse{

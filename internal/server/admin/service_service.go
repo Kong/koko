@@ -97,7 +97,7 @@ func (s *ServiceService) ListServices(ctx context.Context,
 		return nil, err
 	}
 	list := resource.NewList(resource.TypeService)
-	listOptFns, err := listOptsFromReq(req.ListOptions)
+	listOptFns, err := listOptsFromReq(req.Pagination)
 	if err != nil {
 		return nil, s.err(util.ErrClient{Message: err.Error()})
 	}

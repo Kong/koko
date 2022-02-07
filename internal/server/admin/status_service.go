@@ -72,7 +72,7 @@ func (s *StatusService) ListStatuses(ctx context.Context,
 	}
 
 	list := resource.NewList(resource.TypeStatus)
-	listOptFns, err := listOptsFromReq(req.ListOptions)
+	listOptFns, err := listOptsFromReq(req.Pagination)
 	if err != nil {
 		return nil, s.err(util.ErrClient{Message: err.Error()})
 	}
