@@ -27,6 +27,9 @@
       "name": "StatusService"
     },
     {
+      "name": "UpstreamService"
+    },
+    {
       "name": "EventService"
     },
     {
@@ -873,6 +876,186 @@
           "kong.admin.service.v1.StatusService"
         ]
       }
+    },
+    "/v1/upstreams": {
+      "get": {
+        "operationId": "UpstreamService_ListUpstreams",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/kong.admin.service.v1.ListUpstreamsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "cluster.id",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "kong.admin.service.v1.UpstreamService"
+        ]
+      },
+      "post": {
+        "operationId": "UpstreamService_CreateUpstream",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/kong.admin.service.v1.CreateUpstreamResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/kong.admin.model.v1.Upstream"
+            }
+          },
+          {
+            "name": "cluster.id",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "kong.admin.service.v1.UpstreamService"
+        ]
+      }
+    },
+    "/v1/upstreams/{id}": {
+      "get": {
+        "operationId": "UpstreamService_GetUpstream",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/kong.admin.service.v1.GetUpstreamResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "cluster.id",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "kong.admin.service.v1.UpstreamService"
+        ]
+      },
+      "delete": {
+        "operationId": "UpstreamService_DeleteUpstream",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/kong.admin.service.v1.DeleteUpstreamResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "cluster.id",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "kong.admin.service.v1.UpstreamService"
+        ]
+      }
+    },
+    "/v1/upstreams/{item.id}": {
+      "put": {
+        "operationId": "UpstreamService_UpsertUpstream",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/kong.admin.service.v1.UpsertUpstreamResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "item.id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/kong.admin.model.v1.Upstream"
+            }
+          },
+          {
+            "name": "cluster.id",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "kong.admin.service.v1.UpstreamService"
+        ]
+      }
     }
   },
   "definitions": {
@@ -908,6 +1091,85 @@
           "items": {
             "$ref": "#/definitions/google.protobuf.Any"
           }
+        }
+      }
+    },
+    "kong.admin.model.v1.ActiveHealthcheck": {
+      "type": "object",
+      "properties": {
+        "concurrency": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "healthy": {
+          "$ref": "#/definitions/kong.admin.model.v1.ActiveHealthyCondition"
+        },
+        "httpPath": {
+          "type": "string"
+        },
+        "httpSni": {
+          "type": "string"
+        },
+        "httpsVerifyCertificate": {
+          "type": "boolean"
+        },
+        "type": {
+          "type": "string"
+        },
+        "timeout": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "unhealthy": {
+          "$ref": "#/definitions/kong.admin.model.v1.ActiveUnhealthyCondition"
+        }
+      }
+    },
+    "kong.admin.model.v1.ActiveHealthyCondition": {
+      "type": "object",
+      "properties": {
+        "httpStatuses": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "interval": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "successes": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "kong.admin.model.v1.ActiveUnhealthyCondition": {
+      "type": "object",
+      "properties": {
+        "httpFailures": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "tcpFailures": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "httpStatuses": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "timeouts": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "interval": {
+          "type": "integer",
+          "format": "int32"
         }
       }
     },
@@ -959,6 +1221,21 @@
         }
       }
     },
+    "kong.admin.model.v1.Healthchecks": {
+      "type": "object",
+      "properties": {
+        "active": {
+          "$ref": "#/definitions/kong.admin.model.v1.ActiveHealthcheck"
+        },
+        "passive": {
+          "$ref": "#/definitions/kong.admin.model.v1.PassiveHealthcheck"
+        },
+        "threshold": {
+          "type": "number",
+          "format": "float"
+        }
+      }
+    },
     "kong.admin.model.v1.Node": {
       "type": "object",
       "properties": {
@@ -988,6 +1265,60 @@
         },
         "configHash": {
           "type": "string"
+        }
+      }
+    },
+    "kong.admin.model.v1.PassiveHealthcheck": {
+      "type": "object",
+      "properties": {
+        "healthy": {
+          "$ref": "#/definitions/kong.admin.model.v1.PassiveHealthyCondition"
+        },
+        "type": {
+          "type": "string"
+        },
+        "unhealthy": {
+          "$ref": "#/definitions/kong.admin.model.v1.PassiveUnhealthyCondition"
+        }
+      }
+    },
+    "kong.admin.model.v1.PassiveHealthyCondition": {
+      "type": "object",
+      "properties": {
+        "httpStatuses": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "successes": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "kong.admin.model.v1.PassiveUnhealthyCondition": {
+      "type": "object",
+      "properties": {
+        "httpFailures": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "tcpFailures": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "httpStatuses": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "timeouts": {
+          "type": "integer",
+          "format": "int32"
         }
       }
     },
@@ -1237,6 +1568,62 @@
         }
       }
     },
+    "kong.admin.model.v1.Upstream": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "algorithm": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "updatedAt": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "hashOn": {
+          "type": "string"
+        },
+        "hashFallback": {
+          "type": "string"
+        },
+        "hashOnHeader": {
+          "type": "string"
+        },
+        "hashFallbackHeader": {
+          "type": "string"
+        },
+        "hashOnCookie": {
+          "type": "string"
+        },
+        "hashOnCookiePath": {
+          "type": "string"
+        },
+        "slots": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "healthchecks": {
+          "$ref": "#/definitions/kong.admin.model.v1.Healthchecks"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "hostHeader": {
+          "type": "string"
+        }
+      }
+    },
     "kong.admin.service.v1.CreateNodeResponse": {
       "type": "object",
       "properties": {
@@ -1269,6 +1656,14 @@
         }
       }
     },
+    "kong.admin.service.v1.CreateUpstreamResponse": {
+      "type": "object",
+      "properties": {
+        "item": {
+          "$ref": "#/definitions/kong.admin.model.v1.Upstream"
+        }
+      }
+    },
     "kong.admin.service.v1.DeleteNodeResponse": {
       "type": "object"
     },
@@ -1282,6 +1677,9 @@
       "type": "object"
     },
     "kong.admin.service.v1.DeleteStatusResponse": {
+      "type": "object"
+    },
+    "kong.admin.service.v1.DeleteUpstreamResponse": {
       "type": "object"
     },
     "kong.admin.service.v1.GetLuaSchemasPluginResponse": {
@@ -1337,6 +1735,14 @@
       "properties": {
         "item": {
           "$ref": "#/definitions/kong.admin.model.v1.Status"
+        }
+      }
+    },
+    "kong.admin.service.v1.GetUpstreamResponse": {
+      "type": "object",
+      "properties": {
+        "item": {
+          "$ref": "#/definitions/kong.admin.model.v1.Upstream"
         }
       }
     },
@@ -1403,6 +1809,17 @@
         }
       }
     },
+    "kong.admin.service.v1.ListUpstreamsResponse": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/kong.admin.model.v1.Upstream"
+          }
+        }
+      }
+    },
     "kong.admin.service.v1.UpsertNodeResponse": {
       "type": "object",
       "properties": {
@@ -1432,6 +1849,14 @@
       "properties": {
         "item": {
           "$ref": "#/definitions/kong.admin.model.v1.Service"
+        }
+      }
+    },
+    "kong.admin.service.v1.UpsertUpstreamResponse": {
+      "type": "object",
+      "properties": {
+        "item": {
+          "$ref": "#/definitions/kong.admin.model.v1.Upstream"
         }
       }
     },
