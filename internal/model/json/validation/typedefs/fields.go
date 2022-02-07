@@ -10,6 +10,8 @@ const (
 	maxTimeout    = (1 << 31) - 2 //nolint:gomnd
 	maxTags       = 8
 	namePattern   = `^[0-9a-zA-Z.\-_~]*$`
+
+	HTTPHeaderNamePattern = "^[A-Za-z0-9!#$%&'*+-.^_|~]+$"
 )
 
 var ID = &generator.Schema{
@@ -75,6 +77,11 @@ var Tags = &generator.Schema{
 	Type:     "array",
 	Items:    Name,
 	MaxItems: maxTags,
+}
+
+var Header = &generator.Schema{
+	Type:    "string",
+	Pattern: HTTPHeaderNamePattern,
 }
 
 var Path = &generator.Schema{

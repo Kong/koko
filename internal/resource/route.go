@@ -174,7 +174,7 @@ func init() {
 							Description: "must not contain 'host' header",
 						},
 					},
-					"^[A-Za-z0-9!#$%&'*+-.^_|~]+$": {
+					typedefs.HTTPHeaderNamePattern: {
 						Type: "object",
 						Properties: map[string]*generator.Schema{
 							"values": {
