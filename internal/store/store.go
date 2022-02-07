@@ -341,6 +341,7 @@ func (s *ObjectStore) List(ctx context.Context, list model.ObjectList, opts ...L
 	if err != nil {
 		return err
 	}
+	tcSet := false
 	for _, kv := range kvs {
 		value := kv.Value
 		object, err := model.NewObject(typ)
@@ -353,7 +354,10 @@ func (s *ObjectStore) List(ctx context.Context, list model.ObjectList, opts ...L
 			return err
 		}
 		list.Add(object)
-		list.SetCount(kv.TotalCount)
+		if !tcSet {
+			list.SetCount(kv.TotalCount)
+			tcSet = true
+		}
 	}
 	return nil
 }
