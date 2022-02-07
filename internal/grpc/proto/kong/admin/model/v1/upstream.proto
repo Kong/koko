@@ -1,0 +1,75 @@
+syntax = "proto3";
+
+option go_package = "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1;v1";
+
+package kong.admin.model.v1;
+
+import "google/protobuf/wrappers.proto";
+
+message Upstream {
+  string id = 1;
+  string name = 2;
+  string algorithm = 3;
+  int32 created_at = 4;
+  int32 updated_at = 5;
+  string hash_on = 6;
+  string hash_fallback = 7;
+  string hash_on_header = 8;
+  string hash_fallback_header = 9;
+  string hash_on_cookie = 10;
+  string hash_on_cookie_path = 11;
+  google.protobuf.Int32Value slots = 12;
+  Healthchecks healthchecks = 13;
+  repeated string tags = 14;
+  string host_header = 15;
+  // Certificate client_certificate = 16;
+}
+
+message Healthchecks {
+  ActiveHealthcheck active = 1;
+  PassiveHealthcheck passive = 2;
+  google.protobuf.FloatValue threshold = 3;
+}
+
+message ActiveHealthcheck {
+  google.protobuf.Int32Value concurrency = 1;
+  ActiveHealthyCondition healthy = 2;
+  string http_path = 3;
+  string http_sni = 4;
+  google.protobuf.BoolValue https_verify_certificate = 5;
+  string type = 6;
+  google.protobuf.Int32Value timeout = 7;
+  ActiveUnhealthyCondition unhealthy = 8;
+}
+
+message PassiveHealthcheck {
+  PassiveHealthyCondition healthy = 1;
+  string type = 2;
+  PassiveUnhealthyCondition unhealthy = 3;
+}
+
+message ActiveHealthyCondition {
+  repeated int32  http_statuses = 1;
+  google.protobuf.Int32Value interval = 2;
+  google.protobuf.Int32Value successes = 3;
+}
+
+message PassiveHealthyCondition {
+  repeated int32  http_statuses = 1;
+  google.protobuf.Int32Value successes = 3;
+}
+
+message ActiveUnhealthyCondition {
+  google.protobuf.Int32Value http_failures = 1;
+  google.protobuf.Int32Value tcp_failures = 2;
+  repeated int32 http_statuses = 3;
+  google.protobuf.Int32Value timeouts = 4;
+  google.protobuf.Int32Value interval = 5;
+}
+
+message PassiveUnhealthyCondition {
+  google.protobuf.Int32Value http_failures = 1;
+  google.protobuf.Int32Value tcp_failures = 2;
+  repeated int32 http_statuses = 3;
+  google.protobuf.Int32Value timeouts = 4;
+}
