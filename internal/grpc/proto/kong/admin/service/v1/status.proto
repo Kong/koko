@@ -53,5 +53,5 @@ message ListStatusesRequest{
 
 message ListStatusesResponse{
   repeated model.v1.Status items = 1;
-  string offset = 2;
+  model.v1.PaginationResponse pagination = 2;
 }

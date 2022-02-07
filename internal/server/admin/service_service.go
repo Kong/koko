@@ -105,8 +105,8 @@ func (s *ServiceService) ListServices(ctx context.Context,
 		return nil, s.err(err)
 	}
 	return &v1.ListServicesResponse{
-		Items:  servicesFromObjects(list.GetAll()),
-		Offset: getOffset(list.GetCount()),
+		Items:      servicesFromObjects(list.GetAll()),
+		Pagination: getPagination(list.GetCount()),
 	}, nil
 }
 

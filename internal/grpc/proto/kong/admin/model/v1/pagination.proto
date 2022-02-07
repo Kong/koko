@@ -8,3 +8,7 @@ message Pagination {
   int32 size = 1;
   int32 page = 2;
 }
+
+message PaginationResponse {
+  string offset = 1;
+}

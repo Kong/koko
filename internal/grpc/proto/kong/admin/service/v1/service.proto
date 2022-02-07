@@ -82,5 +82,5 @@ message ListServicesRequest{
 
 message ListServicesResponse{
   repeated model.v1.Service items = 1;
-  string offset = 2;
+  model.v1.PaginationResponse pagination = 2;
 }

@@ -43,3 +43,10 @@ func getOffset(totalCount int) string {
 	// Converting to string first offset may not be int
 	return base64.StdEncoding.EncodeToString([]byte(strconv.Itoa(totalCount)))
 }
+
+func getPagination(totalCount int) *pbModel.PaginationResponse {
+	if totalCount == 0 {
+		return nil
+	}
+	return &pbModel.PaginationResponse{Offset: getOffset(totalCount)}
+}

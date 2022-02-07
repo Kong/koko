@@ -240,7 +240,7 @@ func TestServiceList(t *testing.T) {
 	})
 }
 
-func TestServiceListPaginaton(t *testing.T) {
+func TestServiceListPagination(t *testing.T) {
 	s, cleanup := setup(t)
 	defer cleanup()
 	c := httpexpect.New(t, s.URL)
@@ -264,7 +264,8 @@ func TestServiceListPaginaton(t *testing.T) {
 	// Get the tail's id so that we can make sure that it is consistent
 	tailID = items.Element(9).Object().Value("id").String().Raw()
 	require.NotEmpty(t, tailID)
-	body.Value("offset").String().Equal("MTA=")
+	body.Value("pagination").Object().Value("offset").String().Equal("MTA=")
+
 	t.Run("list page_size 1 and page 10 returns 1 services with offset=10", func(t *testing.T) {
 		// Get First Page
 		body := c.GET("/v1/services").
@@ -274,7 +275,8 @@ func TestServiceListPaginaton(t *testing.T) {
 			Expect().Status(http.StatusOK).JSON().Object()
 		items := body.Value("items").Array()
 		items.Length().Equal(1)
-		body.Value("offset").String().Equal("MTA=")
+
+		body.Value("pagination").Object().Value("offset").String().Equal("MTA=")
 		firstID := items.Element(0).Object().Value("id").String().Raw()
 		require.NotEmpty(t, firstID)
 		require.Equal(t, headID, firstID)
@@ -286,7 +288,8 @@ func TestServiceListPaginaton(t *testing.T) {
 			Expect().Status(http.StatusOK).JSON().Object()
 		items = body.Value("items").Array()
 		items.Length().Equal(1)
-		body.Value("offset").String().Equal("MTA=")
+		body.Value("pagination").Object().Value("offset").String().Equal("MTA=")
+
 		lastID := items.Element(0).Object().Value("id").String().Raw()
 		require.NotEmpty(t, lastID)
 		require.Equal(t, tailID, lastID)
@@ -300,7 +303,8 @@ func TestServiceListPaginaton(t *testing.T) {
 			Expect().Status(http.StatusOK).JSON().Object()
 		items := body.Value("items").Array()
 		items.Length().Equal(2)
-		body.Value("offset").String().Equal("MTA=")
+		body.Value("pagination").Object().Value("offset").String().Equal("MTA=")
+
 		firstID := items.Element(0).Object().Value("id").String().Raw()
 		require.NotEmpty(t, firstID)
 		require.Equal(t, headID, firstID)
@@ -312,7 +316,7 @@ func TestServiceListPaginaton(t *testing.T) {
 			Expect().Status(http.StatusOK).JSON().Object()
 		items = body.Value("items").Array()
 		items.Length().Equal(2)
-		body.Value("offset").String().Equal("MTA=")
+		body.Value("pagination").Object().Value("offset").String().Equal("MTA=")
 		lastID := items.Element(1).Object().Value("id").String().Raw()
 		require.NotEmpty(t, lastID)
 		require.Equal(t, tailID, lastID)
@@ -326,7 +330,7 @@ func TestServiceListPaginaton(t *testing.T) {
 			Expect().Status(http.StatusOK).JSON().Object()
 		items := body.Value("items").Array()
 		items.Length().Equal(3)
-		body.Value("offset").String().Equal("MTA=")
+		body.Value("pagination").Object().Value("offset").String().Equal("MTA=")
 		firstID := items.Element(0).Object().Value("id").String().Raw()
 		require.NotEmpty(t, firstID)
 		require.Equal(t, headID, firstID)
@@ -338,7 +342,7 @@ func TestServiceListPaginaton(t *testing.T) {
 			Expect().Status(http.StatusOK).JSON().Object()
 		items = body.Value("items").Array()
 		items.Length().Equal(1)
-		body.Value("offset").String().Equal("MTA=")
+		body.Value("pagination").Object().Value("offset").String().Equal("MTA=")
 		lastID := items.Element(0).Object().Value("id").String().Raw()
 		require.NotEmpty(t, lastID)
 		require.Equal(t, tailID, lastID)
@@ -352,7 +356,7 @@ func TestServiceListPaginaton(t *testing.T) {
 			Expect().Status(http.StatusOK).JSON().Object()
 		items := body.Value("items").Array()
 		items.Length().Equal(4)
-		body.Value("offset").String().Equal("MTA=")
+		body.Value("pagination").Object().Value("offset").String().Equal("MTA=")
 		firstID := items.Element(0).Object().Value("id").String().Raw()
 		require.NotEmpty(t, firstID)
 		require.Equal(t, headID, firstID)
@@ -364,7 +368,7 @@ func TestServiceListPaginaton(t *testing.T) {
 			Expect().Status(http.StatusOK).JSON().Object()
 		items = body.Value("items").Array()
 		items.Length().Equal(2)
-		body.Value("offset").String().Equal("MTA=")
+		body.Value("pagination").Object().Value("offset").String().Equal("MTA=")
 		lastID := items.Element(1).Object().Value("id").String().Raw()
 		require.NotEmpty(t, lastID)
 		require.Equal(t, tailID, lastID)
@@ -378,7 +382,7 @@ func TestServiceListPaginaton(t *testing.T) {
 			Expect().Status(http.StatusOK).JSON().Object()
 		items := body.Value("items").Array()
 		items.Length().Equal(10)
-		body.Value("offset").String().Equal("MTA=")
+		body.Value("pagination").Object().Value("offset").String().Equal("MTA=")
 		firstID := items.Element(0).Object().Value("id").String().Raw()
 		require.NotEmpty(t, firstID)
 		require.Equal(t, headID, firstID)
@@ -396,7 +400,7 @@ func TestServiceListPaginaton(t *testing.T) {
 			Expect().Status(http.StatusOK).JSON().Object()
 		items := body.Value("items").Array()
 		items.Length().Equal(10)
-		body.Value("offset").String().Equal("MTA=")
+		body.Value("pagination").Object().Value("offset").String().Equal("MTA=")
 		firstID := items.Element(0).Object().Value("id").String().Raw()
 		require.NotEmpty(t, firstID)
 		require.Equal(t, headID, firstID)

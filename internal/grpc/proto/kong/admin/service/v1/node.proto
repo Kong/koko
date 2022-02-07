@@ -75,5 +75,5 @@ message ListNodesRequest{
 
 message ListNodesResponse{
   repeated model.v1.Node items = 1;
-  string offset = 2;
+  model.v1.PaginationResponse pagination = 2;
 }

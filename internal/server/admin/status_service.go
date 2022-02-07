@@ -81,8 +81,8 @@ func (s *StatusService) ListStatuses(ctx context.Context,
 	}
 
 	return &v1.ListStatusesResponse{
-		Items:  statusesFromObjects(list.GetAll()),
-		Offset: getOffset(list.GetCount()),
+		Items:      statusesFromObjects(list.GetAll()),
+		Pagination: getPagination(list.GetCount()),
 	}, nil
 }
 
