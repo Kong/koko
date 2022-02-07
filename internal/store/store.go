@@ -366,7 +366,7 @@ func (s *ObjectStore) referencedList(ctx context.Context, list model.ObjectList,
 	typ := list.Type()
 	err := s.withTx(ctx, func(tx persistence.Tx) error {
 		keyPrefix := s.referencedListKey(typ, opt)
-		kvs, err := tx.List(ctx, keyPrefix, persistence.NewDefaultListOpts()) // FIXME: rajkong
+		kvs, err := getFullList(ctx, tx, keyPrefix)
 		if err != nil {
 			return err
 		}

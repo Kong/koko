@@ -208,7 +208,7 @@ func (s *ObjectStore) checkForeignIndexesForDelete(ctx context.Context,
 	tx persistence.Tx,
 	object model.Object) error {
 	key := s.clusterKey(fmt.Sprintf("ix/f/%s/%s", object.Type(), object.ID()))
-	kvs, err := tx.List(ctx, key, persistence.NewDefaultListOpts()) // FIXME: rajkong
+	kvs, err := getFullList(ctx, tx, key)
 	if err != nil {
 		return err
 	}
