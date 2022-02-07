@@ -1,0 +1,465 @@
+{
+  "required": [
+    "id",
+    "name"
+  ],
+  "properties": {
+    "algorithm": {
+      "enum": [
+        "round-robin",
+        "consistent-hashing",
+        "least-connections"
+      ],
+      "type": "string"
+    },
+    "created_at": {
+      "minimum": 1,
+      "type": "integer"
+    },
+    "hash_fallback": {
+      "enum": [
+        "none",
+        "consumer",
+        "ip",
+        "header",
+        "cookie"
+      ],
+      "type": "string"
+    },
+    "hash_fallback_header": {
+      "pattern": "^[A-Za-z0-9!#$%\u0026'*+-.^_|~]+$",
+      "type": "string"
+    },
+    "hash_on": {
+      "enum": [
+        "none",
+        "consumer",
+        "ip",
+        "header",
+        "cookie"
+      ],
+      "type": "string"
+    },
+    "hash_on_cookie": {
+      "pattern": "^[a-zA-Z0-9-_]+$",
+      "type": "string"
+    },
+    "hash_on_cookie_path": {
+      "type": "string",
+      "allOf": [
+        {
+          "pattern": "^/.*",
+          "description": "must begin with `/`"
+        },
+        {
+          "not": {
+            "pattern": "//",
+            "description": "must not contain `//`"
+          }
+        }
+      ]
+    },
+    "hash_on_header": {
+      "pattern": "^[A-Za-z0-9!#$%\u0026'*+-.^_|~]+$",
+      "type": "string"
+    },
+    "healthchecks": {
+      "properties": {
+        "active": {
+          "properties": {
+            "concurrency": {
+              "maximum": 2147483648,
+              "minimum": 1,
+              "type": "integer"
+            },
+            "healthy": {
+              "properties": {
+                "http_statuses": {
+                  "items": {
+                    "maximum": 999,
+                    "minimum": 100,
+                    "type": "integer"
+                  },
+                  "maxItems": 32,
+                  "type": "array"
+                },
+                "interval": {
+                  "maximum": 65535,
+                  "type": "integer"
+                },
+                "success": {
+                  "maximum": 255,
+                  "type": "integer"
+                }
+              },
+              "type": "object"
+            },
+            "http_path": {
+              "type": "string",
+              "allOf": [
+                {
+                  "pattern": "^/.*",
+                  "description": "must begin with `/`"
+                },
+                {
+                  "not": {
+                    "pattern": "//",
+                    "description": "must not contain `//`"
+                  }
+                }
+              ]
+            },
+            "http_sni": {},
+            "https_verify_certificate": {
+              "type": "boolean"
+            },
+            "timeout": {
+              "maximum": 65535,
+              "type": "integer"
+            },
+            "type": {
+              "enum": [
+                "tcp",
+                "http",
+                "https"
+              ],
+              "type": "string"
+            },
+            "unhealthy": {
+              "properties": {
+                "http_failures": {
+                  "maximum": 255,
+                  "type": "integer"
+                },
+                "http_statuses": {
+                  "items": {
+                    "maximum": 999,
+                    "minimum": 100,
+                    "type": "integer"
+                  },
+                  "maxItems": 32,
+                  "type": "array"
+                },
+                "interval": {
+                  "maximum": 65535,
+                  "type": "integer"
+                },
+                "tcp_failures": {
+                  "maximum": 255,
+                  "type": "integer"
+                },
+                "timeouts": {
+                  "maximum": 255,
+                  "type": "integer"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "passive": {
+          "properties": {
+            "healthy": {
+              "properties": {
+                "http_statuses": {
+                  "items": {
+                    "maximum": 999,
+                    "minimum": 100,
+                    "type": "integer"
+                  },
+                  "maxItems": 32,
+                  "type": "array"
+                },
+                "success": {
+                  "maximum": 255,
+                  "type": "integer"
+                }
+              },
+              "type": "object"
+            },
+            "timeout": {
+              "maximum": 65535,
+              "type": "integer"
+            },
+            "type": {
+              "enum": [
+                "tcp",
+                "http"
+              ],
+              "type": "string"
+            },
+            "unhealthy": {
+              "properties": {
+                "http_failures": {
+                  "maximum": 255,
+                  "type": "integer"
+                },
+                "http_statuses": {
+                  "items": {
+                    "maximum": 999,
+                    "minimum": 100,
+                    "type": "integer"
+                  },
+                  "maxItems": 32,
+                  "type": "array"
+                },
+                "tcp_failures": {
+                  "maximum": 255,
+                  "type": "integer"
+                },
+                "timeouts": {
+                  "maximum": 255,
+                  "type": "integer"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "threshold": {
+          "maximum": 100,
+          "type": "number"
+        }
+      },
+      "type": "object"
+    },
+    "host_header": {
+      "pattern": "^[A-Za-z0-9!#$%\u0026'*+-.^_|~]+$",
+      "type": "string"
+    },
+    "id": {
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+      "type": "string",
+      "description": "must be a valid UUID"
+    },
+    "name": {
+      "maxLength": 128,
+      "minLength": 1,
+      "pattern": "^[0-9a-zA-Z.\\-_~]*$",
+      "type": "string"
+    },
+    "slots": {
+      "maximum": 65536,
+      "minimum": 10,
+      "type": "integer"
+    },
+    "tags": {
+      "items": {
+        "maxLength": 128,
+        "minLength": 1,
+        "pattern": "^[0-9a-zA-Z.\\-_~]*$",
+        "type": "string"
+      },
+      "maxItems": 8,
+      "type": "array"
+    },
+    "updated_at": {
+      "minimum": 1,
+      "type": "integer"
+    }
+  },
+  "additionalProperties": false,
+  "type": "object",
+  "allOf": [
+    {
+      "description": "when 'hash_on' is set to 'header','hash_on_header' must be set",
+      "if": {
+        "required": [
+          "hash_on"
+        ],
+        "properties": {
+          "hash_on": {
+            "const": "header"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "hash_on_header"
+        ]
+      }
+    },
+    {
+      "description": "when 'hash_fallback' is set to 'header','hash_fallback_header' must be set",
+      "if": {
+        "required": [
+          "hash_fallback"
+        ],
+        "properties": {
+          "hash_fallback": {
+            "const": "header"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "hash_fallback_header"
+        ]
+      }
+    },
+    {
+      "description": "when 'hash_on' is set to 'cookie', 'hash_on_cookie' must be set",
+      "if": {
+        "required": [
+          "hash_on"
+        ],
+        "properties": {
+          "hash_on": {
+            "const": "cookie"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "hash_on_cookie"
+        ]
+      }
+    },
+    {
+      "description": "when 'hash_fallback' is set to 'cookie', 'hash_on_cookie' must be set",
+      "if": {
+        "required": [
+          "hash_fallback"
+        ],
+        "properties": {
+          "hash_fallback": {
+            "const": "cookie"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "hash_on_cookie"
+        ]
+      }
+    },
+    {
+      "description": "when 'hash_on' is set to 'none', 'hash_fallback' must be set to 'none'",
+      "if": {
+        "required": [
+          "hash_on"
+        ],
+        "properties": {
+          "hash_on": {
+            "const": "none"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "hash_fallback"
+        ],
+        "properties": {
+          "hash_fallback": {
+            "const": "none"
+          }
+        }
+      }
+    },
+    {
+      "description": "when 'hash_on' is set to 'cookie', 'hash_fallback' must be set to 'none'",
+      "if": {
+        "required": [
+          "hash_on"
+        ],
+        "properties": {
+          "hash_on": {
+            "const": "cookie"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "hash_fallback"
+        ],
+        "properties": {
+          "hash_fallback": {
+            "const": "none"
+          }
+        }
+      }
+    },
+    {
+      "description": "when 'hash_on' is set to 'consumer', 'hash_fallback' must be set to one of 'none', 'ip', 'header', 'cookie'",
+      "if": {
+        "required": [
+          "hash_on"
+        ],
+        "properties": {
+          "hash_on": {
+            "const": "consumer"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "hash_fallback"
+        ],
+        "properties": {
+          "hash_fallback": {
+            "anyOf": [
+              {
+                "type": "string",
+                "const": "none"
+              },
+              {
+                "type": "string",
+                "const": "ip"
+              },
+              {
+                "type": "string",
+                "const": "header"
+              },
+              {
+                "type": "string",
+                "const": "cookie"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "description": "when 'hash_on' is set to 'ip', 'hash_fallback' must be set to one of 'none', 'consumer', 'header', 'cookie'",
+      "if": {
+        "required": [
+          "hash_on"
+        ],
+        "properties": {
+          "hash_on": {
+            "const": "ip"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "hash_fallback"
+        ],
+        "properties": {
+          "hash_fallback": {
+            "anyOf": [
+              {
+                "type": "string",
+                "const": "none"
+              },
+              {
+                "type": "string",
+                "const": "consumer"
+              },
+              {
+                "type": "string",
+                "const": "header"
+              },
+              {
+                "type": "string",
+                "const": "cookie"
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}
