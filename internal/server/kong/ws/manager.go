@@ -225,11 +225,12 @@ func (m *Manager) broadcast() {
 }
 
 type ConfigClient struct {
-	Service admin.ServiceServiceClient
-	Route   admin.RouteServiceClient
-	Plugin  admin.PluginServiceClient
-	Status  relay.StatusServiceClient
-	Node    admin.NodeServiceClient
+	Service  admin.ServiceServiceClient
+	Route    admin.RouteServiceClient
+	Plugin   admin.PluginServiceClient
+	Upstream admin.UpstreamServiceClient
+	Status   relay.StatusServiceClient
+	Node     admin.NodeServiceClient
 
 	Event relay.EventServiceClient
 }
@@ -265,10 +266,17 @@ func (m *Manager) fetchContent(ctx context.Context) (mold.GrpcContent, error) {
 	if err != nil {
 		return mold.GrpcContent{}, err
 	}
+
+	upstreamsList, err := m.fetchUpstreams(ctx)
+	if err != nil {
+		return mold.GrpcContent{}, err
+	}
+
 	return mold.GrpcContent{
-		Services: serviceList.Items,
-		Routes:   routesList.Items,
-		Plugins:  pluginsList.Items,
+		Services:  serviceList.Items,
+		Routes:    routesList.Items,
+		Plugins:   pluginsList.Items,
+		Upstreams: upstreamsList.Items,
 	}, nil
 }
 
@@ -298,6 +306,15 @@ func (m *Manager) fetchPlugins(ctx context.Context) (*admin.
 	defer cancel()
 	return m.configClient.Plugin.ListPlugins(ctx,
 		&admin.ListPluginsRequest{
+			Cluster: m.reqCluster(),
+		})
+}
+
+func (m *Manager) fetchUpstreams(ctx context.Context) (*admin.ListUpstreamsResponse, error) {
+	ctx, cancel := context.WithTimeout(ctx, defaultRequestTimeout)
+	defer cancel()
+	return m.configClient.Upstream.ListUpstreams(ctx,
+		&admin.ListUpstreamsRequest{
 			Cluster: m.reqCluster(),
 		})
 }

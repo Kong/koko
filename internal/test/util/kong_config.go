@@ -9,9 +9,10 @@ import (
 )
 
 type KongConfig struct {
-	Services []*kong.Service `json:"services,omitempty"`
-	Routes   []*kong.Route   `json:"routes,omitempty"`
-	Plugins  []*kong.Plugin  `json:"plugins,omitempty"`
+	Services  []*kong.Service  `json:"services,omitempty"`
+	Routes    []*kong.Route    `json:"routes,omitempty"`
+	Plugins   []*kong.Plugin   `json:"plugins,omitempty"`
+	Upstreams []*kong.Upstream `json:"upstreams,omitempty"`
 }
 
 func EnsureConfig(expectedConfig *model.TestingConfig) error {
@@ -43,9 +44,14 @@ func fetchKongConfig() (KongConfig, error) {
 	if err != nil {
 		return KongConfig{}, fmt.Errorf("fetch plugins: %v", err)
 	}
+	upstreams, err := client.Upstreams.ListAll(ctx)
+	if err != nil {
+		return KongConfig{}, fmt.Errorf("fetch upstreams: %v", err)
+	}
 	return KongConfig{
-		Services: services,
-		Routes:   routes,
-		Plugins:  plugins,
+		Services:  services,
+		Routes:    routes,
+		Plugins:   plugins,
+		Upstreams: upstreams,
 	}, nil
 }
