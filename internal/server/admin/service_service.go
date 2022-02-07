@@ -101,12 +101,14 @@ func (s *ServiceService) ListServices(ctx context.Context,
 	if err != nil {
 		return nil, s.err(util.ErrClient{Message: err.Error()})
 	}
+
 	if err := db.List(ctx, list, listOptFns...); err != nil {
 		return nil, s.err(err)
 	}
+
 	return &v1.ListServicesResponse{
 		Items:      servicesFromObjects(list.GetAll()),
-		Pagination: getPagination(list.GetCount()),
+		Pagination: getPagination(list.GetTotalCount()),
 	}, nil
 }
 

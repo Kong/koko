@@ -3,17 +3,17 @@ package resource
 import "github.com/kong/koko/internal/model"
 
 type List struct {
-	typ     model.Type
-	objects []model.Object
-	count   int
+	typ        model.Type
+	objects    []model.Object
+	totalCount int
 }
 
-func (l *List) SetCount(count int) {
-	l.count = count
+func (l *List) SetTotalCount(count int) {
+	l.totalCount = count
 }
 
-func (l *List) GetCount() int {
-	return l.count
+func (l *List) GetTotalCount() int {
+	return l.totalCount
 }
 
 func NewList(typ model.Type) model.ObjectList {

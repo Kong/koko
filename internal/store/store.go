@@ -355,7 +355,7 @@ func (s *ObjectStore) List(ctx context.Context, list model.ObjectList, opts ...L
 		}
 		list.Add(object)
 		if !tcSet {
-			list.SetCount(kv.TotalCount)
+			list.SetTotalCount(kv.TotalCount)
 			tcSet = true
 		}
 	}
