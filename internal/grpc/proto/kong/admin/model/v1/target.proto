@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+option go_package = "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1;v1";
+
+package kong.admin.model.v1;
+
+import "kong/admin/model/v1/upstream.proto";
+import "google/protobuf/wrappers.proto";
+
+message Target {
+  string id = 1;
+  string target = 2;
+  google.protobuf.Int32Value weight = 3;
+  int32 created_at = 4;
+  int32 updated_at = 5;
+  repeated string tags = 6;
+  Upstream upstream = 7;
+}
