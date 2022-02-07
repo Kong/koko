@@ -7,6 +7,7 @@ import (
 
 	pbModel "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
 	"github.com/kong/koko/internal/persistence"
+	"github.com/kong/koko/internal/store"
 )
 
 func validateListOptions(listOpts *pbModel.ListOpts) error {
@@ -17,6 +18,22 @@ func validateListOptions(listOpts *pbModel.ListOpts) error {
 		return fmt.Errorf("invalid page_size '%d', must be within range [1 - 1000]", listOpts.PageSize)
 	}
 	return nil
+}
+
+func listOptsFromReq(listOpts *pbModel.ListOpts) ([]store.ListOptsFunc, error) {
+	if listOpts == nil {
+		return []store.ListOptsFunc{}, nil
+	}
+	err := validateListOptions(listOpts)
+	if err != nil {
+		return nil, err
+	}
+
+	listOptFns := []store.ListOptsFunc{
+		store.ListWithPageNum(int(listOpts.Page)),
+		store.ListWithPageSize(int(listOpts.PageSize)),
+	}
+	return listOptFns, nil
 }
 
 func getOffset(totalCount int) string {

@@ -8,7 +8,6 @@ import (
 	pbModel "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/service/v1"
 	"github.com/kong/koko/internal/model"
-	"github.com/kong/koko/internal/persistence"
 	"github.com/kong/koko/internal/resource"
 	"github.com/kong/koko/internal/server/util"
 	"github.com/kong/koko/internal/store"
@@ -97,20 +96,15 @@ func (s *NodeService) ListNodes(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-	listOpts := req.ListOptions
-	if listOpts == nil {
-		listOpts = &pbModel.ListOpts{Page: persistence.DefaultPage, PageSize: persistence.DefaultPageSize}
-	}
-	// Validate what we got
-	if err = validateListOptions(listOpts); err != nil {
+	list := resource.NewList(resource.TypeNode)
+	listOptFns, err := listOptsFromReq(req.ListOptions)
+	if err != nil {
 		return nil, s.err(util.ErrClient{Message: err.Error()})
 	}
-
-	list := resource.NewList(resource.TypeNode)
-	if err := db.List(ctx, list, store.ListWithPageNum(int(listOpts.Page)),
-		store.ListWithPageSize(int(listOpts.PageSize))); err != nil {
+	if err := db.List(ctx, list, listOptFns...); err != nil {
 		return nil, s.err(err)
 	}
+
 	return &v1.ListNodesResponse{
 		Items:  nodesFromObjects(list.GetAll()),
 		Offset: getOffset(list.GetCount()),

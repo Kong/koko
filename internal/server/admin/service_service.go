@@ -8,7 +8,6 @@ import (
 	pbModel "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/service/v1"
 	"github.com/kong/koko/internal/model"
-	"github.com/kong/koko/internal/persistence"
 	"github.com/kong/koko/internal/resource"
 	"github.com/kong/koko/internal/server/util"
 	"github.com/kong/koko/internal/store"
@@ -98,20 +97,13 @@ func (s *ServiceService) ListServices(ctx context.Context,
 		return nil, err
 	}
 	list := resource.NewList(resource.TypeService)
-	listOpts := req.ListOptions
-	if listOpts == nil {
-		listOpts = &pbModel.ListOpts{Page: persistence.DefaultPage, PageSize: persistence.DefaultPageSize}
-	}
-	// Validate what we got
-	if err = validateListOptions(listOpts); err != nil {
+	listOptFns, err := listOptsFromReq(req.ListOptions)
+	if err != nil {
 		return nil, s.err(util.ErrClient{Message: err.Error()})
 	}
-
-	if err := db.List(ctx, list, store.ListWithPageNum(int(listOpts.Page)),
-		store.ListWithPageSize(int(listOpts.PageSize))); err != nil {
+	if err := db.List(ctx, list, listOptFns...); err != nil {
 		return nil, s.err(err)
 	}
-
 	return &v1.ListServicesResponse{
 		Items:  servicesFromObjects(list.GetAll()),
 		Offset: getOffset(list.GetCount()),

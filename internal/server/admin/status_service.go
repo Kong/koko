@@ -11,7 +11,6 @@ import (
 	pbModel "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/service/v1"
 	"github.com/kong/koko/internal/model"
-	"github.com/kong/koko/internal/persistence"
 	"github.com/kong/koko/internal/resource"
 	"github.com/kong/koko/internal/server/util"
 	"github.com/kong/koko/internal/store"
@@ -72,18 +71,12 @@ func (s *StatusService) ListStatuses(ctx context.Context,
 		return s.listStatusForEntity(ctx, db, req.RefType, req.RefId)
 	}
 
-	listOpts := req.ListOptions
-	if listOpts == nil {
-		listOpts = &pbModel.ListOpts{Page: persistence.DefaultPage, PageSize: persistence.DefaultPageSize}
-	}
-	// Validate what we got
-	if err = validateListOptions(listOpts); err != nil {
+	list := resource.NewList(resource.TypeStatus)
+	listOptFns, err := listOptsFromReq(req.ListOptions)
+	if err != nil {
 		return nil, s.err(util.ErrClient{Message: err.Error()})
 	}
-
-	list := resource.NewList(resource.TypeStatus)
-	if err := db.List(ctx, list, store.ListWithPageNum(int(listOpts.Page)),
-		store.ListWithPageSize(int(listOpts.PageSize))); err != nil {
+	if err := db.List(ctx, list, listOptFns...); err != nil {
 		return nil, s.err(err)
 	}
 
