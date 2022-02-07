@@ -360,6 +360,51 @@ func TestPluginSync(t *testing.T) {
 	})
 }
 
+func TestUpstreamSync(t *testing.T) {
+	// ensure that upstreams can be synced to Kong gateway
+
+	cert, err := tls.X509KeyPair(certs.DefaultSharedCert, certs.DefaultSharedKey)
+	require.Nil(t, err)
+
+	require.Nil(t, util.CleanDB())
+	cleanup := run.Koko(t, cmd.ServerConfig{
+		DPAuthCert: cert,
+		KongCPCert: cert,
+		Logger:     log.Logger,
+		Database: config.Database{
+			Dialect: db.DialectSQLite3,
+			SQLite: config.SQLite{
+				InMemory: true,
+			},
+		},
+	})
+	defer cleanup()
+
+	require.Nil(t, util.WaitForAdminAPI(t))
+
+	upstream := &v1.Upstream{
+		Id:   uuid.NewString(),
+		Name: "foo",
+	}
+	c := httpexpect.New(t, "http://localhost:3000")
+	res := c.POST("/v1/upstreams").WithJSON(upstream).Expect()
+	res.Status(201)
+
+	dpCleanup := run.KongDP(kong.GetKongConfForShared())
+	defer dpCleanup()
+
+	require.Nil(t, util.WaitForKongPort(t, 8001))
+
+	expectedConfig := &v1.TestingConfig{
+		Upstreams: []*v1.Upstream{upstream},
+	}
+	util.WaitFunc(t, func() error {
+		err := util.EnsureConfig(expectedConfig)
+		t.Log("configuration mismatch", err)
+		return err
+	})
+}
+
 func TestRouteHeader(t *testing.T) {
 	// ensure that routes with headers can be synced to Kong gateway
 	// this is done because the data-structures for headers in Koko and Kong

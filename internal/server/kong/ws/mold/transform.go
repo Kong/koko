@@ -41,6 +41,14 @@ func GrpcToWrpc(input GrpcContent) (config.Content, error) {
 		}
 		res.Plugins = append(res.Plugins, m)
 	}
+	for _, upstream := range input.Upstreams {
+		m, err := simplify(upstream)
+		delete(m, "updated_at")
+		if err != nil {
+			return config.Content{}, err
+		}
+		res.Upstreams = append(res.Upstreams, m)
+	}
 
 	return res, nil
 }

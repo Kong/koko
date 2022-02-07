@@ -223,9 +223,10 @@ func setupRelayClient() (ws.ConfigClient, error) {
 		return ws.ConfigClient{}, err
 	}
 	return ws.ConfigClient{
-		Service: v1.NewServiceServiceClient(cc),
-		Route:   v1.NewRouteServiceClient(cc),
-		Plugin:  v1.NewPluginServiceClient(cc),
+		Service:  v1.NewServiceServiceClient(cc),
+		Route:    v1.NewRouteServiceClient(cc),
+		Plugin:   v1.NewPluginServiceClient(cc),
+		Upstream: v1.NewUpstreamServiceClient(cc),
 
 		Node: v1.NewNodeServiceClient(cc),
 
