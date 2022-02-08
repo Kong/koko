@@ -333,16 +333,12 @@ func (s *ObjectStore) List(ctx context.Context, list model.ObjectList, opts ...L
 		return s.referencedList(ctx, list, opt)
 	}
 
-	var kvs []*persistence.KVResult
-	var err error
-
-	kvs, err = s.store.List(ctx, s.listKey(typ), &persistence.ListOpts{Page: opt.Page, PageSize: opt.PageSize})
-
+	listResult, err := s.store.List(ctx, s.listKey(typ), &persistence.ListOpts{Page: opt.Page, PageSize: opt.PageSize})
 	if err != nil {
 		return err
 	}
-	tcSet := false
-	for _, kv := range kvs {
+	list.SetTotalCount(listResult.TotalCount)
+	for _, kv := range listResult.KVList {
 		value := kv.Value
 		object, err := model.NewObject(typ)
 		if err != nil {
@@ -354,10 +350,6 @@ func (s *ObjectStore) List(ctx context.Context, list model.ObjectList, opts ...L
 			return err
 		}
 		list.Add(object)
-		if !tcSet {
-			list.SetTotalCount(kv.TotalCount)
-			tcSet = true
-		}
 	}
 	return nil
 }
@@ -366,12 +358,15 @@ func (s *ObjectStore) referencedList(ctx context.Context, list model.ObjectList,
 	typ := list.Type()
 	err := s.withTx(ctx, func(tx persistence.Tx) error {
 		keyPrefix := s.referencedListKey(typ, opt)
-		kvs, err := getFullList(ctx, tx, keyPrefix)
+		listResult, err := getFullList(ctx, tx, keyPrefix)
 		if err != nil {
 			return err
 		}
+		if listResult.KVList == nil {
+			listResult.KVList = []*persistence.KVResult{}
+		}
 		keyPrefixLen := len(keyPrefix)
-		for _, kv := range kvs {
+		for _, kv := range listResult.KVList {
 			key := string(kv.Key)
 			value := kv.Value
 			if err := verifyForeignValue(value); err != nil {

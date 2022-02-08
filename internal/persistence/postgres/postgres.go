@@ -114,9 +114,9 @@ func (s *Postgres) Delete(ctx context.Context, key string) error {
 	})
 }
 
-func (s *Postgres) List(ctx context.Context, prefix string, opts *persistence.ListOpts) ([]*persistence.KVResult,
+func (s *Postgres) List(ctx context.Context, prefix string, opts *persistence.ListOpts) (persistence.ListResult,
 	error) {
-	var res []*persistence.KVResult
+	var res persistence.ListResult
 	err := s.withinTx(ctx, func(tx persistence.Tx) error {
 		var err error
 		res, err = tx.List(ctx, prefix, opts)
@@ -192,27 +192,29 @@ func (t *sqliteTx) Delete(ctx context.Context, key string) error {
 	return nil
 }
 
-func (t *sqliteTx) List(ctx context.Context, prefix string, opts *persistence.ListOpts) ([]*persistence.KVResult,
+func (t *sqliteTx) List(ctx context.Context, prefix string, opts *persistence.ListOpts) (persistence.ListResult,
 	error) {
-	res := make([]*persistence.KVResult, 0, opts.PageSize)
+	kvlist := make([]*persistence.KVResult, 0, opts.PageSize)
 	rows, err := t.tx.QueryContext(ctx, listQueryPaging, prefix, opts.PageSize, persistence.ToOffset(opts))
 	if err != nil {
-		return nil, err
+		return persistence.ListResult{}, err
 	}
 	defer rows.Close()
 	if rows.Err() != nil {
-		return nil, rows.Err()
+		return persistence.ListResult{}, rows.Err()
 	}
 	if err != nil {
-		return nil, err
+		return persistence.ListResult{}, err
 	}
+	res := persistence.ListResult{}
 	for rows.Next() {
 		var kvr persistence.KVResult
-		err := rows.Scan(&kvr.Key, &kvr.Value, &kvr.TotalCount)
+		err := rows.Scan(&kvr.Key, &kvr.Value, &res.TotalCount)
 		if err != nil {
-			return nil, err
+			return persistence.ListResult{}, err
 		}
-		res = append(res, &kvr)
+		kvlist = append(kvlist, &kvr)
 	}
+	res.KVList = kvlist
 	return res, nil
 }
