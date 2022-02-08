@@ -10,5 +10,5 @@ message Pagination {
 }
 
 message PaginationResponse {
-  string offset = 1;
+  string total_count = 1;
 }

@@ -1343,7 +1343,7 @@
     "kong.admin.model.v1.PaginationResponse": {
       "type": "object",
       "properties": {
-        "offset": {
+        "totalCount": {
           "type": "string"
         }
       }
