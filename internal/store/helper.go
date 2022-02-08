@@ -41,12 +41,12 @@ func toOffset(opts *ListOpts) int {
 	return opts.PageSize * (opts.Page - 1)
 }
 
-func ToLastPage(pageSize int, count int) int {
-	if pageSize >= count {
+func ToLastPage(pageSize int, totalItems int) int {
+	if pageSize >= totalItems {
 		return 1
 	}
-	if count%pageSize == 0 {
-		return count / pageSize
+	if totalItems%pageSize == 0 {
+		return totalItems / pageSize
 	}
-	return (count / pageSize) + 1
+	return (totalItems / pageSize) + 1
 }

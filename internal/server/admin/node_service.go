@@ -107,7 +107,7 @@ func (s *NodeService) ListNodes(ctx context.Context,
 
 	return &v1.ListNodesResponse{
 		Items:      nodesFromObjects(list.GetAll()),
-		Pagination: getPagination(list.GetTotalCount()),
+		Pagination: getPagination(list.GetTotalCount(), list.GetNextPage()),
 	}, nil
 }
 

@@ -6,6 +6,15 @@ type List struct {
 	typ        model.Type
 	objects    []model.Object
 	totalCount int
+	nextPage   int
+}
+
+func (l *List) SetNextPage(pageNum int) {
+	l.nextPage = pageNum
+}
+
+func (l *List) GetNextPage() int {
+	return l.nextPage
 }
 
 func (l *List) SetTotalCount(count int) {

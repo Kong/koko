@@ -10,5 +10,6 @@ message Pagination {
 }
 
 message PaginationResponse {
-  string total_count = 1;
+  int32 total_count = 1;
+  int32 next_page = 2;
 }

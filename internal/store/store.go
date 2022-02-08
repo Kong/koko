@@ -328,7 +328,7 @@ func (s *ObjectStore) List(ctx context.Context, list model.ObjectList, opts ...L
 	ctx, cancel := context.WithTimeout(ctx, DefaultDBQueryTimeout)
 	defer cancel()
 	typ := list.Type()
-	opt := NewListOpts(opts...) // This is store.ListOpts
+	opt := NewListOpts(opts...)
 	if opt != nil && opt.ReferenceType != "" && opt.ReferenceID != "" {
 		return s.referencedList(ctx, list, opt)
 	}
@@ -338,6 +338,10 @@ func (s *ObjectStore) List(ctx context.Context, list model.ObjectList, opts ...L
 		return err
 	}
 	list.SetTotalCount(listResult.TotalCount)
+	lastPage := ToLastPage(opt.PageSize, listResult.TotalCount)
+	if lastPage > opt.Page {
+		list.SetNextPage(opt.Page + 1)
+	}
 	for _, kv := range listResult.KVList {
 		value := kv.Value
 		object, err := model.NewObject(typ)

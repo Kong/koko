@@ -1344,7 +1344,12 @@
       "type": "object",
       "properties": {
         "totalCount": {
-          "type": "string"
+          "type": "integer",
+          "format": "int32"
+        },
+        "nextPage": {
+          "type": "integer",
+          "format": "int32"
         }
       }
     },

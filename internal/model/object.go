@@ -51,6 +51,8 @@ type ObjectList interface {
 	GetAll() []Object
 	GetTotalCount() int
 	SetTotalCount(count int)
+	SetNextPage(pageNum int)
+	GetNextPage() int
 }
 
 func MultiValueIndex(values ...string) string {
