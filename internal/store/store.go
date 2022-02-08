@@ -362,7 +362,7 @@ func (s *ObjectStore) referencedList(ctx context.Context, list model.ObjectList,
 	typ := list.Type()
 	err := s.withTx(ctx, func(tx persistence.Tx) error {
 		keyPrefix := s.referencedListKey(typ, opt)
-		listResult, err := getFullList(ctx, tx, keyPrefix)
+		listResult, err := tx.List(ctx, keyPrefix, getPersistenceListOptions(opt))
 		if err != nil {
 			return err
 		}
