@@ -25,6 +25,7 @@ import (
 	"github.com/kong/koko/internal/util"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 type ServerConfig struct {
@@ -218,7 +219,8 @@ func Run(ctx context.Context, config ServerConfig) error {
 }
 
 func setupRelayClient() (ws.ConfigClient, error) {
-	cc, err := grpc.Dial("localhost:3001", grpc.WithInsecure())
+	cc, err := grpc.Dial("localhost:3001",
+		grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return ws.ConfigClient{}, err
 	}

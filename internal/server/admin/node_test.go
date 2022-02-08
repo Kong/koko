@@ -18,6 +18,7 @@ import (
 	"github.com/kong/koko/internal/test/util"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/test/bufconn"
 )
 
@@ -318,7 +319,7 @@ func clientConn(t *testing.T, l *bufconn.Listener) grpc.ClientConnInterface {
 		grpc.WithContextDialer(func(ctx context.Context, s string) (net.Conn, error) {
 			return l.Dial()
 		}),
-		grpc.WithInsecure())
+		grpc.WithTransportCredentials(insecure.NewCredentials()))
 	require.Nil(t, err)
 	return conn
 }
