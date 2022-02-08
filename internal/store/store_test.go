@@ -701,7 +701,7 @@ func TestUpdateEvent(t *testing.T) {
 		firstEvent := e.StoreEvent.Value
 
 		svc = resource.NewService()
-		require.Nil(t, s.Read(context.Background(), svc, GetByID(id)))
+		require.Nil(t, s.Read(ctx, svc, GetByID(id)))
 
 		e = event.New()
 		err = s.Read(ctx, e, GetByID(event.ID))

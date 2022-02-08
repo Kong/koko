@@ -7,7 +7,9 @@ linters:
   - asciicheck
   - bidichk
   - bodyclose
+  - contextcheck
   - deadcode
+  - decorder
   - depguard
   - dogsled
   - durationcheck
@@ -27,6 +29,7 @@ linters:
   - gosec
   - gosimple
   - govet
+  - grouper
   - ifshort
   - importas
   - ineffassign

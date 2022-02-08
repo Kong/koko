@@ -67,7 +67,9 @@ func (h *HTTP) Run(ctx context.Context) error {
 		ctx, cleanup := context.WithDeadline(context.Background(),
 			time.Now().Add(defaultShutdownTimeout))
 		defer cleanup()
-		err := s.Shutdown(ctx)
+		// ctx not inheritted since the parent ctx will already be Done()
+		// at this point
+		err := s.Shutdown(ctx) //nolint:contextcheck
 		if err != nil {
 			return err
 		}
