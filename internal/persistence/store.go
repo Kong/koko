@@ -41,18 +41,17 @@ type ListResult struct {
 }
 
 const (
-	DefaultPage     = 1
-	DefaultPageSize = 100
-	MaxPageSize     = 1000
+	DefaultLimit  = 100
+	DefaultOffset = 0
 )
 
 func NewDefaultListOpts() *ListOpts {
-	return &ListOpts{Page: DefaultPage, PageSize: DefaultPageSize}
+	return &ListOpts{Offset: DefaultOffset, Limit: DefaultLimit}
 }
 
 type ListOpts struct {
-	PageSize int
-	Page     int
+	Limit  int
+	Offset int
 }
 
 type Tx interface {
@@ -67,21 +66,4 @@ type ErrNotFound struct {
 
 func (e ErrNotFound) Error() string {
 	return fmt.Sprintf("%v not found", e.Key)
-}
-
-func ToOffset(opts *ListOpts) int {
-	if opts.Page == 1 || opts.Page == 0 {
-		return 0
-	}
-	return opts.PageSize * (opts.Page - 1)
-}
-
-func ToLastPage(pageSize int, count int) int {
-	if pageSize >= count {
-		return 1
-	}
-	if count%pageSize == 0 {
-		return count / pageSize
-	}
-	return (count / pageSize) + 1
 }

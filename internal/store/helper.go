@@ -25,3 +25,28 @@ func getFullList(ctx context.Context, tx persistence.Tx, keyPrefix string) (pers
 	}
 	return listResult, nil
 }
+
+// Converts store Page and Page Size to Limit and Offset.
+func getPersistenceListOptions(opts *ListOpts) *persistence.ListOpts {
+	return &persistence.ListOpts{
+		Limit:  opts.PageSize,
+		Offset: toOffset(opts),
+	}
+}
+
+func toOffset(opts *ListOpts) int {
+	if opts.Page == 1 || opts.Page == 0 {
+		return 0
+	}
+	return opts.PageSize * (opts.Page - 1)
+}
+
+func ToLastPage(pageSize int, count int) int {
+	if pageSize >= count {
+		return 1
+	}
+	if count%pageSize == 0 {
+		return count / pageSize
+	}
+	return (count / pageSize) + 1
+}

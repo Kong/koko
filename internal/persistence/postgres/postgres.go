@@ -194,8 +194,8 @@ func (t *sqliteTx) Delete(ctx context.Context, key string) error {
 
 func (t *sqliteTx) List(ctx context.Context, prefix string, opts *persistence.ListOpts) (persistence.ListResult,
 	error) {
-	kvlist := make([]*persistence.KVResult, 0, opts.PageSize)
-	rows, err := t.tx.QueryContext(ctx, listQueryPaging, prefix, opts.PageSize, persistence.ToOffset(opts))
+	kvlist := make([]*persistence.KVResult, 0, opts.Limit)
+	rows, err := t.tx.QueryContext(ctx, listQueryPaging, prefix, opts.Limit, opts.Offset)
 	if err != nil {
 		return persistence.ListResult{}, err
 	}

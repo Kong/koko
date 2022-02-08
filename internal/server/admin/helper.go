@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	pbModel "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
-	"github.com/kong/koko/internal/persistence"
 	"github.com/kong/koko/internal/store"
 )
 
@@ -12,7 +11,7 @@ func validateListOptions(listOpts *pbModel.Pagination) error {
 	if listOpts.Page < 1 {
 		return fmt.Errorf("invalid page '%d', page must be >= 1", listOpts.Page)
 	}
-	if listOpts.Size < 1 || listOpts.Size > persistence.MaxPageSize {
+	if listOpts.Size < 1 || listOpts.Size > store.MaxPageSize {
 		return fmt.Errorf("invalid page_size '%d', must be within range [1 - 1000]", listOpts.Size)
 	}
 	return nil

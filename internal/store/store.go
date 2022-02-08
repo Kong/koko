@@ -333,7 +333,7 @@ func (s *ObjectStore) List(ctx context.Context, list model.ObjectList, opts ...L
 		return s.referencedList(ctx, list, opt)
 	}
 
-	listResult, err := s.store.List(ctx, s.listKey(typ), &persistence.ListOpts{Page: opt.Page, PageSize: opt.PageSize})
+	listResult, err := s.store.List(ctx, s.listKey(typ), getPersistenceListOptions(opt))
 	if err != nil {
 		return err
 	}

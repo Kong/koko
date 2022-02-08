@@ -2,7 +2,6 @@ package store
 
 import (
 	"github.com/kong/koko/internal/model"
-	"github.com/kong/koko/internal/persistence"
 )
 
 type CreateOpts struct{}
@@ -81,8 +80,14 @@ type ListOpts struct {
 
 type ListOptsFunc func(*ListOpts)
 
+const (
+	DefaultPage     = 1
+	DefaultPageSize = 100
+	MaxPageSize     = 1000
+)
+
 func NewListOpts(fns ...ListOptsFunc) *ListOpts {
-	res := &ListOpts{PageSize: persistence.DefaultPageSize, Page: persistence.DefaultPage}
+	res := &ListOpts{PageSize: DefaultPageSize, Page: DefaultPage}
 	for _, fn := range fns {
 		fn(res)
 	}
