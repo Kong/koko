@@ -92,3 +92,7 @@ issues:
       - gosec
     text: "G402"
     path: _test\.go
+  - linters:
+      - forcetypeassert
+    text: "type assertion must be checked"
+    path: _test\.go
