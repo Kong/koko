@@ -75,6 +75,7 @@ message DeleteRouteResponse{
 
 message ListRoutesRequest{
   model.v1.RequestCluster cluster = 1;
+  string service = 2;
 }
 
 message ListRoutesResponse{

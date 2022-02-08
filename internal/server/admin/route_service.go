@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 
 	pbModel "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/service/v1"
@@ -100,8 +101,23 @@ func (s *RouteService) ListRoutes(ctx context.Context,
 	if err := db.List(ctx, list); err != nil {
 		return nil, s.err(err)
 	}
+
+	// Determine if all routes should be returned or a filtered list
+	service := strings.TrimSpace(req.Service)
+	routes := routesFromObjects(list.GetAll())
+	if len(service) > 0 {
+		// Filter routes associated with service
+		routesByService := []*pbModel.Route{}
+		for _, route := range routes {
+			if service == route.Service.Id || service == route.Service.Name {
+				routesByService = append(routesByService, route)
+			}
+		}
+		routes = routesByService
+	}
+
 	return &v1.ListRoutesResponse{
-		Items: routesFromObjects(list.GetAll()),
+		Items: routes,
 	}, nil
 }
 
