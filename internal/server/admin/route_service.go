@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/google/uuid"
 	pbModel "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/service/v1"
 	"github.com/kong/koko/internal/model"
@@ -98,11 +99,14 @@ func (s *RouteService) ListRoutes(ctx context.Context,
 		return nil, err
 	}
 
-	// Determine if all routes should be returned or a filtered list
 	serviceID := strings.TrimSpace(req.ServiceId)
 	listFn := []store.ListOptsFunc{}
 	if len(serviceID) > 0 {
-		// Add function for filtering routes associated with service
+		if _, err := uuid.Parse(serviceID); err != nil {
+			return nil, s.err(util.ErrClient{
+				Message: fmt.Sprintf("service_id '%s' is not a UUID", req.ServiceId),
+			})
+		}
 		listFn = append(listFn, store.ListFor(resource.TypeService, serviceID))
 	}
 
