@@ -802,6 +802,156 @@ func TestStoredValue(t *testing.T) {
 	})
 }
 
+func TestPagination(t *testing.T) {
+	persister, err := util.GetPersister()
+	require.Nil(t, err)
+	store := New(persister, log.Logger).ForCluster("default")
+	ctx := context.Background()
+	// Create 10 services and perform the pagination
+	svcName := "myservice-%d"
+	svc := resource.NewService()
+	svc.Service = &v1.Service{
+		Name: "foo",
+		Host: "example.com",
+		Path: "/",
+	}
+	idList := make([]string, 0, 10)
+	for i := 0; i < 10; i++ {
+		svc.Service.Name = fmt.Sprintf(svcName, i)
+		svc.Service.Id = uuid.NewString()
+		idList = append(idList, svc.Service.Id)
+		require.Nil(t, store.Create(ctx, svc))
+	}
+	// Retrieve the List to get head and tail
+	svcs := resource.NewList(resource.TypeService)
+	err = store.List(context.Background(), svcs)
+	require.Nil(t, err)
+	require.Equal(t, svcs.GetTotalCount(), 10)
+	head := svcs.GetAll()[0].ID()
+	require.NotEmpty(t, head)
+	require.True(t, contains(idList, head))
+	tail := svcs.GetAll()[9].ID()
+	require.NotEmpty(t, tail)
+	require.True(t, contains(idList, tail))
+	// Now Test each pagination scenario
+	t.Run("Page 1, Size 1 success", func(t *testing.T) {
+		pageSize, err := ListWithPageSize(1)
+		require.NoError(t, err)
+		pageNum, err := ListWithPageNum(1)
+		require.NoError(t, err)
+		svcs = resource.NewList(resource.TypeService)
+		err = store.List(ctx, svcs, pageSize, pageNum)
+		require.NoError(t, err)
+		require.Equal(t, 10, svcs.GetTotalCount())
+		require.Equal(t, 2, svcs.GetNextPage())
+		require.Equal(t, head, svcs.GetAll()[0].ID())
+		// Get the last Page and Element
+		pageNum, err = ListWithPageNum(10)
+		require.NoError(t, err)
+		svcs = resource.NewList(resource.TypeService)
+		err = store.List(ctx, svcs, pageSize, pageNum)
+		require.NoError(t, err)
+		require.Equal(t, 10, svcs.GetTotalCount())
+		require.Equal(t, 0, svcs.GetNextPage())
+		require.Equal(t, tail, svcs.GetAll()[0].ID())
+	})
+	t.Run("Page 1, Size 2 success", func(t *testing.T) {
+		pageSize, err := ListWithPageSize(2)
+		require.NoError(t, err)
+		pageNum, err := ListWithPageNum(1)
+		require.NoError(t, err)
+		svcs = resource.NewList(resource.TypeService)
+		err = store.List(ctx, svcs, pageSize, pageNum)
+		require.NoError(t, err)
+		require.Equal(t, 10, svcs.GetTotalCount())
+		require.Equal(t, 2, svcs.GetNextPage())
+		require.Equal(t, head, svcs.GetAll()[0].ID())
+		// Get the last Page and Element
+		pageNum, err = ListWithPageNum(5)
+		require.NoError(t, err)
+		svcs = resource.NewList(resource.TypeService)
+		err = store.List(ctx, svcs, pageSize, pageNum)
+		require.NoError(t, err)
+		require.Equal(t, 10, svcs.GetTotalCount())
+		require.Equal(t, 0, svcs.GetNextPage())
+		require.Equal(t, tail, svcs.GetAll()[1].ID())
+	})
+	t.Run("Page 1, Size 3 success", func(t *testing.T) {
+		pageSize, err := ListWithPageSize(3)
+		require.NoError(t, err)
+		pageNum, err := ListWithPageNum(1)
+		require.NoError(t, err)
+		svcs = resource.NewList(resource.TypeService)
+		err = store.List(ctx, svcs, pageSize, pageNum)
+		require.NoError(t, err)
+		require.Equal(t, 10, svcs.GetTotalCount())
+		require.Equal(t, 2, svcs.GetNextPage())
+		require.Equal(t, head, svcs.GetAll()[0].ID())
+		// Get the last Page and Element
+		pageNum, err = ListWithPageNum(4)
+		require.NoError(t, err)
+		svcs = resource.NewList(resource.TypeService)
+		err = store.List(ctx, svcs, pageSize, pageNum)
+		require.NoError(t, err)
+		require.Equal(t, 10, svcs.GetTotalCount())
+		require.Equal(t, 0, svcs.GetNextPage())
+		require.Equal(t, tail, svcs.GetAll()[0].ID())
+	})
+	t.Run("Page 1, Size 10 success", func(t *testing.T) {
+		pageSize, err := ListWithPageSize(10)
+		require.NoError(t, err)
+		pageNum, err := ListWithPageNum(1)
+		require.NoError(t, err)
+		svcs = resource.NewList(resource.TypeService)
+		err = store.List(ctx, svcs, pageSize, pageNum)
+		require.NoError(t, err)
+		require.Equal(t, 10, svcs.GetTotalCount())
+		require.Equal(t, 0, svcs.GetNextPage())
+		require.Equal(t, head, svcs.GetAll()[0].ID())
+		require.Equal(t, tail, svcs.GetAll()[9].ID())
+	})
+	t.Run("Page 1, Size 11 success", func(t *testing.T) {
+		pageSize, err := ListWithPageSize(11)
+		require.NoError(t, err)
+		pageNum, err := ListWithPageNum(1)
+		require.NoError(t, err)
+		svcs = resource.NewList(resource.TypeService)
+		err = store.List(ctx, svcs, pageSize, pageNum)
+		require.NoError(t, err)
+		require.Equal(t, 10, svcs.GetTotalCount())
+		require.Equal(t, 0, svcs.GetNextPage())
+		require.Len(t, svcs.GetAll(), 10)
+		require.Equal(t, head, svcs.GetAll()[0].ID())
+		require.Equal(t, tail, svcs.GetAll()[9].ID())
+	})
+	t.Run("Page 11, Size 1 empty", func(t *testing.T) {
+		pageSize, err := ListWithPageSize(1)
+		require.NoError(t, err)
+		pageNum, err := ListWithPageNum(11)
+		require.NoError(t, err)
+		svcs = resource.NewList(resource.TypeService)
+		err = store.List(ctx, svcs, pageSize, pageNum)
+		require.NoError(t, err)
+		require.Equal(t, 0, svcs.GetTotalCount())
+		require.Equal(t, 0, svcs.GetNextPage())
+		require.Len(t, svcs.GetAll(), 0)
+	})
+	t.Run("Page 0, Size 1 fails", func(t *testing.T) {
+		_, err := ListWithPageSize(1)
+		require.NoError(t, err)
+		_, err = ListWithPageNum(0)
+		expectedErr := fmt.Errorf("invalid page '%d', page must be >= 1", 0)
+		require.Error(t, expectedErr, err)
+	})
+	t.Run("Page 1, Size 0 fails", func(t *testing.T) {
+		_, err = ListWithPageNum(1)
+		require.NoError(t, err)
+		_, err := ListWithPageSize(0)
+		expectedErr := fmt.Errorf("invalid page_size '%d', must be within range [1 - 1000]", 0)
+		require.Error(t, expectedErr, err)
+	})
+}
+
 type jsonWrapper struct {
 	Value string `json:"value"`
 }
@@ -850,4 +1000,13 @@ func TestFullListPaging(t *testing.T) {
 		require.Equal(t, expectedKeysBatchOne, keysAsStrings)
 		tx.Rollback()
 	})
+}
+
+func contains(repo []string, search string) bool {
+	for _, v := range repo {
+		if v == search {
+			return true
+		}
+	}
+	return false
 }

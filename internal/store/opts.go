@@ -1,6 +1,8 @@
 package store
 
 import (
+	"fmt"
+
 	"github.com/kong/koko/internal/model"
 )
 
@@ -101,14 +103,20 @@ func ListFor(typ model.Type, id string) ListOptsFunc {
 	}
 }
 
-func ListWithPageNum(page int) ListOptsFunc {
+func ListWithPageNum(page int) (ListOptsFunc, error) {
+	if page < 1 {
+		return nil, fmt.Errorf("invalid page '%d', page must be >= 1", page)
+	}
 	return func(opt *ListOpts) {
 		opt.Page = page
-	}
+	}, nil
 }
 
-func ListWithPageSize(pageSize int) ListOptsFunc {
+func ListWithPageSize(pageSize int) (ListOptsFunc, error) {
+	if pageSize < 1 {
+		return nil, fmt.Errorf("invalid page_size '%d', must be within range [1 - 1000]", pageSize)
+	}
 	return func(opt *ListOpts) {
 		opt.PageSize = pageSize
-	}
+	}, nil
 }
