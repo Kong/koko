@@ -401,7 +401,7 @@ func TestServiceListPagination(t *testing.T) {
 		require.NotEmpty(t, lastID)
 		require.Equal(t, tailID, lastID)
 	})
-	t.Run("list page_size 11 and page 1 returns 10 services with offset=1", func(t *testing.T) {
+	t.Run("list page_size 11 and page 1 returns 10 services with total_count=10", func(t *testing.T) {
 		// Get First Page
 		body := c.GET("/v1/services").
 			WithQuery("cluster.id", "default").

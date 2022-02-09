@@ -25,7 +25,7 @@ func listOptsFromReq(listOpts *pbModel.Pagination) ([]store.ListOptsFunc, error)
 	return listOptFns, nil
 }
 
-func getPagination(totalCount int, nextPage int) *pbModel.PaginationResponse {
+func getPaginationResponse(totalCount int, nextPage int) *pbModel.PaginationResponse {
 	if totalCount == 0 {
 		return nil
 	}

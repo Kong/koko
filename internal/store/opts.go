@@ -114,7 +114,7 @@ func ListWithPageNum(page int) (ListOptsFunc, error) {
 
 func ListWithPageSize(pageSize int) (ListOptsFunc, error) {
 	if pageSize < 1 {
-		return nil, fmt.Errorf("invalid page_size '%d', must be within range [1 - 1000]", pageSize)
+		return nil, fmt.Errorf("invalid page_size '%d', must be within range [1 - %d]", pageSize, MaxPageSize)
 	}
 	return func(opt *ListOpts) {
 		opt.PageSize = pageSize

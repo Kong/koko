@@ -83,7 +83,7 @@ func (s *StatusService) ListStatuses(ctx context.Context,
 
 	return &v1.ListStatusesResponse{
 		Items:      statusesFromObjects(list.GetAll()),
-		Pagination: getPagination(list.GetTotalCount(), list.GetNextPage()),
+		Pagination: getPaginationResponse(list.GetTotalCount(), list.GetNextPage()),
 	}, nil
 }
 

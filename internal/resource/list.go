@@ -9,22 +9,6 @@ type List struct {
 	nextPage   int
 }
 
-func (l *List) SetNextPage(pageNum int) {
-	l.nextPage = pageNum
-}
-
-func (l *List) GetNextPage() int {
-	return l.nextPage
-}
-
-func (l *List) SetTotalCount(count int) {
-	l.totalCount = count
-}
-
-func (l *List) GetTotalCount() int {
-	return l.totalCount
-}
-
 func NewList(typ model.Type) model.ObjectList {
 	return &List{typ: typ}
 }
@@ -39,4 +23,20 @@ func (l *List) Add(object model.Object) {
 
 func (l *List) GetAll() []model.Object {
 	return l.objects
+}
+
+func (l *List) SetNextPage(pageNum int) {
+	l.nextPage = pageNum
+}
+
+func (l *List) GetNextPage() int {
+	return l.nextPage
+}
+
+func (l *List) SetTotalCount(count int) {
+	l.totalCount = count
+}
+
+func (l *List) GetTotalCount() int {
+	return l.totalCount
 }
