@@ -10,11 +10,20 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func goodRoute() *v1.Route {
-	return &v1.Route{
-		Name:  "foo",
-		Paths: []string{"/foo"},
+func goodRoutes() []*v1.Route {
+	routes := []*v1.Route{}
+	routeNames := []string{"foo", "bar", "baz", "buz"}
+	for _, routeName := range routeNames {
+		routes = append(routes, &v1.Route{
+			Name:  routeName,
+			Paths: []string{"/" + routeName},
+		})
 	}
+	return routes
+}
+
+func goodRoute() *v1.Route {
+	return goodRoutes()[0]
 }
 
 func validateGoodRoute(body *httpexpect.Object) {
@@ -221,30 +230,91 @@ func TestRouteRead(t *testing.T) {
 	})
 }
 
+func goodServices() []*v1.Service {
+	services := []*v1.Service{}
+	serviceNames := []string{"qux", "quux"}
+	for _, serviceName := range serviceNames {
+		services = append(services, &v1.Service{
+			Name: serviceName,
+			Host: "example.com",
+			Path: "/" + serviceName,
+		})
+	}
+	return services
+}
+
 func TestRouteList(t *testing.T) {
 	s, cleanup := setup(t)
 	defer cleanup()
 	c := httpexpect.New(t, s.URL)
-	svc := goodRoute()
-	res := c.POST("/v1/routes").WithJSON(svc).Expect()
-	id1 := res.JSON().Path("$.item.id").String().Raw()
-	res.Status(201)
-	svc = &v1.Route{
-		Name:  "bar",
-		Paths: []string{"/foo"},
-	}
-	res = c.POST("/v1/routes").WithJSON(svc).Expect()
-	id2 := res.JSON().Path("$.item.id").String().Raw()
-	res.Status(201)
 
-	t.Run("list returns multiple routes", func(t *testing.T) {
+	// Create multiple services
+	serviceIds := map[string]string{}
+	for _, service := range goodServices() {
+		res := c.POST("/v1/services").WithJSON(service).Expect()
+		res.Status(201)
+		serviceIds[service.Name] = res.JSON().Path("$.item.id").String().Raw()
+	}
+
+	// Create multiple routes
+	//  - associate route "foo" and "bar" with "qux" service
+	//  - associate route "baz" with "quux" service
+	expectedRouteIDs := []string{}
+	expectedRouteIDsByService := map[string][]string{}
+	for _, route := range goodRoutes() {
+		var serviceName string
+		if route.Name == "foo" || route.Name == "bar" {
+			serviceName = "qux"
+		} else if route.Name == "baz" {
+			serviceName = "quux"
+		}
+
+		// Add service ID if applicable
+		if len(serviceName) > 0 {
+			route.Service = &v1.Service{
+				Id: serviceIds[serviceName],
+			}
+		}
+		res := c.POST("/v1/routes").WithJSON(route).Expect()
+		res.Status(201)
+
+		routeID := res.JSON().Path("$.item.id").String().Raw()
+		expectedRouteIDs = append(expectedRouteIDs, routeID)
+		if len(serviceName) > 0 {
+			expectedRouteIDsByService[serviceName] = append(expectedRouteIDsByService[serviceName], routeID)
+		}
+	}
+
+	t.Run("list all routes", func(t *testing.T) {
 		body := c.GET("/v1/routes").Expect().Status(http.StatusOK).JSON().Object()
 		items := body.Value("items").Array()
-		items.Length().Equal(2)
+		items.Length().Equal(len(expectedRouteIDs))
 		var gotIDs []string
 		for _, item := range items.Iter() {
 			gotIDs = append(gotIDs, item.Object().Value("id").String().Raw())
 		}
-		require.ElementsMatch(t, []string{id1, id2}, gotIDs)
+		require.ElementsMatch(t, expectedRouteIDs, gotIDs)
+	})
+
+	t.Run("list routes by service", func(t *testing.T) {
+		totalRoutes := 0
+		for serviceName, expectedRouteIdsByService := range expectedRouteIDsByService {
+			body := c.GET("/v1/routes").WithQuery("service_id", serviceIds[serviceName]).
+				Expect().Status(http.StatusOK).JSON().Object()
+			items := body.Value("items").Array()
+			items.Length().Equal(len(expectedRouteIdsByService))
+			var gotIDs []string
+			for _, item := range items.Iter() {
+				gotIDs = append(gotIDs, item.Object().Value("id").String().Raw())
+			}
+			require.ElementsMatch(t, expectedRouteIdsByService, gotIDs)
+			totalRoutes += len(expectedRouteIdsByService)
+		}
+	})
+
+	t.Run("list routes by service - invalid service id", func(t *testing.T) {
+		body := c.GET("/v1/routes").WithQuery("service_id", "invalid").
+			Expect().Status(http.StatusOK).JSON().Object()
+		body.Empty()
 	})
 }

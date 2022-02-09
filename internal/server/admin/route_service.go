@@ -97,27 +97,22 @@ func (s *RouteService) ListRoutes(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
+
+	// Determine if all routes should be returned or a filtered list
+	serviceID := strings.TrimSpace(req.ServiceId)
+	listFn := []store.ListOptsFunc{}
+	if len(serviceID) > 0 {
+		// Add function for filtering routes associated with service
+		listFn = append(listFn, store.ListFor(resource.TypeService, serviceID))
+	}
+
 	list := resource.NewList(resource.TypeRoute)
-	if err := db.List(ctx, list); err != nil {
+	if err := db.List(ctx, list, listFn...); err != nil {
 		return nil, s.err(err)
 	}
 
-	// Determine if all routes should be returned or a filtered list
-	service := strings.TrimSpace(req.Service)
-	routes := routesFromObjects(list.GetAll())
-	if len(service) > 0 {
-		// Filter routes associated with service
-		routesByService := []*pbModel.Route{}
-		for _, route := range routes {
-			if service == route.Service.Id || service == route.Service.Name {
-				routesByService = append(routesByService, route)
-			}
-		}
-		routes = routesByService
-	}
-
 	return &v1.ListRoutesResponse{
-		Items: routes,
+		Items: routesFromObjects(list.GetAll()),
 	}, nil
 }
 

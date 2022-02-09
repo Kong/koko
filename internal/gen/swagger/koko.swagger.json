@@ -370,7 +370,7 @@
             "type": "string"
           },
           {
-            "name": "service",
+            "name": "serviceId",
             "in": "query",
             "required": false,
             "type": "string"
