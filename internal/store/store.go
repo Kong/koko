@@ -338,7 +338,7 @@ func (s *ObjectStore) List(ctx context.Context, list model.ObjectList, opts ...L
 		return err
 	}
 	list.SetTotalCount(listResult.TotalCount)
-	lastPage := ToLastPage(opt.PageSize, listResult.TotalCount)
+	lastPage := toLastPage(opt.PageSize, listResult.TotalCount)
 	if lastPage > opt.Page {
 		list.SetNextPage(opt.Page + 1)
 	}

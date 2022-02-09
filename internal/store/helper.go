@@ -8,7 +8,8 @@ import (
 
 // returns the full list despite pagination.
 func getFullList(ctx context.Context, tx persistence.Tx, keyPrefix string) (persistence.ListResult, error) {
-	listResult, err := tx.List(ctx, keyPrefix, persistence.NewDefaultListOpts())
+	listOptions := persistence.NewDefaultListOpts()
+	listResult, err := tx.List(ctx, keyPrefix, listOptions)
 	if err != nil {
 		return persistence.ListResult{}, err
 	}
@@ -16,8 +17,9 @@ func getFullList(ctx context.Context, tx persistence.Tx, keyPrefix string) (pers
 		listResult.KVList = []*persistence.KVResult{}
 	}
 	tCount := listResult.TotalCount
-	for kvl := len(listResult.KVList); (kvl > 0) && (tCount > kvl); {
-		currListRes, err := tx.List(ctx, keyPrefix, persistence.NewDefaultListOpts())
+	for kvl := len(listResult.KVList); (kvl > 0) && (tCount > kvl); kvl = len(listResult.KVList) {
+		listOptions.Offset += listOptions.Limit
+		currListRes, err := tx.List(ctx, keyPrefix, listOptions)
 		if err != nil {
 			return persistence.ListResult{}, err
 		}
@@ -41,7 +43,7 @@ func toOffset(opts *ListOpts) int {
 	return opts.PageSize * (opts.Page - 1)
 }
 
-func ToLastPage(pageSize int, totalItems int) int {
+func toLastPage(pageSize int, totalItems int) int {
 	if pageSize >= totalItems {
 		return 1
 	}
