@@ -225,26 +225,127 @@ func TestRouteList(t *testing.T) {
 	s, cleanup := setup(t)
 	defer cleanup()
 	c := httpexpect.New(t, s.URL)
-	svc := goodRoute()
-	res := c.POST("/v1/routes").WithJSON(svc).Expect()
-	id1 := res.JSON().Path("$.item.id").String().Raw()
+
+	svc := &v1.Service{
+		Name: "foo",
+		Host: "example.com",
+		Path: "/foo",
+	}
+	res := c.POST("/v1/services").WithJSON(svc).Expect()
 	res.Status(201)
-	svc = &v1.Route{
+	serviceID1 := res.JSON().Path("$.item.id").String().Raw()
+	svc = &v1.Service{
+		Name: "bar",
+		Host: "example.com",
+		Path: "/bar",
+	}
+	res = c.POST("/v1/services").WithJSON(svc).Expect()
+	res.Status(201)
+	serviceID2 := res.JSON().Path("$.item.id").String().Raw()
+	svc = &v1.Service{
+		Name: "baz",
+		Host: "example.com",
+		Path: "/baz",
+	}
+	res = c.POST("/v1/services").WithJSON(svc).Expect()
+	res.Status(201)
+	serviceID3 := res.JSON().Path("$.item.id").String().Raw()
+
+	rte := goodRoute()
+	res = c.POST("/v1/routes").WithJSON(rte).Expect()
+	res.Status(201)
+	routeID1 := res.JSON().Path("$.item.id").String().Raw()
+	rte = &v1.Route{
 		Name:  "bar",
 		Paths: []string{"/foo"},
 	}
-	res = c.POST("/v1/routes").WithJSON(svc).Expect()
-	id2 := res.JSON().Path("$.item.id").String().Raw()
+	res = c.POST("/v1/routes").WithJSON(rte).Expect()
 	res.Status(201)
+	routeID2 := res.JSON().Path("$.item.id").String().Raw()
+	rte = &v1.Route{
+		Name:  "qux",
+		Paths: []string{"/qux"},
+		Service: &v1.Service{
+			Id: serviceID1,
+		},
+	}
+	res = c.POST("/v1/routes").WithJSON(rte).Expect()
+	res.Status(201)
+	routeID3 := res.JSON().Path("$.item.id").String().Raw()
+	rte = &v1.Route{
+		Name:  "quux",
+		Paths: []string{"/quux"},
+		Service: &v1.Service{
+			Id: serviceID1,
+		},
+	}
+	res = c.POST("/v1/routes").WithJSON(rte).Expect()
+	res.Status(201)
+	routeID4 := res.JSON().Path("$.item.id").String().Raw()
+	rte = &v1.Route{
+		Name:  "quuz",
+		Paths: []string{"/quuz"},
+		Service: &v1.Service{
+			Id: serviceID2,
+		},
+	}
+	res = c.POST("/v1/routes").WithJSON(rte).Expect()
+	res.Status(201)
+	routeID5 := res.JSON().Path("$.item.id").String().Raw()
 
-	t.Run("list returns multiple routes", func(t *testing.T) {
+	t.Run("list all routes", func(t *testing.T) {
 		body := c.GET("/v1/routes").Expect().Status(http.StatusOK).JSON().Object()
+		items := body.Value("items").Array()
+		items.Length().Equal(5)
+		var gotIDs []string
+		for _, item := range items.Iter() {
+			gotIDs = append(gotIDs, item.Object().Value("id").String().Raw())
+		}
+		require.ElementsMatch(t, []string{
+			routeID1,
+			routeID2,
+			routeID3,
+			routeID4,
+			routeID5,
+		}, gotIDs)
+	})
+
+	t.Run("list routes by service", func(t *testing.T) {
+		body := c.GET("/v1/routes").WithQuery("service_id", serviceID1).
+			Expect().Status(http.StatusOK).JSON().Object()
 		items := body.Value("items").Array()
 		items.Length().Equal(2)
 		var gotIDs []string
 		for _, item := range items.Iter() {
 			gotIDs = append(gotIDs, item.Object().Value("id").String().Raw())
 		}
-		require.ElementsMatch(t, []string{id1, id2}, gotIDs)
+		require.ElementsMatch(t, []string{
+			routeID3,
+			routeID4,
+		}, gotIDs)
+
+		body = c.GET("/v1/routes").WithQuery("service_id", serviceID2).
+			Expect().Status(http.StatusOK).JSON().Object()
+		items = body.Value("items").Array()
+		items.Length().Equal(1)
+		gotIDs = nil
+		for _, item := range items.Iter() {
+			gotIDs = append(gotIDs, item.Object().Value("id").String().Raw())
+		}
+		require.ElementsMatch(t, []string{routeID5}, gotIDs)
+	})
+
+	t.Run("list routes by service - no routes associated with service", func(t *testing.T) {
+		body := c.GET("/v1/routes").WithQuery("service_id", serviceID3).
+			Expect().Status(http.StatusOK).JSON().Object()
+		body.Empty()
+	})
+
+	t.Run("list routes by service - invalid service UUID", func(t *testing.T) {
+		body := c.GET("/v1/routes").WithQuery("service_id", "invalid-uuid").
+			Expect().Status(http.StatusBadRequest).JSON().Object()
+		body.Keys().Length().Equal(2)
+		body.ValueEqual("code", 3)
+		body.ValueEqual("message", "service_id 'invalid-uuid' is not a UUID")
 	})
 }
