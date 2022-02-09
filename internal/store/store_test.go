@@ -5,10 +5,13 @@ import (
 	encodingJSON "encoding/json"
 	"errors"
 	"fmt"
+	"sort"
+	"strings"
 	"testing"
 
 	"github.com/google/uuid"
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
+	protoJSON "github.com/kong/koko/internal/json"
 	"github.com/kong/koko/internal/log"
 	"github.com/kong/koko/internal/model"
 	"github.com/kong/koko/internal/model/json/validation"
@@ -796,5 +799,55 @@ func TestStoredValue(t *testing.T) {
 		// check a wrapper type was rendered correctly,
 		// this fails if a protobuf unaware parser is used
 		require.True(t, v.Object["request_buffering"].(bool))
+	})
+}
+
+type jsonWrapper struct {
+	Value string `json:"value"`
+}
+
+func json(value string) []byte {
+	res, err := protoJSON.Marshal(jsonWrapper{value})
+	if err != nil {
+		panic(fmt.Sprintf("marshal json: %v", err))
+	}
+	return res
+}
+
+func TestFullListPaging(t *testing.T) {
+	p, err := util.GetPersister()
+	require.Nil(t, err)
+	t.Run("we retrieve full list despite default pagination", func(t *testing.T) {
+		ctx := context.Background()
+		tx, err := p.Tx(ctx)
+		require.Nil(t, err)
+		var expectedValuesBatchOne, expectedKeysBatchOne []string
+		for i := 0; i < 100; i++ { // TODO: Increasing to 101 hangs
+			value := json(fmt.Sprintf("prefix-value-%06d", i))
+			key := fmt.Sprintf("myprefix/key%06d", i)
+			err = tx.Put(ctx, key, value)
+			require.Nil(t, err)
+			expectedKeysBatchOne = append(expectedKeysBatchOne, key)
+			expectedValuesBatchOne = append(expectedValuesBatchOne, string(value))
+		}
+
+		listResult, err := getFullList(ctx, tx, "myprefix/")
+		require.Nil(t, err)
+		require.Equal(t, 100, listResult.TotalCount)
+		var valuesAsStrings []string
+		var keysAsStrings []string
+		for _, kv := range listResult.KVList {
+			key := string(kv.Key)
+			value := string(kv.Value)
+			keysAsStrings = append(keysAsStrings, key)
+			value = strings.ReplaceAll(value, " ", "")
+			valuesAsStrings = append(valuesAsStrings, value)
+		}
+		sort.Strings(keysAsStrings)
+		sort.Strings(expectedKeysBatchOne)
+		sort.Strings(valuesAsStrings)
+		sort.Strings(expectedValuesBatchOne)
+		require.Equal(t, expectedKeysBatchOne, keysAsStrings)
+		tx.Rollback()
 	})
 }
