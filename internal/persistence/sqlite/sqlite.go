@@ -197,7 +197,7 @@ func (t *sqliteTx) List(ctx context.Context, prefix string, opts *persistence.Li
 		return persistence.ListResult{}, err
 	}
 	var res persistence.ListResult
-	kvlist := make([]*persistence.KVResult, 0, opts.Limit)
+	kvlist := make([]persistence.KVResult, 0, opts.Limit)
 	tcSet := false
 	var discard int
 	for rows.Next() {
@@ -212,7 +212,7 @@ func (t *sqliteTx) List(ctx context.Context, prefix string, opts *persistence.Li
 		if err != nil {
 			return persistence.ListResult{}, err
 		}
-		kvlist = append(kvlist, &kvr)
+		kvlist = append(kvlist, kvr)
 	}
 	res.KVList = kvlist
 	return res, nil

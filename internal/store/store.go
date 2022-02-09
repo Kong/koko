@@ -366,9 +366,7 @@ func (s *ObjectStore) referencedList(ctx context.Context, list model.ObjectList,
 		if err != nil {
 			return err
 		}
-		if listResult.KVList == nil {
-			listResult.KVList = []*persistence.KVResult{}
-		}
+
 		keyPrefixLen := len(keyPrefix)
 		for _, kv := range listResult.KVList {
 			key := string(kv.Key)

@@ -36,7 +36,7 @@ type KVResult struct {
 }
 
 type ListResult struct {
-	KVList     []*KVResult
+	KVList     []KVResult
 	TotalCount int
 }
 

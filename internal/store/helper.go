@@ -13,9 +13,6 @@ func getFullList(ctx context.Context, tx persistence.Tx, keyPrefix string) (pers
 	if err != nil {
 		return persistence.ListResult{}, err
 	}
-	if listResult.KVList == nil {
-		listResult.KVList = []*persistence.KVResult{}
-	}
 	tCount := listResult.TotalCount
 	for kvl := len(listResult.KVList); (kvl > 0) && (tCount > kvl); kvl = len(listResult.KVList) {
 		listOptions.Offset += listOptions.Limit

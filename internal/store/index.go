@@ -212,9 +212,6 @@ func (s *ObjectStore) checkForeignIndexesForDelete(ctx context.Context,
 	if err != nil {
 		return err
 	}
-	if listResult.KVList == nil {
-		listResult.KVList = []*persistence.KVResult{}
-	}
 	if len(listResult.KVList) > 0 {
 		refTypeID := strings.TrimPrefix(string(listResult.KVList[0].Key), key+"/")
 		typeAndID := strings.Split(refTypeID, "/")
