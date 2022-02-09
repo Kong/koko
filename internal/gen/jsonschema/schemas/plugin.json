@@ -26,7 +26,6 @@
       "type": "string"
     },
     "protocols": {
-      "maxLength": 8,
       "items": {
         "enum": [
           "http",
@@ -39,6 +38,7 @@
         ],
         "type": "string"
       },
+      "maxItems": 8,
       "type": "array"
     },
     "route": {

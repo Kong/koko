@@ -1,17 +1,21 @@
 package typedefs
 
 import (
+	"fmt"
+
 	"github.com/kong/koko/internal/model/json/generator"
 )
 
 const (
-	maxNameLength = 128
-	maxPort       = 65535
-	maxTimeout    = (1 << 31) - 2 //nolint:gomnd
-	maxTags       = 8
-	namePattern   = `^[0-9a-zA-Z.\-_~]*$`
+	maxNameLength     = 128
+	maxPort           = 65535
+	maxTimeout        = (1 << 31) - 2 //nolint:gomnd
+	maxTags           = 8
+	namePattern       = `^[0-9a-zA-Z.\-_~]*$`
+	maxHostnameLength = 256
+	maxPathLength     = 1024
 
-	HTTPHeaderNamePattern = "^[A-Za-z0-9!#$%&'*+-.^_|~]+$"
+	HTTPHeaderNamePattern = "^[A-Za-z0-9!#$%&'*+-.^_|~]{1,64}$"
 )
 
 var ID = &generator.Schema{
@@ -60,6 +64,7 @@ var Host = &generator.Schema{
 	Description: "must be a valid hostname",
 	Type:        "string",
 	Pattern:     "^[a-z0-9]([-a-z0-9]*[a-z0-9])?(.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$",
+	MaxLength:   maxHostnameLength,
 }
 
 var Port = &generator.Schema{
@@ -90,6 +95,10 @@ var Path = &generator.Schema{
 		{
 			Description: "must begin with `/`",
 			Pattern:     "^/.*",
+		},
+		{
+			Description: fmt.Sprintf("length must not exceed %d", maxPathLength),
+			MaxLength:   maxPathLength,
 		},
 		{
 			Not: &generator.Schema{

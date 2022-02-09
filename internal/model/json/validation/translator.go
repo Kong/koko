@@ -111,7 +111,11 @@ func (t ErrorTranslator) getErr(schemaErr jsonschema.Detailed,
 		case "patternProperties":
 			fallthrough
 		case "anyOf":
-			message = schema.Description
+			if schema != nil {
+				message = schema.Description
+			} else {
+				message = schemaErr.Error
+			}
 		case "pattern":
 			message = fmt.Sprintf("must match pattern '%v'",
 				schema.Pattern.String())

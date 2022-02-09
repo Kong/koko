@@ -16,6 +16,9 @@ import (
 const (
 	// TypeRoute denotes the Route type.
 	TypeRoute model.Type = "route"
+
+	maxMatchElements     = 16
+	maxHeaderValueLength = 64
 )
 
 var (
@@ -153,21 +156,25 @@ func init() {
 			"methods": {
 				Type: "array",
 				Items: &generator.Schema{
-					Type:    "string",
-					Pattern: "^[A-Z]+$",
+					Type:     "string",
+					Pattern:  "^[A-Z]+$",
+					MaxItems: maxMatchElements,
 				},
 			},
 			"hosts": {
-				Type:  "array",
-				Items: typedefs.Host,
+				Type:     "array",
+				Items:    typedefs.Host,
+				MaxItems: maxMatchElements,
 			},
 			"paths": {
-				Type:  "array",
-				Items: typedefs.Path,
+				Type:     "array",
+				Items:    typedefs.Path,
+				MaxItems: maxMatchElements,
 			},
 			"headers": {
 				Type:                 "object",
 				AdditionalProperties: &falsy,
+				MaxProperties:        maxMatchElements,
 				PatternProperties: map[string]*generator.Schema{
 					"^[Hh][Oo][Ss][Tt]$": {
 						Not: &generator.Schema{
@@ -178,9 +185,11 @@ func init() {
 						Type: "object",
 						Properties: map[string]*generator.Schema{
 							"values": {
-								Type: "array",
+								Type:     "array",
+								MaxItems: maxMatchElements,
 								Items: &generator.Schema{
-									Type: "string",
+									Type:      "string",
+									MaxLength: maxHeaderValueLength,
 								},
 							},
 						},
@@ -221,16 +230,19 @@ func init() {
 				Type: "boolean",
 			},
 			"snis": {
-				Type:  "array",
-				Items: typedefs.Host,
+				Type:     "array",
+				Items:    typedefs.Host,
+				MaxItems: maxMatchElements,
 			},
 			"sources": {
-				Type:  "array",
-				Items: typedefs.CIDRPort,
+				Type:     "array",
+				Items:    typedefs.CIDRPort,
+				MaxItems: maxMatchElements,
 			},
 			"destinations": {
-				Type:  "array",
-				Items: typedefs.CIDRPort,
+				Type:     "array",
+				Items:    typedefs.CIDRPort,
+				MaxItems: maxMatchElements,
 			},
 			// TODO "service": find a way to reference
 			"tags":       typedefs.Tags,
