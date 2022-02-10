@@ -946,7 +946,7 @@ func TestFullListPaging(t *testing.T) {
 		tx, err := p.Tx(ctx)
 		require.Nil(t, err)
 		var expectedValuesBatchOne, expectedKeysBatchOne []string
-		for i := 0; i < 175; i++ { // TODO: Increasing to 101 hangs
+		for i := 0; i < 175; i++ {
 			value := json(fmt.Sprintf("prefix-value-%06d", i))
 			key := fmt.Sprintf("myprefix/key%06d", i)
 			err = tx.Put(ctx, key, value)

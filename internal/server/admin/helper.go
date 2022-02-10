@@ -12,7 +12,7 @@ func validateListOptions(listOpts *pbModel.Pagination) error {
 		return fmt.Errorf("invalid page '%d', page must be > 0", listOpts.Page)
 	}
 	if listOpts.Size < 0 || listOpts.Size > store.MaxPageSize {
-		return fmt.Errorf("invalid page_size '%d', must be within range [1 - 1000]", listOpts.Size)
+		return fmt.Errorf("invalid page_size '%d', must be within range [1 - %d]", listOpts.Size, store.MaxPageSize)
 	}
 	return nil
 }
