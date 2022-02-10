@@ -596,24 +596,38 @@ func TestPluginList(t *testing.T) {
 	t.Run("list returns multiple plugins with paging", func(t *testing.T) {
 		// Get First Page
 		body := c.GET("/v1/plugins").
-			WithQuery("pagination.size", "1").
+			WithQuery("pagination.size", "4").
 			WithQuery("pagination.page", "1").
 			Expect().Status(http.StatusOK).JSON().Object()
 		items := body.Value("items").Array()
-		items.Length().Equal(1)
-		id1Got := items.Element(0).Object().Value("id").String().Raw()
-		body.Value("pagination").Object().Value("total_count").Number().Equal(2)
+		items.Length().Equal(4)
+		var gotIDs []string
+		for _, item := range items.Iter() {
+			gotIDs = append(gotIDs, item.Object().Value("id").String().Raw())
+		}
+		body.Value("pagination").Object().Value("total_count").Number().Equal(8)
 		body.Value("pagination").Object().Value("next_page").Number().Equal(2)
 		// Get second page
 		body = c.GET("/v1/plugins").
-			WithQuery("pagination.size", "1").
+			WithQuery("pagination.size", "4").
 			WithQuery("pagination.page", "2").
 			Expect().Status(http.StatusOK).JSON().Object()
 		items = body.Value("items").Array()
-		items.Length().Equal(1)
-		id2Got := items.Element(0).Object().Value("id").String().Raw()
-		body.Value("pagination").Object().Value("total_count").Number().Equal(2)
+		items.Length().Equal(4)
+		for _, item := range items.Iter() {
+			gotIDs = append(gotIDs, item.Object().Value("id").String().Raw())
+		}
+		body.Value("pagination").Object().Value("total_count").Number().Equal(8)
 		body.Value("pagination").Object().NotContainsKey("next_page")
-		require.ElementsMatch(t, []string{id1, id2}, []string{id1Got, id2Got})
+		require.ElementsMatch(t, []string{
+			pluginID1,
+			pluginID2,
+			pluginID3,
+			pluginID4,
+			pluginID5,
+			pluginID6,
+			pluginID7,
+			pluginID8,
+		}, gotIDs)
 	})
 }
