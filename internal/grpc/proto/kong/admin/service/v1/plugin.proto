@@ -77,6 +77,7 @@ message DeletePluginResponse{
 message ListPluginsRequest{
   model.v1.RequestCluster cluster = 1;
   string service_id = 2;
+  string route_id = 3;
 }
 
 message ListPluginsResponse{
