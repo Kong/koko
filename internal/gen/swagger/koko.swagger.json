@@ -188,6 +188,18 @@
             "in": "query",
             "required": false,
             "type": "string"
+          },
+          {
+            "name": "serviceId",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "routeId",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [

@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 
+	"github.com/google/uuid"
 	pbModel "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/service/v1"
 	"github.com/kong/koko/internal/model"
@@ -96,10 +98,35 @@ func (s *PluginService) ListPlugins(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
+
+	serviceID := strings.TrimSpace(req.GetServiceId())
+	routeID := strings.TrimSpace(req.GetRouteId())
+	listFn := []store.ListOptsFunc{}
+	if len(serviceID) > 0 && len(routeID) > 0 {
+		return nil, s.err(util.ErrClient{Message: "service_id and route_id are mutually exclusive"})
+	}
+
+	if len(serviceID) > 0 {
+		if _, err := uuid.Parse(serviceID); err != nil {
+			return nil, s.err(util.ErrClient{
+				Message: fmt.Sprintf("service_id '%s' is not a UUID", req.GetServiceId()),
+			})
+		}
+		listFn = append(listFn, store.ListFor(resource.TypeService, serviceID))
+	} else if len(routeID) > 0 {
+		if _, err := uuid.Parse(routeID); err != nil {
+			return nil, s.err(util.ErrClient{
+				Message: fmt.Sprintf("route_id '%s' is not a UUID", req.GetRouteId()),
+			})
+		}
+		listFn = append(listFn, store.ListFor(resource.TypeRoute, routeID))
+	}
+
 	list := resource.NewList(resource.TypePlugin)
-	if err := db.List(ctx, list); err != nil {
+	if err := db.List(ctx, list, listFn...); err != nil {
 		return nil, s.err(err)
 	}
+
 	return &v1.ListPluginsResponse{
 		Items: pluginsFromObjects(list.GetAll()),
 	}, nil

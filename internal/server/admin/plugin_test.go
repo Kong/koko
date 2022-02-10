@@ -344,30 +344,253 @@ func TestPluginList(t *testing.T) {
 	s, cleanup := setup(t)
 	defer cleanup()
 	c := httpexpect.New(t, s.URL)
+
+	svc := &v1.Service{
+		Name: "foo",
+		Host: "example.com",
+		Path: "/foo",
+	}
+	res := c.POST("/v1/services").WithJSON(svc).Expect()
+	res.Status(201)
+	serviceID1 := res.JSON().Path("$.item.id").String().Raw()
+	svc = &v1.Service{
+		Name: "bar",
+		Host: "example.com",
+		Path: "/bar",
+	}
+	res = c.POST("/v1/services").WithJSON(svc).Expect()
+	res.Status(201)
+	serviceID2 := res.JSON().Path("$.item.id").String().Raw()
+	svc = &v1.Service{
+		Name: "baz",
+		Host: "example.com",
+		Path: "/baz",
+	}
+	res = c.POST("/v1/services").WithJSON(svc).Expect()
+	res.Status(201)
+	serviceID3 := res.JSON().Path("$.item.id").String().Raw()
+
+	rte := &v1.Route{
+		Name:  "qux",
+		Paths: []string{"/qux"},
+	}
+	res = c.POST("/v1/routes").WithJSON(rte).Expect()
+	res.Status(201)
+	routeID1 := res.JSON().Path("$.item.id").String().Raw()
+	rte = &v1.Route{
+		Name:  "quux",
+		Paths: []string{"/quux"},
+	}
+	res = c.POST("/v1/routes").WithJSON(rte).Expect()
+	res.Status(201)
+	routeID2 := res.JSON().Path("$.item.id").String().Raw()
+	rte = &v1.Route{
+		Name:  "quuz",
+		Paths: []string{"/quuz"},
+	}
+	res = c.POST("/v1/routes").WithJSON(rte).Expect()
+	res.Status(201)
+	routeID3 := res.JSON().Path("$.item.id").String().Raw()
+
 	pluginBytes, err := json.Marshal(goodKeyAuthPlugin())
 	require.Nil(t, err)
-	res := c.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
-	id1 := res.JSON().Path("$.item.id").String().Raw()
+	res = c.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
 	res.Status(201)
-	plugin := &v1.Plugin{
+	pluginID1 := res.JSON().Path("$.item.id").String().Raw()
+	plg := &v1.Plugin{
 		Name:      "request-transformer",
 		Enabled:   wrapperspb.Bool(true),
 		Protocols: []string{"http", "https"},
 	}
-	pluginBytes, err = json.Marshal(plugin)
+	pluginBytes, err = json.Marshal(plg)
 	require.Nil(t, err)
 	res = c.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
-	id2 := res.JSON().Path("$.item.id").String().Raw()
 	res.Status(201)
+	pluginID2 := res.JSON().Path("$.item.id").String().Raw()
+	plg = &v1.Plugin{
+		Name:      "basic-auth",
+		Enabled:   wrapperspb.Bool(true),
+		Protocols: []string{"http", "https"},
+		Service: &v1.Service{
+			Id: serviceID1,
+		},
+	}
+	pluginBytes, err = json.Marshal(plg)
+	require.Nil(t, err)
+	res = c.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
+	res.Status(201)
+	pluginID3 := res.JSON().Path("$.item.id").String().Raw()
+	plg = &v1.Plugin{
+		Name:      "bot-detection",
+		Enabled:   wrapperspb.Bool(true),
+		Protocols: []string{"http", "https"},
+		Service: &v1.Service{
+			Id: serviceID1,
+		},
+	}
+	pluginBytes, err = json.Marshal(plg)
+	require.Nil(t, err)
+	res = c.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
+	res.Status(201)
+	pluginID4 := res.JSON().Path("$.item.id").String().Raw()
+	plg = &v1.Plugin{
+		Name:      "cors",
+		Enabled:   wrapperspb.Bool(true),
+		Protocols: []string{"http", "https"},
+		Service: &v1.Service{
+			Id: serviceID2,
+		},
+	}
+	pluginBytes, err = json.Marshal(plg)
+	require.Nil(t, err)
+	res = c.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
+	res.Status(201)
+	pluginID5 := res.JSON().Path("$.item.id").String().Raw()
+	plg = &v1.Plugin{
+		Name:      "hmac-auth",
+		Enabled:   wrapperspb.Bool(true),
+		Protocols: []string{"http", "https"},
+		Route: &v1.Route{
+			Id: routeID1,
+		},
+	}
+	pluginBytes, err = json.Marshal(plg)
+	require.Nil(t, err)
+	res = c.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
+	res.Status(201)
+	pluginID6 := res.JSON().Path("$.item.id").String().Raw()
+	plg = &v1.Plugin{
+		Name:      "jwt",
+		Enabled:   wrapperspb.Bool(true),
+		Protocols: []string{"http", "https"},
+		Route: &v1.Route{
+			Id: routeID2,
+		},
+	}
+	pluginBytes, err = json.Marshal(plg)
+	require.Nil(t, err)
+	res = c.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
+	res.Status(201)
+	pluginID7 := res.JSON().Path("$.item.id").String().Raw()
+	plg = &v1.Plugin{
+		Name:      "request-size-limiting",
+		Enabled:   wrapperspb.Bool(true),
+		Protocols: []string{"http", "https"},
+		Route: &v1.Route{
+			Id: routeID2,
+		},
+	}
+	pluginBytes, err = json.Marshal(plg)
+	require.Nil(t, err)
+	res = c.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
+	res.Status(201)
+	pluginID8 := res.JSON().Path("$.item.id").String().Raw()
 
-	t.Run("list returns multiple plugins", func(t *testing.T) {
+	t.Run("list all plugins", func(t *testing.T) {
 		body := c.GET("/v1/plugins").Expect().Status(http.StatusOK).JSON().Object()
+		items := body.Value("items").Array()
+		items.Length().Equal(8)
+		var gotIDs []string
+		for _, item := range items.Iter() {
+			gotIDs = append(gotIDs, item.Object().Value("id").String().Raw())
+		}
+		require.ElementsMatch(t, []string{
+			pluginID1,
+			pluginID2,
+			pluginID3,
+			pluginID4,
+			pluginID5,
+			pluginID6,
+			pluginID7,
+			pluginID8,
+		}, gotIDs)
+	})
+
+	t.Run("list plugins by service", func(t *testing.T) {
+		body := c.GET("/v1/plugins").WithQuery("service_id", serviceID1).
+			Expect().Status(http.StatusOK).JSON().Object()
 		items := body.Value("items").Array()
 		items.Length().Equal(2)
 		var gotIDs []string
 		for _, item := range items.Iter() {
 			gotIDs = append(gotIDs, item.Object().Value("id").String().Raw())
 		}
-		require.ElementsMatch(t, []string{id1, id2}, gotIDs)
+		require.ElementsMatch(t, []string{
+			pluginID3,
+			pluginID4,
+		}, gotIDs)
+
+		body = c.GET("/v1/plugins").WithQuery("service_id", serviceID2).
+			Expect().Status(http.StatusOK).JSON().Object()
+		items = body.Value("items").Array()
+		items.Length().Equal(1)
+		gotIDs = nil
+		for _, item := range items.Iter() {
+			gotIDs = append(gotIDs, item.Object().Value("id").String().Raw())
+		}
+		require.ElementsMatch(t, []string{pluginID5}, gotIDs)
+	})
+
+	t.Run("list plugins by service - no plugins associated with service", func(t *testing.T) {
+		body := c.GET("/v1/plugins").WithQuery("service_id", serviceID3).
+			Expect().Status(http.StatusOK).JSON().Object()
+		body.Empty()
+	})
+
+	t.Run("list plugins by service - invalid service UUID", func(t *testing.T) {
+		body := c.GET("/v1/plugins").WithQuery("service_id", "invalid-uuid").
+			Expect().Status(http.StatusBadRequest).JSON().Object()
+		body.Keys().Length().Equal(2)
+		body.ValueEqual("code", 3)
+		body.ValueEqual("message", "service_id 'invalid-uuid' is not a UUID")
+	})
+
+	t.Run("list plugins by route", func(t *testing.T) {
+		body := c.GET("/v1/plugins").WithQuery("route_id", routeID1).
+			Expect().Status(http.StatusOK).JSON().Object()
+		items := body.Value("items").Array()
+		items.Length().Equal(1)
+		var gotIDs []string
+		for _, item := range items.Iter() {
+			gotIDs = append(gotIDs, item.Object().Value("id").String().Raw())
+		}
+		require.ElementsMatch(t, []string{pluginID6}, gotIDs)
+
+		body = c.GET("/v1/plugins").WithQuery("route_id", routeID2).
+			Expect().Status(http.StatusOK).JSON().Object()
+		items = body.Value("items").Array()
+		items.Length().Equal(2)
+		gotIDs = nil
+		for _, item := range items.Iter() {
+			gotIDs = append(gotIDs, item.Object().Value("id").String().Raw())
+		}
+		require.ElementsMatch(t, []string{
+			pluginID7,
+			pluginID8,
+		}, gotIDs)
+	})
+
+	t.Run("list plugins by route - no plugins associated with route", func(t *testing.T) {
+		body := c.GET("/v1/plugins").WithQuery("route_id", routeID3).
+			Expect().Status(http.StatusOK).JSON().Object()
+		body.Empty()
+	})
+
+	t.Run("list plugins by route - invalid route UUID", func(t *testing.T) {
+		body := c.GET("/v1/plugins").WithQuery("route_id", "invalid-uuid").
+			Expect().Status(http.StatusBadRequest).JSON().Object()
+		body.Keys().Length().Equal(2)
+		body.ValueEqual("code", 3)
+		body.ValueEqual("message", "route_id 'invalid-uuid' is not a UUID")
+	})
+
+	t.Run("list plugins by route and service - invalid request", func(t *testing.T) {
+		body := c.GET("/v1/plugins").
+			WithQuery("service_id", serviceID2).
+			WithQuery("route_id", routeID1).
+			Expect().Status(http.StatusBadRequest).JSON().Object()
+		body.Keys().Length().Equal(2)
+		body.ValueEqual("code", 3)
+		body.ValueEqual("message", "service_id and route_id are mutually exclusive")
 	})
 }
