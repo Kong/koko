@@ -41,6 +41,7 @@ type ListResult struct {
 }
 
 const (
+	MaxLimit      = 1000
 	DefaultLimit  = 100
 	DefaultOffset = 0
 )

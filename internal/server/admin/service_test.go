@@ -267,7 +267,7 @@ func TestServiceListPagination(t *testing.T) {
 	body.Value("pagination").Object().Value("total_count").Number().Equal(10)
 	body.Value("pagination").Object().NotContainsKey("next_page")
 
-	t.Run("list size 1 page 10 returns 1 service total_count=10", func(t *testing.T) {
+	t.Run("list size 1 page 1 returns 1 service total_count=10", func(t *testing.T) {
 		// Get First Page
 		body := c.GET("/v1/services").
 			WithQuery("cluster.id", "default").
@@ -297,7 +297,7 @@ func TestServiceListPagination(t *testing.T) {
 		require.NotEmpty(t, lastID)
 		require.Equal(t, tailID, lastID)
 	})
-	t.Run("list page_size 2 and page 10 returns 2 services with total_count=10", func(t *testing.T) {
+	t.Run("list page_size 2 and page 1 returns 2 services with total_count=10", func(t *testing.T) {
 		// Get First Page
 		body := c.GET("/v1/services").
 			WithQuery("cluster.id", "default").
@@ -326,7 +326,7 @@ func TestServiceListPagination(t *testing.T) {
 		require.NotEmpty(t, lastID)
 		require.Equal(t, tailID, lastID)
 	})
-	t.Run("list page_size 3 and page 10 returns 3 services with total_count=10", func(t *testing.T) {
+	t.Run("list page_size 3 and page 1 returns 3 services with total_count=10", func(t *testing.T) {
 		// Get First Page
 		body := c.GET("/v1/services").
 			WithQuery("cluster.id", "default").
@@ -354,7 +354,7 @@ func TestServiceListPagination(t *testing.T) {
 		require.NotEmpty(t, lastID)
 		require.Equal(t, tailID, lastID)
 	})
-	t.Run("list page_size 4 and page 10 returns 4 services with total_count=10", func(t *testing.T) {
+	t.Run("list page_size 4 and page 1 returns 4 services with total_count=10", func(t *testing.T) {
 		// Get First Page
 		body := c.GET("/v1/services").
 			WithQuery("cluster.id", "default").
@@ -464,7 +464,7 @@ func TestServiceListPagination(t *testing.T) {
 		require.NotEmpty(t, lastID)
 		require.Equal(t, tailID, lastID)
 	})
-	t.Run("list > 1001 page size and page 10 returns error", func(t *testing.T) {
+	t.Run("list > 1001 page size and page 1 returns error", func(t *testing.T) {
 		// Get First Page
 		body := c.GET("/v1/services").
 			WithQuery("cluster.id", "default").

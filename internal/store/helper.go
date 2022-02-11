@@ -6,26 +6,18 @@ import (
 	"github.com/kong/koko/internal/persistence"
 )
 
-// returns the full list despite pagination.
+// getFullList returns the full list despite pagination.
 func getFullList(ctx context.Context, tx persistence.Tx, keyPrefix string) (persistence.ListResult, error) {
 	listOptions := persistence.NewDefaultListOpts()
+	listOptions.Limit = persistence.MaxLimit
 	listResult, err := tx.List(ctx, keyPrefix, listOptions)
 	if err != nil {
 		return persistence.ListResult{}, err
 	}
-	tCount := listResult.TotalCount
-	for kvl := len(listResult.KVList); (kvl > 0) && (tCount > kvl); kvl = len(listResult.KVList) {
-		listOptions.Offset += listOptions.Limit
-		currListRes, err := tx.List(ctx, keyPrefix, listOptions)
-		if err != nil {
-			return persistence.ListResult{}, err
-		}
-		listResult.KVList = append(listResult.KVList, currListRes.KVList...)
-	}
 	return listResult, nil
 }
 
-// Converts store Page and Page Size to Limit and Offset.
+// getPersistenceListOptions Converts store Page and Page Size to Limit and Offset.
 func getPersistenceListOptions(opts *ListOpts) *persistence.ListOpts {
 	return &persistence.ListOpts{
 		Limit:  opts.PageSize,
@@ -40,7 +32,7 @@ func toOffset(opts *ListOpts) int {
 	return opts.PageSize * (opts.Page - 1)
 }
 
-// Calculate the last page based on totalItems and pageSize.
+// toLastPage calculates the last page based on totalItems and pageSize.
 func toLastPage(pageSize int, totalItems int) int {
 	if pageSize >= totalItems {
 		return 1

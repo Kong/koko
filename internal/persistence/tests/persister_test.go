@@ -223,7 +223,6 @@ func TestPersister(t *testing.T) {
 			require.Len(t, listResult.KVList, 0)
 		})
 	})
-
 	t.Run("Tx()", func(t *testing.T) {
 		t.Run("transaction rollbacks correctly", func(t *testing.T) {
 			ctx := context.Background()

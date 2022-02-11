@@ -182,9 +182,8 @@ func (t *sqliteTx) Delete(ctx context.Context, key string) error {
 	return nil
 }
 
-func (t *sqliteTx) List(ctx context.Context, prefix string, opts *persistence.ListOpts) (persistence.ListResult,
-	error,
-) {
+func (t *sqliteTx) List(ctx context.Context, prefix string,
+	opts *persistence.ListOpts) (persistence.ListResult, error) {
 	rows, err := t.tx.QueryContext(ctx, listQueryPaging, prefix, opts.Limit, opts.Offset)
 	if err != nil {
 		return persistence.ListResult{}, err
@@ -198,17 +197,9 @@ func (t *sqliteTx) List(ctx context.Context, prefix string, opts *persistence.Li
 	}
 	var res persistence.ListResult
 	kvlist := make([]persistence.KVResult, 0, opts.Limit)
-	tcSet := false
-	var discard int
 	for rows.Next() {
 		var kvr persistence.KVResult
-		var err error
-		if !tcSet {
-			err = rows.Scan(&kvr.Key, &kvr.Value, &res.TotalCount)
-			tcSet = true
-		} else {
-			err = rows.Scan(&kvr.Key, &kvr.Value, &discard)
-		}
+		err := rows.Scan(&kvr.Key, &kvr.Value, &res.TotalCount)
 		if err != nil {
 			return persistence.ListResult{}, err
 		}

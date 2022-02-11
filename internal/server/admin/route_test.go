@@ -383,6 +383,30 @@ func TestRouteList(t *testing.T) {
 		}
 		require.ElementsMatch(t, []string{routeID5}, gotIDs)
 	})
+	t.Run("list routes by service with paging", func(t *testing.T) {
+		body := c.GET("/v1/routes").
+			WithQuery("service_id", serviceID1).
+			WithQuery("pagination.size", "1").
+			WithQuery("pagination.page", "1").
+			Expect().Status(http.StatusOK).JSON().Object()
+		items := body.Value("items").Array()
+		items.Length().Equal(1)
+		body.Value("pagination").Object().Value("total_count").Number().Equal(2)
+		body.Value("pagination").Object().Value("next_page").Number().Equal(2)
+		id1Got := items.Element(0).Object().Value("id").String().Raw()
+		// Next
+		body = c.GET("/v1/routes").
+			WithQuery("service_id", serviceID1).
+			WithQuery("pagination.size", "1").
+			WithQuery("pagination.page", "2").
+			Expect().Status(http.StatusOK).JSON().Object()
+		items = body.Value("items").Array()
+		items.Length().Equal(1)
+		body.Value("pagination").Object().Value("total_count").Number().Equal(2)
+		body.Value("pagination").Object().NotContainsKey("next_page")
+		id2Got := items.Element(0).Object().Value("id").String().Raw()
+		require.ElementsMatch(t, []string{routeID3, routeID4}, []string{id1Got, id2Got})
+	})
 
 	t.Run("list routes by service - no routes associated with service", func(t *testing.T) {
 		body := c.GET("/v1/routes").WithQuery("service_id", serviceID3).
