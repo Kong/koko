@@ -402,7 +402,7 @@ func (s *ObjectStore) referencedListKey(typ model.Type, opt *ListOpts) string {
 }
 
 func (s *ObjectStore) listKey(typ model.Type) string {
-	return s.clusterKey(fmt.Sprintf("%s/", typ))
+	return s.clusterKey(fmt.Sprintf("o/%s/", typ))
 }
 
 func (s *ObjectStore) genID(typ model.Type, id string) (string, error) {
@@ -412,7 +412,7 @@ func (s *ObjectStore) genID(typ model.Type, id string) (string, error) {
 	if typ == "" {
 		return "", fmt.Errorf("no type specified")
 	}
-	return s.clusterKey(fmt.Sprintf("%s/%s", typ, id)), nil
+	return s.clusterKey(fmt.Sprintf("o/%s/%s", typ, id)), nil
 }
 
 func (s *ObjectStore) clusterKey(key string) string {
