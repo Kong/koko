@@ -163,24 +163,24 @@ func TestStatusList(t *testing.T) {
 	t.Run("list returns multiple statuses with paging", func(t *testing.T) {
 		// Get First Page
 		body := c.GET("/v1/statuses").
-			WithQuery("pagination.size", "1").
-			WithQuery("pagination.page", "1").
+			WithQuery("page.size", "1").
+			WithQuery("page.number", "1").
 			Expect().Status(http.StatusOK).JSON().Object()
 		items := body.Value("items").Array()
 		items.Length().Equal(1)
 		id1Got := items.Element(0).Object().Value("id").String().Raw()
-		body.Value("pagination").Object().Value("total_count").Number().Equal(2)
-		body.Value("pagination").Object().Value("next_page").Number().Equal(2)
+		body.Value("page").Object().Value("total_count").Number().Equal(2)
+		body.Value("page").Object().Value("next_page_num").Number().Equal(2)
 		// Get second page
 		body = c.GET("/v1/statuses").
-			WithQuery("pagination.size", "1").
-			WithQuery("pagination.page", "2").
+			WithQuery("page.size", "1").
+			WithQuery("page.number", "2").
 			Expect().Status(http.StatusOK).JSON().Object()
 		items = body.Value("items").Array()
 		items.Length().Equal(1)
 		id2Got := items.Element(0).Object().Value("id").String().Raw()
-		body.Value("pagination").Object().Value("total_count").Number().Equal(2)
-		body.Value("pagination").Object().NotContainsKey("next_page")
+		body.Value("page").Object().Value("total_count").Number().Equal(2)
+		body.Value("page").Object().NotContainsKey("next_page_num")
 		require.ElementsMatch(t, []string{id1, id2}, []string{id1Got, id2Got})
 	})
 	t.Run("list returns status by type id", func(t *testing.T) {

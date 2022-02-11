@@ -111,7 +111,7 @@ func (s *RouteService) ListRoutes(ctx context.Context,
 	}
 
 	list := resource.NewList(resource.TypeRoute)
-	listOptFns, err := listOptsFromReq(req.Pagination)
+	listOptFns, err := listOptsFromReq(req.Page)
 	if err != nil {
 		return nil, s.err(util.ErrClient{Message: err.Error()})
 	}
@@ -123,8 +123,8 @@ func (s *RouteService) ListRoutes(ctx context.Context,
 	}
 
 	return &v1.ListRoutesResponse{
-		Items:      routesFromObjects(list.GetAll()),
-		Pagination: getPaginationResponse(list.GetTotalCount(), list.GetNextPage()),
+		Items: routesFromObjects(list.GetAll()),
+		Page:  getPaginationResponse(list.GetTotalCount(), list.GetNextPage()),
 	}, nil
 }
 

@@ -48,10 +48,10 @@ message ListStatusesRequest{
   model.v1.RequestCluster cluster = 1;
   string ref_type = 2;
   string ref_id = 3;
-  model.v1.Pagination pagination = 4;
+  model.v1.PaginationRequest page = 4;
 }
 
 message ListStatusesResponse{
   repeated model.v1.Status items = 1;
-  model.v1.PaginationResponse pagination = 2;
+  model.v1.PaginationResponse page = 2;
 }
