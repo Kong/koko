@@ -330,15 +330,7 @@ func (s *ObjectStore) List(ctx context.Context, list model.ObjectList, opts ...L
 	typ := list.Type()
 	opt := NewListOpts(opts...)
 	if opt != nil && opt.ReferenceType != "" && opt.ReferenceID != "" {
-		err := s.referencedList(ctx, list, opt)
-		if err != nil {
-			return err
-		}
-		lastPage := toLastPage(opt.PageSize, list.GetTotalCount())
-		if lastPage > opt.Page {
-			list.SetNextPage(opt.Page + 1)
-		}
-		return nil
+		return s.referencedList(ctx, list, opt)
 	}
 
 	listResult, err := s.store.List(ctx, s.listKey(typ), getPersistenceListOptions(opt))
@@ -395,6 +387,10 @@ func (s *ObjectStore) referencedList(ctx context.Context, list model.ObjectList,
 			list.Add(object)
 		}
 		list.SetTotalCount(listResult.TotalCount)
+		lastPage := toLastPage(opt.PageSize, list.GetTotalCount())
+		if lastPage > opt.Page {
+			list.SetNextPage(opt.Page + 1)
+		}
 		return nil
 	})
 	return err
