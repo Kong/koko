@@ -97,7 +97,7 @@ func (s *NodeService) ListNodes(ctx context.Context,
 		return nil, err
 	}
 	list := resource.NewList(resource.TypeNode)
-	listOptFns, err := listOptsFromReq(req.Pagination)
+	listOptFns, err := listOptsFromReq(req.Page)
 	if err != nil {
 		return nil, s.err(util.ErrClient{Message: err.Error()})
 	}
@@ -106,8 +106,8 @@ func (s *NodeService) ListNodes(ctx context.Context,
 	}
 
 	return &v1.ListNodesResponse{
-		Items:      nodesFromObjects(list.GetAll()),
-		Pagination: getPaginationResponse(list.GetTotalCount(), list.GetNextPage()),
+		Items: nodesFromObjects(list.GetAll()),
+		Page:  getPaginationResponse(list.GetTotalCount(), list.GetNextPage()),
 	}, nil
 }
 

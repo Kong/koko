@@ -123,7 +123,7 @@ func (s *PluginService) ListPlugins(ctx context.Context,
 	}
 
 	list := resource.NewList(resource.TypePlugin)
-	listOptFns, err := listOptsFromReq(req.Pagination)
+	listOptFns, err := listOptsFromReq(req.Page)
 	if err != nil {
 		return nil, s.err(util.ErrClient{Message: err.Error()})
 	}
@@ -134,8 +134,8 @@ func (s *PluginService) ListPlugins(ctx context.Context,
 	}
 
 	return &v1.ListPluginsResponse{
-		Items:      pluginsFromObjects(list.GetAll()),
-		Pagination: getPaginationResponse(list.GetTotalCount(), list.GetNextPage()),
+		Items: pluginsFromObjects(list.GetAll()),
+		Page:  getPaginationResponse(list.GetTotalCount(), list.GetNextPage()),
 	}, nil
 }
 

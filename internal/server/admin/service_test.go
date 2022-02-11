@@ -264,34 +264,34 @@ func TestServiceListPagination(t *testing.T) {
 	// Get the tail's id so that we can make sure that it is consistent
 	tailID = items.Element(9).Object().Value("id").String().Raw()
 	require.NotEmpty(t, tailID)
-	body.Value("pagination").Object().Value("total_count").Number().Equal(10)
-	body.Value("pagination").Object().NotContainsKey("next_page")
+	body.Value("page").Object().Value("total_count").Number().Equal(10)
+	body.Value("page").Object().NotContainsKey("next_page_num")
 
 	t.Run("list size 1 page 1 returns 1 service total_count=10", func(t *testing.T) {
 		// Get First Page
 		body := c.GET("/v1/services").
 			WithQuery("cluster.id", "default").
-			WithQuery("pagination.size", "1").
-			WithQuery("pagination.page", "1").
+			WithQuery("page.size", "1").
+			WithQuery("page.number", "1").
 			Expect().Status(http.StatusOK).JSON().Object()
 		items := body.Value("items").Array()
 		items.Length().Equal(1)
 
-		body.Value("pagination").Object().Value("total_count").Number().Equal(10)
-		body.Value("pagination").Object().Value("next_page").Number().Equal(2)
+		body.Value("page").Object().Value("total_count").Number().Equal(10)
+		body.Value("page").Object().Value("next_page_num").Number().Equal(2)
 		firstID := items.Element(0).Object().Value("id").String().Raw()
 		require.NotEmpty(t, firstID)
 		require.Equal(t, headID, firstID)
 		// Go to last page and get the last element
 		body = c.GET("/v1/services").
 			WithQuery("cluster.id", "default").
-			WithQuery("pagination.size", "1").
-			WithQuery("pagination.page", "10").
+			WithQuery("page.size", "1").
+			WithQuery("page.number", "10").
 			Expect().Status(http.StatusOK).JSON().Object()
 		items = body.Value("items").Array()
 		items.Length().Equal(1)
-		body.Value("pagination").Object().Value("total_count").Number().Equal(10)
-		body.Value("pagination").Object().NotContainsKey("next_page")
+		body.Value("page").Object().Value("total_count").Number().Equal(10)
+		body.Value("page").Object().NotContainsKey("next_page_num")
 
 		lastID := items.Element(0).Object().Value("id").String().Raw()
 		require.NotEmpty(t, lastID)
@@ -301,13 +301,13 @@ func TestServiceListPagination(t *testing.T) {
 		// Get First Page
 		body := c.GET("/v1/services").
 			WithQuery("cluster.id", "default").
-			WithQuery("pagination.size", "2").
-			WithQuery("pagination.page", "1").
+			WithQuery("page.size", "2").
+			WithQuery("page.number", "1").
 			Expect().Status(http.StatusOK).JSON().Object()
 		items := body.Value("items").Array()
 		items.Length().Equal(2)
-		body.Value("pagination").Object().Value("total_count").Number().Equal(10)
-		body.Value("pagination").Object().Value("next_page").Number().Equal(2)
+		body.Value("page").Object().Value("total_count").Number().Equal(10)
+		body.Value("page").Object().Value("next_page_num").Number().Equal(2)
 
 		firstID := items.Element(0).Object().Value("id").String().Raw()
 		require.NotEmpty(t, firstID)
@@ -315,13 +315,13 @@ func TestServiceListPagination(t *testing.T) {
 		// Go to last page and get the last element
 		body = c.GET("/v1/services").
 			WithQuery("cluster.id", "default").
-			WithQuery("pagination.size", "2").
-			WithQuery("pagination.page", "5").
+			WithQuery("page.size", "2").
+			WithQuery("page.number", "5").
 			Expect().Status(http.StatusOK).JSON().Object()
 		items = body.Value("items").Array()
 		items.Length().Equal(2)
-		body.Value("pagination").Object().Value("total_count").Number().Equal(10)
-		body.Value("pagination").Object().NotContainsKey("next_page")
+		body.Value("page").Object().Value("total_count").Number().Equal(10)
+		body.Value("page").Object().NotContainsKey("next_page_num")
 		lastID := items.Element(1).Object().Value("id").String().Raw()
 		require.NotEmpty(t, lastID)
 		require.Equal(t, tailID, lastID)
@@ -330,26 +330,26 @@ func TestServiceListPagination(t *testing.T) {
 		// Get First Page
 		body := c.GET("/v1/services").
 			WithQuery("cluster.id", "default").
-			WithQuery("pagination.size", "3").
-			WithQuery("pagination.page", "1").
+			WithQuery("page.size", "3").
+			WithQuery("page.number", "1").
 			Expect().Status(http.StatusOK).JSON().Object()
 		items := body.Value("items").Array()
 		items.Length().Equal(3)
-		body.Value("pagination").Object().Value("total_count").Number().Equal(10)
-		body.Value("pagination").Object().Value("next_page").Number().Equal(2)
+		body.Value("page").Object().Value("total_count").Number().Equal(10)
+		body.Value("page").Object().Value("next_page_num").Number().Equal(2)
 		firstID := items.Element(0).Object().Value("id").String().Raw()
 		require.NotEmpty(t, firstID)
 		require.Equal(t, headID, firstID)
 		// Go to last page and get the last element
 		body = c.GET("/v1/services").
 			WithQuery("cluster.id", "default").
-			WithQuery("pagination.size", "3").
-			WithQuery("pagination.page", "4").
+			WithQuery("page.size", "3").
+			WithQuery("page.number", "4").
 			Expect().Status(http.StatusOK).JSON().Object()
 		items = body.Value("items").Array()
 		items.Length().Equal(1)
-		body.Value("pagination").Object().Value("total_count").Number().Equal(10)
-		body.Value("pagination").Object().NotContainsKey("next_page")
+		body.Value("page").Object().Value("total_count").Number().Equal(10)
+		body.Value("page").Object().NotContainsKey("next_page_num")
 		lastID := items.Element(0).Object().Value("id").String().Raw()
 		require.NotEmpty(t, lastID)
 		require.Equal(t, tailID, lastID)
@@ -358,26 +358,26 @@ func TestServiceListPagination(t *testing.T) {
 		// Get First Page
 		body := c.GET("/v1/services").
 			WithQuery("cluster.id", "default").
-			WithQuery("pagination.size", "4").
-			WithQuery("pagination.page", "1").
+			WithQuery("page.size", "4").
+			WithQuery("page.number", "1").
 			Expect().Status(http.StatusOK).JSON().Object()
 		items := body.Value("items").Array()
 		items.Length().Equal(4)
-		body.Value("pagination").Object().Value("total_count").Number().Equal(10)
-		body.Value("pagination").Object().Value("next_page").Number().Equal(2)
+		body.Value("page").Object().Value("total_count").Number().Equal(10)
+		body.Value("page").Object().Value("next_page_num").Number().Equal(2)
 		firstID := items.Element(0).Object().Value("id").String().Raw()
 		require.NotEmpty(t, firstID)
 		require.Equal(t, headID, firstID)
 		// Go to last page and get the last element
 		body = c.GET("/v1/services").
 			WithQuery("cluster.id", "default").
-			WithQuery("pagination.size", "4").
-			WithQuery("pagination.page", "3").
+			WithQuery("page.size", "4").
+			WithQuery("page.number", "3").
 			Expect().Status(http.StatusOK).JSON().Object()
 		items = body.Value("items").Array()
 		items.Length().Equal(2)
-		body.Value("pagination").Object().Value("total_count").Number().Equal(10)
-		body.Value("pagination").Object().NotContainsKey("next_page")
+		body.Value("page").Object().Value("total_count").Number().Equal(10)
+		body.Value("page").Object().NotContainsKey("next_page_num")
 		lastID := items.Element(1).Object().Value("id").String().Raw()
 		require.NotEmpty(t, lastID)
 		require.Equal(t, tailID, lastID)
@@ -386,13 +386,13 @@ func TestServiceListPagination(t *testing.T) {
 		// Get First Page
 		body := c.GET("/v1/services").
 			WithQuery("cluster.id", "default").
-			WithQuery("pagination.size", "10").
-			WithQuery("pagination.page", "1").
+			WithQuery("page.size", "10").
+			WithQuery("page.number", "1").
 			Expect().Status(http.StatusOK).JSON().Object()
 		items := body.Value("items").Array()
 		items.Length().Equal(10)
-		body.Value("pagination").Object().Value("total_count").Number().Equal(10)
-		body.Value("pagination").Object().NotContainsKey("next_page")
+		body.Value("page").Object().Value("total_count").Number().Equal(10)
+		body.Value("page").Object().NotContainsKey("next_page_num")
 		firstID := items.Element(0).Object().Value("id").String().Raw()
 		require.NotEmpty(t, firstID)
 		require.Equal(t, headID, firstID)
@@ -404,8 +404,8 @@ func TestServiceListPagination(t *testing.T) {
 	t.Run("list page_size 10 and page 10 returns no services", func(t *testing.T) {
 		body := c.GET("/v1/services").
 			WithQuery("cluster.id", "default").
-			WithQuery("pagination.size", "10").
-			WithQuery("pagination.page", "10").
+			WithQuery("page.size", "10").
+			WithQuery("page.number", "10").
 			Expect().Status(http.StatusOK).JSON().Object()
 		body.NotContainsKey("items")
 	})
@@ -413,12 +413,12 @@ func TestServiceListPagination(t *testing.T) {
 		// Get First Page
 		body := c.GET("/v1/services").
 			WithQuery("cluster.id", "default").
-			WithQuery("pagination.size", "10").
+			WithQuery("page.size", "10").
 			Expect().Status(http.StatusOK).JSON().Object()
 		items := body.Value("items").Array()
 		items.Length().Equal(10)
-		body.Value("pagination").Object().Value("total_count").Number().Equal(10)
-		body.Value("pagination").Object().NotContainsKey("next_page")
+		body.Value("page").Object().Value("total_count").Number().Equal(10)
+		body.Value("page").Object().NotContainsKey("next_page_num")
 		firstID := items.Element(0).Object().Value("id").String().Raw()
 		require.NotEmpty(t, firstID)
 		require.Equal(t, headID, firstID)
@@ -431,12 +431,12 @@ func TestServiceListPagination(t *testing.T) {
 		// Get First Page
 		body := c.GET("/v1/services").
 			WithQuery("cluster.id", "default").
-			WithQuery("pagination.page", "1").
+			WithQuery("page.number", "1").
 			Expect().Status(http.StatusOK).JSON().Object()
 		items := body.Value("items").Array()
 		items.Length().Equal(10)
-		body.Value("pagination").Object().Value("total_count").Number().Equal(10)
-		body.Value("pagination").Object().NotContainsKey("next_page")
+		body.Value("page").Object().Value("total_count").Number().Equal(10)
+		body.Value("page").Object().NotContainsKey("next_page_num")
 		firstID := items.Element(0).Object().Value("id").String().Raw()
 		require.NotEmpty(t, firstID)
 		require.Equal(t, headID, firstID)
@@ -449,13 +449,13 @@ func TestServiceListPagination(t *testing.T) {
 		// Get First Page
 		body := c.GET("/v1/services").
 			WithQuery("cluster.id", "default").
-			WithQuery("pagination.size", "11").
-			WithQuery("pagination.page", "1").
+			WithQuery("page.size", "11").
+			WithQuery("page.number", "1").
 			Expect().Status(http.StatusOK).JSON().Object()
 		items := body.Value("items").Array()
 		items.Length().Equal(10)
-		body.Value("pagination").Object().Value("total_count").Number().Equal(10)
-		body.Value("pagination").Object().NotContainsKey("next_page")
+		body.Value("page").Object().Value("total_count").Number().Equal(10)
+		body.Value("page").Object().NotContainsKey("next_page_num")
 		firstID := items.Element(0).Object().Value("id").String().Raw()
 		require.NotEmpty(t, firstID)
 		require.Equal(t, headID, firstID)
@@ -468,8 +468,8 @@ func TestServiceListPagination(t *testing.T) {
 		// Get First Page
 		body := c.GET("/v1/services").
 			WithQuery("cluster.id", "default").
-			WithQuery("pagination.size", "1001").
-			WithQuery("pagination.page", "1").
+			WithQuery("page.size", "1001").
+			WithQuery("page.number", "1").
 			Expect().Status(http.StatusBadRequest).JSON().Object()
 		body.Value("code").Number().Equal(3)
 		body.Value("message").String().Equal("invalid page_size '1001', must be within range [1 - 1000]")
@@ -478,10 +478,10 @@ func TestServiceListPagination(t *testing.T) {
 		// Get First Page
 		body := c.GET("/v1/services").
 			WithQuery("cluster.id", "default").
-			WithQuery("pagination.size", "10").
-			WithQuery("pagination.page", "-1").
+			WithQuery("page.size", "10").
+			WithQuery("page.number", "-1").
 			Expect().Status(http.StatusBadRequest).JSON().Object()
 		body.Value("code").Number().Equal(3)
-		body.Value("message").String().Equal("invalid page '-1', page must be > 0")
+		body.Value("message").String().Equal("invalid page number '-1', page must be > 0")
 	})
 }

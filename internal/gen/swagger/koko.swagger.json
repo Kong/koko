@@ -90,14 +90,14 @@
             "type": "string"
           },
           {
-            "name": "pagination.size",
+            "name": "page.size",
             "in": "query",
             "required": false,
             "type": "integer",
             "format": "int32"
           },
           {
-            "name": "pagination.page",
+            "name": "page.number",
             "in": "query",
             "required": false,
             "type": "integer",
@@ -216,14 +216,14 @@
             "type": "string"
           },
           {
-            "name": "pagination.size",
+            "name": "page.size",
             "in": "query",
             "required": false,
             "type": "integer",
             "format": "int32"
           },
           {
-            "name": "pagination.page",
+            "name": "page.number",
             "in": "query",
             "required": false,
             "type": "integer",
@@ -416,14 +416,14 @@
             "type": "string"
           },
           {
-            "name": "pagination.size",
+            "name": "page.size",
             "in": "query",
             "required": false,
             "type": "integer",
             "format": "int32"
           },
           {
-            "name": "pagination.page",
+            "name": "page.number",
             "in": "query",
             "required": false,
             "type": "integer",
@@ -670,14 +670,14 @@
             "type": "string"
           },
           {
-            "name": "pagination.size",
+            "name": "page.size",
             "in": "query",
             "required": false,
             "type": "integer",
             "format": "int32"
           },
           {
-            "name": "pagination.page",
+            "name": "page.number",
             "in": "query",
             "required": false,
             "type": "integer",
@@ -876,14 +876,14 @@
             "type": "string"
           },
           {
-            "name": "pagination.size",
+            "name": "page.size",
             "in": "query",
             "required": false,
             "type": "integer",
             "format": "int32"
           },
           {
-            "name": "pagination.page",
+            "name": "page.number",
             "in": "query",
             "required": false,
             "type": "integer",
@@ -1356,14 +1356,14 @@
         }
       }
     },
-    "kong.admin.model.v1.Pagination": {
+    "kong.admin.model.v1.PaginationRequest": {
       "type": "object",
       "properties": {
         "size": {
           "type": "integer",
           "format": "int32"
         },
-        "page": {
+        "number": {
           "type": "integer",
           "format": "int32"
         }
@@ -1376,7 +1376,7 @@
           "type": "integer",
           "format": "int32"
         },
-        "nextPage": {
+        "nextPageNum": {
           "type": "integer",
           "format": "int32"
         }
@@ -1877,7 +1877,7 @@
             "$ref": "#/definitions/kong.admin.model.v1.Node"
           }
         },
-        "pagination": {
+        "page": {
           "$ref": "#/definitions/kong.admin.model.v1.PaginationResponse"
         }
       }
@@ -1891,7 +1891,7 @@
             "$ref": "#/definitions/kong.admin.model.v1.Plugin"
           }
         },
-        "pagination": {
+        "page": {
           "$ref": "#/definitions/kong.admin.model.v1.PaginationResponse"
         }
       }
@@ -1905,7 +1905,7 @@
             "$ref": "#/definitions/kong.admin.model.v1.Route"
           }
         },
-        "pagination": {
+        "page": {
           "$ref": "#/definitions/kong.admin.model.v1.PaginationResponse"
         }
       }
@@ -1919,7 +1919,7 @@
             "$ref": "#/definitions/kong.admin.model.v1.Service"
           }
         },
-        "pagination": {
+        "page": {
           "$ref": "#/definitions/kong.admin.model.v1.PaginationResponse"
         }
       }
@@ -1933,7 +1933,7 @@
             "$ref": "#/definitions/kong.admin.model.v1.Status"
           }
         },
-        "pagination": {
+        "page": {
           "$ref": "#/definitions/kong.admin.model.v1.PaginationResponse"
         }
       }

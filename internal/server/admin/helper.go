@@ -7,9 +7,9 @@ import (
 	"github.com/kong/koko/internal/store"
 )
 
-func validateListOptions(listOpts *pbModel.Pagination) error {
-	if listOpts.Page < 0 {
-		return fmt.Errorf("invalid page '%d', page must be > 0", listOpts.Page)
+func validateListOptions(listOpts *pbModel.PaginationRequest) error {
+	if listOpts.Number < 0 {
+		return fmt.Errorf("invalid page number '%d', page must be > 0", listOpts.Number)
 	}
 	if listOpts.Size < 0 || listOpts.Size > store.MaxPageSize {
 		return fmt.Errorf("invalid page_size '%d', must be within range [1 - %d]", listOpts.Size, store.MaxPageSize)
@@ -17,7 +17,7 @@ func validateListOptions(listOpts *pbModel.Pagination) error {
 	return nil
 }
 
-func listOptsFromReq(listOpts *pbModel.Pagination) ([]store.ListOptsFunc, error) {
+func listOptsFromReq(listOpts *pbModel.PaginationRequest) ([]store.ListOptsFunc, error) {
 	if listOpts == nil {
 		return []store.ListOptsFunc{}, nil
 	}
@@ -25,7 +25,7 @@ func listOptsFromReq(listOpts *pbModel.Pagination) ([]store.ListOptsFunc, error)
 	if err != nil {
 		return nil, err
 	}
-	pageNumOption := store.ListWithPageNum(int(listOpts.Page))
+	pageNumOption := store.ListWithPageNum(int(listOpts.Number))
 
 	pageSizeOption := store.ListWithPageSize(int(listOpts.Size))
 
@@ -41,7 +41,7 @@ func getPaginationResponse(totalCount int, nextPage int) *pbModel.PaginationResp
 		return nil
 	}
 	return &pbModel.PaginationResponse{
-		TotalCount: int32(totalCount),
-		NextPage:   int32(nextPage),
+		TotalCount:  int32(totalCount),
+		NextPageNum: int32(nextPage),
 	}
 }

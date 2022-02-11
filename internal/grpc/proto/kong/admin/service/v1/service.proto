@@ -77,10 +77,10 @@ message DeleteServiceResponse{
 
 message ListServicesRequest{
   model.v1.RequestCluster cluster = 1;
-  model.v1.Pagination pagination = 2;
+  model.v1.PaginationRequest page = 2;
 }
 
 message ListServicesResponse{
   repeated model.v1.Service items = 1;
-  model.v1.PaginationResponse pagination = 2;
+  model.v1.PaginationResponse page = 2;
 }
