@@ -15,9 +15,8 @@ const (
 	deleteQuery = `delete from store where key=$1`
 )
 
-var listQuery = func(prefix string) string {
-	return fmt.Sprintf(`SELECT * from store where key glob '%s*'`, prefix)
-}
+var listQueryPaging = `SELECT key, value, COUNT(*) OVER() AS full_count FROM 
+                        store WHERE key GLOB $1 || '*' ORDER BY key LIMIT $2 OFFSET $3;`
 
 type SQLite struct {
 	db *sql.DB
@@ -106,11 +105,11 @@ func (s *SQLite) Delete(ctx context.Context, key string) error {
 	})
 }
 
-func (s *SQLite) List(ctx context.Context, prefix string) ([][2][]byte, error) {
-	var res [][2][]byte
+func (s *SQLite) List(ctx context.Context, prefix string, opts *persistence.ListOpts) (persistence.ListResult, error) {
+	var res persistence.ListResult
 	err := s.withinTx(ctx, func(tx persistence.Tx) error {
 		var err error
-		res, err = tx.List(ctx, prefix)
+		res, err = tx.List(ctx, prefix, opts)
 		return err
 	})
 	return res, err
@@ -183,30 +182,29 @@ func (t *sqliteTx) Delete(ctx context.Context, key string) error {
 	return nil
 }
 
-func (t *sqliteTx) List(ctx context.Context, prefix string) ([][2][]byte,
-	error) {
-	var res [][2][]byte
-	rows, err := t.tx.QueryContext(ctx, listQuery(prefix))
+func (t *sqliteTx) List(ctx context.Context, prefix string,
+	opts *persistence.ListOpts) (persistence.ListResult, error) {
+	rows, err := t.tx.QueryContext(ctx, listQueryPaging, prefix, opts.Limit, opts.Offset)
 	if err != nil {
-		return nil, err
+		return persistence.ListResult{}, err
 	}
 	defer rows.Close()
 	if rows.Err() != nil {
-		return nil, rows.Err()
+		return persistence.ListResult{}, rows.Err()
 	}
 	if err != nil {
-		return nil, err
+		return persistence.ListResult{}, err
 	}
+	var res persistence.ListResult
+	kvlist := make([]persistence.KVResult, 0, opts.Limit)
 	for rows.Next() {
-		var (
-			resKey []byte
-			value  []byte
-		)
-		err := rows.Scan(&resKey, &value)
+		var kvr persistence.KVResult
+		err := rows.Scan(&kvr.Key, &kvr.Value, &res.TotalCount)
 		if err != nil {
-			return nil, err
+			return persistence.ListResult{}, err
 		}
-		res = append(res, [2][]byte{resKey, value})
+		kvlist = append(kvlist, kvr)
 	}
+	res.KVList = kvlist
 	return res, nil
 }

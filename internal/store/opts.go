@@ -1,6 +1,8 @@
 package store
 
-import "github.com/kong/koko/internal/model"
+import (
+	"github.com/kong/koko/internal/model"
+)
 
 type CreateOpts struct{}
 
@@ -72,12 +74,20 @@ func DeleteByType(typ model.Type) DeleteOptsFunc {
 type ListOpts struct {
 	ReferenceType model.Type
 	ReferenceID   string
+	PageSize      int
+	Page          int
 }
 
 type ListOptsFunc func(*ListOpts)
 
+const (
+	DefaultPage     = 1
+	DefaultPageSize = 100
+	MaxPageSize     = 1000
+)
+
 func NewListOpts(fns ...ListOptsFunc) *ListOpts {
-	res := &ListOpts{}
+	res := &ListOpts{PageSize: DefaultPageSize, Page: DefaultPage}
 	for _, fn := range fns {
 		fn(res)
 	}
@@ -88,5 +98,25 @@ func ListFor(typ model.Type, id string) ListOptsFunc {
 	return func(opt *ListOpts) {
 		opt.ReferenceType = typ
 		opt.ReferenceID = id
+	}
+}
+
+func ListWithPageNum(page int) ListOptsFunc {
+	return func(opt *ListOpts) {
+		if page == 0 {
+			opt.Page = DefaultPage
+		} else {
+			opt.Page = page
+		}
+	}
+}
+
+func ListWithPageSize(pageSize int) ListOptsFunc {
+	return func(opt *ListOpts) {
+		if pageSize == 0 {
+			opt.PageSize = DefaultPageSize
+		} else {
+			opt.PageSize = pageSize
+		}
 	}
 }

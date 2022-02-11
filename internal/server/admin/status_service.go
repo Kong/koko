@@ -72,11 +72,18 @@ func (s *StatusService) ListStatuses(ctx context.Context,
 	}
 
 	list := resource.NewList(resource.TypeStatus)
-	if err := db.List(ctx, list); err != nil {
+	listOptFns, err := listOptsFromReq(req.Pagination)
+	if err != nil {
+		return nil, s.err(util.ErrClient{Message: err.Error()})
+	}
+
+	if err := db.List(ctx, list, listOptFns...); err != nil {
 		return nil, s.err(err)
 	}
+
 	return &v1.ListStatusesResponse{
-		Items: statusesFromObjects(list.GetAll()),
+		Items:      statusesFromObjects(list.GetAll()),
+		Pagination: getPaginationResponse(list.GetTotalCount(), list.GetNextPage()),
 	}, nil
 }
 

@@ -97,11 +97,18 @@ func (s *ServiceService) ListServices(ctx context.Context,
 		return nil, err
 	}
 	list := resource.NewList(resource.TypeService)
-	if err := db.List(ctx, list); err != nil {
+	listOptFns, err := listOptsFromReq(req.Pagination)
+	if err != nil {
+		return nil, s.err(util.ErrClient{Message: err.Error()})
+	}
+
+	if err := db.List(ctx, list, listOptFns...); err != nil {
 		return nil, s.err(err)
 	}
+
 	return &v1.ListServicesResponse{
-		Items: servicesFromObjects(list.GetAll()),
+		Items:      servicesFromObjects(list.GetAll()),
+		Pagination: getPaginationResponse(list.GetTotalCount(), list.GetNextPage()),
 	}, nil
 }
 

@@ -208,12 +208,12 @@ func (s *ObjectStore) checkForeignIndexesForDelete(ctx context.Context,
 	tx persistence.Tx,
 	object model.Object) error {
 	key := s.clusterKey(fmt.Sprintf("ix/f/%s/%s", object.Type(), object.ID()))
-	kvs, err := tx.List(ctx, key)
+	listResult, err := getFullList(ctx, tx, key)
 	if err != nil {
 		return err
 	}
-	if len(kvs) > 0 {
-		refTypeID := strings.TrimPrefix(string(kvs[0][0]), key+"/")
+	if len(listResult.KVList) > 0 {
+		refTypeID := strings.TrimPrefix(string(listResult.KVList[0].Key), key+"/")
 		typeAndID := strings.Split(refTypeID, "/")
 		return ErrConstraint{
 			Index: model.Index{

@@ -97,11 +97,17 @@ func (s *NodeService) ListNodes(ctx context.Context,
 		return nil, err
 	}
 	list := resource.NewList(resource.TypeNode)
-	if err := db.List(ctx, list); err != nil {
+	listOptFns, err := listOptsFromReq(req.Pagination)
+	if err != nil {
+		return nil, s.err(util.ErrClient{Message: err.Error()})
+	}
+	if err := db.List(ctx, list, listOptFns...); err != nil {
 		return nil, s.err(err)
 	}
+
 	return &v1.ListNodesResponse{
-		Items: nodesFromObjects(list.GetAll()),
+		Items:      nodesFromObjects(list.GetAll()),
+		Pagination: getPaginationResponse(list.GetTotalCount(), list.GetNextPage()),
 	}, nil
 }
 

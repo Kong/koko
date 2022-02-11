@@ -98,22 +98,22 @@ func TestPersister(t *testing.T) {
 	t.Run("List()", func(t *testing.T) {
 		t.Run("lists all keys with prefix", func(t *testing.T) {
 			var expectedValues, expectedKeys []string
-			for i := 0; i < 1000; i++ {
+			for i := 0; i < 100; i++ {
 				value := json(fmt.Sprintf("prefix-value-%d", i))
 				key := fmt.Sprintf("prefix/key%d", i)
 				require.Nil(t, p.Put(context.Background(), key, value))
 				expectedKeys = append(expectedKeys, key)
 				expectedValues = append(expectedValues, string(value))
 			}
-			kvs, err := p.List(context.Background(), "prefix/")
+			listResult, err := p.List(context.Background(), "prefix/", persistence.NewDefaultListOpts())
 			require.Nil(t, err)
-			require.Len(t, kvs, 1000)
+			require.Len(t, listResult.KVList, 100)
 
 			var valuesAsStrings []string
 			var keysAsStrings []string
-			for _, kv := range kvs {
-				key := string(kv[0])
-				value := string(kv[1])
+			for _, kv := range listResult.KVList {
+				key := string(kv.Key)
+				value := string(kv.Value)
 				keysAsStrings = append(keysAsStrings, key)
 				value = strings.ReplaceAll(value, " ", "")
 				valuesAsStrings = append(valuesAsStrings, value)
@@ -128,7 +128,7 @@ func TestPersister(t *testing.T) {
 		})
 		t.Run("other prefixes are left as is", func(t *testing.T) {
 			var expected []string
-			for i := 0; i < 1000; i++ {
+			for i := 0; i < 100; i++ {
 				value := json(fmt.Sprintf("prefix-value-%d", i))
 				require.Nil(t, p.Put(
 					context.Background(),
@@ -142,16 +142,85 @@ func TestPersister(t *testing.T) {
 					fmt.Sprintf("ix/prefix/key%d", i),
 					value))
 			}
-			values, err := p.List(context.Background(), "prefix/")
+			listResult, err := p.List(context.Background(), "prefix/", persistence.NewDefaultListOpts())
 			require.Nil(t, err)
-			require.Len(t, values, 1000)
+			require.Len(t, listResult.KVList, 100)
 			var valuesAsStrings []string
-			for _, value := range values {
-				valuesAsStrings = append(valuesAsStrings, string(value[1]))
+			for _, value := range listResult.KVList {
+				valuesAsStrings = append(valuesAsStrings, string(value.Value))
 			}
 			sort.Strings(valuesAsStrings)
 			sort.Strings(expected)
 			// require.Equal(t, expected, valuesAsStrings)
+		})
+		t.Run("list with non default pagination", func(t *testing.T) {
+			var expectedValuesBatchOne, expectedKeysBatchOne, expectedValuesBatchTwo, expectedKeysBatchTwo []string
+			for i := 0; i < 200; i++ {
+				value := json(fmt.Sprintf("prefix-value-%06d", i))
+				key := fmt.Sprintf("myprefix/key%06d", i)
+				require.Nil(t, p.Put(context.Background(), key, value))
+				if i < 100 {
+					expectedKeysBatchOne = append(expectedKeysBatchOne, key)
+					expectedValuesBatchOne = append(expectedValuesBatchOne, string(value))
+				} else {
+					expectedKeysBatchTwo = append(expectedKeysBatchTwo, key)
+					expectedValuesBatchTwo = append(expectedValuesBatchTwo, string(value))
+				}
+			}
+			listResult, err := p.List(context.Background(), "myprefix/", &persistence.ListOpts{
+				Offset: 0,
+				Limit:  100,
+			})
+			require.Nil(t, err)
+			require.Len(t, listResult.KVList, 100)
+
+			var valuesAsStrings []string
+			var keysAsStrings []string
+			for _, kv := range listResult.KVList {
+				key := string(kv.Key)
+				value := string(kv.Value)
+				keysAsStrings = append(keysAsStrings, key)
+				value = strings.ReplaceAll(value, " ", "")
+				valuesAsStrings = append(valuesAsStrings, value)
+			}
+			sort.Strings(keysAsStrings)
+			sort.Strings(expectedKeysBatchOne)
+			sort.Strings(valuesAsStrings)
+			sort.Strings(expectedValuesBatchOne)
+			require.Equal(t, expectedKeysBatchOne, keysAsStrings)
+			require.Equal(t, expectedValuesBatchOne, valuesAsStrings)
+
+			// Now get the Second batch
+			listResult, err = p.List(context.Background(), "myprefix/", &persistence.ListOpts{
+				Offset: 100,
+				Limit:  100,
+			})
+			require.Nil(t, err)
+			require.Len(t, listResult.KVList, 100)
+
+			var valuesAsStringsTwo []string
+			var keysAsStringsTwo []string
+			for _, kv := range listResult.KVList {
+				key := string(kv.Key)
+				value := string(kv.Value)
+				keysAsStringsTwo = append(keysAsStringsTwo, key)
+				value = strings.ReplaceAll(value, " ", "")
+				valuesAsStringsTwo = append(valuesAsStringsTwo, value)
+			}
+			sort.Strings(keysAsStringsTwo)
+			sort.Strings(expectedKeysBatchTwo)
+			sort.Strings(valuesAsStringsTwo)
+			sort.Strings(expectedValuesBatchTwo)
+			require.Equal(t, expectedKeysBatchTwo, keysAsStringsTwo)
+			require.Equal(t, expectedValuesBatchTwo, valuesAsStringsTwo)
+
+			// See if there is more
+			listResult, err = p.List(context.Background(), "myprefix/", &persistence.ListOpts{
+				Offset: 200,
+				Limit:  100,
+			})
+			require.Nil(t, err)
+			require.Len(t, listResult.KVList, 0)
 		})
 	})
 	t.Run("Tx()", func(t *testing.T) {

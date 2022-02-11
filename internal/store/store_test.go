@@ -5,10 +5,13 @@ import (
 	encodingJSON "encoding/json"
 	"errors"
 	"fmt"
+	"sort"
+	"strings"
 	"testing"
 
 	"github.com/google/uuid"
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
+	protoJSON "github.com/kong/koko/internal/json"
 	"github.com/kong/koko/internal/log"
 	"github.com/kong/koko/internal/model"
 	"github.com/kong/koko/internal/model/json/validation"
@@ -797,4 +800,187 @@ func TestStoredValue(t *testing.T) {
 		// this fails if a protobuf unaware parser is used
 		require.True(t, v.Object["request_buffering"].(bool))
 	})
+}
+
+func TestPagination(t *testing.T) {
+	persister, err := util.GetPersister()
+	require.Nil(t, err)
+	store := New(persister, log.Logger).ForCluster("default")
+	ctx := context.Background()
+	// Create 10 services and perform the pagination
+	svcName := "myservice-%d"
+	svc := resource.NewService()
+	svc.Service = &v1.Service{
+		Name: "foo",
+		Host: "example.com",
+		Path: "/",
+	}
+	idList := make([]string, 0, 10)
+	for i := 0; i < 10; i++ {
+		svc.Service.Name = fmt.Sprintf(svcName, i)
+		svc.Service.Id = uuid.NewString()
+		idList = append(idList, svc.Service.Id)
+		require.Nil(t, store.Create(ctx, svc))
+	}
+	// Retrieve the List to get head and tail
+	svcs := resource.NewList(resource.TypeService)
+	err = store.List(context.Background(), svcs)
+	require.Nil(t, err)
+	require.Equal(t, svcs.GetTotalCount(), 10)
+	head := svcs.GetAll()[0].ID()
+	require.NotEmpty(t, head)
+	require.True(t, contains(idList, head))
+	tail := svcs.GetAll()[9].ID()
+	require.NotEmpty(t, tail)
+	require.True(t, contains(idList, tail))
+	// Now Test each pagination scenario
+	t.Run("Page 1, Size 1 success", func(t *testing.T) {
+		pageSize := ListWithPageSize(1)
+		pageNum := ListWithPageNum(1)
+		svcs = resource.NewList(resource.TypeService)
+		err = store.List(ctx, svcs, pageSize, pageNum)
+		require.NoError(t, err)
+		require.Equal(t, 10, svcs.GetTotalCount())
+		require.Equal(t, 2, svcs.GetNextPage())
+		require.Equal(t, head, svcs.GetAll()[0].ID())
+		// Get the last Page and Element
+		pageNum = ListWithPageNum(10)
+		require.NoError(t, err)
+		svcs = resource.NewList(resource.TypeService)
+		err = store.List(ctx, svcs, pageSize, pageNum)
+		require.NoError(t, err)
+		require.Equal(t, 10, svcs.GetTotalCount())
+		require.Equal(t, 0, svcs.GetNextPage())
+		require.Equal(t, tail, svcs.GetAll()[0].ID())
+	})
+	t.Run("Page 1, Size 2 success", func(t *testing.T) {
+		pageSize := ListWithPageSize(2)
+
+		pageNum := ListWithPageNum(1)
+		require.NoError(t, err)
+		svcs = resource.NewList(resource.TypeService)
+		err = store.List(ctx, svcs, pageSize, pageNum)
+		require.NoError(t, err)
+		require.Equal(t, 10, svcs.GetTotalCount())
+		require.Equal(t, 2, svcs.GetNextPage())
+		require.Equal(t, head, svcs.GetAll()[0].ID())
+		// Get the last Page and Element
+		pageNum = ListWithPageNum(5)
+		svcs = resource.NewList(resource.TypeService)
+		err = store.List(ctx, svcs, pageSize, pageNum)
+		require.NoError(t, err)
+		require.Equal(t, 10, svcs.GetTotalCount())
+		require.Equal(t, 0, svcs.GetNextPage())
+		require.Equal(t, tail, svcs.GetAll()[1].ID())
+	})
+	t.Run("Page 1, Size 3 success", func(t *testing.T) {
+		pageSize := ListWithPageSize(3)
+		pageNum := ListWithPageNum(1)
+		svcs = resource.NewList(resource.TypeService)
+		err = store.List(ctx, svcs, pageSize, pageNum)
+		require.NoError(t, err)
+		require.Equal(t, 10, svcs.GetTotalCount())
+		require.Equal(t, 2, svcs.GetNextPage())
+		require.Equal(t, head, svcs.GetAll()[0].ID())
+		// Get the last Page and Element
+		pageNum = ListWithPageNum(4)
+		svcs = resource.NewList(resource.TypeService)
+		err = store.List(ctx, svcs, pageSize, pageNum)
+		require.NoError(t, err)
+		require.Equal(t, 10, svcs.GetTotalCount())
+		require.Equal(t, 0, svcs.GetNextPage())
+		require.Equal(t, tail, svcs.GetAll()[0].ID())
+	})
+	t.Run("Page 1, Size 10 success", func(t *testing.T) {
+		pageSize := ListWithPageSize(10)
+		pageNum := ListWithPageNum(1)
+		svcs = resource.NewList(resource.TypeService)
+		err = store.List(ctx, svcs, pageSize, pageNum)
+		require.NoError(t, err)
+		require.Equal(t, 10, svcs.GetTotalCount())
+		require.Equal(t, 0, svcs.GetNextPage())
+		require.Equal(t, head, svcs.GetAll()[0].ID())
+		require.Equal(t, tail, svcs.GetAll()[9].ID())
+	})
+	t.Run("Page 1, Size 11 success", func(t *testing.T) {
+		pageSize := ListWithPageSize(11)
+		pageNum := ListWithPageNum(1)
+		svcs = resource.NewList(resource.TypeService)
+		err = store.List(ctx, svcs, pageSize, pageNum)
+		require.NoError(t, err)
+		require.Equal(t, 10, svcs.GetTotalCount())
+		require.Equal(t, 0, svcs.GetNextPage())
+		require.Len(t, svcs.GetAll(), 10)
+		require.Equal(t, head, svcs.GetAll()[0].ID())
+		require.Equal(t, tail, svcs.GetAll()[9].ID())
+	})
+	t.Run("Page 11, Size 1 empty", func(t *testing.T) {
+		pageSize := ListWithPageSize(1)
+		pageNum := ListWithPageNum(11)
+		svcs = resource.NewList(resource.TypeService)
+		err = store.List(ctx, svcs, pageSize, pageNum)
+		require.NoError(t, err)
+		require.Equal(t, 0, svcs.GetTotalCount())
+		require.Equal(t, 0, svcs.GetNextPage())
+		require.Len(t, svcs.GetAll(), 0)
+	})
+}
+
+type jsonWrapper struct {
+	Value string `json:"value"`
+}
+
+func json(value string) []byte {
+	res, err := protoJSON.Marshal(jsonWrapper{value})
+	if err != nil {
+		panic(fmt.Sprintf("marshal json: %v", err))
+	}
+	return res
+}
+
+func TestFullListPaging(t *testing.T) {
+	p, err := util.GetPersister()
+	require.Nil(t, err)
+	t.Run("we retrieve full list despite default pagination", func(t *testing.T) {
+		ctx := context.Background()
+		tx, err := p.Tx(ctx)
+		require.Nil(t, err)
+		var expectedValuesBatchOne, expectedKeysBatchOne []string
+		for i := 0; i < 1001; i++ {
+			value := json(fmt.Sprintf("prefix-value-%06d", i))
+			key := fmt.Sprintf("myprefix/key%06d", i)
+			err = tx.Put(ctx, key, value)
+			require.Nil(t, err)
+			expectedKeysBatchOne = append(expectedKeysBatchOne, key)
+			expectedValuesBatchOne = append(expectedValuesBatchOne, string(value))
+		}
+
+		listResult, err := getFullList(ctx, tx, "myprefix/")
+		require.Nil(t, err)
+		require.Equal(t, 1001, listResult.TotalCount)
+		var valuesAsStrings []string
+		var keysAsStrings []string
+		for _, kv := range listResult.KVList {
+			key := string(kv.Key)
+			value := string(kv.Value)
+			keysAsStrings = append(keysAsStrings, key)
+			value = strings.ReplaceAll(value, " ", "")
+			valuesAsStrings = append(valuesAsStrings, value)
+		}
+		sort.Strings(keysAsStrings)
+		sort.Strings(expectedKeysBatchOne)
+		sort.Strings(valuesAsStrings)
+		sort.Strings(expectedValuesBatchOne)
+		require.Equal(t, expectedKeysBatchOne, keysAsStrings)
+		tx.Rollback()
+	})
+}
+
+func contains(repo []string, search string) bool {
+	for _, v := range repo {
+		if v == search {
+			return true
+		}
+	}
+	return false
 }

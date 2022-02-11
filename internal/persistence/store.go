@@ -27,7 +27,32 @@ type CRUD interface {
 	// If key is not found, an ErrNotFound error is returned.
 	Delete(ctx context.Context, key string) error
 	// List returns all keys with prefix.
-	List(ctx context.Context, prefix string) ([][2][]byte, error)
+	List(ctx context.Context, prefix string, opts *ListOpts) (ListResult, error)
+}
+
+type KVResult struct {
+	Key   []byte
+	Value []byte
+}
+
+type ListResult struct {
+	KVList     []KVResult
+	TotalCount int
+}
+
+const (
+	MaxLimit      = 1000
+	DefaultLimit  = 100
+	DefaultOffset = 0
+)
+
+func NewDefaultListOpts() *ListOpts {
+	return &ListOpts{Offset: DefaultOffset, Limit: DefaultLimit}
+}
+
+type ListOpts struct {
+	Limit  int
+	Offset int
 }
 
 type Tx interface {

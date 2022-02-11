@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+option go_package = "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1;v1";
+
+package kong.admin.model.v1;
+
+message Pagination {
+  int32 size = 1;
+  int32 page = 2;
+}
+
+message PaginationResponse {
+  int32 total_count = 1;
+  int32 next_page = 2;
+}

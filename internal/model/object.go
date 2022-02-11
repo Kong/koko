@@ -49,6 +49,11 @@ type ObjectList interface {
 	Type() Type
 	Add(Object)
 	GetAll() []Object
+	// GetTotalCount returns the count of objects in the underlying store across all pages.
+	GetTotalCount() int
+	SetTotalCount(count int)
+	SetNextPage(pageNum int)
+	GetNextPage() int
 }
 
 func MultiValueIndex(values ...string) string {

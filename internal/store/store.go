@@ -333,12 +333,17 @@ func (s *ObjectStore) List(ctx context.Context, list model.ObjectList, opts ...L
 		return s.referencedList(ctx, list, opt)
 	}
 
-	kvs, err := s.store.List(ctx, s.listKey(typ))
+	listResult, err := s.store.List(ctx, s.listKey(typ), getPersistenceListOptions(opt))
 	if err != nil {
 		return err
 	}
-	for _, kv := range kvs {
-		value := kv[1]
+	list.SetTotalCount(listResult.TotalCount)
+	lastPage := toLastPage(opt.PageSize, listResult.TotalCount)
+	if lastPage > opt.Page {
+		list.SetNextPage(opt.Page + 1)
+	}
+	for _, kv := range listResult.KVList {
+		value := kv.Value
 		object, err := model.NewObject(typ)
 		if err != nil {
 			return err
@@ -357,14 +362,16 @@ func (s *ObjectStore) referencedList(ctx context.Context, list model.ObjectList,
 	typ := list.Type()
 	err := s.withTx(ctx, func(tx persistence.Tx) error {
 		keyPrefix := s.referencedListKey(typ, opt)
-		kvs, err := tx.List(ctx, keyPrefix)
+		persistenceOpts := getPersistenceListOptions(opt)
+		listResult, err := tx.List(ctx, keyPrefix, persistenceOpts)
 		if err != nil {
 			return err
 		}
+
 		keyPrefixLen := len(keyPrefix)
-		for _, kv := range kvs {
-			key := string(kv[0])
-			value := kv[1]
+		for _, kv := range listResult.KVList {
+			key := string(kv.Key)
+			value := kv.Value
 			if err := verifyForeignValue(value); err != nil {
 				panic(err)
 			}
@@ -378,6 +385,11 @@ func (s *ObjectStore) referencedList(ctx context.Context, list model.ObjectList,
 				return err
 			}
 			list.Add(object)
+		}
+		list.SetTotalCount(listResult.TotalCount)
+		lastPage := toLastPage(opt.PageSize, list.GetTotalCount())
+		if lastPage > opt.Page {
+			list.SetNextPage(opt.Page + 1)
 		}
 		return nil
 	})
