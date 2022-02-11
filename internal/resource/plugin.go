@@ -122,9 +122,9 @@ func init() {
 			},
 			"tags": typedefs.Tags,
 			"protocols": {
-				Type:      "array",
-				Items:     typedefs.Protocol,
-				MaxLength: maxProtocols,
+				Type:     "array",
+				Items:    typedefs.Protocol,
+				MaxItems: maxProtocols,
 			},
 			"config": {
 				Type:                 "object",

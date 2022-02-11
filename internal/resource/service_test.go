@@ -1,6 +1,7 @@
 package resource
 
 import (
+	"strings"
 	"testing"
 
 	model "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
@@ -179,6 +180,42 @@ func TestService_Validate(t *testing.T) {
 					Field: "host",
 					Messages: []string{
 						"must be a valid hostname",
+					},
+				},
+			},
+		},
+		{
+			name: "a long host throws an error",
+			Service: func() Service {
+				s := goodService()
+				s.Service.Host = strings.Repeat("foo.bar", 37)
+				return s
+			},
+			wantErr: true,
+			Errs: []*model.ErrorDetail{
+				{
+					Type:  model.ErrorType_ERROR_TYPE_FIELD,
+					Field: "host",
+					Messages: []string{
+						"must be a valid hostname",
+					},
+				},
+			},
+		},
+		{
+			name: "a long path throws an error",
+			Service: func() Service {
+				s := goodService()
+				s.Service.Path = strings.Repeat("/longpath", 114)
+				return s
+			},
+			wantErr: true,
+			Errs: []*model.ErrorDetail{
+				{
+					Type:  model.ErrorType_ERROR_TYPE_FIELD,
+					Field: "path",
+					Messages: []string{
+						"length must not exceed 1024",
 					},
 				},
 			},

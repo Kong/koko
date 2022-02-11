@@ -1,7 +1,9 @@
 package resource
 
 import (
+	"fmt"
 	"net/http"
+	"strings"
 	"testing"
 
 	model "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
@@ -319,6 +321,25 @@ func TestRoute_Validate(t *testing.T) {
 			},
 		},
 		{
+			name: "long paths throws an error",
+			Route: func() Route {
+				r := goodRoute()
+				path := strings.Repeat("/longpath", 114)
+				r.Route.Paths = []string{path}
+				return r
+			},
+			wantErr: true,
+			Errs: []*model.ErrorDetail{
+				{
+					Type:  model.ErrorType_ERROR_TYPE_FIELD,
+					Field: "paths[0]",
+					Messages: []string{
+						"length must not exceed 1024",
+					},
+				},
+			},
+		},
+		{
 			name: "invalid https_redirect_status_code throws an error",
 			Route: func() Route {
 				r := goodRoute()
@@ -332,6 +353,27 @@ func TestRoute_Validate(t *testing.T) {
 					Field: "https_redirect_status_code",
 					Messages: []string{
 						`value must be one of "426", "301", "302", "307", "308"`,
+					},
+				},
+			},
+		},
+		{
+			name: "more than 16 hosts throw an error",
+			Route: func() Route {
+				r := goodRoute()
+				for i := 0; i < 17; i++ {
+					r.Route.Hosts = append(r.Route.Hosts,
+						fmt.Sprintf("f%d.example.com", i))
+				}
+				return r
+			},
+			wantErr: true,
+			Errs: []*model.ErrorDetail{
+				{
+					Type:  model.ErrorType_ERROR_TYPE_FIELD,
+					Field: "hosts",
+					Messages: []string{
+						"maximum 16 items required, but found 18 items",
 					},
 				},
 			},
@@ -353,6 +395,49 @@ func TestRoute_Validate(t *testing.T) {
 					Field: "headers.host",
 					Messages: []string{
 						"must not contain 'host' header",
+					},
+				},
+			},
+		},
+		{
+			name: "header key more than 64 chars errors",
+			Route: func() Route {
+				r := goodRoute()
+				longKey := strings.Repeat("buzz", 17)
+				r.Route.Headers = map[string]*model.HeaderValues{
+					longKey: {Values: []string{"bar"}},
+				}
+				return r
+			},
+			wantErr: true,
+			Errs: []*model.ErrorDetail{
+				{
+					Type:  model.ErrorType_ERROR_TYPE_FIELD,
+					Field: "headers",
+					Messages: []string{
+						"additionalProperties" +
+							" 'buzzbuzzbuzzbuzzbuzzbuzzbuzzbuzzbuzzbuzzbuzzbuzzbuzzbuzzbuzzbuzzbuzz' not allowed",
+					},
+				},
+			},
+		},
+		{
+			name: "header value more than 64 chars errors",
+			Route: func() Route {
+				r := goodRoute()
+				longValue := strings.Repeat("buzz", 17)
+				r.Route.Headers = map[string]*model.HeaderValues{
+					"foo": {Values: []string{longValue}},
+				}
+				return r
+			},
+			wantErr: true,
+			Errs: []*model.ErrorDetail{
+				{
+					Type:  model.ErrorType_ERROR_TYPE_FIELD,
+					Field: "headers.foo.values[0]",
+					Messages: []string{
+						"length must be <= 64, but got 68",
 					},
 				},
 			},

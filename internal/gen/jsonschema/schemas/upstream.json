@@ -27,7 +27,7 @@
       "type": "string"
     },
     "hash_fallback_header": {
-      "pattern": "^[A-Za-z0-9!#$%\u0026'*+-.^_|~]+$",
+      "pattern": "^[A-Za-z0-9!#$%\u0026'*+-.^_|~]{1,64}$",
       "type": "string"
     },
     "hash_on": {
@@ -52,6 +52,10 @@
           "description": "must begin with `/`"
         },
         {
+          "maxLength": 1024,
+          "description": "length must not exceed 1024"
+        },
+        {
           "not": {
             "pattern": "//",
             "description": "must not contain `//`"
@@ -60,7 +64,7 @@
       ]
     },
     "hash_on_header": {
-      "pattern": "^[A-Za-z0-9!#$%\u0026'*+-.^_|~]+$",
+      "pattern": "^[A-Za-z0-9!#$%\u0026'*+-.^_|~]{1,64}$",
       "type": "string"
     },
     "healthchecks": {
@@ -102,6 +106,10 @@
                   "description": "must begin with `/`"
                 },
                 {
+                  "maxLength": 1024,
+                  "description": "length must not exceed 1024"
+                },
+                {
                   "not": {
                     "pattern": "//",
                     "description": "must not contain `//`"
@@ -109,7 +117,12 @@
                 }
               ]
             },
-            "http_sni": {},
+            "http_sni": {
+              "maxLength": 256,
+              "pattern": "^[a-z0-9]([-a-z0-9]*[a-z0-9])?(.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$",
+              "type": "string",
+              "description": "must be a valid hostname"
+            },
             "https_verify_certificate": {
               "type": "boolean"
             },
@@ -226,8 +239,10 @@
       "type": "object"
     },
     "host_header": {
-      "pattern": "^[A-Za-z0-9!#$%\u0026'*+-.^_|~]+$",
-      "type": "string"
+      "maxLength": 256,
+      "pattern": "^[a-z0-9]([-a-z0-9]*[a-z0-9])?(.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$",
+      "type": "string",
+      "description": "must be a valid hostname"
     },
     "id": {
       "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",

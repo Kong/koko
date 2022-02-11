@@ -219,7 +219,7 @@ func init() {
 				Minimum: minSlots,
 				Maximum: maxSlots,
 			},
-			"host_header": typedefs.Header,
+			"host_header": typedefs.Host,
 			"healthchecks": {
 				Type: "object",
 				Properties: map[string]*generator.Schema{
@@ -236,7 +236,7 @@ func init() {
 								Minimum: 1,
 								Maximum: maxConcurrency,
 							},
-							"http_sni":  {},
+							"http_sni":  typedefs.Host,
 							"http_path": typedefs.Path,
 							"https_verify_certificate": {
 								Type: "boolean",

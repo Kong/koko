@@ -46,16 +46,20 @@
           }
         ]
       },
+      "maxItems": 16,
       "type": "array"
     },
     "headers": {
+      "maxProperties": 16,
       "patternProperties": {
-        "^[A-Za-z0-9!#$%\u0026'*+-.^_|~]+$": {
+        "^[A-Za-z0-9!#$%\u0026'*+-.^_|~]{1,64}$": {
           "properties": {
             "values": {
               "items": {
+                "maxLength": 64,
                 "type": "string"
               },
+              "maxItems": 16,
               "type": "array"
             }
           },
@@ -72,10 +76,12 @@
     },
     "hosts": {
       "items": {
+        "maxLength": 256,
         "pattern": "^[a-z0-9]([-a-z0-9]*[a-z0-9])?(.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$",
         "type": "string",
         "description": "must be a valid hostname"
       },
+      "maxItems": 16,
       "type": "array"
     },
     "https_redirect_status_code": {
@@ -96,6 +102,7 @@
     "methods": {
       "items": {
         "pattern": "^[A-Z]+$",
+        "maxItems": 16,
         "type": "string"
       },
       "type": "array"
@@ -122,6 +129,10 @@
             "description": "must begin with `/`"
           },
           {
+            "maxLength": 1024,
+            "description": "length must not exceed 1024"
+          },
+          {
             "not": {
               "pattern": "//",
               "description": "must not contain `//`"
@@ -129,6 +140,7 @@
           }
         ]
       },
+      "maxItems": 16,
       "type": "array"
     },
     "preserve_host": {
@@ -205,10 +217,12 @@
     },
     "snis": {
       "items": {
+        "maxLength": 256,
         "pattern": "^[a-z0-9]([-a-z0-9]*[a-z0-9])?(.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$",
         "type": "string",
         "description": "must be a valid hostname"
       },
+      "maxItems": 16,
       "type": "array"
     },
     "sources": {
@@ -249,6 +263,7 @@
           }
         ]
       },
+      "maxItems": 16,
       "type": "array"
     },
     "strip_path": {
