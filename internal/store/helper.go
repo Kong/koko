@@ -14,6 +14,15 @@ func getFullList(ctx context.Context, tx persistence.Tx, keyPrefix string) (pers
 	if err != nil {
 		return persistence.ListResult{}, err
 	}
+	tCount := listResult.TotalCount
+	for kvl := len(listResult.KVList); (kvl > 0) && (tCount > kvl); kvl = len(listResult.KVList) {
+		listOptions.Offset += listOptions.Limit
+		currListRes, err := tx.List(ctx, keyPrefix, listOptions)
+		if err != nil {
+			return persistence.ListResult{}, err
+		}
+		listResult.KVList = append(listResult.KVList, currListRes.KVList...)
+	}
 	return listResult, nil
 }
 
