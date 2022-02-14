@@ -294,6 +294,36 @@ func TestUpstream_Validate(t *testing.T) {
 			},
 		},
 		{
+			name: "upstream with negative interval throws an error",
+			Upstream: func() Upstream {
+				u := NewUpstream()
+				u.Upstream.Id = uuid.NewString()
+				u.Upstream.Name = "foo"
+				u.Upstream.Healthchecks = &model.Healthchecks{
+					Threshold: wrapperspb.Float(0),
+					Active: &model.ActiveHealthcheck{
+						Concurrency: wrapperspb.Int32(32),
+						Healthy: &model.ActiveHealthyCondition{
+							HttpStatuses: []int32{200, 302},
+							Interval:     wrapperspb.Int32(-1),
+							Successes:    wrapperspb.Int32(5),
+						},
+					},
+				}
+				return u
+			},
+			wantErr: true,
+			Errs: []*model.ErrorDetail{
+				{
+					Type:  model.ErrorType_ERROR_TYPE_FIELD,
+					Field: "healthchecks.active.healthy.interval",
+					Messages: []string{
+						"must be >= 0 but found -1",
+					},
+				},
+			},
+		},
+		{
 			name: "hash_fallback_header must not be equal to hash_on_header",
 			Upstream: func() Upstream {
 				u := NewUpstream()

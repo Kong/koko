@@ -30,3 +30,7 @@ func (t wrappersPBTransformer) Transformer(typ reflect.Type) func(dst, src refle
 		return nil
 	}
 }
+
+func intP(i int) *int {
+	return &i
+}

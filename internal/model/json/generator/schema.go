@@ -30,7 +30,7 @@ type Schema struct {
 	MultipleOf           int                `json:"multipleOf,omitempty"`           // section 5.1
 	Maximum              int                `json:"maximum,omitempty"`              // section 5.2
 	ExclusiveMaximum     int                `json:"exclusiveMaximum,omitempty"`     // section 5.3
-	Minimum              int                `json:"minimum,omitempty"`              // section 5.4
+	Minimum              *int               `json:"minimum,omitempty"`              // section 5.4
 	ExclusiveMinimum     int                `json:"exclusiveMinimum,omitempty"`     // section 5.5
 	MaxLength            int                `json:"maxLength,omitempty"`            // section 5.6
 	MinLength            int                `json:"minLength,omitempty"`            // section 5.7

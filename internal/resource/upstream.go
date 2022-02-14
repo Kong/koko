@@ -90,19 +90,19 @@ var (
 	}
 	typedefSeconds = &generator.Schema{
 		Type:    "integer",
-		Minimum: 0,
+		Minimum: intP(0),
 		Maximum: maxSeconds,
 	}
 	typedefOneByteInteger = &generator.Schema{
 		Type:    "integer",
-		Minimum: 0,
+		Minimum: intP(0),
 		Maximum: maxOneByteInt,
 	}
 	typedefHTTPStatuses = &generator.Schema{
 		Type: "array",
 		Items: &generator.Schema{
 			Type:    "integer",
-			Minimum: minStatus,
+			Minimum: intP(minStatus),
 			Maximum: maxStatus,
 		},
 		MaxItems: maxStatuses,
@@ -216,7 +216,7 @@ func init() {
 			"hash_on_cookie_path": typedefs.Path,
 			"slots": {
 				Type:    "integer",
-				Minimum: minSlots,
+				Minimum: intP(minSlots),
 				Maximum: maxSlots,
 			},
 			"host_header": typedefs.Host,
@@ -225,7 +225,7 @@ func init() {
 				Properties: map[string]*generator.Schema{
 					"threshold": {
 						Type:    "number",
-						Minimum: 0,
+						Minimum: intP(0),
 						Maximum: maxThreshold,
 					},
 					"active": {
@@ -233,7 +233,7 @@ func init() {
 						Properties: map[string]*generator.Schema{
 							"concurrency": {
 								Type:    "integer",
-								Minimum: 1,
+								Minimum: intP(1),
 								Maximum: maxConcurrency,
 							},
 							"http_sni":  typedefs.Host,
