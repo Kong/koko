@@ -89,10 +89,12 @@
                 },
                 "interval": {
                   "maximum": 65535,
+                  "minimum": 0,
                   "type": "integer"
                 },
                 "success": {
                   "maximum": 255,
+                  "minimum": 0,
                   "type": "integer"
                 }
               },
@@ -128,6 +130,7 @@
             },
             "timeout": {
               "maximum": 65535,
+              "minimum": 0,
               "type": "integer"
             },
             "type": {
@@ -142,6 +145,7 @@
               "properties": {
                 "http_failures": {
                   "maximum": 255,
+                  "minimum": 0,
                   "type": "integer"
                 },
                 "http_statuses": {
@@ -155,14 +159,17 @@
                 },
                 "interval": {
                   "maximum": 65535,
+                  "minimum": 0,
                   "type": "integer"
                 },
                 "tcp_failures": {
                   "maximum": 255,
+                  "minimum": 0,
                   "type": "integer"
                 },
                 "timeouts": {
                   "maximum": 255,
+                  "minimum": 0,
                   "type": "integer"
                 }
               },
@@ -186,6 +193,7 @@
                 },
                 "success": {
                   "maximum": 255,
+                  "minimum": 0,
                   "type": "integer"
                 }
               },
@@ -193,6 +201,7 @@
             },
             "timeout": {
               "maximum": 65535,
+              "minimum": 0,
               "type": "integer"
             },
             "type": {
@@ -206,6 +215,7 @@
               "properties": {
                 "http_failures": {
                   "maximum": 255,
+                  "minimum": 0,
                   "type": "integer"
                 },
                 "http_statuses": {
@@ -219,10 +229,12 @@
                 },
                 "tcp_failures": {
                   "maximum": 255,
+                  "minimum": 0,
                   "type": "integer"
                 },
                 "timeouts": {
                   "maximum": 255,
+                  "minimum": 0,
                   "type": "integer"
                 }
               },
@@ -233,6 +245,7 @@
         },
         "threshold": {
           "maximum": 100,
+          "minimum": 0,
           "type": "number"
         }
       },

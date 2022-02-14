@@ -104,6 +104,7 @@
     },
     "tls_verify_depth": {
       "maximum": 64,
+      "minimum": 0,
       "type": "integer"
     },
     "updated_at": {

@@ -100,7 +100,7 @@ func init() {
 			"name": typedefs.Name,
 			"retries": {
 				Type:    "integer",
-				Minimum: 1,
+				Minimum: intP(1),
 				Maximum: maxRetries,
 			},
 			"protocol":        typedefs.Protocol,
@@ -116,7 +116,7 @@ func init() {
 			},
 			"tls_verify_depth": {
 				Type:    "integer",
-				Minimum: 0,
+				Minimum: intP(0),
 				Maximum: maxVerifyDepth,
 			},
 			"ca_certificates": {

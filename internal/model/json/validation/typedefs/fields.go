@@ -16,6 +16,7 @@ const (
 	maxPathLength     = 1024
 
 	HTTPHeaderNamePattern = "^[A-Za-z0-9!#$%&'*+-.^_|~]{1,64}$"
+	hostnamePattern       = "^[a-z0-9]([-a-z0-9]*[a-z0-9])?(.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$"
 )
 
 var ID = &generator.Schema{
@@ -31,6 +32,7 @@ var ReferenceObject = &generator.Schema{
 	Properties: map[string]*generator.Schema{
 		"id": ID,
 	},
+	Required:             []string{"id"},
 	AdditionalProperties: &falsy,
 }
 
@@ -43,7 +45,7 @@ var Name = &generator.Schema{
 
 var Timeout = &generator.Schema{
 	Type:    "integer",
-	Minimum: 1,
+	Minimum: intP(1),
 	Maximum: maxTimeout,
 }
 
@@ -63,19 +65,19 @@ var Protocol = &generator.Schema{
 var Host = &generator.Schema{
 	Description: "must be a valid hostname",
 	Type:        "string",
-	Pattern:     "^[a-z0-9]([-a-z0-9]*[a-z0-9])?(.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$",
 	MaxLength:   maxHostnameLength,
+	Pattern:     hostnamePattern,
 }
 
 var Port = &generator.Schema{
 	Type:    "integer",
-	Minimum: 1,
+	Minimum: intP(1),
 	Maximum: maxPort,
 }
 
 var UnixEpoch = &generator.Schema{
 	Type:    "integer",
-	Minimum: 1,
+	Minimum: intP(1),
 }
 
 var Tags = &generator.Schema{
@@ -141,3 +143,5 @@ var CIDRPort = &generator.Schema{
 		},
 	},
 }
+
+func intP(i int) *int { return &i }

@@ -340,6 +340,24 @@ func TestRoute_Validate(t *testing.T) {
 			},
 		},
 		{
+			name: "route with empty service throws an error",
+			Route: func() Route {
+				r := goodRoute()
+				r.Route.Service = &model.Service{}
+				return r
+			},
+			wantErr: true,
+			Errs: []*model.ErrorDetail{
+				{
+					Type:  model.ErrorType_ERROR_TYPE_FIELD,
+					Field: "service",
+					Messages: []string{
+						"missing properties: 'id'",
+					},
+				},
+			},
+		},
+		{
 			name: "invalid https_redirect_status_code throws an error",
 			Route: func() Route {
 				r := goodRoute()

@@ -92,7 +92,7 @@ func init() {
 			},
 			"last_ping": {
 				Type:    "integer",
-				Minimum: 1,
+				Minimum: intP(1),
 			},
 			"config_hash": {
 				Type:      "string",
