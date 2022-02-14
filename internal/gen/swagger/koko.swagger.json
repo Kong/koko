@@ -27,6 +27,9 @@
       "name": "StatusService"
     },
     {
+      "name": "TargetService"
+    },
+    {
       "name": "UpstreamService"
     },
     {
@@ -965,6 +968,206 @@
         ]
       }
     },
+    "/v1/targets": {
+      "get": {
+        "operationId": "TargetService_ListTargets",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/kong.admin.service.v1.ListTargetsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "upstreamId",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "cluster.id",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "page.size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "page.number",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "tags": [
+          "kong.admin.service.v1.TargetService"
+        ]
+      },
+      "post": {
+        "operationId": "TargetService_CreateTarget",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/kong.admin.service.v1.CreateTargetResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/kong.admin.model.v1.Target"
+            }
+          },
+          {
+            "name": "cluster.id",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "kong.admin.service.v1.TargetService"
+        ]
+      }
+    },
+    "/v1/targets/{id}": {
+      "get": {
+        "operationId": "TargetService_GetTarget",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/kong.admin.service.v1.GetTargetResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "cluster.id",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "kong.admin.service.v1.TargetService"
+        ]
+      },
+      "delete": {
+        "operationId": "TargetService_DeleteTarget",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/kong.admin.service.v1.DeleteTargetResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "cluster.id",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "kong.admin.service.v1.TargetService"
+        ]
+      }
+    },
+    "/v1/targets/{item.id}": {
+      "put": {
+        "operationId": "TargetService_UpsertTarget",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/kong.admin.service.v1.UpsertTargetResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "item.id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/kong.admin.model.v1.Target"
+            }
+          },
+          {
+            "name": "cluster.id",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "kong.admin.service.v1.TargetService"
+        ]
+      }
+    },
     "/v1/upstreams": {
       "get": {
         "operationId": "UpstreamService_ListUpstreams",
@@ -1682,6 +1885,38 @@
         }
       }
     },
+    "kong.admin.model.v1.Target": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "target": {
+          "type": "string"
+        },
+        "weight": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "createdAt": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "updatedAt": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "upstream": {
+          "$ref": "#/definitions/kong.admin.model.v1.Upstream"
+        }
+      }
+    },
     "kong.admin.model.v1.Upstream": {
       "type": "object",
       "properties": {
@@ -1770,6 +2005,14 @@
         }
       }
     },
+    "kong.admin.service.v1.CreateTargetResponse": {
+      "type": "object",
+      "properties": {
+        "item": {
+          "$ref": "#/definitions/kong.admin.model.v1.Target"
+        }
+      }
+    },
     "kong.admin.service.v1.CreateUpstreamResponse": {
       "type": "object",
       "properties": {
@@ -1791,6 +2034,9 @@
       "type": "object"
     },
     "kong.admin.service.v1.DeleteStatusResponse": {
+      "type": "object"
+    },
+    "kong.admin.service.v1.DeleteTargetResponse": {
       "type": "object"
     },
     "kong.admin.service.v1.DeleteUpstreamResponse": {
@@ -1849,6 +2095,14 @@
       "properties": {
         "item": {
           "$ref": "#/definitions/kong.admin.model.v1.Status"
+        }
+      }
+    },
+    "kong.admin.service.v1.GetTargetResponse": {
+      "type": "object",
+      "properties": {
+        "item": {
+          "$ref": "#/definitions/kong.admin.model.v1.Target"
         }
       }
     },
@@ -1938,6 +2192,20 @@
         }
       }
     },
+    "kong.admin.service.v1.ListTargetsResponse": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/kong.admin.model.v1.Target"
+          }
+        },
+        "page": {
+          "$ref": "#/definitions/kong.admin.model.v1.PaginationResponse"
+        }
+      }
+    },
     "kong.admin.service.v1.ListUpstreamsResponse": {
       "type": "object",
       "properties": {
@@ -1978,6 +2246,14 @@
       "properties": {
         "item": {
           "$ref": "#/definitions/kong.admin.model.v1.Service"
+        }
+      }
+    },
+    "kong.admin.service.v1.UpsertTargetResponse": {
+      "type": "object",
+      "properties": {
+        "item": {
+          "$ref": "#/definitions/kong.admin.model.v1.Target"
         }
       }
     },
