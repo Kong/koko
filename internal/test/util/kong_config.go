@@ -13,6 +13,7 @@ type KongConfig struct {
 	Routes    []*kong.Route    `json:"routes,omitempty"`
 	Plugins   []*kong.Plugin   `json:"plugins,omitempty"`
 	Upstreams []*kong.Upstream `json:"upstreams,omitempty"`
+	Targets   []*kong.Target   `json:"targets,omitempty"`
 }
 
 func EnsureConfig(expectedConfig *model.TestingConfig) error {
@@ -48,10 +49,20 @@ func fetchKongConfig() (KongConfig, error) {
 	if err != nil {
 		return KongConfig{}, fmt.Errorf("fetch upstreams: %v", err)
 	}
+	var allTargets []*kong.Target
+	for _, u := range upstreams {
+		targets, err := client.Targets.ListAll(ctx, u.ID)
+		if err != nil {
+			return KongConfig{},
+				fmt.Errorf("fetch targets for upstream '%v': %v", *u.ID, err)
+		}
+		allTargets = append(allTargets, targets...)
+	}
 	return KongConfig{
 		Services:  services,
 		Routes:    routes,
 		Plugins:   plugins,
 		Upstreams: upstreams,
+		Targets:   allTargets,
 	}, nil
 }

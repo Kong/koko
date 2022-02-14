@@ -229,6 +229,7 @@ type ConfigClient struct {
 	Route    admin.RouteServiceClient
 	Plugin   admin.PluginServiceClient
 	Upstream admin.UpstreamServiceClient
+	Target   admin.TargetServiceClient
 	Status   relay.StatusServiceClient
 	Node     admin.NodeServiceClient
 
@@ -272,11 +273,17 @@ func (m *Manager) fetchContent(ctx context.Context) (mold.GrpcContent, error) {
 		return mold.GrpcContent{}, err
 	}
 
+	targetsList, err := m.fetchTargets(ctx)
+	if err != nil {
+		return mold.GrpcContent{}, err
+	}
+
 	return mold.GrpcContent{
 		Services:  serviceList.Items,
 		Routes:    routesList.Items,
 		Plugins:   pluginsList.Items,
 		Upstreams: upstreamsList.Items,
+		Targets:   targetsList.Items,
 	}, nil
 }
 
@@ -317,6 +324,15 @@ func (m *Manager) fetchUpstreams(ctx context.Context) (*admin.ListUpstreamsRespo
 		&admin.ListUpstreamsRequest{
 			Cluster: m.reqCluster(),
 		})
+}
+
+func (m *Manager) fetchTargets(ctx context.Context) (*admin.ListTargetsResponse,
+	error) {
+	ctx, cancel := context.WithTimeout(ctx, defaultRequestTimeout)
+	defer cancel()
+	return m.configClient.Target.ListTargets(ctx, &admin.ListTargetsRequest{
+		Cluster: m.reqCluster(),
+	})
 }
 
 func (m *Manager) Run(ctx context.Context) {

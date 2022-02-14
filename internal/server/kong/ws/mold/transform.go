@@ -49,6 +49,14 @@ func GrpcToWrpc(input GrpcContent) (config.Content, error) {
 		}
 		res.Upstreams = append(res.Upstreams, m)
 	}
+	for _, target := range input.Targets {
+		m, err := simplify(target)
+		delete(m, "updated_at")
+		if err != nil {
+			return config.Content{}, err
+		}
+		res.Targets = append(res.Targets, m)
+	}
 
 	return res, nil
 }
@@ -56,6 +64,7 @@ func GrpcToWrpc(input GrpcContent) (config.Content, error) {
 func flatten(m config.Map) {
 	flattenForeign(m, "service")
 	flattenForeign(m, "route")
+	flattenForeign(m, "upstream")
 }
 
 func flattenForeign(m config.Map, entityType string) {
