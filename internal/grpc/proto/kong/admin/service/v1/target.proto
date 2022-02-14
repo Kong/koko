@@ -1,0 +1,86 @@
+syntax = "proto3";
+
+package kong.admin.service.v1;
+
+option go_package = "github.com/kong/koko/internal/gen/kong/admin/service/v1;v1";
+
+import "google/api/annotations.proto";
+import "kong/admin/model/v1/target.proto";
+import "kong/admin/model/v1/cluster.proto";
+import "kong/admin/model/v1/pagination.proto";
+
+service TargetService {
+  rpc GetTarget(GetTargetRequest) returns (GetTargetResponse) {
+    option (google.api.http) = {
+      get: "/v1/targets/{id}"
+    };
+  }
+  rpc CreateTarget(CreateTargetRequest) returns (CreateTargetResponse) {
+    option (google.api.http) = {
+      post: "/v1/targets"
+      body: "item"
+    };
+  }
+  rpc UpsertTarget(UpsertTargetRequest) returns (UpsertTargetResponse) {
+    option (google.api.http) = {
+      put: "/v1/targets/{item.id}"
+      body: "item"
+    };
+  }
+  rpc DeleteTarget(DeleteTargetRequest) returns (DeleteTargetResponse) {
+    option (google.api.http) = {
+      delete: "/v1/targets/{id}"
+    };
+  }
+  rpc ListTargets(ListTargetsRequest) returns (ListTargetsResponse) {
+    option (google.api.http) = {
+      get: "/v1/targets"
+    };
+  }
+}
+
+message GetTargetRequest{
+  string id = 1;
+  model.v1.RequestCluster cluster = 2;
+}
+
+message GetTargetResponse{
+  model.v1.Target item = 1;
+}
+
+message CreateTargetRequest{
+  model.v1.Target item = 1;
+  model.v1.RequestCluster cluster = 2;
+}
+
+message CreateTargetResponse{
+  model.v1.Target item = 1;
+}
+
+message UpsertTargetRequest{
+  model.v1.Target item = 1;
+  model.v1.RequestCluster cluster = 2;
+}
+
+message UpsertTargetResponse{
+  model.v1.Target item = 1;
+}
+
+message DeleteTargetRequest{
+  string id = 1;
+  model.v1.RequestCluster cluster = 2;
+}
+
+message DeleteTargetResponse{
+}
+
+message ListTargetsRequest{
+  string upstream_id = 1;
+  model.v1.RequestCluster cluster = 2;
+  model.v1.PaginationRequest page = 3;
+}
+
+message ListTargetsResponse{
+  repeated model.v1.Target items = 1;
+  model.v1.PaginationResponse page = 2;
+}
