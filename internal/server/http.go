@@ -4,12 +4,18 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
+	"io"
+	"log"
 	"net"
 	"net/http"
+	"os"
+	"strings"
 	"time"
 
 	"go.uber.org/zap"
 )
+
+const tlsHandshakeError = "http: TLS handshake error"
 
 var defaultShutdownTimeout = 5 * time.Second
 
@@ -40,9 +46,28 @@ func NewHTTP(opts HTTPOpts) (*HTTP, error) {
 	}, nil
 }
 
+type tlsHandshakeErrorWriter struct {
+	io.Writer
+}
+
+func (w *tlsHandshakeErrorWriter) Write(p []byte) (int, error) {
+	if strings.Contains(string(p), tlsHandshakeError) {
+		return len(p), nil
+	}
+	// for non tls handshake error, log it as usual
+	return w.Write(p)
+}
+
+func (h *HTTP) addTLSHandshakeErrorHandler() {
+	tlsErrorWriter := &tlsHandshakeErrorWriter{os.Stderr}
+	tlsErrorLogger := log.New(tlsErrorWriter, "", 0)
+	h.server.ErrorLog = tlsErrorLogger
+}
+
 func (h *HTTP) Run(ctx context.Context) error {
 	errCh := make(chan error)
 	s := h.server
+	h.addTLSHandshakeErrorHandler()
 	go func() {
 		h.logger.Debug("starting server")
 		listener, err := net.Listen("tcp", h.server.Addr)
