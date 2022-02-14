@@ -16,6 +16,7 @@ type Content struct {
 	Routes        []Map  `json:"routes,omitempty"`
 	Plugins       []Map  `json:"plugins,omitempty"`
 	Upstreams     []Map  `json:"upstreams,omitempty"`
+	Targets       []Map  `json:"targets,omitempty"`
 }
 
 type Payload struct {

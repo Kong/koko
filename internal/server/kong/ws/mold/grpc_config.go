@@ -9,4 +9,5 @@ type GrpcContent struct {
 	Routes    []*v1.Route
 	Plugins   []*v1.Plugin
 	Upstreams []*v1.Upstream
+	Targets   []*v1.Target
 }
