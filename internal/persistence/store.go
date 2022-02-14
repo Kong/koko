@@ -14,6 +14,7 @@ import (
 type Persister interface {
 	CRUD
 	Tx(context.Context) (Tx, error)
+	Close() error
 }
 
 type CRUD interface {

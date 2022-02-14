@@ -54,6 +54,7 @@ func Run(ctx context.Context, config ServerConfig) error {
 	if err != nil {
 		return fmt.Errorf("database: %v", err)
 	}
+	defer persister.Close()
 
 	store := store.New(persister, logger.With(zap.String("component",
 		"store"))).ForCluster("default")

@@ -133,6 +133,10 @@ func (s *Postgres) Tx(ctx context.Context) (persistence.Tx, error) {
 	return &sqliteTx{tx: tx}, nil
 }
 
+func (s *Postgres) Close() error {
+	return s.db.Close()
+}
+
 type sqliteTx struct {
 	tx *sql.Tx
 }
