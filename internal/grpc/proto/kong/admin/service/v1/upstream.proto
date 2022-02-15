@@ -7,6 +7,7 @@ option go_package = "github.com/kong/koko/internal/gen/kong/admin/service/v1;v1"
 import "google/api/annotations.proto";
 import "kong/admin/model/v1/upstream.proto";
 import "kong/admin/model/v1/cluster.proto";
+import "kong/admin/model/v1/pagination.proto";
 
 service UpstreamService {
   rpc GetUpstream(GetUpstreamRequest) returns (GetUpstreamResponse) {
@@ -76,8 +77,10 @@ message DeleteUpstreamResponse{
 
 message ListUpstreamsRequest{
   model.v1.RequestCluster cluster = 1;
+  model.v1.PaginationRequest page = 2;
 }
 
 message ListUpstreamsResponse{
   repeated model.v1.Upstream items = 1;
+  model.v1.PaginationResponse page = 2;
 }
