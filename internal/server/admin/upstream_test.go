@@ -211,15 +211,60 @@ func TestUpstreamList(t *testing.T) {
 	res = c.POST("/v1/upstreams").WithJSON(upstream).Expect()
 	id2 := res.JSON().Path("$.item.id").String().Raw()
 	res.Status(201)
+	upstream = &v1.Upstream{
+		Name: "baz",
+	}
+	res = c.POST("/v1/upstreams").WithJSON(upstream).Expect()
+	id3 := res.JSON().Path("$.item.id").String().Raw()
+	res.Status(201)
+	upstream = &v1.Upstream{
+		Name: "qux",
+	}
+	res = c.POST("/v1/upstreams").WithJSON(upstream).Expect()
+	id4 := res.JSON().Path("$.item.id").String().Raw()
+	res.Status(201)
 
 	t.Run("list returns multiple upstreams", func(t *testing.T) {
 		body := c.GET("/v1/upstreams").Expect().Status(http.StatusOK).JSON().Object()
+		items := body.Value("items").Array()
+		items.Length().Equal(4)
+		var gotIDs []string
+		for _, item := range items.Iter() {
+			gotIDs = append(gotIDs, item.Object().Value("id").String().Raw())
+		}
+		require.ElementsMatch(t, []string{id1, id2, id3, id4}, gotIDs)
+	})
+	t.Run("list returns multiple upstreams with paging", func(t *testing.T) {
+		// Get First Page
+		body := c.GET("/v1/upstreams").
+			WithQuery("page.size", "2").
+			WithQuery("page.number", "1").
+			Expect().Status(http.StatusOK).JSON().Object()
 		items := body.Value("items").Array()
 		items.Length().Equal(2)
 		var gotIDs []string
 		for _, item := range items.Iter() {
 			gotIDs = append(gotIDs, item.Object().Value("id").String().Raw())
 		}
-		require.ElementsMatch(t, []string{id1, id2}, gotIDs)
+		body.Value("page").Object().Value("total_count").Number().Equal(4)
+		body.Value("page").Object().Value("next_page_num").Number().Equal(2)
+		// Get second page
+		body = c.GET("/v1/upstreams").
+			WithQuery("page.size", "2").
+			WithQuery("page.number", "2").
+			Expect().Status(http.StatusOK).JSON().Object()
+		items = body.Value("items").Array()
+		items.Length().Equal(2)
+		for _, item := range items.Iter() {
+			gotIDs = append(gotIDs, item.Object().Value("id").String().Raw())
+		}
+		body.Value("page").Object().Value("total_count").Number().Equal(4)
+		body.Value("page").Object().NotContainsKey("next_page")
+		require.ElementsMatch(t, []string{
+			id1,
+			id2,
+			id3,
+			id4,
+		}, gotIDs)
 	})
 }

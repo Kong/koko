@@ -97,11 +97,18 @@ func (s *UpstreamService) ListUpstreams(ctx context.Context,
 		return nil, err
 	}
 	list := resource.NewList(resource.TypeUpstream)
-	if err := db.List(ctx, list); err != nil {
+	listOptFns, err := listOptsFromReq(req.Page)
+	if err != nil {
+		return nil, s.err(util.ErrClient{Message: err.Error()})
+	}
+
+	if err := db.List(ctx, list, listOptFns...); err != nil {
 		return nil, s.err(err)
 	}
+
 	return &v1.ListUpstreamsResponse{
 		Items: upstreamsFromObjects(list.GetAll()),
+		Page:  getPaginationResponse(list.GetTotalCount(), list.GetNextPage()),
 	}, nil
 }
 
