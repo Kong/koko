@@ -41,7 +41,7 @@ func (d DefaultCluster) Get() string {
 
 func NewManager(opts ManagerOpts) *Manager {
 	return &Manager{
-		cluster:      opts.Cluster,
+		Cluster:      opts.Cluster,
 		configClient: opts.Client,
 		logger:       opts.Logger,
 		payload:      &config.Payload{},
@@ -56,7 +56,7 @@ type ManagerConfig struct {
 
 type Manager struct {
 	configClient ConfigClient
-	cluster      Cluster
+	Cluster      Cluster
 	logger       *zap.Logger
 
 	payload *config.Payload
@@ -69,7 +69,7 @@ type Manager struct {
 }
 
 func (m *Manager) reqCluster() *model.RequestCluster {
-	return &model.RequestCluster{Id: m.cluster.Get()}
+	return &model.RequestCluster{Id: m.Cluster.Get()}
 }
 
 func (m *Manager) UpdateConfig(c ManagerConfig) {
