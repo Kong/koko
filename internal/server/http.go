@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"fmt"
 	"io"
+	"log"
 	"net"
 	"net/http"
 	"os"
@@ -12,7 +13,6 @@ import (
 	"time"
 
 	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 )
 
 const tlsHandshakeError = "http: TLS handshake error"
@@ -51,41 +51,23 @@ type tlsErrorWriter struct {
 }
 
 func (w *tlsErrorWriter) Write(p []byte) (int, error) {
-	if strings.Contains(string(p), tlsHandshakeError) {
+	if strings.HasPrefix(string(p), tlsHandshakeError) {
 		return len(p), nil
 	}
 	// for non tls handshake error, log it as usual
 	return w.Writer.Write(p)
 }
 
-func NewTLSErrorWriter(wr io.Writer) io.Writer {
-	return &tlsErrorWriter{wr}
-}
-
-func (h *HTTP) addTLSHandshakeErrorHandler() error {
-	level := zapcore.ErrorLevel
-	config := zap.NewProductionConfig()
-	syncer := zapcore.AddSync(NewTLSErrorWriter(os.Stderr))
-	core := zapcore.NewCore(
-		zapcore.NewJSONEncoder(config.EncoderConfig),
-		syncer,
-		level,
-	)
-	logger := zap.New(core, zap.AddCaller(), zap.ErrorOutput(syncer))
-	errorLog, err := zap.NewStdLogAt(logger, level)
-	if err != nil {
-		return err
-	}
-	h.server.ErrorLog = errorLog
-	return nil
+func (h *HTTP) addTLSHandshakeErrorHandler() {
+	tlsErrorWriter := &tlsErrorWriter{os.Stderr}
+	tlsErrorLogger := log.New(tlsErrorWriter, "", 0)
+	h.server.ErrorLog = tlsErrorLogger
 }
 
 func (h *HTTP) Run(ctx context.Context) error {
 	errCh := make(chan error)
 	s := h.server
-	if err := h.addTLSHandshakeErrorHandler(); err != nil {
-		h.logger.Error("could not add TLS handshake error handler", zap.Error(err))
-	}
+	h.addTLSHandshakeErrorHandler()
 	go func() {
 		h.logger.Debug("starting server")
 		listener, err := net.Listen("tcp", h.server.Addr)
