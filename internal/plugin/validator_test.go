@@ -21,6 +21,22 @@ import (
 //go:embed testdata/schemas/*
 var badSchemaFS embed.FS
 
+// goodValidator is loaded at init.
+// This is an optimization to speed up tests.
+var goodValidator *LuaValidator
+
+func init() {
+	var err error
+	goodValidator, err = NewLuaValidator(Opts{Logger: log.Logger})
+	if err != nil {
+		panic(err)
+	}
+	err = goodValidator.LoadSchemasFromEmbed(Schemas, "schemas")
+	if err != nil {
+		panic(err)
+	}
+}
+
 func TestLoadSchemasFromEmbed(t *testing.T) {
 	validator, err := NewLuaValidator(Opts{Logger: log.Logger})
 	require.Nil(t, err)
@@ -45,11 +61,7 @@ func TestLoadSchemasFromEmbed(t *testing.T) {
 }
 
 func TestProcessAutoFields(t *testing.T) {
-	validator, err := NewLuaValidator(Opts{Logger: log.Logger})
-	require.Nil(t, err)
-
-	err = validator.LoadSchemasFromEmbed(Schemas, "schemas")
-	require.Nil(t, err)
+	validator := goodValidator
 	t.Run("injects default fields for a plugin", func(t *testing.T) {
 		config, err := structpb.NewStruct(map[string]interface{}{
 			"second": 42,
@@ -98,11 +110,7 @@ func TestProcessAutoFields(t *testing.T) {
 }
 
 func TestValidate(t *testing.T) {
-	validator, err := NewLuaValidator(Opts{Logger: log.Logger})
-	require.Nil(t, err)
-
-	err = validator.LoadSchemasFromEmbed(Schemas, "schemas")
-	require.Nil(t, err)
+	validator := goodValidator
 	t.Run("test with entity errors", func(t *testing.T) {
 		config, err := structpb.NewStruct(map[string]interface{}{
 			"policy": "redis",
@@ -146,7 +154,7 @@ func TestValidate(t *testing.T) {
 		require.ElementsMatch(t, expected, validationErr.Errs)
 	})
 	t.Run("plugin does not exist", func(t *testing.T) {
-		err = validator.Validate(&model.Plugin{
+		err := validator.Validate(&model.Plugin{
 			Name: "no-auth",
 		})
 		require.NotNil(t, err)
@@ -165,7 +173,7 @@ func TestValidate(t *testing.T) {
 		var config structpb.Struct
 		configString := `{"add":{"headers":["nokey"]}}`
 		require.Nil(t, json.Unmarshal([]byte(configString), &config))
-		err = validator.Validate(&model.Plugin{
+		err := validator.Validate(&model.Plugin{
 			Name:      "request-transformer",
 			Config:    &config,
 			Protocols: []string{"http", "https"},
@@ -190,7 +198,7 @@ func TestValidate(t *testing.T) {
 			Enabled:   wrapperspb.Bool(true),
 		}
 		require.Nil(t, validator.ProcessDefaults(p))
-		err = validator.Validate(p)
+		err := validator.Validate(p)
 		require.Nil(t, err)
 	})
 	t.Run("serverless plugin schema", func(t *testing.T) {
@@ -263,8 +271,7 @@ type testPluginSchema struct {
 }
 
 func TestPluginLuaSchema(t *testing.T) {
-	validator, err := NewLuaValidator(Opts{Logger: log.Logger})
-	require.Nil(t, err)
+	validator := goodValidator
 	pluginNames := []string{
 		"one",
 		"two",
