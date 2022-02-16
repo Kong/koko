@@ -51,6 +51,7 @@ func TestTargetCreate(t *testing.T) {
 	})
 	t.Run("recreating the same target on the same upstream fails", func(t *testing.T) {
 		target := &v1.Target{
+			Id:     uuid.NewString(),
 			Target: "10.42.42.42",
 			Upstream: &v1.Upstream{
 				Id: upstream.Id,
