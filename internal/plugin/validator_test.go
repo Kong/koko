@@ -12,6 +12,7 @@ import (
 	"github.com/kong/koko/internal/json"
 	"github.com/kong/koko/internal/log"
 	"github.com/kong/koko/internal/model/json/validation"
+	"github.com/kong/koko/internal/plugin/testdata"
 	"github.com/stretchr/testify/require"
 	lua "github.com/yuin/gopher-lua"
 	"google.golang.org/protobuf/types/known/structpb"
@@ -35,6 +36,25 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
+}
+
+func TestNewLuaValidator(t *testing.T) {
+	t.Run("instantiate validator using inject file system", func(t *testing.T) {
+		validator, err := NewLuaValidator(Opts{
+			Logger:   log.Logger,
+			InjectFS: &testdata.LuaTree,
+		})
+		require.Nil(t, err)
+		require.NotNil(t, validator)
+	})
+	t.Run("fail to instantiate validator using inject file system", func(t *testing.T) {
+		_, err := NewLuaValidator(Opts{
+			Logger:   log.Logger,
+			InjectFS: &badSchemaFS,
+		})
+		require.NotNil(t, err)
+		require.Contains(t, err.Error(), "file system must contain 'lua-tree/share/lua/5.1'")
+	})
 }
 
 func TestLoadSchemasFromEmbed(t *testing.T) {
