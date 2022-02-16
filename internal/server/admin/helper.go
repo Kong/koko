@@ -5,6 +5,7 @@ import (
 
 	"github.com/google/uuid"
 	pbModel "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
+	"github.com/kong/koko/internal/server/util"
 	"github.com/kong/koko/internal/store"
 )
 
@@ -18,9 +19,12 @@ func validateListOptions(listOpts *pbModel.PaginationRequest) error {
 	return nil
 }
 
-func validUUID(id string) bool {
+func validUUID(id string) error {
 	_, err := uuid.Parse(id)
-	return err == nil
+	if err != nil {
+		return util.ErrClient{Message: fmt.Sprintf(" '%v' is not a valid uuid", id)}
+	}
+	return nil
 }
 
 func listOptsFromReq(listOpts *pbModel.PaginationRequest) ([]store.ListOptsFunc, error) {

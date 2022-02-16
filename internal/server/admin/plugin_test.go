@@ -11,7 +11,6 @@ import (
 	"github.com/kong/koko/internal/log"
 	"github.com/kong/koko/internal/plugin"
 	"github.com/kong/koko/internal/resource"
-	"github.com/kong/koko/internal/server/util"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
@@ -303,7 +302,7 @@ func TestPluginUpsert(t *testing.T) {
 			Expect()
 		res.Status(http.StatusBadRequest)
 		body := res.JSON().Object()
-		body.ValueEqual("message", util.InvalidUUIDErrString)
+		body.ValueEqual("message", " '' is not a valid uuid")
 	})
 }
 

@@ -8,7 +8,6 @@ import (
 	"github.com/google/uuid"
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
 	"github.com/kong/koko/internal/json"
-	"github.com/kong/koko/internal/server/util"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )
@@ -161,7 +160,7 @@ func TestUpstreamUpsert(t *testing.T) {
 			Expect()
 		res.Status(http.StatusBadRequest)
 		body := res.JSON().Object()
-		body.ValueEqual("message", util.InvalidUUIDErrString)
+		body.ValueEqual("message", " '' is not a valid uuid")
 	})
 }
 

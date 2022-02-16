@@ -21,8 +21,8 @@ type ServiceService struct {
 
 func (s *ServiceService) GetService(ctx context.Context,
 	req *v1.GetServiceRequest) (*v1.GetServiceResponse, error) {
-	if req.Id == "" {
-		return nil, s.err(util.ErrClient{Message: util.InvalidUUIDErrString})
+	if err := validUUID(req.Id); err != nil {
+		return nil, s.err(err)
 	}
 	db, err := s.CommonOpts.getDB(ctx, req.Cluster)
 	if err != nil {
@@ -58,8 +58,8 @@ func (s *ServiceService) CreateService(ctx context.Context,
 
 func (s *ServiceService) UpsertService(ctx context.Context,
 	req *v1.UpsertServiceRequest) (*v1.UpsertServiceResponse, error) {
-	if !validUUID(req.Item.Id) {
-		return nil, s.err(util.ErrClient{Message: util.InvalidUUIDErrString})
+	if err := validUUID(req.Item.Id); err != nil {
+		return nil, s.err(err)
 	}
 	db, err := s.CommonOpts.getDB(ctx, req.Cluster)
 	if err != nil {
@@ -77,8 +77,8 @@ func (s *ServiceService) UpsertService(ctx context.Context,
 
 func (s *ServiceService) DeleteService(ctx context.Context,
 	req *v1.DeleteServiceRequest) (*v1.DeleteServiceResponse, error) {
-	if !validUUID(req.Id) {
-		return nil, s.err(util.ErrClient{Message: util.InvalidUUIDErrString})
+	if err := validUUID(req.Id); err != nil {
+		return nil, s.err(err)
 	}
 	db, err := s.CommonOpts.getDB(ctx, req.Cluster)
 	if err != nil {
