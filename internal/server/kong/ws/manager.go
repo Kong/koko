@@ -27,6 +27,8 @@ type ManagerOpts struct {
 	Cluster Cluster
 	Logger  *zap.Logger
 	Config  ManagerConfig
+
+	DPConfigLoader config.Loader
 }
 
 type Cluster interface {
@@ -44,6 +46,7 @@ func NewManager(opts ManagerOpts) *Manager {
 		Cluster:      opts.Cluster,
 		configClient: opts.Client,
 		logger:       opts.Logger,
+		configLoader: opts.DPConfigLoader,
 		payload:      &config.Payload{},
 		nodes:        &NodeList{},
 		config:       opts.Config,
@@ -63,6 +66,8 @@ type Manager struct {
 	nodes   *NodeList
 
 	broadcastMutex sync.Mutex
+
+	configLoader config.Loader
 
 	config   ManagerConfig
 	configMu sync.RWMutex
@@ -198,7 +203,7 @@ func (m *Manager) AddNode(node Node) {
 				Error("remove node")
 		}
 	}()
-	err = m.reconcilePayload(context.Background())
+	err = m.reconcileKongPayload(context.Background())
 	if err != nil {
 		m.logger.With(zap.Error(err)).
 			Error("reconcile configuration")
@@ -246,6 +251,14 @@ func (m *Manager) reconcilePayload(ctx context.Context) error {
 		return err
 	}
 	return m.payload.Update(wrpcContent)
+}
+
+func (m *Manager) reconcileKongPayload(ctx context.Context) error {
+	config, err := m.configLoader.Load(ctx, m.Cluster.Get())
+	if err != nil {
+		return err
+	}
+	return m.payload.UpdateBinary(config)
 }
 
 var defaultRequestTimeout = 5 * time.Second
@@ -397,7 +410,7 @@ func (m *Manager) streamUpdateEvents(ctx context.Context, stream relay.
 			m.logger.Debug("reconcile payload")
 			backoffer := newBackOff(ctx, 1*time.Minute) // retry for a minute
 			err := backoff.RetryNotify(func() error {
-				return m.reconcilePayload(ctx)
+				return m.reconcileKongPayload(ctx)
 			}, backoffer, func(err error, duration time.Duration) {
 				m.logger.With(
 					zap.Error(err),

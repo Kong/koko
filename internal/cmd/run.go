@@ -19,6 +19,7 @@ import (
 	"github.com/kong/koko/internal/server/admin"
 	"github.com/kong/koko/internal/server/health"
 	"github.com/kong/koko/internal/server/kong/ws"
+	kongConfigWS "github.com/kong/koko/internal/server/kong/ws/config"
 	relayImpl "github.com/kong/koko/internal/server/relay"
 	serverUtil "github.com/kong/koko/internal/server/util"
 	"github.com/kong/koko/internal/store"
@@ -127,13 +128,44 @@ func Run(ctx context.Context, config ServerConfig) error {
 		return err
 	}
 
+	loader := &kongConfigWS.KongConfigurationLoader{}
+	err = loader.Register(&kongConfigWS.KongServiceLoader{Client: configClient.
+		Service})
+	if err != nil {
+		panic(err.Error())
+	}
+	err = loader.Register(&kongConfigWS.KongRouteLoader{Client: configClient.Route})
+	if err != nil {
+		panic(err.Error())
+	}
+	err = loader.Register(&kongConfigWS.KongPluginLoader{Client: configClient.Plugin})
+	if err != nil {
+		panic(err.Error())
+	}
+
+	err = loader.Register(&kongConfigWS.KongUpstreamLoader{Client: configClient.Upstream})
+	if err != nil {
+		panic(err.Error())
+	}
+
+	err = loader.Register(&kongConfigWS.KongTargetLoader{Client: configClient.Target})
+	if err != nil {
+		panic(err.Error())
+	}
+
+	err = loader.Register(&kongConfigWS.VersionLoader{})
+	if err != nil {
+		panic(err.Error())
+	}
+
 	// setup control server
 
 	controlLogger := logger.With(zap.String("component", "control-server"))
 	m := ws.NewManager(ws.ManagerOpts{
-		Logger:  controlLogger,
-		Client:  configClient,
-		Cluster: ws.DefaultCluster{},
+		Logger:         controlLogger,
+		DPConfigLoader: loader,
+		Client:         configClient,
+		Cluster:        ws.DefaultCluster{},
 		// TODO(hbagdi): make this configurable
 		Config: ws.ManagerConfig{
 			DataPlaneRequisites: []*grpcKongUtil.DataPlanePrerequisite{
