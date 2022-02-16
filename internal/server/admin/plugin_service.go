@@ -23,8 +23,8 @@ type PluginService struct {
 
 func (s *PluginService) GetPlugin(ctx context.Context,
 	req *v1.GetPluginRequest) (*v1.GetPluginResponse, error) {
-	if req.Id == "" {
-		return nil, s.err(util.ErrClient{Message: "required ID is missing"})
+	if err := validUUID(req.Id); err != nil {
+		return nil, s.err(err)
 	}
 	db, err := s.CommonOpts.getDB(ctx, req.Cluster)
 	if err != nil {

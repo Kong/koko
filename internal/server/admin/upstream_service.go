@@ -21,8 +21,8 @@ type UpstreamService struct {
 
 func (s *UpstreamService) GetUpstream(ctx context.Context,
 	req *v1.GetUpstreamRequest) (*v1.GetUpstreamResponse, error) {
-	if req.Id == "" {
-		return nil, s.err(util.ErrClient{Message: "required ID is missing"})
+	if err := validUUID(req.Id); err != nil {
+		return nil, s.err(err)
 	}
 	db, err := s.CommonOpts.getDB(ctx, req.Cluster)
 	if err != nil {

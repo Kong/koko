@@ -23,8 +23,8 @@ type TargetService struct {
 
 func (s *TargetService) GetTarget(ctx context.Context,
 	req *v1.GetTargetRequest) (*v1.GetTargetResponse, error) {
-	if req.Id == "" {
-		return nil, s.err(util.ErrClient{Message: "required ID is missing"})
+	if err := validUUID(req.Id); err != nil {
+		return nil, s.err(err)
 	}
 	db, err := s.CommonOpts.getDB(ctx, req.Cluster)
 	if err != nil {
@@ -60,6 +60,9 @@ func (s *TargetService) CreateTarget(ctx context.Context,
 
 func (s *TargetService) UpsertTarget(ctx context.Context,
 	req *v1.UpsertTargetRequest) (*v1.UpsertTargetResponse, error) {
+	if err := validUUID(req.Item.Id); err != nil {
+		return nil, s.err(err)
+	}
 	db, err := s.CommonOpts.getDB(ctx, req.Cluster)
 	if err != nil {
 		return nil, err
@@ -76,8 +79,8 @@ func (s *TargetService) UpsertTarget(ctx context.Context,
 
 func (s *TargetService) DeleteTarget(ctx context.Context,
 	req *v1.DeleteTargetRequest) (*v1.DeleteTargetResponse, error) {
-	if req.Id == "" {
-		return nil, s.err(util.ErrClient{Message: "required ID is missing"})
+	if err := validUUID(req.Id); err != nil {
+		return nil, s.err(err)
 	}
 	db, err := s.CommonOpts.getDB(ctx, req.Cluster)
 	if err != nil {

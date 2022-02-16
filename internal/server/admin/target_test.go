@@ -172,6 +172,20 @@ func TestTargetUpsert(t *testing.T) {
 		object.Value("target").Equal("10.60.24.7")
 		object.Path("$.upstream.id").Equal(newUpstreamID)
 	})
+	t.Run("upsert target without id fails", func(t *testing.T) {
+		target := &v1.Target{
+			Target: "10.60.24.7",
+			Upstream: &v1.Upstream{
+				Id: upstream.Id,
+			},
+		}
+		res := c.PUT("/v1/targets/").
+			WithJSON(target).
+			Expect()
+		res.Status(http.StatusBadRequest)
+		body := res.JSON().Object()
+		body.ValueEqual("message", " '' is not a valid uuid")
+	})
 }
 
 func TestTargetDelete(t *testing.T) {
@@ -202,6 +216,9 @@ func TestTargetDelete(t *testing.T) {
 	})
 	t.Run("delete request without an ID returns 400", func(t *testing.T) {
 		c.DELETE("/v1/targets/").Expect().Status(400)
+	})
+	t.Run("delete request with an invalid ID returns 400", func(t *testing.T) {
+		c.DELETE("/v1/targets/" + "Not-Valid").Expect().Status(400)
 	})
 }
 
