@@ -20,8 +20,7 @@ func validateListOptions(listOpts *pbModel.PaginationRequest) error {
 }
 
 func validUUID(id string) error {
-	_, err := uuid.Parse(id)
-	if err != nil {
+	if _, err := uuid.Parse(id); err != nil {
 		return util.ErrClient{Message: fmt.Sprintf(" '%v' is not a valid uuid", id)}
 	}
 	return nil
