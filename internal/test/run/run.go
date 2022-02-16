@@ -17,7 +17,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func getConfig(pkiMtls, sharedMtls bool) (*cmd.ServerConfig, error) {
+func getConfig(dpAuthMode cmd.DPAuthMode) (*cmd.ServerConfig, error) {
 	config := &cmd.ServerConfig{
 		Logger: log.Logger,
 		Database: config.Database{
@@ -27,7 +27,8 @@ func getConfig(pkiMtls, sharedMtls bool) (*cmd.ServerConfig, error) {
 			},
 		},
 	}
-	if pkiMtls {
+	switch dpAuthMode {
+	case cmd.DPAuthPKIMTLS:
 		cpCert, err := tls.X509KeyPair(certs.CPCert, certs.CPKey)
 		if err != nil {
 			return nil, err
@@ -39,22 +40,20 @@ func getConfig(pkiMtls, sharedMtls bool) (*cmd.ServerConfig, error) {
 		config.KongCPCert = cpCert
 		config.DPAuthMode = cmd.DPAuthPKIMTLS
 		config.DPAuthCACerts = dpCACert
-	} else {
+	case cmd.DPAuthSharedMTLS:
 		cert, err := tls.X509KeyPair(certs.DefaultSharedCert, certs.DefaultSharedKey)
 		if err != nil {
 			return nil, err
 		}
 		config.KongCPCert = cert
 		config.DPAuthCert = cert
-		if sharedMtls {
-			config.DPAuthMode = cmd.DPAuthSharedMTLS
-		}
+		config.DPAuthMode = cmd.DPAuthSharedMTLS
 	}
 	return config, nil
 }
 
-func Koko(t *testing.T, pkiMtls, sharedMtls bool) func() {
-	config, err := getConfig(pkiMtls, sharedMtls)
+func Koko(t *testing.T, dpAuthMode cmd.DPAuthMode) func() {
+	config, err := getConfig(dpAuthMode)
 	require.Nil(t, err)
 
 	require.Nil(t, util.CleanDB())

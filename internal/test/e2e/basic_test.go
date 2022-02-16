@@ -14,6 +14,7 @@ import (
 	"github.com/gavv/httpexpect/v2"
 	"github.com/google/uuid"
 	kongClient "github.com/kong/go-kong/kong"
+	"github.com/kong/koko/internal/cmd"
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
 	"github.com/kong/koko/internal/json"
 	"github.com/kong/koko/internal/test/kong"
@@ -26,7 +27,7 @@ import (
 
 func TestSharedMTLS(t *testing.T) {
 	// ensure that Kong Gateway can connect using Shared MTLS mode
-	cleanup := run.Koko(t, false, true)
+	cleanup := run.Koko(t, cmd.DPAuthSharedMTLS)
 	defer cleanup()
 	require.Nil(t, util.WaitForAdminAPI(t))
 
@@ -66,7 +67,7 @@ func TestSharedMTLS(t *testing.T) {
 
 func TestPKIMTLS(t *testing.T) {
 	// ensure that Kong Gateway can connect using PKI MTLS mode
-	cleanup := run.Koko(t, true, false)
+	cleanup := run.Koko(t, cmd.DPAuthPKIMTLS)
 
 	defer cleanup()
 
@@ -107,7 +108,7 @@ func TestPKIMTLS(t *testing.T) {
 
 func TestHealthEndpointOnCPPort(t *testing.T) {
 	// ensure that health-check is enabled on the CP port
-	cleanup := run.Koko(t, false, false)
+	cleanup := run.Koko(t, cmd.DPAuthSharedMTLS)
 	defer cleanup()
 
 	// test the endpoint
@@ -136,7 +137,7 @@ func insecureHTTPClient() *http.Client {
 
 func TestNodesEndpoint(t *testing.T) {
 	// ensure that gateway nodes are tracked in database
-	cleanup := run.Koko(t, false, false)
+	cleanup := run.Koko(t, cmd.DPAuthSharedMTLS)
 	defer cleanup()
 	require.Nil(t, util.WaitForAdminAPI(t))
 
@@ -194,7 +195,7 @@ func TestNodesEndpoint(t *testing.T) {
 
 func TestPluginSync(t *testing.T) {
 	// ensure that plugins can be synced to Kong gateway
-	cleanup := run.Koko(t, false, false)
+	cleanup := run.Koko(t, cmd.DPAuthSharedMTLS)
 	defer cleanup()
 
 	require.Nil(t, util.WaitForAdminAPI(t))
@@ -275,7 +276,7 @@ func TestPluginSync(t *testing.T) {
 
 func TestUpstreamSync(t *testing.T) {
 	// ensure that upstreams can be synced to Kong gateway
-	cleanup := run.Koko(t, false, false)
+	cleanup := run.Koko(t, cmd.DPAuthSharedMTLS)
 	defer cleanup()
 
 	require.Nil(t, util.WaitForAdminAPI(t))
@@ -361,7 +362,7 @@ func TestRouteHeader(t *testing.T) {
 	// ensure that routes with headers can be synced to Kong gateway
 	// this is done because the data-structures for headers in Koko and Kong
 	// are different
-	cleanup := run.Koko(t, false, false)
+	cleanup := run.Koko(t, cmd.DPAuthSharedMTLS)
 	defer cleanup()
 	require.Nil(t, util.WaitForAdminAPI(t))
 
@@ -419,7 +420,7 @@ func TestRouteHeader(t *testing.T) {
 func TestDataPlanePluginCheck(t *testing.T) {
 	// ensure that a data-plane that doesn't meet the pre-requisites is
 	// tracked as a node and has a corresponding status entry
-	cleanup := run.Koko(t, false, false)
+	cleanup := run.Koko(t, cmd.DPAuthSharedMTLS)
 	defer cleanup()
 
 	require.Nil(t, util.WaitForAdminAPI(t))
