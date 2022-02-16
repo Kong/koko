@@ -14,14 +14,8 @@ import (
 	"github.com/gavv/httpexpect/v2"
 	"github.com/google/uuid"
 	kongClient "github.com/kong/go-kong/kong"
-	"github.com/kong/koko/internal/cmd"
-	"github.com/kong/koko/internal/config"
-	"github.com/kong/koko/internal/crypto"
-	"github.com/kong/koko/internal/db"
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
 	"github.com/kong/koko/internal/json"
-	"github.com/kong/koko/internal/log"
-	"github.com/kong/koko/internal/test/certs"
 	"github.com/kong/koko/internal/test/kong"
 	"github.com/kong/koko/internal/test/run"
 	"github.com/kong/koko/internal/test/util"
@@ -32,22 +26,7 @@ import (
 
 func TestSharedMTLS(t *testing.T) {
 	// ensure that Kong Gateway can connect using Shared MTLS mode
-	cert, err := tls.X509KeyPair(certs.DefaultSharedCert, certs.DefaultSharedKey)
-	require.Nil(t, err)
-
-	require.Nil(t, util.CleanDB())
-	cleanup := run.Koko(t, cmd.ServerConfig{
-		DPAuthCert: cert,
-		KongCPCert: cert,
-		DPAuthMode: cmd.DPAuthSharedMTLS,
-		Logger:     log.Logger,
-		Database: config.Database{
-			Dialect: db.DialectSQLite3,
-			SQLite: config.SQLite{
-				InMemory: true,
-			},
-		},
-	})
+	cleanup := run.Koko(t, false, true)
 	defer cleanup()
 	require.Nil(t, util.WaitForAdminAPI(t))
 
@@ -87,29 +66,8 @@ func TestSharedMTLS(t *testing.T) {
 
 func TestPKIMTLS(t *testing.T) {
 	// ensure that Kong Gateway can connect using PKI MTLS mode
+	cleanup := run.Koko(t, true, false)
 
-	cpCert, err := tls.X509KeyPair(certs.CPCert, certs.CPKey)
-	require.Nil(t, err)
-
-	dpCACert, err := crypto.ParsePEMCerts(certs.DPTree1CACert)
-	require.Nil(t, err)
-
-	require.Nil(t, util.CleanDB())
-
-	cleanup := run.Koko(t, cmd.ServerConfig{
-		Logger: log.Logger,
-
-		KongCPCert: cpCert,
-
-		DPAuthMode:    cmd.DPAuthPKIMTLS,
-		DPAuthCACerts: dpCACert,
-		Database: config.Database{
-			Dialect: db.DialectSQLite3,
-			SQLite: config.SQLite{
-				InMemory: true,
-			},
-		},
-	})
 	defer cleanup()
 
 	require.Nil(t, util.WaitForAdminAPI(t))
@@ -149,23 +107,7 @@ func TestPKIMTLS(t *testing.T) {
 
 func TestHealthEndpointOnCPPort(t *testing.T) {
 	// ensure that health-check is enabled on the CP port
-
-	cert, err := tls.X509KeyPair(certs.DefaultSharedCert, certs.DefaultSharedKey)
-	require.Nil(t, err)
-
-	require.Nil(t, util.CleanDB())
-
-	cleanup := run.Koko(t, cmd.ServerConfig{
-		DPAuthCert: cert,
-		KongCPCert: cert,
-		Logger:     log.Logger,
-		Database: config.Database{
-			Dialect: db.DialectSQLite3,
-			SQLite: config.SQLite{
-				InMemory: true,
-			},
-		},
-	})
+	cleanup := run.Koko(t, false, false)
 	defer cleanup()
 
 	// test the endpoint
@@ -194,21 +136,7 @@ func insecureHTTPClient() *http.Client {
 
 func TestNodesEndpoint(t *testing.T) {
 	// ensure that gateway nodes are tracked in database
-
-	cert, err := tls.X509KeyPair(certs.DefaultSharedCert, certs.DefaultSharedKey)
-	require.Nil(t, err)
-	require.Nil(t, util.CleanDB())
-	cleanup := run.Koko(t, cmd.ServerConfig{
-		DPAuthCert: cert,
-		KongCPCert: cert,
-		Logger:     log.Logger,
-		Database: config.Database{
-			Dialect: db.DialectSQLite3,
-			SQLite: config.SQLite{
-				InMemory: true,
-			},
-		},
-	})
+	cleanup := run.Koko(t, false, false)
 	defer cleanup()
 	require.Nil(t, util.WaitForAdminAPI(t))
 
@@ -266,22 +194,7 @@ func TestNodesEndpoint(t *testing.T) {
 
 func TestPluginSync(t *testing.T) {
 	// ensure that plugins can be synced to Kong gateway
-
-	cert, err := tls.X509KeyPair(certs.DefaultSharedCert, certs.DefaultSharedKey)
-	require.Nil(t, err)
-
-	require.Nil(t, util.CleanDB())
-	cleanup := run.Koko(t, cmd.ServerConfig{
-		DPAuthCert: cert,
-		KongCPCert: cert,
-		Logger:     log.Logger,
-		Database: config.Database{
-			Dialect: db.DialectSQLite3,
-			SQLite: config.SQLite{
-				InMemory: true,
-			},
-		},
-	})
+	cleanup := run.Koko(t, false, false)
 	defer cleanup()
 
 	require.Nil(t, util.WaitForAdminAPI(t))
@@ -362,22 +275,7 @@ func TestPluginSync(t *testing.T) {
 
 func TestUpstreamSync(t *testing.T) {
 	// ensure that upstreams can be synced to Kong gateway
-
-	cert, err := tls.X509KeyPair(certs.DefaultSharedCert, certs.DefaultSharedKey)
-	require.Nil(t, err)
-
-	require.Nil(t, util.CleanDB())
-	cleanup := run.Koko(t, cmd.ServerConfig{
-		DPAuthCert: cert,
-		KongCPCert: cert,
-		Logger:     log.Logger,
-		Database: config.Database{
-			Dialect: db.DialectSQLite3,
-			SQLite: config.SQLite{
-				InMemory: true,
-			},
-		},
-	})
+	cleanup := run.Koko(t, false, false)
 	defer cleanup()
 
 	require.Nil(t, util.WaitForAdminAPI(t))
@@ -463,22 +361,7 @@ func TestRouteHeader(t *testing.T) {
 	// ensure that routes with headers can be synced to Kong gateway
 	// this is done because the data-structures for headers in Koko and Kong
 	// are different
-
-	cert, err := tls.X509KeyPair(certs.DefaultSharedCert, certs.DefaultSharedKey)
-	require.Nil(t, err)
-
-	require.Nil(t, util.CleanDB())
-	cleanup := run.Koko(t, cmd.ServerConfig{
-		DPAuthCert: cert,
-		KongCPCert: cert,
-		Logger:     log.Logger,
-		Database: config.Database{
-			Dialect: db.DialectSQLite3,
-			SQLite: config.SQLite{
-				InMemory: true,
-			},
-		},
-	})
+	cleanup := run.Koko(t, false, false)
 	defer cleanup()
 	require.Nil(t, util.WaitForAdminAPI(t))
 
@@ -536,22 +419,7 @@ func TestRouteHeader(t *testing.T) {
 func TestDataPlanePluginCheck(t *testing.T) {
 	// ensure that a data-plane that doesn't meet the pre-requisites is
 	// tracked as a node and has a corresponding status entry
-
-	cert, err := tls.X509KeyPair(certs.DefaultSharedCert, certs.DefaultSharedKey)
-	require.Nil(t, err)
-
-	require.Nil(t, util.CleanDB())
-	cleanup := run.Koko(t, cmd.ServerConfig{
-		DPAuthCert: cert,
-		KongCPCert: cert,
-		Logger:     log.Logger,
-		Database: config.Database{
-			Dialect: db.DialectSQLite3,
-			SQLite: config.SQLite{
-				InMemory: true,
-			},
-		},
-	})
+	cleanup := run.Koko(t, false, false)
 	defer cleanup()
 
 	require.Nil(t, util.WaitForAdminAPI(t))
