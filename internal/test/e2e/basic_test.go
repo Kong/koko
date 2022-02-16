@@ -297,22 +297,7 @@ func TestUpstreamSync(t *testing.T) {
 
 func TestTargetSync(t *testing.T) {
 	// ensure that target can be synced to Kong gateway
-
-	cert, err := tls.X509KeyPair(certs.DefaultSharedCert, certs.DefaultSharedKey)
-	require.Nil(t, err)
-
-	require.Nil(t, util.CleanDB())
-	cleanup := run.Koko(t, cmd.ServerConfig{
-		DPAuthCert: cert,
-		KongCPCert: cert,
-		Logger:     log.Logger,
-		Database: config.Database{
-			Dialect: db.DialectSQLite3,
-			SQLite: config.SQLite{
-				InMemory: true,
-			},
-		},
-	})
+	cleanup := run.Koko(t, cmd.DPAuthSharedMTLS)
 	defer cleanup()
 
 	require.Nil(t, util.WaitForAdminAPI(t))
