@@ -88,6 +88,20 @@ func buildServices(opts HandlerOpts) services {
 					"plugin")),
 			},
 		},
+		upstream: &UpstreamService{
+			CommonOpts: CommonOpts{
+				storeLoader: opts.StoreLoader,
+				logger: opts.Logger.With(zap.String("admin-service",
+					"upstream")),
+			},
+		},
+		target: &TargetService{
+			CommonOpts: CommonOpts{
+				storeLoader: opts.StoreLoader,
+				logger: opts.Logger.With(zap.String("admin-service",
+					"target")),
+			},
+		},
 		schemas: &SchemasService{
 			logger:          opts.Logger.With(zap.String("admin-service", "schemas")),
 			getRawLuaSchema: opts.GetRawLuaSchema,
@@ -104,6 +118,13 @@ func buildServices(opts HandlerOpts) services {
 				storeLoader: opts.StoreLoader,
 				logger: opts.Logger.With(zap.String("admin-service",
 					"node")),
+			},
+		},
+		consumer: &ConsumerService{
+			CommonOpts: CommonOpts{
+				storeLoader: opts.StoreLoader,
+				logger: opts.Logger.With(zap.String("admin-service",
+					"consumer")),
 			},
 		},
 	}
@@ -144,6 +165,18 @@ func NewHandler(opts HandlerOpts) (http.Handler, error) {
 		return nil, err
 	}
 
+	err = v1.RegisterUpstreamServiceHandlerServer(context.Background(),
+		mux, services.upstream)
+	if err != nil {
+		return nil, err
+	}
+
+	err = v1.RegisterTargetServiceHandlerServer(context.Background(),
+		mux, services.target)
+	if err != nil {
+		return nil, err
+	}
+
 	err = v1.RegisterSchemasServiceHandlerServer(context.Background(),
 		mux, services.schemas)
 	if err != nil {
@@ -157,6 +190,11 @@ func NewHandler(opts HandlerOpts) (http.Handler, error) {
 	}
 	err = v1.RegisterStatusServiceHandlerServer(context.Background(),
 		mux, services.status)
+	if err != nil {
+		return nil, err
+	}
+	err = v1.RegisterConsumerServiceHandlerServer(context.Background(),
+		mux, services.consumer)
 	if err != nil {
 		return nil, err
 	}
@@ -180,8 +218,11 @@ func NewGRPC(opts HandlerOpts) *grpc.Server {
 	v1.RegisterServiceServiceServer(server, services.service)
 	v1.RegisterRouteServiceServer(server, services.route)
 	v1.RegisterPluginServiceServer(server, services.plugin)
+	v1.RegisterUpstreamServiceServer(server, services.upstream)
+	v1.RegisterTargetServiceServer(server, services.target)
 	v1.RegisterSchemasServiceServer(server, services.schemas)
 	v1.RegisterNodeServiceServer(server, services.node)
 	v1.RegisterStatusServiceServer(server, services.status)
+	v1.RegisterConsumerServiceServer(server, services.consumer)
 	return server
 }
