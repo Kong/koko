@@ -54,3 +54,10 @@ func (p *Payload) Payload() []byte {
 	defer p.mu.RUnlock()
 	return p.compressed
 }
+
+func (p *Payload) UpdateBinary(c []byte) error {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.compressed = c
+	return nil
+}
