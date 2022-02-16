@@ -58,8 +58,8 @@ func (s *UpstreamService) CreateUpstream(ctx context.Context,
 
 func (s *UpstreamService) UpsertUpstream(ctx context.Context,
 	req *v1.UpsertUpstreamRequest) (*v1.UpsertUpstreamResponse, error) {
-	if req.Item.Id == "" {
-		return nil, s.err(util.ErrClient{Message: "required ID is missing"})
+	if !validUUID(req.Item.Id) {
+		return nil, s.err(util.ErrClient{Message: util.InvalidUUIDErrString})
 	}
 	db, err := s.CommonOpts.getDB(ctx, req.Cluster)
 	if err != nil {
@@ -77,8 +77,8 @@ func (s *UpstreamService) UpsertUpstream(ctx context.Context,
 
 func (s *UpstreamService) DeleteUpstream(ctx context.Context,
 	req *v1.DeleteUpstreamRequest) (*v1.DeleteUpstreamResponse, error) {
-	if req.Id == "" {
-		return nil, s.err(util.ErrClient{Message: "required ID is missing"})
+	if !validUUID(req.Id) {
+		return nil, s.err(util.ErrClient{Message: util.InvalidUUIDErrString})
 	}
 	db, err := s.CommonOpts.getDB(ctx, req.Cluster)
 	if err != nil {

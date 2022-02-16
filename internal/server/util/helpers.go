@@ -21,6 +21,8 @@ import (
 
 const (
 	StatusCodeKey = "koko-status-code"
+
+	InvalidUUIDErrString = "ID must be a valid UUID"
 )
 
 type ErrClient struct {

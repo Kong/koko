@@ -60,8 +60,8 @@ func (s *PluginService) CreatePlugin(ctx context.Context,
 
 func (s *PluginService) UpsertPlugin(ctx context.Context,
 	req *v1.UpsertPluginRequest) (*v1.UpsertPluginResponse, error) {
-	if req.Item.Id == "" {
-		return nil, s.err(util.ErrClient{Message: "required ID is missing"})
+	if !validUUID(req.Item.Id) {
+		return nil, s.err(util.ErrClient{Message: util.InvalidUUIDErrString})
 	}
 	db, err := s.CommonOpts.getDB(ctx, req.Cluster)
 	if err != nil {
@@ -79,8 +79,8 @@ func (s *PluginService) UpsertPlugin(ctx context.Context,
 
 func (s *PluginService) DeletePlugin(ctx context.Context,
 	req *v1.DeletePluginRequest) (*v1.DeletePluginResponse, error) {
-	if req.Id == "" {
-		return nil, s.err(util.ErrClient{Message: "required ID is missing"})
+	if !validUUID(req.Id) {
+		return nil, s.err(util.ErrClient{Message: util.InvalidUUIDErrString})
 	}
 	db, err := s.CommonOpts.getDB(ctx, req.Cluster)
 	if err != nil {

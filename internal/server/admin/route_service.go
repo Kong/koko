@@ -60,8 +60,8 @@ func (s *RouteService) CreateRoute(ctx context.Context,
 
 func (s *RouteService) UpsertRoute(ctx context.Context,
 	req *v1.UpsertRouteRequest) (*v1.UpsertRouteResponse, error) {
-	if req.Item.Id == "" {
-		return nil, s.err(util.ErrClient{Message: "required ID is missing"})
+	if !validUUID(req.Item.Id) {
+		return nil, s.err(util.ErrClient{Message: util.InvalidUUIDErrString})
 	}
 	db, err := s.CommonOpts.getDB(ctx, req.Cluster)
 	if err != nil {
@@ -79,8 +79,8 @@ func (s *RouteService) UpsertRoute(ctx context.Context,
 
 func (s *RouteService) DeleteRoute(ctx context.Context,
 	req *v1.DeleteRouteRequest) (*v1.DeleteRouteResponse, error) {
-	if req.Id == "" {
-		return nil, s.err(util.ErrClient{Message: "required ID is missing"})
+	if !validUUID(req.Id) {
+		return nil, s.err(util.ErrClient{Message: util.InvalidUUIDErrString})
 	}
 	db, err := s.CommonOpts.getDB(ctx, req.Cluster)
 	if err != nil {

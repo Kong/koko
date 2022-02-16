@@ -7,6 +7,7 @@ import (
 	"github.com/gavv/httpexpect/v2"
 	"github.com/google/uuid"
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
+	"github.com/kong/koko/internal/server/util"
 	"github.com/stretchr/testify/require"
 )
 
@@ -184,7 +185,7 @@ func TestRouteUpsert(t *testing.T) {
 			Expect()
 		res.Status(http.StatusBadRequest)
 		body := res.JSON().Object()
-		body.ValueEqual("message", "required ID is missing")
+		body.ValueEqual("message", util.InvalidUUIDErrString)
 	})
 }
 
@@ -205,6 +206,9 @@ func TestRouteDelete(t *testing.T) {
 	})
 	t.Run("delete request without an ID returns 400", func(t *testing.T) {
 		c.DELETE("/v1/routes/").Expect().Status(400)
+	})
+	t.Run("delete request with an invalid ID returns 400", func(t *testing.T) {
+		c.DELETE("/v1/routes/" + "Not-Valid").Expect().Status(400)
 	})
 }
 

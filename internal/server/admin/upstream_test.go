@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
 	"github.com/kong/koko/internal/json"
+	"github.com/kong/koko/internal/server/util"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )
@@ -160,7 +161,7 @@ func TestUpstreamUpsert(t *testing.T) {
 			Expect()
 		res.Status(http.StatusBadRequest)
 		body := res.JSON().Object()
-		body.ValueEqual("message", "required ID is missing")
+		body.ValueEqual("message", util.InvalidUUIDErrString)
 	})
 }
 
@@ -181,6 +182,9 @@ func TestUpstreamDelete(t *testing.T) {
 	})
 	t.Run("delete request without an ID returns 400", func(t *testing.T) {
 		c.DELETE("/v1/upstreams/").Expect().Status(400)
+	})
+	t.Run("delete request with an invalid ID returns 400", func(t *testing.T) {
+		c.DELETE("/v1/upstreams/" + "Not-Valid").Expect().Status(400)
 	})
 }
 

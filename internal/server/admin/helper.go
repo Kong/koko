@@ -3,6 +3,7 @@ package admin
 import (
 	"fmt"
 
+	"github.com/google/uuid"
 	pbModel "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
 	"github.com/kong/koko/internal/store"
 )
@@ -15,6 +16,11 @@ func validateListOptions(listOpts *pbModel.PaginationRequest) error {
 		return fmt.Errorf("invalid page_size '%d', must be within range [1 - %d]", listOpts.Size, store.MaxPageSize)
 	}
 	return nil
+}
+
+func validUUID(id string) bool {
+	_, err := uuid.Parse(id)
+	return err == nil
 }
 
 func listOptsFromReq(listOpts *pbModel.PaginationRequest) ([]store.ListOptsFunc, error) {
