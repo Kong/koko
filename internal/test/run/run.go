@@ -66,6 +66,7 @@ func Koko(t *testing.T, dpAuthMode cmd.DPAuthMode) func() {
 		err := cmd.Run(ctx, *config)
 		require.Nil(t, err)
 	}()
+	require.Nil(t, util.WaitForAdminAPI(t))
 	return func() {
 		cancel()
 		wg.Wait()
