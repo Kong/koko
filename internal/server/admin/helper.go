@@ -3,7 +3,9 @@ package admin
 import (
 	"fmt"
 
+	"github.com/google/uuid"
 	pbModel "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
+	"github.com/kong/koko/internal/server/util"
 	"github.com/kong/koko/internal/store"
 )
 
@@ -13,6 +15,13 @@ func validateListOptions(listOpts *pbModel.PaginationRequest) error {
 	}
 	if listOpts.Size < 0 || listOpts.Size > store.MaxPageSize {
 		return fmt.Errorf("invalid page_size '%d', must be within range [1 - %d]", listOpts.Size, store.MaxPageSize)
+	}
+	return nil
+}
+
+func validUUID(id string) error {
+	if _, err := uuid.Parse(id); err != nil {
+		return util.ErrClient{Message: fmt.Sprintf(" '%v' is not a valid uuid", id)}
 	}
 	return nil
 }

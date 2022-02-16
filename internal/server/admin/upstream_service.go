@@ -21,8 +21,8 @@ type UpstreamService struct {
 
 func (s *UpstreamService) GetUpstream(ctx context.Context,
 	req *v1.GetUpstreamRequest) (*v1.GetUpstreamResponse, error) {
-	if req.Id == "" {
-		return nil, s.err(util.ErrClient{Message: "required ID is missing"})
+	if err := validUUID(req.Id); err != nil {
+		return nil, s.err(err)
 	}
 	db, err := s.CommonOpts.getDB(ctx, req.Cluster)
 	if err != nil {
@@ -58,6 +58,9 @@ func (s *UpstreamService) CreateUpstream(ctx context.Context,
 
 func (s *UpstreamService) UpsertUpstream(ctx context.Context,
 	req *v1.UpsertUpstreamRequest) (*v1.UpsertUpstreamResponse, error) {
+	if err := validUUID(req.Item.Id); err != nil {
+		return nil, s.err(err)
+	}
 	db, err := s.CommonOpts.getDB(ctx, req.Cluster)
 	if err != nil {
 		return nil, err
@@ -74,8 +77,8 @@ func (s *UpstreamService) UpsertUpstream(ctx context.Context,
 
 func (s *UpstreamService) DeleteUpstream(ctx context.Context,
 	req *v1.DeleteUpstreamRequest) (*v1.DeleteUpstreamResponse, error) {
-	if req.Id == "" {
-		return nil, s.err(util.ErrClient{Message: "required ID is missing"})
+	if err := validUUID(req.Id); err != nil {
+		return nil, s.err(err)
 	}
 	db, err := s.CommonOpts.getDB(ctx, req.Cluster)
 	if err != nil {

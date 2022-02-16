@@ -177,6 +177,15 @@ func TestRouteUpsert(t *testing.T) {
 		paths.Length().Equal(1)
 		paths.Element(0).String().Equal("/new-value")
 	})
+	t.Run("upsert route without id fails", func(t *testing.T) {
+		route := goodRoute()
+		res := c.PUT("/v1/routes/").
+			WithJSON(route).
+			Expect()
+		res.Status(http.StatusBadRequest)
+		body := res.JSON().Object()
+		body.ValueEqual("message", " '' is not a valid uuid")
+	})
 }
 
 func TestRouteDelete(t *testing.T) {
@@ -195,7 +204,16 @@ func TestRouteDelete(t *testing.T) {
 		c.DELETE("/v1/routes/" + id).Expect().Status(204)
 	})
 	t.Run("delete request without an ID returns 400", func(t *testing.T) {
-		c.DELETE("/v1/routes/").Expect().Status(400)
+		res := c.DELETE("/v1/routes/").Expect()
+		res.Status(http.StatusBadRequest)
+		body := res.JSON().Object()
+		body.ValueEqual("message", " '' is not a valid uuid")
+	})
+	t.Run("delete request with an invalid ID returns 400", func(t *testing.T) {
+		res := c.DELETE("/v1/routes/" + "Not-Valid").Expect()
+		res.Status(http.StatusBadRequest)
+		body := res.JSON().Object()
+		body.ValueEqual("message", " 'Not-Valid' is not a valid uuid")
 	})
 }
 

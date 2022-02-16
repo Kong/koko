@@ -167,6 +167,15 @@ func TestServiceUpsert(t *testing.T) {
 		body.Value("host").Equal("new.example.com")
 		body.Value("path").Equal("/bar-new")
 	})
+	t.Run("upsert service without id fails", func(t *testing.T) {
+		svc := goodService()
+		res := c.PUT("/v1/services/").
+			WithJSON(svc).
+			Expect()
+		res.Status(http.StatusBadRequest)
+		body := res.JSON().Object()
+		body.ValueEqual("message", " '' is not a valid uuid")
+	})
 }
 
 func TestServiceDelete(t *testing.T) {
@@ -185,7 +194,16 @@ func TestServiceDelete(t *testing.T) {
 		c.DELETE("/v1/services/" + id).Expect().Status(204)
 	})
 	t.Run("delete request without an ID returns 400", func(t *testing.T) {
-		c.DELETE("/v1/services/").Expect().Status(400)
+		res := c.DELETE("/v1/services/").Expect()
+		res.Status(http.StatusBadRequest)
+		body := res.JSON().Object()
+		body.ValueEqual("message", " '' is not a valid uuid")
+	})
+	t.Run("delete request with an invalid ID returns 400", func(t *testing.T) {
+		res := c.DELETE("/v1/services/" + "Not-Valid").Expect()
+		res.Status(http.StatusBadRequest)
+		body := res.JSON().Object()
+		body.ValueEqual("message", " 'Not-Valid' is not a valid uuid")
 	})
 }
 

@@ -294,6 +294,16 @@ func TestPluginUpsert(t *testing.T) {
 		res.JSON().Path("$.item.config.day").Number().Equal(42)
 		res.JSON().Path("$.item.config.second").Null()
 	})
+	t.Run("upsert plugin without id fails", func(t *testing.T) {
+		pluginBytes, err := json.Marshal(goodKeyAuthPlugin())
+		require.Nil(t, err)
+		res := c.PUT("/v1/plugins/").
+			WithBytes(pluginBytes).
+			Expect()
+		res.Status(http.StatusBadRequest)
+		body := res.JSON().Object()
+		body.ValueEqual("message", " '' is not a valid uuid")
+	})
 }
 
 func TestPluginDelete(t *testing.T) {
@@ -313,7 +323,16 @@ func TestPluginDelete(t *testing.T) {
 		c.DELETE("/v1/plugins/" + id).Expect().Status(204)
 	})
 	t.Run("delete request without an ID returns 400", func(t *testing.T) {
-		c.DELETE("/v1/plugins/").Expect().Status(400)
+		res := c.DELETE("/v1/plugins/").Expect()
+		res.Status(http.StatusBadRequest)
+		body := res.JSON().Object()
+		body.ValueEqual("message", " '' is not a valid uuid")
+	})
+	t.Run("delete request with an invalid ID returns 400", func(t *testing.T) {
+		res := c.DELETE("/v1/plugins/" + "Not-Valid").Expect()
+		res.Status(http.StatusBadRequest)
+		body := res.JSON().Object()
+		body.ValueEqual("message", " 'Not-Valid' is not a valid uuid")
 	})
 }
 
