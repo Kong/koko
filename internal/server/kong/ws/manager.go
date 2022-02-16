@@ -18,7 +18,6 @@ import (
 	grpcKongUtil "github.com/kong/koko/internal/gen/grpc/kong/util/v1"
 	"github.com/kong/koko/internal/resource"
 	"github.com/kong/koko/internal/server/kong/ws/config"
-	"github.com/kong/koko/internal/server/kong/ws/mold"
 	"go.uber.org/zap"
 )
 
@@ -241,18 +240,6 @@ type ConfigClient struct {
 	Event relay.EventServiceClient
 }
 
-func (m *Manager) reconcilePayload(ctx context.Context) error {
-	grpcContent, err := m.fetchContent(ctx)
-	if err != nil {
-		return err
-	}
-	wrpcContent, err := mold.GrpcToWrpc(grpcContent)
-	if err != nil {
-		return err
-	}
-	return m.payload.Update(wrpcContent)
-}
-
 func (m *Manager) reconcileKongPayload(ctx context.Context) error {
 	config, err := m.configLoader.Load(ctx, m.Cluster.Get())
 	if err != nil {
@@ -262,91 +249,6 @@ func (m *Manager) reconcileKongPayload(ctx context.Context) error {
 }
 
 var defaultRequestTimeout = 5 * time.Second
-
-func (m *Manager) fetchContent(ctx context.Context) (mold.GrpcContent, error) {
-	var err error
-
-	serviceList, err := m.fetchServices(ctx)
-	if err != nil {
-		return mold.GrpcContent{}, err
-	}
-
-	routesList, err := m.fetchRoutes(ctx)
-	if err != nil {
-		return mold.GrpcContent{}, err
-	}
-
-	pluginsList, err := m.fetchPlugins(ctx)
-	if err != nil {
-		return mold.GrpcContent{}, err
-	}
-
-	upstreamsList, err := m.fetchUpstreams(ctx)
-	if err != nil {
-		return mold.GrpcContent{}, err
-	}
-
-	targetsList, err := m.fetchTargets(ctx)
-	if err != nil {
-		return mold.GrpcContent{}, err
-	}
-
-	return mold.GrpcContent{
-		Services:  serviceList.Items,
-		Routes:    routesList.Items,
-		Plugins:   pluginsList.Items,
-		Upstreams: upstreamsList.Items,
-		Targets:   targetsList.Items,
-	}, nil
-}
-
-func (m *Manager) fetchServices(ctx context.Context) (*admin.
-	ListServicesResponse, error) {
-	ctx, cancel := context.WithTimeout(ctx, defaultRequestTimeout)
-	defer cancel()
-	return m.configClient.Service.ListServices(ctx,
-		&admin.ListServicesRequest{
-			Cluster: m.reqCluster(),
-		})
-}
-
-func (m *Manager) fetchRoutes(ctx context.Context) (*admin.
-	ListRoutesResponse, error) {
-	ctx, cancel := context.WithTimeout(ctx, defaultRequestTimeout)
-	defer cancel()
-	return m.configClient.Route.ListRoutes(ctx,
-		&admin.ListRoutesRequest{
-			Cluster: m.reqCluster(),
-		})
-}
-
-func (m *Manager) fetchPlugins(ctx context.Context) (*admin.
-	ListPluginsResponse, error) {
-	ctx, cancel := context.WithTimeout(ctx, defaultRequestTimeout)
-	defer cancel()
-	return m.configClient.Plugin.ListPlugins(ctx,
-		&admin.ListPluginsRequest{
-			Cluster: m.reqCluster(),
-		})
-}
-
-func (m *Manager) fetchUpstreams(ctx context.Context) (*admin.ListUpstreamsResponse, error) {
-	ctx, cancel := context.WithTimeout(ctx, defaultRequestTimeout)
-	defer cancel()
-	return m.configClient.Upstream.ListUpstreams(ctx,
-		&admin.ListUpstreamsRequest{
-			Cluster: m.reqCluster(),
-		})
-}
-
-func (m *Manager) fetchTargets(ctx context.Context) (*admin.ListTargetsResponse,
-	error) {
-	ctx, cancel := context.WithTimeout(ctx, defaultRequestTimeout)
-	defer cancel()
-	return m.configClient.Target.ListTargets(ctx, &admin.ListTargetsRequest{
-		Cluster: m.reqCluster(),
-	})
-}
 
 func (m *Manager) Run(ctx context.Context) {
 	for {
