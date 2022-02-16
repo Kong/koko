@@ -34,7 +34,7 @@ func NewLuaValidator(opts Opts) (*LuaValidator, error) {
 	if opts.Logger == nil {
 		return nil, fmt.Errorf("opts.Logger required")
 	}
-	validator, err := goksPlugin.NewValidator()
+	validator, err := goksPlugin.NewValidator(goksPlugin.ValidatorOpts{})
 	if err != nil {
 		return nil, err
 	}
