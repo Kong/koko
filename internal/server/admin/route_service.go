@@ -60,6 +60,9 @@ func (s *RouteService) CreateRoute(ctx context.Context,
 
 func (s *RouteService) UpsertRoute(ctx context.Context,
 	req *v1.UpsertRouteRequest) (*v1.UpsertRouteResponse, error) {
+	if req.Item.Id == "" {
+		return nil, s.err(util.ErrClient{Message: "required ID is missing"})
+	}
 	db, err := s.CommonOpts.getDB(ctx, req.Cluster)
 	if err != nil {
 		return nil, err

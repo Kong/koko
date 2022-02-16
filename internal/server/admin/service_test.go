@@ -167,6 +167,15 @@ func TestServiceUpsert(t *testing.T) {
 		body.Value("host").Equal("new.example.com")
 		body.Value("path").Equal("/bar-new")
 	})
+	t.Run("upsert service without id fails", func(t *testing.T) {
+		svc := goodService()
+		res := c.PUT("/v1/services/").
+			WithJSON(svc).
+			Expect()
+		res.Status(http.StatusBadRequest)
+		body := res.JSON().Object()
+		body.ValueEqual("message", "required ID is missing")
+	})
 }
 
 func TestServiceDelete(t *testing.T) {

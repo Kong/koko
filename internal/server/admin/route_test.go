@@ -177,6 +177,15 @@ func TestRouteUpsert(t *testing.T) {
 		paths.Length().Equal(1)
 		paths.Element(0).String().Equal("/new-value")
 	})
+	t.Run("upsert route without id fails", func(t *testing.T) {
+		route := goodRoute()
+		res := c.PUT("/v1/routes/").
+			WithJSON(route).
+			Expect()
+		res.Status(http.StatusBadRequest)
+		body := res.JSON().Object()
+		body.ValueEqual("message", "required ID is missing")
+	})
 }
 
 func TestRouteDelete(t *testing.T) {

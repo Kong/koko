@@ -58,6 +58,9 @@ func (s *UpstreamService) CreateUpstream(ctx context.Context,
 
 func (s *UpstreamService) UpsertUpstream(ctx context.Context,
 	req *v1.UpsertUpstreamRequest) (*v1.UpsertUpstreamResponse, error) {
+	if req.Item.Id == "" {
+		return nil, s.err(util.ErrClient{Message: "required ID is missing"})
+	}
 	db, err := s.CommonOpts.getDB(ctx, req.Cluster)
 	if err != nil {
 		return nil, err

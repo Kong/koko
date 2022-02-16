@@ -58,6 +58,9 @@ func (s *ServiceService) CreateService(ctx context.Context,
 
 func (s *ServiceService) UpsertService(ctx context.Context,
 	req *v1.UpsertServiceRequest) (*v1.UpsertServiceResponse, error) {
+	if req.Item.Id == "" {
+		return nil, s.err(util.ErrClient{Message: "required ID is missing"})
+	}
 	db, err := s.CommonOpts.getDB(ctx, req.Cluster)
 	if err != nil {
 		return nil, err

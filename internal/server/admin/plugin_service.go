@@ -60,6 +60,9 @@ func (s *PluginService) CreatePlugin(ctx context.Context,
 
 func (s *PluginService) UpsertPlugin(ctx context.Context,
 	req *v1.UpsertPluginRequest) (*v1.UpsertPluginResponse, error) {
+	if req.Item.Id == "" {
+		return nil, s.err(util.ErrClient{Message: "required ID is missing"})
+	}
 	db, err := s.CommonOpts.getDB(ctx, req.Cluster)
 	if err != nil {
 		return nil, err

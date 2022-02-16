@@ -294,6 +294,16 @@ func TestPluginUpsert(t *testing.T) {
 		res.JSON().Path("$.item.config.day").Number().Equal(42)
 		res.JSON().Path("$.item.config.second").Null()
 	})
+	t.Run("upsert plugin without id fails", func(t *testing.T) {
+		pluginBytes, err := json.Marshal(goodKeyAuthPlugin())
+		require.Nil(t, err)
+		res := c.PUT("/v1/plugins/").
+			WithBytes(pluginBytes).
+			Expect()
+		res.Status(http.StatusBadRequest)
+		body := res.JSON().Object()
+		body.ValueEqual("message", "required ID is missing")
+	})
 }
 
 func TestPluginDelete(t *testing.T) {

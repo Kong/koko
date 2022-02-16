@@ -153,6 +153,15 @@ func TestUpstreamUpsert(t *testing.T) {
 		body.Value("hash_on_header").Equal("apikey")
 		body.Value("hash_fallback").Equal("ip")
 	})
+	t.Run("upsert upstream without id fails", func(t *testing.T) {
+		upstream := goodUpstream()
+		res := c.PUT("/v1/upstreams/").
+			WithJSON(upstream).
+			Expect()
+		res.Status(http.StatusBadRequest)
+		body := res.JSON().Object()
+		body.ValueEqual("message", "required ID is missing")
+	})
 }
 
 func TestUpstreamDelete(t *testing.T) {
