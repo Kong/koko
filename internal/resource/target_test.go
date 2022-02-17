@@ -189,3 +189,109 @@ func TestTarget_Validate(t *testing.T) {
 		})
 	}
 }
+
+func TestTarget_fortmatTarget(t *testing.T) {
+	tests := []struct {
+		name     string
+		target   string
+		expected string
+		wantErr  bool
+	}{
+		{
+			name:     "valid ipv4 ok",
+			target:   "1.1.1.1",
+			expected: "1.1.1.1:8000",
+		},
+		{
+			name:     "valid ipv4 and port ok",
+			target:   "1.1.1.1:80",
+			expected: "1.1.1.1:80",
+		},
+		{
+			name:     "valid ipv6 ok",
+			target:   "::1",
+			expected: "[0000:0000:0000:0000:0000:0000:0000:0001]:8000",
+		},
+		{
+			name:     "valid ipv6 ok",
+			target:   "2001:0000::",
+			expected: "[2001:0000:0000:0000:0000:0000:0000:0000]:8000",
+		},
+		{
+			name:     "valid ipv6 ok",
+			target:   "2001:0db8:85a3:0000:0000:8a2e:0370:7334",
+			expected: "[2001:0db8:85a3:0000:0000:8a2e:0370:7334]:8000",
+		},
+		{
+			name:     "valid ipv6 ok",
+			target:   "2001:0db8:85a3::8a2e:0370:7334",
+			expected: "[2001:0db8:85a3:0000:0000:8a2e:0370:7334]:8000",
+		},
+		{
+			name:     "valid ipv6 ok",
+			target:   "2001:1:2::3:4:5",
+			expected: "[2001:0001:0002:0000:0000:0003:0004:0005]:8000",
+		},
+		{
+			name:     "valid ipv6 brackets ok",
+			target:   "[::1]",
+			expected: "[0000:0000:0000:0000:0000:0000:0000:0001]:8000",
+		},
+		{
+			name:     "valid ipv6 brackets and port ok",
+			target:   "[::1]:80",
+			expected: "[0000:0000:0000:0000:0000:0000:0000:0001]:80",
+		},
+		{
+			name:     "valid domain ok",
+			target:   "valid",
+			expected: "valid:8000",
+		},
+		{
+			name:     "valid dotted domain ok",
+			target:   "valid.domain",
+			expected: "valid.domain:8000",
+		},
+		{
+			name:     "valid domain and port ok",
+			target:   "valid:80",
+			expected: "valid:80",
+		},
+		{
+			name:     "valid dotted domain and port ok",
+			target:   "valid.name:80",
+			expected: "valid.name:80",
+		},
+		{
+			name:    "invalid domain throws an error",
+			target:  "abc.cde:80:80",
+			wantErr: true,
+		},
+		{
+			name:    "invalid ipv4 throws an error",
+			target:  "1.1.1.1.1",
+			wantErr: true,
+		},
+		{
+			name:    "invalid name fails",
+			target:  "\\\\bad\\\\////name////",
+			wantErr: true,
+		},
+		{
+			name:    "domain and port fails",
+			target:  "1.2.3.4.5:80",
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := formatTarget(tt.target)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("validateTarget() error = %v, wantErr %v", err, tt.wantErr)
+			}
+			if got != tt.expected {
+				t.Errorf("validateTarget() got = %s, expected %s", got, tt.expected)
+			}
+		})
+	}
+}

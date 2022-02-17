@@ -1,7 +1,12 @@
 package resource
 
 import (
+	"encoding/hex"
 	"fmt"
+	"net"
+	"regexp"
+	"strconv"
+	"strings"
 
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
 	"github.com/kong/koko/internal/model"
@@ -14,6 +19,9 @@ import (
 const (
 	// TypeTarget denotes the Target type.
 	TypeTarget model.Type = "target"
+
+	defaultTargetPort = 8000
+	maxPortNumber     = 65535
 )
 
 var _ model.Object = Target{}
@@ -72,12 +80,6 @@ func (t Target) Validate() error {
 	if err != nil {
 		return err
 	}
-	err = validateTarget(t.Target.Target)
-	if err != nil {
-		// TODO(hbagdi): convert the error into *jsonschema.ValidationError
-		// representation
-		return err
-	}
 	return nil
 }
 
@@ -90,10 +92,19 @@ func (t Target) ProcessDefaults() error {
 		t.Target.Weight = wrapperspb.Int32(defaultWeight)
 	}
 	var err error
-	t.Target.Target, err = formatTarget(t.Target.Target)
+	target, err := formatTarget(t.Target.Target)
 	if err != nil {
-		return fmt.Errorf("format target: %v", err)
+		errWrap := validation.Error{}
+		errWrap.Errs = append(errWrap.Errs, &v1.ErrorDetail{
+			Type:  v1.ErrorType_ERROR_TYPE_FIELD,
+			Field: "target",
+			Messages: []string{
+				fmt.Sprintf("not a valid hostname or ip address: %s", t.Target.Target),
+			},
+		})
+		return errWrap
 	}
+	t.Target.Target = target
 	return nil
 }
 
@@ -138,12 +149,146 @@ func init() {
 	}
 }
 
-// TODO(hbagdi): implement validation for target.
-func validateTarget(target string) error {
-	return nil
+// hostnameType checks what kind of format the target has,
+// without doing any further validation.
+//
+// Does it includes multiple ':'           -> it's an ipv6
+// Is it a dot-separated string of numbers -> it's an ipv4
+// Otherwise                               -> it's a domain name.
+func hostnameType(hostname string) string {
+	parts := strings.Split(hostname, ":")
+	if len(parts) > 2 { //nolint:gomnd
+		return "ipv6"
+	}
+	re := regexp.MustCompile(`^[\d+\.]+$`)
+	if re.FindString(parts[0]) != "" {
+		return "ipv4"
+	}
+	return "name"
 }
 
-// TODO(hbagdi): implement expansion for target.
+func validatePort(portStr string) (int, error) {
+	port, err := strconv.Atoi(portStr)
+	if err != nil {
+		return port, fmt.Errorf("invalid port: %s", portStr)
+	}
+	if port > maxPortNumber {
+		return port, fmt.Errorf("invalid port number: %d", port)
+	}
+	return port, nil
+}
+
+// normalizeTargetHostname returns a normalized target name
+// in the format 'name:port' if input is a valid name.
+func normalizeTargetHostname(target string) (string, error) {
+	var err error
+
+	port := defaultTargetPort
+	parts := strings.Split(target, ":")
+	domain := parts[0]
+	if len(parts) > 2 { //nolint:gomnd
+		// multiple colons are not allowed for a domain name.
+		return "", fmt.Errorf("invalid target name: %s", target)
+	}
+	if len(parts) == 2 { //nolint:gomnd
+		if port, err = validatePort(parts[1]); err != nil {
+			return "", err
+		}
+	}
+	nameRegex := regexp.MustCompile(`^[\d\w\-\.\_]+$`)
+	if nameRegex.FindString(domain) == "" {
+		return "", fmt.Errorf("invalid hostname: %s", domain)
+	}
+	return fmt.Sprintf("%s:%d", domain, port), nil
+}
+
+// normalizeIPv4 returns a normalized ipv4
+// in the format 'address:port' if input is a valid ipv4.
+func normalizeIPv4(target string) (string, error) {
+	var err error
+	port := defaultTargetPort
+	ip := target
+	if strings.Contains(target, ":") {
+		// has a port
+		var portStr string
+		parts := strings.Split(target, ":")
+		ip, portStr = parts[0], parts[1]
+		port, err = validatePort(portStr)
+		if err != nil {
+			return ip, err
+		}
+	}
+	if net.ParseIP(ip).To4() == nil {
+		return "", fmt.Errorf("invalid ipv4 address %s", ip)
+	}
+	return fmt.Sprintf("%s:%d", ip, port), nil
+}
+
+// expandIPv6 decompress an ipv6 address into its 'long' format.
+// for example:
+//
+// from ::1 to [0000:0000:0000:0000:0000:0000:0000:0001]:8000.
+func expandIPv6(address string) string {
+	ip := net.ParseIP(address).To16()
+	dst := make([]byte, hex.EncodedLen(len(ip)))
+	hex.Encode(dst, ip)
+	var final string
+	for i := 0; i < len(dst); i += 4 {
+		final += fmt.Sprintf("%s:", dst[i:i+4])
+	}
+	// remove last colon
+	return final[:len(final)-1]
+}
+
+func removeBrackets(ip string) string {
+	ip = strings.ReplaceAll(ip, "[", "")
+	return strings.ReplaceAll(ip, "]", "")
+}
+
+// normalizeIPv6 returns a normalized ipv6
+// in the format '[address]:port' if input is a valid ipv6.
+func normalizeIPv6(target string) (string, error) {
+	var err error
+	ip := target
+	port := defaultTargetPort
+	hasPortRegex := regexp.MustCompile(`\]\:\d+$`)
+	match := hasPortRegex.FindStringSubmatch(target)
+	if len(match) > 0 {
+		// has [address]:port pattern
+		portString := strings.ReplaceAll(match[0], "]:", "")
+		port, err = validatePort(portString)
+		if err != nil {
+			return ip, err
+		}
+		ip = strings.ReplaceAll(target, match[0], "")
+		ip = removeBrackets(ip)
+	} else {
+		hasBracketRegex := regexp.MustCompile(`\[\S+\]$`)
+		match = hasBracketRegex.FindStringSubmatch(target)
+		if len(match) > 0 {
+			ip = removeBrackets(match[0])
+		}
+		if net.ParseIP(ip).To16() == nil {
+			return "", fmt.Errorf("invalid ipv6 address %s", target)
+		}
+	}
+	return fmt.Sprintf("[%s]:%d", expandIPv6(ip), port), nil
+}
+
 func formatTarget(target string) (string, error) {
-	return target, nil
+	if target == "" {
+		return target, nil
+	}
+	var err error
+	newTarget := target
+	targetType := hostnameType(target)
+	switch targetType {
+	case "name":
+		newTarget, err = normalizeTargetHostname(target)
+	case "ipv4":
+		newTarget, err = normalizeIPv4(target)
+	case "ipv6":
+		newTarget, err = normalizeIPv6(target)
+	}
+	return newTarget, err
 }
