@@ -49,7 +49,7 @@ func WithDPAuthMode(dpAuthMode cmd.DPAuthMode) ServerConfigOpt {
 			serverConfig.DPAuthCert = cert
 			serverConfig.DPAuthMode = cmd.DPAuthSharedMTLS
 		default:
-			return fmt.Errorf("unknown DPAuthMode: %v", dpAuthMode)
+			panic(fmt.Sprintf("unknown DPAuthMode: %v", dpAuthMode))
 		}
 		return nil
 	}
