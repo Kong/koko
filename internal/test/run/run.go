@@ -17,31 +17,40 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func WithDPAuthMode(t *testing.T, dpAuthMode cmd.DPAuthMode) func(*cmd.ServerConfig) {
-	return func(serverConfig *cmd.ServerConfig) {
+type serverConfigOpt func(*cmd.ServerConfig) error
+
+func WithDPAuthMode(t *testing.T, dpAuthMode cmd.DPAuthMode) serverConfigOpt {
+	return func(serverConfig *cmd.ServerConfig) error {
 		switch dpAuthMode {
 		case cmd.DPAuthPKIMTLS:
 			cpCert, err := tls.X509KeyPair(certs.CPCert, certs.CPKey)
-			require.Nil(t, err)
+			if err != nil {
+				return err
+			}
 
 			dpCACert, err := crypto.ParsePEMCerts(certs.DPTree1CACert)
-			require.Nil(t, err)
+			if err != nil {
+				return err
+			}
 
 			serverConfig.KongCPCert = cpCert
 			serverConfig.DPAuthMode = cmd.DPAuthPKIMTLS
 			serverConfig.DPAuthCACerts = dpCACert
 		case cmd.DPAuthSharedMTLS:
 			cert, err := tls.X509KeyPair(certs.DefaultSharedCert, certs.DefaultSharedKey)
-			require.Nil(t, err)
+			if err != nil {
+				return err
+			}
 
 			serverConfig.KongCPCert = cert
 			serverConfig.DPAuthCert = cert
 			serverConfig.DPAuthMode = cmd.DPAuthSharedMTLS
 		}
+		return nil
 	}
 }
 
-func Koko(t *testing.T, options ...func(*cmd.ServerConfig)) func() {
+func Koko(t *testing.T, options ...serverConfigOpt) func() {
 	config := &cmd.ServerConfig{
 		Logger: log.Logger,
 		Database: config.Database{
@@ -52,7 +61,8 @@ func Koko(t *testing.T, options ...func(*cmd.ServerConfig)) func() {
 		},
 	}
 	for _, o := range options {
-		o(config)
+		err := o(config)
+		require.Nil(t, err)
 	}
 
 	require.Nil(t, util.CleanDB())
