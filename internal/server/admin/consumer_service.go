@@ -58,6 +58,9 @@ func (s *ConsumerService) CreateConsumer(ctx context.Context,
 
 func (s *ConsumerService) UpsertConsumer(ctx context.Context,
 	req *v1.UpsertConsumerRequest) (*v1.UpsertConsumerResponse, error) {
+	if err := validUUID(req.Item.Id); err != nil {
+		return nil, s.err(err)
+	}
 	db, err := s.CommonOpts.getDB(ctx, req.Cluster)
 	if err != nil {
 		return nil, err
