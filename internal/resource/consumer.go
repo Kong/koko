@@ -90,7 +90,7 @@ func init() {
 			"username":   typedefs.Name,
 			"created_at": typedefs.UnixEpoch,
 			"updated_at": typedefs.UnixEpoch,
-			"custom_id":  typedefs.Name, // Not a UUID
+			"custom_id":  typedefs.Name,
 			"tags":       typedefs.Tags,
 		},
 		AdditionalProperties: &falsy,
