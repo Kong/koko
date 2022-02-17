@@ -17,7 +17,31 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func getConfig(dpAuthMode cmd.DPAuthMode) (*cmd.ServerConfig, error) {
+func WithDPAuthMode(t *testing.T, dpAuthMode cmd.DPAuthMode) func(*cmd.ServerConfig) {
+	return func(serverConfig *cmd.ServerConfig) {
+		switch dpAuthMode {
+		case cmd.DPAuthPKIMTLS:
+			cpCert, err := tls.X509KeyPair(certs.CPCert, certs.CPKey)
+			require.Nil(t, err)
+
+			dpCACert, err := crypto.ParsePEMCerts(certs.DPTree1CACert)
+			require.Nil(t, err)
+
+			serverConfig.KongCPCert = cpCert
+			serverConfig.DPAuthMode = cmd.DPAuthPKIMTLS
+			serverConfig.DPAuthCACerts = dpCACert
+		case cmd.DPAuthSharedMTLS:
+			cert, err := tls.X509KeyPair(certs.DefaultSharedCert, certs.DefaultSharedKey)
+			require.Nil(t, err)
+
+			serverConfig.KongCPCert = cert
+			serverConfig.DPAuthCert = cert
+			serverConfig.DPAuthMode = cmd.DPAuthSharedMTLS
+		}
+	}
+}
+
+func Koko(t *testing.T, options ...func(*cmd.ServerConfig)) func() {
 	config := &cmd.ServerConfig{
 		Logger: log.Logger,
 		Database: config.Database{
@@ -27,34 +51,9 @@ func getConfig(dpAuthMode cmd.DPAuthMode) (*cmd.ServerConfig, error) {
 			},
 		},
 	}
-	switch dpAuthMode {
-	case cmd.DPAuthPKIMTLS:
-		cpCert, err := tls.X509KeyPair(certs.CPCert, certs.CPKey)
-		if err != nil {
-			return nil, err
-		}
-		dpCACert, err := crypto.ParsePEMCerts(certs.DPTree1CACert)
-		if err != nil {
-			return nil, err
-		}
-		config.KongCPCert = cpCert
-		config.DPAuthMode = cmd.DPAuthPKIMTLS
-		config.DPAuthCACerts = dpCACert
-	case cmd.DPAuthSharedMTLS:
-		cert, err := tls.X509KeyPair(certs.DefaultSharedCert, certs.DefaultSharedKey)
-		if err != nil {
-			return nil, err
-		}
-		config.KongCPCert = cert
-		config.DPAuthCert = cert
-		config.DPAuthMode = cmd.DPAuthSharedMTLS
+	for _, o := range options {
+		o(config)
 	}
-	return config, nil
-}
-
-func Koko(t *testing.T, dpAuthMode cmd.DPAuthMode) func() {
-	config, err := getConfig(dpAuthMode)
-	require.Nil(t, err)
 
 	require.Nil(t, util.CleanDB())
 

@@ -27,7 +27,7 @@ import (
 
 func TestSharedMTLS(t *testing.T) {
 	// ensure that Kong Gateway can connect using Shared MTLS mode
-	cleanup := run.Koko(t, cmd.DPAuthSharedMTLS)
+	cleanup := run.Koko(t, run.WithDPAuthMode(t, cmd.DPAuthSharedMTLS))
 	defer cleanup()
 
 	service := &v1.Service{
@@ -66,7 +66,7 @@ func TestSharedMTLS(t *testing.T) {
 
 func TestPKIMTLS(t *testing.T) {
 	// ensure that Kong Gateway can connect using PKI MTLS mode
-	cleanup := run.Koko(t, cmd.DPAuthPKIMTLS)
+	cleanup := run.Koko(t, run.WithDPAuthMode(t, cmd.DPAuthPKIMTLS))
 	defer cleanup()
 
 	service := &v1.Service{
@@ -104,7 +104,7 @@ func TestPKIMTLS(t *testing.T) {
 
 func TestHealthEndpointOnCPPort(t *testing.T) {
 	// ensure that health-check is enabled on the CP port
-	cleanup := run.Koko(t, cmd.DPAuthSharedMTLS)
+	cleanup := run.Koko(t, run.WithDPAuthMode(t, cmd.DPAuthSharedMTLS))
 	defer cleanup()
 
 	// test the endpoint
@@ -133,7 +133,7 @@ func insecureHTTPClient() *http.Client {
 
 func TestNodesEndpoint(t *testing.T) {
 	// ensure that gateway nodes are tracked in database
-	cleanup := run.Koko(t, cmd.DPAuthSharedMTLS)
+	cleanup := run.Koko(t, run.WithDPAuthMode(t, cmd.DPAuthSharedMTLS))
 	defer cleanup()
 
 	service := &v1.Service{
@@ -190,7 +190,7 @@ func TestNodesEndpoint(t *testing.T) {
 
 func TestPluginSync(t *testing.T) {
 	// ensure that plugins can be synced to Kong gateway
-	cleanup := run.Koko(t, cmd.DPAuthSharedMTLS)
+	cleanup := run.Koko(t, run.WithDPAuthMode(t, cmd.DPAuthSharedMTLS))
 	defer cleanup()
 
 	service := &v1.Service{
@@ -269,7 +269,7 @@ func TestPluginSync(t *testing.T) {
 
 func TestUpstreamSync(t *testing.T) {
 	// ensure that upstreams can be synced to Kong gateway
-	cleanup := run.Koko(t, cmd.DPAuthSharedMTLS)
+	cleanup := run.Koko(t, run.WithDPAuthMode(t, cmd.DPAuthSharedMTLS))
 	defer cleanup()
 
 	upstream := &v1.Upstream{
@@ -297,7 +297,7 @@ func TestUpstreamSync(t *testing.T) {
 
 func TestTargetSync(t *testing.T) {
 	// ensure that target can be synced to Kong gateway
-	cleanup := run.Koko(t, cmd.DPAuthSharedMTLS)
+	cleanup := run.Koko(t, run.WithDPAuthMode(t, cmd.DPAuthSharedMTLS))
 	defer cleanup()
 
 	require.Nil(t, util.WaitForAdminAPI(t))
@@ -338,7 +338,7 @@ func TestRouteHeader(t *testing.T) {
 	// ensure that routes with headers can be synced to Kong gateway
 	// this is done because the data-structures for headers in Koko and Kong
 	// are different
-	cleanup := run.Koko(t, cmd.DPAuthSharedMTLS)
+	cleanup := run.Koko(t, run.WithDPAuthMode(t, cmd.DPAuthSharedMTLS))
 	defer cleanup()
 
 	service := &v1.Service{
@@ -395,7 +395,7 @@ func TestRouteHeader(t *testing.T) {
 func TestDataPlanePluginCheck(t *testing.T) {
 	// ensure that a data-plane that doesn't meet the pre-requisites is
 	// tracked as a node and has a corresponding status entry
-	cleanup := run.Koko(t, cmd.DPAuthSharedMTLS)
+	cleanup := run.Koko(t, run.WithDPAuthMode(t, cmd.DPAuthSharedMTLS))
 	defer cleanup()
 
 	conf := kong.GetKongConfForShared()
