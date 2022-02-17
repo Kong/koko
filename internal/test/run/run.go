@@ -3,6 +3,7 @@ package run
 import (
 	"context"
 	"crypto/tls"
+	"fmt"
 	"os"
 	"sync"
 	"testing"
@@ -47,6 +48,8 @@ func WithDPAuthMode(dpAuthMode cmd.DPAuthMode) ServerConfigOpt {
 			serverConfig.KongCPCert = cert
 			serverConfig.DPAuthCert = cert
 			serverConfig.DPAuthMode = cmd.DPAuthSharedMTLS
+		default:
+			return fmt.Errorf("unknown DPAuthMode: %v", dpAuthMode)
 		}
 		return nil
 	}
@@ -86,6 +89,8 @@ func Koko(t *testing.T, options ...ServerConfigOpt) func() {
 				DBName:   "koko",
 			},
 		}
+	default:
+		panic(fmt.Sprintf("unknown dialect: %s", dialect))
 	}
 
 	// inject user options
