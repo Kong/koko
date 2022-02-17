@@ -26,7 +26,7 @@ type Consumer struct {
 	unknownFields protoimpl.UnknownFields
 
 	Id        string   `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Username  string   `protobuf:"bytes,2,opt,name=username,proto3" json:"username,omitempty"` // Kong username
+	Username  string   `protobuf:"bytes,2,opt,name=username,proto3" json:"username,omitempty"`
 	CreatedAt int32    `protobuf:"varint,3,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
 	UpdatedAt int32    `protobuf:"varint,4,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
 	CustomId  string   `protobuf:"bytes,5,opt,name=custom_id,json=customId,proto3" json:"custom_id,omitempty"`
