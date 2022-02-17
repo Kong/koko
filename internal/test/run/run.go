@@ -3,6 +3,7 @@ package run
 import (
 	"context"
 	"crypto/tls"
+	"os"
 	"sync"
 	"testing"
 
@@ -11,6 +12,7 @@ import (
 	"github.com/kong/koko/internal/crypto"
 	"github.com/kong/koko/internal/db"
 	"github.com/kong/koko/internal/log"
+	"github.com/kong/koko/internal/persistence/postgres"
 	"github.com/kong/koko/internal/test/certs"
 	"github.com/kong/koko/internal/test/kong"
 	"github.com/kong/koko/internal/test/util"
@@ -18,44 +20,6 @@ import (
 )
 
 type ServerConfigOpt func(*cmd.ServerConfig) error
-
-func WithSQlite3(inMemory bool, filename string) ServerConfigOpt {
-	return func(serverConfig *cmd.ServerConfig) error {
-		switch inMemory {
-		case true:
-			serverConfig.Database = config.Database{
-				Dialect: db.DialectSQLite3,
-				SQLite: config.SQLite{
-					InMemory: true,
-				},
-			}
-		default:
-			serverConfig.Database = config.Database{
-				Dialect: db.DialectSQLite3,
-				SQLite: config.SQLite{
-					Filename: filename,
-				},
-			}
-		}
-		return nil
-	}
-}
-
-func WithPostgres(dbName, hostname, user, password string, port int) ServerConfigOpt {
-	return func(serverConfig *cmd.ServerConfig) error {
-		serverConfig.Database = config.Database{
-			Dialect: db.DialectPostgres,
-			Postgres: config.Postgres{
-				DBName:   dbName,
-				Hostname: hostname,
-				Port:     port,
-				User:     user,
-				Password: password,
-			},
-		}
-		return nil
-	}
-}
 
 func WithDPAuthMode(dpAuthMode cmd.DPAuthMode) ServerConfigOpt {
 	return func(serverConfig *cmd.ServerConfig) error {
@@ -92,22 +56,41 @@ func Koko(t *testing.T, options ...ServerConfigOpt) func() {
 	// build default config
 	cert, err := tls.X509KeyPair(certs.DefaultSharedCert, certs.DefaultSharedKey)
 	require.Nil(t, err)
-	config := &cmd.ServerConfig{
+	serverConfig := &cmd.ServerConfig{
 		Logger:     log.Logger,
 		KongCPCert: cert,
 		DPAuthCert: cert,
 		DPAuthMode: cmd.DPAuthSharedMTLS,
-		Database: config.Database{
+	}
+
+	dialect := os.Getenv("KOKO_TEST_DB")
+	if dialect == "" {
+		dialect = "sqlite3"
+	}
+	switch dialect {
+	case "sqlite3":
+		serverConfig.Database = config.Database{
 			Dialect: db.DialectSQLite3,
 			SQLite: config.SQLite{
 				InMemory: true,
 			},
-		},
+		}
+	case "postgres":
+		serverConfig.Database = config.Database{
+			Dialect: db.DialectPostgres,
+			Postgres: config.Postgres{
+				Hostname: "localhost",
+				Port:     postgres.DefaultPort,
+				User:     "koko",
+				Password: "koko",
+				DBName:   "koko",
+			},
+		}
 	}
 
 	// inject user options
 	for _, o := range options {
-		err := o(config)
+		err := o(serverConfig)
 		require.Nil(t, err)
 	}
 
@@ -118,7 +101,7 @@ func Koko(t *testing.T, options ...ServerConfigOpt) func() {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		err := cmd.Run(ctx, *config)
+		err := cmd.Run(ctx, *serverConfig)
 		require.Nil(t, err)
 	}()
 	require.Nil(t, util.WaitForAdminAPI(t))

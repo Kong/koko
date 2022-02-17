@@ -66,11 +66,7 @@ func TestSharedMTLS(t *testing.T) {
 
 func TestPKIMTLS(t *testing.T) {
 	// ensure that Kong Gateway can connect using PKI MTLS mode
-	cleanup := run.Koko(
-		t,
-		run.WithDPAuthMode(cmd.DPAuthPKIMTLS),
-		run.WithSQlite3(true, ""),
-	)
+	cleanup := run.Koko(t, run.WithDPAuthMode(cmd.DPAuthPKIMTLS))
 	defer cleanup()
 
 	service := &v1.Service{
