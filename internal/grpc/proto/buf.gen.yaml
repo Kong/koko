@@ -15,6 +15,7 @@ plugins:
   - name: openapiv2
     out: internal/gen
     opt:
+      - json_names_for_fields=false
       - include_package_in_tags=true
       - allow_merge=true
       - allow_repeated_fields_in_body=true

@@ -2,11 +2,14 @@ package schema
 
 import (
 	"bytes"
+	"crypto/x509"
 	"encoding/json"
+	"encoding/pem"
 	"fmt"
 	"strings"
 	"sync"
 
+	internalCrypto "github.com/kong/koko/internal/crypto"
 	genJSONSchema "github.com/kong/koko/internal/gen/jsonschema"
 	"github.com/santhosh-tekuri/jsonschema/v5"
 )
@@ -27,8 +30,12 @@ func initSchemas() {
 	if err != nil {
 		panic(err)
 	}
+
+	initCustomFormats()
+
 	compiler := jsonschema.NewCompiler()
 	compiler.ExtractAnnotations = true
+	compiler.AssertFormat = true
 	for _, file := range files {
 		name := file.Name()
 		if !strings.HasSuffix(name, ".json") {
@@ -51,6 +58,42 @@ func initSchemas() {
 			panic(err)
 		}
 		rawJSONSchemas[schemaName] = buffer.Bytes()
+	}
+}
+
+func initCustomFormats() {
+	jsonschema.Formats["pem-encoded-cert"] = func(v interface{}) bool {
+		switch v := v.(type) {
+		case string:
+			_, err := internalCrypto.ParsePEMCert([]byte(v))
+			return err == nil
+		default:
+			return false
+		}
+	}
+	jsonschema.Formats["pem-encoded-private-key"] = func(v interface{}) bool {
+		switch v := v.(type) {
+		case string:
+			block, _ := pem.Decode([]byte(v))
+			if block == nil {
+				return false
+			}
+			_, err := x509.ParsePKCS8PrivateKey(block.Bytes)
+			if err == nil {
+				return true
+			}
+			_, err = x509.ParsePKCS1PrivateKey(block.Bytes)
+			if err == nil {
+				return true
+			}
+			_, err = x509.ParseECPrivateKey(block.Bytes)
+			if err == nil {
+				return true
+			}
+			return false
+		default:
+			return false
+		}
 	}
 }
 

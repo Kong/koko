@@ -1,0 +1,88 @@
+syntax = "proto3";
+
+package kong.admin.service.v1;
+
+option go_package = "github.com/kong/koko/internal/gen/kong/admin/service/v1;v1";
+
+import "google/api/annotations.proto";
+import "kong/admin/model/v1/certificate.proto";
+import "kong/admin/model/v1/cluster.proto";
+import "kong/admin/model/v1/pagination.proto";
+
+service CertificateService {
+  rpc GetCertificate(GetCertificateRequest) returns (GetCertificateResponse) {
+    option (google.api.http) = {
+      get: "/v1/certificates/{id}"
+      response_body: "item"
+    };
+  }
+  rpc CreateCertificate(CreateCertificateRequest) returns (CreateCertificateResponse) {
+    option (google.api.http) = {
+      post: "/v1/certificates"
+      body: "item"
+      response_body: "item"
+    };
+  }
+  rpc UpsertCertificate(UpsertCertificateRequest) returns (UpsertCertificateResponse) {
+    option (google.api.http) = {
+      put: "/v1/certificates/{item.id}"
+      body: "item"
+      response_body: "item"
+    };
+  }
+  rpc DeleteCertificate(DeleteCertificateRequest) returns (DeleteCertificateResponse) {
+    option (google.api.http) = {
+      delete: "/v1/certificates/{id}"
+    };
+  }
+  rpc ListCertificates(ListCertificatesRequest) returns (ListCertificatesResponse) {
+    option (google.api.http) = {
+      get: "/v1/certificates"
+    };
+  }
+}
+
+message GetCertificateRequest{
+  string id = 1;
+  model.v1.RequestCluster cluster = 2;
+}
+
+message GetCertificateResponse{
+  model.v1.Certificate item = 1;
+}
+
+message CreateCertificateRequest{
+  model.v1.Certificate item = 1;
+  model.v1.RequestCluster cluster = 2;
+}
+
+message CreateCertificateResponse{
+  model.v1.Certificate item = 1;
+}
+
+message UpsertCertificateRequest{
+  model.v1.Certificate item = 1;
+  model.v1.RequestCluster cluster = 2;
+}
+
+message UpsertCertificateResponse{
+  model.v1.Certificate item = 1;
+}
+
+message DeleteCertificateRequest{
+  string id = 1;
+  model.v1.RequestCluster cluster = 2;
+}
+
+message DeleteCertificateResponse{
+}
+
+message ListCertificatesRequest{
+  model.v1.RequestCluster cluster = 1;
+  model.v1.PaginationRequest page = 2;
+}
+
+message ListCertificatesResponse{
+  repeated model.v1.Certificate items = 1;
+  model.v1.PaginationResponse page = 2;
+}
