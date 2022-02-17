@@ -136,6 +136,10 @@ func (t ErrorTranslator) getErr(schemaErr jsonschema.Detailed,
 		case "minLength":
 			fallthrough
 		case "maxLength":
+			fallthrough
+		case "format":
+			fallthrough
+		case "dependencies":
 			message = schemaErr.Error
 		default:
 			panic("unexpected hint: " + hint)

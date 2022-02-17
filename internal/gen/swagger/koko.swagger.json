@@ -1,12 +1,15 @@
 {
   "swagger": "2.0",
   "info": {
-    "title": "kong/admin/model/v1/cluster.proto",
+    "title": "kong/admin/model/v1/certificate.proto",
     "version": "version not set"
   },
   "tags": [
     {
       "name": "MetaService"
+    },
+    {
+      "name": "CertificateService"
     },
     {
       "name": "NodeService"
@@ -43,6 +46,200 @@
     "application/json"
   ],
   "paths": {
+    "/v1/certificates": {
+      "get": {
+        "operationId": "CertificateService_ListCertificates",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/kong.admin.service.v1.ListCertificatesResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "cluster.id",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "page.size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "page.number",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "tags": [
+          "kong.admin.service.v1.CertificateService"
+        ]
+      },
+      "post": {
+        "operationId": "CertificateService_CreateCertificate",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/kong.admin.model.v1.Certificate"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/kong.admin.model.v1.Certificate"
+            }
+          },
+          {
+            "name": "cluster.id",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "kong.admin.service.v1.CertificateService"
+        ]
+      }
+    },
+    "/v1/certificates/{id}": {
+      "get": {
+        "operationId": "CertificateService_GetCertificate",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/kong.admin.model.v1.Certificate"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "cluster.id",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "kong.admin.service.v1.CertificateService"
+        ]
+      },
+      "delete": {
+        "operationId": "CertificateService_DeleteCertificate",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/kong.admin.service.v1.DeleteCertificateResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "cluster.id",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "kong.admin.service.v1.CertificateService"
+        ]
+      }
+    },
+    "/v1/certificates/{item.id}": {
+      "put": {
+        "operationId": "CertificateService_UpsertCertificate",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/kong.admin.model.v1.Certificate"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "item.id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/kong.admin.model.v1.Certificate"
+            }
+          },
+          {
+            "name": "cluster.id",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "kong.admin.service.v1.CertificateService"
+        ]
+      }
+    },
     "/v1/meta/version": {
       "get": {
         "operationId": "MetaService_GetVersion",
@@ -204,13 +401,13 @@
             "type": "string"
           },
           {
-            "name": "serviceId",
+            "name": "service_id",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
-            "name": "routeId",
+            "name": "route_id",
             "in": "query",
             "required": false,
             "type": "string"
@@ -410,7 +607,7 @@
             "type": "string"
           },
           {
-            "name": "serviceId",
+            "name": "service_id",
             "in": "query",
             "required": false,
             "type": "string"
@@ -864,13 +1061,13 @@
             "type": "string"
           },
           {
-            "name": "refType",
+            "name": "ref_type",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
-            "name": "refId",
+            "name": "ref_id",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1206,13 +1403,13 @@
         "healthy": {
           "$ref": "#/definitions/kong.admin.model.v1.ActiveHealthyCondition"
         },
-        "httpPath": {
+        "http_path": {
           "type": "string"
         },
-        "httpSni": {
+        "http_sni": {
           "type": "string"
         },
-        "httpsVerifyCertificate": {
+        "https_verify_certificate": {
           "type": "boolean"
         },
         "type": {
@@ -1230,7 +1427,7 @@
     "kong.admin.model.v1.ActiveHealthyCondition": {
       "type": "object",
       "properties": {
-        "httpStatuses": {
+        "http_statuses": {
           "type": "array",
           "items": {
             "type": "integer",
@@ -1250,15 +1447,15 @@
     "kong.admin.model.v1.ActiveUnhealthyCondition": {
       "type": "object",
       "properties": {
-        "httpFailures": {
+        "http_failures": {
           "type": "integer",
           "format": "int32"
         },
-        "tcpFailures": {
+        "tcp_failures": {
           "type": "integer",
           "format": "int32"
         },
-        "httpStatuses": {
+        "http_statuses": {
           "type": "array",
           "items": {
             "type": "integer",
@@ -1286,6 +1483,54 @@
           "format": "int32"
         }
       }
+    },
+    "kong.admin.model.v1.Certificate": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "created_at": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "updated_at": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "cert": {
+          "type": "string",
+          "description": "PEM encoded certificate",
+          "required": [
+            "cert"
+          ]
+        },
+        "key": {
+          "type": "string",
+          "description": "PEM encoded private key",
+          "required": [
+            "key"
+          ]
+        },
+        "cert_alt": {
+          "type": "string",
+          "description": "PEM encoded certificate"
+        },
+        "key_alt": {
+          "type": "string",
+          "description": "PEM encoded private key"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "cert",
+        "key"
+      ]
     },
     "kong.admin.model.v1.Condition": {
       "type": "object",
@@ -1350,22 +1595,22 @@
         "hostname": {
           "type": "string"
         },
-        "lastPing": {
+        "last_ping": {
           "type": "integer",
           "format": "int32"
         },
         "type": {
           "type": "string"
         },
-        "createdAt": {
+        "created_at": {
           "type": "integer",
           "format": "int32"
         },
-        "updatedAt": {
+        "updated_at": {
           "type": "integer",
           "format": "int32"
         },
-        "configHash": {
+        "config_hash": {
           "type": "string"
         }
       }
@@ -1386,11 +1631,11 @@
     "kong.admin.model.v1.PaginationResponse": {
       "type": "object",
       "properties": {
-        "totalCount": {
+        "total_count": {
           "type": "integer",
           "format": "int32"
         },
-        "nextPageNum": {
+        "next_page_num": {
           "type": "integer",
           "format": "int32"
         }
@@ -1413,7 +1658,7 @@
     "kong.admin.model.v1.PassiveHealthyCondition": {
       "type": "object",
       "properties": {
-        "httpStatuses": {
+        "http_statuses": {
           "type": "array",
           "items": {
             "type": "integer",
@@ -1429,15 +1674,15 @@
     "kong.admin.model.v1.PassiveUnhealthyCondition": {
       "type": "object",
       "properties": {
-        "httpFailures": {
+        "http_failures": {
           "type": "integer",
           "format": "int32"
         },
-        "tcpFailures": {
+        "tcp_failures": {
           "type": "integer",
           "format": "int32"
         },
-        "httpStatuses": {
+        "http_statuses": {
           "type": "array",
           "items": {
             "type": "integer",
@@ -1459,11 +1704,11 @@
         "name": {
           "type": "string"
         },
-        "createdAt": {
+        "created_at": {
           "type": "integer",
           "format": "int32"
         },
-        "updatedAt": {
+        "updated_at": {
           "type": "integer",
           "format": "int32"
         },
@@ -1522,7 +1767,7 @@
             "type": "string"
           }
         },
-        "createdAt": {
+        "created_at": {
           "type": "integer",
           "format": "int32"
         },
@@ -1538,10 +1783,10 @@
             "type": "string"
           }
         },
-        "pathHandling": {
+        "path_handling": {
           "type": "string"
         },
-        "preserveHost": {
+        "preserve_host": {
           "type": "boolean"
         },
         "protocols": {
@@ -1550,14 +1795,14 @@
             "type": "string"
           }
         },
-        "regexPriority": {
+        "regex_priority": {
           "type": "integer",
           "format": "int32"
         },
-        "stripPath": {
+        "strip_path": {
           "type": "boolean"
         },
-        "updatedAt": {
+        "updated_at": {
           "type": "integer",
           "format": "int32"
         },
@@ -1585,14 +1830,14 @@
             "type": "string"
           }
         },
-        "httpsRedirectStatusCode": {
+        "https_redirect_status_code": {
           "type": "integer",
           "format": "int32"
         },
-        "requestBuffering": {
+        "request_buffering": {
           "type": "boolean"
         },
-        "responseBuffering": {
+        "response_buffering": {
           "type": "boolean"
         },
         "service": {
@@ -1609,11 +1854,11 @@
         "name": {
           "type": "string"
         },
-        "connectTimeout": {
+        "connect_timeout": {
           "type": "integer",
           "format": "int32"
         },
-        "createdAt": {
+        "created_at": {
           "type": "integer",
           "format": "int32"
         },
@@ -1630,7 +1875,7 @@
         "protocol": {
           "type": "string"
         },
-        "readTimeout": {
+        "read_timeout": {
           "type": "integer",
           "format": "int32"
         },
@@ -1638,14 +1883,14 @@
           "type": "integer",
           "format": "int32"
         },
-        "updatedAt": {
+        "updated_at": {
           "type": "integer",
           "format": "int32"
         },
         "url": {
           "type": "string"
         },
-        "writeTimeout": {
+        "write_timeout": {
           "type": "integer",
           "format": "int32"
         },
@@ -1655,14 +1900,14 @@
             "type": "string"
           }
         },
-        "tlsVerify": {
+        "tls_verify": {
           "type": "boolean"
         },
-        "tlsVerifyDepth": {
+        "tls_verify_depth": {
           "type": "integer",
           "format": "int32"
         },
-        "caCertificates": {
+        "ca_certificates": {
           "type": "array",
           "items": {
             "type": "string"
@@ -1677,7 +1922,7 @@
         "id": {
           "type": "string"
         },
-        "contextReference": {
+        "context_reference": {
           "$ref": "#/definitions/kong.admin.model.v1.EntityReference"
         },
         "conditions": {
@@ -1686,11 +1931,11 @@
             "$ref": "#/definitions/kong.admin.model.v1.Condition"
           }
         },
-        "createdAt": {
+        "created_at": {
           "type": "integer",
           "format": "int32"
         },
-        "updatedAt": {
+        "updated_at": {
           "type": "integer",
           "format": "int32"
         }
@@ -1708,30 +1953,30 @@
         "algorithm": {
           "type": "string"
         },
-        "createdAt": {
+        "created_at": {
           "type": "integer",
           "format": "int32"
         },
-        "updatedAt": {
+        "updated_at": {
           "type": "integer",
           "format": "int32"
         },
-        "hashOn": {
+        "hash_on": {
           "type": "string"
         },
-        "hashFallback": {
+        "hash_fallback": {
           "type": "string"
         },
-        "hashOnHeader": {
+        "hash_on_header": {
           "type": "string"
         },
-        "hashFallbackHeader": {
+        "hash_fallback_header": {
           "type": "string"
         },
-        "hashOnCookie": {
+        "hash_on_cookie": {
           "type": "string"
         },
-        "hashOnCookiePath": {
+        "hash_on_cookie_path": {
           "type": "string"
         },
         "slots": {
@@ -1747,8 +1992,16 @@
             "type": "string"
           }
         },
-        "hostHeader": {
+        "host_header": {
           "type": "string"
+        }
+      }
+    },
+    "kong.admin.service.v1.CreateCertificateResponse": {
+      "type": "object",
+      "properties": {
+        "item": {
+          "$ref": "#/definitions/kong.admin.model.v1.Certificate"
         }
       }
     },
@@ -1792,6 +2045,9 @@
         }
       }
     },
+    "kong.admin.service.v1.DeleteCertificateResponse": {
+      "type": "object"
+    },
     "kong.admin.service.v1.DeleteNodeResponse": {
       "type": "object"
     },
@@ -1809,6 +2065,14 @@
     },
     "kong.admin.service.v1.DeleteUpstreamResponse": {
       "type": "object"
+    },
+    "kong.admin.service.v1.GetCertificateResponse": {
+      "type": "object",
+      "properties": {
+        "item": {
+          "$ref": "#/definitions/kong.admin.model.v1.Certificate"
+        }
+      }
     },
     "kong.admin.service.v1.GetLuaSchemasPluginResponse": {
       "type": "object",
@@ -1879,6 +2143,20 @@
       "properties": {
         "version": {
           "type": "string"
+        }
+      }
+    },
+    "kong.admin.service.v1.ListCertificatesResponse": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/kong.admin.model.v1.Certificate"
+          }
+        },
+        "page": {
+          "$ref": "#/definitions/kong.admin.model.v1.PaginationResponse"
         }
       }
     },
@@ -1963,6 +2241,14 @@
         },
         "page": {
           "$ref": "#/definitions/kong.admin.model.v1.PaginationResponse"
+        }
+      }
+    },
+    "kong.admin.service.v1.UpsertCertificateResponse": {
+      "type": "object",
+      "properties": {
+        "item": {
+          "$ref": "#/definitions/kong.admin.model.v1.Certificate"
         }
       }
     },
