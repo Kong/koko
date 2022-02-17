@@ -22,11 +22,14 @@ all: lint test
 
 .PHONY: test
 test:
-	go test -count 1 -p 1 -race ./...
+	go test -count 1 ./...
+
+test-race:
+	go test -count 1 -race ./...
 
 .PHONY: test-integration
 test-integration:
-	go test -tags=integration -race -count 1 -p 1 ./internal/test/...
+	go test -tags=integration -race -count 1 ./internal/test/...
 
 .PHONY: gen
 gen:
