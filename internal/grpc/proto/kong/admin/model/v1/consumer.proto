@@ -6,7 +6,7 @@ package kong.admin.model.v1;
 
 message Consumer {
   string id = 1;
-  string username = 2; // Kong username
+  string username = 2;
   int32 created_at = 3;
   int32 updated_at = 4;
   string custom_id = 5;
