@@ -21,7 +21,8 @@ type Validator interface {
 }
 
 type Opts struct {
-	Logger *zap.Logger
+	Logger   *zap.Logger
+	InjectFS *embed.FS
 }
 
 type LuaValidator struct {
@@ -34,7 +35,9 @@ func NewLuaValidator(opts Opts) (*LuaValidator, error) {
 	if opts.Logger == nil {
 		return nil, fmt.Errorf("opts.Logger required")
 	}
-	validator, err := goksPlugin.NewValidator(goksPlugin.ValidatorOpts{})
+	validator, err := goksPlugin.NewValidator(goksPlugin.ValidatorOpts{
+		InjectFS: opts.InjectFS,
+	})
 	if err != nil {
 		return nil, err
 	}
