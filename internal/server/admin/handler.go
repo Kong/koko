@@ -120,13 +120,6 @@ func buildServices(opts HandlerOpts) services {
 					"node")),
 			},
 		},
-		consumer: &ConsumerService{
-			CommonOpts: CommonOpts{
-				storeLoader: opts.StoreLoader,
-				logger: opts.Logger.With(zap.String("admin-service",
-					"consumer")),
-			},
-		},
 	}
 }
 
