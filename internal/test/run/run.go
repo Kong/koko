@@ -17,9 +17,47 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type serverConfigOpt func(*cmd.ServerConfig) error
+type ServerConfigOpt func(*cmd.ServerConfig) error
 
-func WithDPAuthMode(t *testing.T, dpAuthMode cmd.DPAuthMode) serverConfigOpt {
+func WithSQlite3(inMemory bool, filename string) ServerConfigOpt {
+	return func(serverConfig *cmd.ServerConfig) error {
+		switch inMemory {
+		case true:
+			serverConfig.Database = config.Database{
+				Dialect: db.DialectSQLite3,
+				SQLite: config.SQLite{
+					InMemory: true,
+				},
+			}
+		default:
+			serverConfig.Database = config.Database{
+				Dialect: db.DialectSQLite3,
+				SQLite: config.SQLite{
+					Filename: filename,
+				},
+			}
+		}
+		return nil
+	}
+}
+
+func WithPostgres(dbName, hostname, user, password string, port int) ServerConfigOpt {
+	return func(serverConfig *cmd.ServerConfig) error {
+		serverConfig.Database = config.Database{
+			Dialect: db.DialectPostgres,
+			Postgres: config.Postgres{
+				DBName:   dbName,
+				Hostname: hostname,
+				Port:     port,
+				User:     user,
+				Password: password,
+			},
+		}
+		return nil
+	}
+}
+
+func WithDPAuthMode(dpAuthMode cmd.DPAuthMode) ServerConfigOpt {
 	return func(serverConfig *cmd.ServerConfig) error {
 		switch dpAuthMode {
 		case cmd.DPAuthPKIMTLS:
@@ -50,9 +88,15 @@ func WithDPAuthMode(t *testing.T, dpAuthMode cmd.DPAuthMode) serverConfigOpt {
 	}
 }
 
-func Koko(t *testing.T, options ...serverConfigOpt) func() {
+func Koko(t *testing.T, options ...ServerConfigOpt) func() {
+	// build default config
+	cert, err := tls.X509KeyPair(certs.DefaultSharedCert, certs.DefaultSharedKey)
+	require.Nil(t, err)
 	config := &cmd.ServerConfig{
-		Logger: log.Logger,
+		Logger:     log.Logger,
+		KongCPCert: cert,
+		DPAuthCert: cert,
+		DPAuthMode: cmd.DPAuthSharedMTLS,
 		Database: config.Database{
 			Dialect: db.DialectSQLite3,
 			SQLite: config.SQLite{
@@ -60,6 +104,8 @@ func Koko(t *testing.T, options ...serverConfigOpt) func() {
 			},
 		},
 	}
+
+	// inject user options
 	for _, o := range options {
 		err := o(config)
 		require.Nil(t, err)
