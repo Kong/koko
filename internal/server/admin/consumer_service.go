@@ -97,11 +97,16 @@ func (s *ConsumerService) ListConsumers(ctx context.Context,
 		return nil, err
 	}
 	list := resource.NewList(resource.TypeConsumer)
-	if err := db.List(ctx, list); err != nil {
+	listOptFns, err := listOptsFromReq(req.Page)
+	if err != nil {
+		return nil, s.err(util.ErrClient{Message: err.Error()})
+	}
+	if err := db.List(ctx, list, listOptFns...); err != nil {
 		return nil, s.err(err)
 	}
 	return &v1.ListConsumersResponse{
 		Items: consumersFromObjects(list.GetAll()),
+		Page:  getPaginationResponse(list.GetTotalCount(), list.GetNextPage()),
 	}, nil
 }
 

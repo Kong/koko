@@ -1,6 +1,7 @@
 package admin
 
 import (
+	"net/http"
 	"testing"
 
 	"github.com/gavv/httpexpect/v2"
@@ -30,8 +31,8 @@ func TestConsumerCreate(t *testing.T) {
 		body.Value("updated_at").Number().Gt(0)
 	})
 	t.Run("creating a empty consumer fails with 400", func(t *testing.T) {
-		upstream := &v1.Consumer{}
-		res := c.POST("/v1/consumers").WithJSON(upstream).Expect()
+		consumer := &v1.Consumer{}
+		res := c.POST("/v1/consumers").WithJSON(consumer).Expect()
 		res.Status(400)
 		body := res.JSON().Object()
 		body.ValueEqual("message", "validation error")
@@ -41,4 +42,52 @@ func TestConsumerCreate(t *testing.T) {
 		err.Value("messages").Array().Element(0).String().
 			Equal("at-least one of custom_id or username must be set")
 	})
+	t.Run("recreating the consumer with the same username but different id fails",
+		func(t *testing.T) {
+			consumer := goodConsumer()
+			// Change the name to something that does not exist in the DB
+			consumer.Username = "duplicateUserName"
+			consumer.CustomId = ""
+			res := c.POST("/v1/consumers").
+				WithJSON(consumer).
+				Expect()
+			res.Status(201)
+			res.Header("grpc-metadata-koko-status-code").Empty()
+			// Now try to create a new consumer with same username
+			res = c.POST("/v1/consumers").
+				WithJSON(consumer).
+				Expect()
+			res.Status(http.StatusBadRequest)
+			body := res.JSON().Object()
+			body.ValueEqual("message", "data constraint error")
+			body.Value("details").Array().Length().Equal(1)
+			err := body.Value("details").Array().Element(0)
+			err.Object().ValueEqual("type", v1.ErrorType_ERROR_TYPE_REFERENCE.
+				String())
+			err.Object().ValueEqual("field", "username")
+		})
+	t.Run("recreating the consumer with the same customId but different id fails",
+		func(t *testing.T) {
+			consumer := goodConsumer()
+			// Change the name to something that does not exist in the DB
+			consumer.CustomId = "duplicateCustomID"
+			consumer.Username = ""
+			res := c.POST("/v1/consumers").
+				WithJSON(consumer).
+				Expect()
+			res.Status(201)
+			res.Header("grpc-metadata-koko-status-code").Empty()
+			// Now try to create a new consumer with same CustomID
+			res = c.POST("/v1/consumers").
+				WithJSON(consumer).
+				Expect()
+			res.Status(http.StatusBadRequest)
+			body := res.JSON().Object()
+			body.ValueEqual("message", "data constraint error")
+			body.Value("details").Array().Length().Equal(1)
+			err := body.Value("details").Array().Element(0)
+			err.Object().ValueEqual("type", v1.ErrorType_ERROR_TYPE_REFERENCE.
+				String())
+			err.Object().ValueEqual("field", "custom_id")
+		})
 }

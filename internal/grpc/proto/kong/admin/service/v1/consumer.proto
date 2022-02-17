@@ -7,6 +7,7 @@ option go_package = "github.com/kong/koko/internal/gen/kong/admin/service/v1;v1"
 import "google/api/annotations.proto";
 import "kong/admin/model/v1/consumer.proto";
 import "kong/admin/model/v1/cluster.proto";
+import "kong/admin/model/v1/pagination.proto";
 
 service ConsumerService {
   rpc GetConsumer(GetConsumerRequest) returns (GetConsumerResponse) {
@@ -76,8 +77,10 @@ message DeleteConsumerResponse{
 
 message ListConsumersRequest{
   model.v1.RequestCluster cluster = 1;
+  model.v1.PaginationRequest page = 2;
 }
 
 message ListConsumersResponse{
   repeated model.v1.Consumer items = 1;
+  model.v1.PaginationResponse page = 2;
 }

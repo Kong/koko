@@ -72,6 +72,20 @@
             "in": "query",
             "required": false,
             "type": "string"
+          },
+          {
+            "name": "page.size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "page.number",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
           }
         ],
         "tags": [
@@ -2374,6 +2388,9 @@
           "items": {
             "$ref": "#/definitions/kong.admin.model.v1.Consumer"
           }
+        },
+        "page": {
+          "$ref": "#/definitions/kong.admin.model.v1.PaginationResponse"
         }
       }
     },
