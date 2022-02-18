@@ -189,3 +189,174 @@ func TestTarget_Validate(t *testing.T) {
 		})
 	}
 }
+
+func TestTarget_fortmatTarget(t *testing.T) {
+	tests := []struct {
+		name     string
+		target   string
+		expected string
+		wantErr  bool
+	}{
+		{
+			name:     "valid ipv4 ok",
+			target:   "192.0.2.1",
+			expected: "192.0.2.1:8000",
+		},
+		{
+			name:     "valid ipv4 and port ok",
+			target:   "192.0.2.1:80",
+			expected: "192.0.2.1:80",
+		},
+		{
+			name:    "valid ipv4 and invalid port fails",
+			target:  "192.0.2.1:-80",
+			wantErr: true,
+		},
+		{
+			name:    "valid ipv4 and invalid port fails",
+			target:  "192.0.2.1:99999999999999",
+			wantErr: true,
+		},
+		{
+			name:     "valid ipv6 ok",
+			target:   "2001:DB8::1",
+			expected: "[2001:0db8:0000:0000:0000:0000:0000:0001]:8000",
+		},
+		{
+			name:    "invalid ipv6 fails",
+			target:  "2001:DBk::1",
+			wantErr: true,
+		},
+		{
+			name:    "invalid ipv6 fails",
+			target:  "2001:DBDBDB::1",
+			wantErr: true,
+		},
+		{
+			name:    "invalid ipv6 fails",
+			target:  "2001:DB8:85a3:0000:0000:8a2e:370:7334:1234",
+			wantErr: true,
+		},
+		{
+			name:     "valid ipv6 ok",
+			target:   "2001:DB8::",
+			expected: "[2001:0db8:0000:0000:0000:0000:0000:0000]:8000",
+		},
+		{
+			name:     "valid ipv6 ok",
+			target:   "2001:DB8:85a3:0000:0000:8a2e:370:7334",
+			expected: "[2001:0db8:85a3:0000:0000:8a2e:0370:7334]:8000",
+		},
+		{
+			name:     "valid ipv6 ok",
+			target:   "2001:DB8:85a3::8a2e:370:7334",
+			expected: "[2001:0db8:85a3:0000:0000:8a2e:0370:7334]:8000",
+		},
+		{
+			name:     "valid ipv6 ok",
+			target:   "2001:DB8:2::3:4:5",
+			expected: "[2001:0db8:0002:0000:0000:0003:0004:0005]:8000",
+		},
+		{
+			name:     "valid ipv6 brackets ok",
+			target:   "[2001:DB8::1]",
+			expected: "[2001:0db8:0000:0000:0000:0000:0000:0001]:8000",
+		},
+		{
+			name:    "invalid ipv6 with brackets fails",
+			target:  "[2001:DBk::1]",
+			wantErr: true,
+		},
+		{
+			name:     "valid ipv6 brackets and port ok",
+			target:   "[2001:DB8::1]:80",
+			expected: "[2001:0db8:0000:0000:0000:0000:0000:0001]:80",
+		},
+		{
+			name:    "valid ipv6 brackets and invalid port fails",
+			target:  "[2001:DB8::1]:-80",
+			wantErr: true,
+		},
+		{
+			name:    "valid ipv6 brackets and invalid port fails",
+			target:  "[2001:DB8::1]:99999999999999",
+			wantErr: true,
+		},
+		{
+			name:     "valid domain ok",
+			target:   "valid",
+			expected: "valid:8000",
+		},
+		{
+			name:     "valid dotted domain ok",
+			target:   "valid.domain",
+			expected: "valid.domain:8000",
+		},
+		{
+			name:     "valid domain and port ok",
+			target:   "valid:80",
+			expected: "valid:80",
+		},
+		{
+			name:    "valid domain and invalid port fails",
+			target:  "valid:-80",
+			wantErr: true,
+		},
+		{
+			name:    "valid domain and invalid port fails",
+			target:  "valid:99999999999999",
+			wantErr: true,
+		},
+		{
+			name:     "valid dotted domain and port ok",
+			target:   "valid.name:80",
+			expected: "valid.name:80",
+		},
+		{
+			name:    "valid dotted domain and invalid port fails",
+			target:  "valid.name:-80",
+			wantErr: true,
+		},
+		{
+			name:    "valid dotted domain and invalid port fails",
+			target:  "valid.name:99999999999999",
+			wantErr: true,
+		},
+		{
+			name:    "invalid domain throws an error",
+			target:  "abc.cde:80:80",
+			wantErr: true,
+		},
+		{
+			name:    "invalid ipv4 throws an error",
+			target:  "192.0.2.1.1",
+			wantErr: true,
+		},
+		{
+			name:    "invalid ipv4 throws an error",
+			target:  "300.0.2.1",
+			wantErr: true,
+		},
+		{
+			name:    "invalid name fails",
+			target:  "\\\\bad\\\\////name////",
+			wantErr: true,
+		},
+		{
+			name:    "invalid domain and port fails",
+			target:  "1.2.3.4.5:80",
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := validateAndFormatTarget(tt.target)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("validateTarget() error = %v, wantErr %v", err, tt.wantErr)
+			}
+			if got != tt.expected {
+				t.Errorf("validateTarget() got = %s, expected %s", got, tt.expected)
+			}
+		})
+	}
+}
