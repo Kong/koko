@@ -1,7 +1,16 @@
 package resource
 
 import (
+	"crypto/ecdsa"
+	"crypto/elliptic"
+	"crypto/rand"
+	"crypto/rsa"
+	"crypto/x509"
+	"crypto/x509/pkix"
+	"encoding/pem"
+	"math/big"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	model "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
@@ -9,27 +18,18 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-const (
-	certPEM = `-----BEGIN CERTIFICATE-----
-MIIBxTCCAS4CCQD0SjBT9iaA9zANBgkqhkiG9w0BAQsFADAnMQswCQYDVQQGEwJV
-UzEYMBYGA1UEAwwPa29uZ19jbHVzdGVyaW5nMB4XDTIyMDIwNDIwMDg1NVoXDTMy
-MDIwMjIwMDg1NVowJzELMAkGA1UEBhMCVVMxGDAWBgNVBAMMD2tvbmdfY2x1c3Rl
-cmluZzCBnzANBgkqhkiG9w0BAQEFAAOBjQAwgYkCgYEAyHXqTwrb6MrDFaZBoLnY
-7cTXbiZu6Tjp2eqHAp1NfCxu3RUd3kbDmX27yWPbOCMo/gv2Nl5xQIp/ciOQPaPx
-gqU8oYjcXomK3zc57nb7meyPn4H6fGIcVxknD+42LAG2DKEdDjLRJIveTeZqvDDt
-OXj1IVQoHme7jLAPF+Wta2ECAwEAATANBgkqhkiG9w0BAQsFAAOBgQBtRKEEVYLs
-/X0ZggtDy/WgRIlgXFzt8q4ECqxdL+h3o9/Cl051xdcAGbnz6Ji+0ZK1+iCLTNl8
-n9pVqfh1Bate01962jGELKyXkGePn/6HzTYJbk1SqCXemYst7VZmiRjx4biz4kPl
-odxViRGIvVwiG+wBvdgZc699Pfh4Hqa/DA==
------END CERTIFICATE-----`
+var certTemplate = x509.Certificate{
+	SerialNumber: big.NewInt(1),
+	Subject: pkix.Name{
+		Organization: []string{"kong_clustering"},
+	},
+	NotBefore: time.Now(),
+	NotAfter:  time.Now().Add(time.Hour * 24),
 
-	keyPEM = `-----BEGIN PRIVATE KEY-----
-MIG2AgEAMBAGByqGSM49AgEGBSuBBAAiBIGeMIGbAgEBBDBNvmhmUfKWbjUAvc3/
-XoEiDjZuGfCKOXlS1pSUsUgV8DerlatiPc7aD8vOej+jsnmhZANiAASDiQiDvMcr
-UFsXqHQ3lyuIUqWkPmrww0rQiFTBpDvyW8Ci723O+piU5n4GjR4JamxTKzlWMQxV
-LJDtSk6WZf3IEzQ9REDXszOJWafqjVih+ge/MjzzQ1S/0BorZHZEZ6w=
------END PRIVATE KEY-----`
-)
+	KeyUsage:              x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
+	ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
+	BasicConstraintsValid: true,
+}
 
 func TestNewCertificate(t *testing.T) {
 	r := NewCertificate()
@@ -50,6 +50,25 @@ func TestCertificate_ProcessDefaults(t *testing.T) {
 }
 
 func TestCertificate_Validate(t *testing.T) {
+	rsaKey, err := rsa.GenerateKey(rand.Reader, 2048)
+	require.Nil(t, err)
+	require.NotNil(t, rsaKey)
+
+	certPEM, err := createCert(rsaKey.Public(), rsaKey)
+	require.Nil(t, err)
+	keyPEM := pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(rsaKey)})
+
+	ecdsaKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	require.Nil(t, err)
+	require.NotNil(t, ecdsaKey)
+
+	certAltPEM, err := createCert(ecdsaKey.Public(), ecdsaKey)
+	require.Nil(t, err)
+	keyDER, err := x509.MarshalECPrivateKey(ecdsaKey)
+	require.Nil(t, err)
+	require.NotNil(t, keyDER)
+	keyAltPEM := pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: keyDER})
+
 	tests := []struct {
 		name        string
 		Certificate func() Certificate
@@ -76,7 +95,7 @@ func TestCertificate_Validate(t *testing.T) {
 			Certificate: func() Certificate {
 				cert := NewCertificate()
 				_ = cert.ProcessDefaults()
-				cert.Certificate.Cert = certPEM
+				cert.Certificate.Cert = string(certPEM)
 				return cert
 			},
 			wantErr: true,
@@ -90,11 +109,11 @@ func TestCertificate_Validate(t *testing.T) {
 			},
 		},
 		{
-			name: "certificate with a key and cert throws an error",
+			name: "certificate with a key and no cert throws an error",
 			Certificate: func() Certificate {
 				cert := NewCertificate()
 				_ = cert.ProcessDefaults()
-				cert.Certificate.Key = keyPEM
+				cert.Certificate.Key = string(keyPEM)
 				return cert
 			},
 			wantErr: true,
@@ -112,9 +131,9 @@ func TestCertificate_Validate(t *testing.T) {
 			Certificate: func() Certificate {
 				cert := NewCertificate()
 				_ = cert.ProcessDefaults()
-				cert.Certificate.Cert = certPEM
-				cert.Certificate.Key = keyPEM
-				cert.Certificate.CertAlt = certPEM
+				cert.Certificate.Cert = string(certPEM)
+				cert.Certificate.Key = string(keyPEM)
+				cert.Certificate.CertAlt = string(certPEM)
 				return cert
 			},
 			wantErr: true,
@@ -132,9 +151,9 @@ func TestCertificate_Validate(t *testing.T) {
 			Certificate: func() Certificate {
 				cert := NewCertificate()
 				_ = cert.ProcessDefaults()
-				cert.Certificate.Cert = certPEM
-				cert.Certificate.Key = keyPEM
-				cert.Certificate.KeyAlt = keyPEM
+				cert.Certificate.Cert = string(certPEM)
+				cert.Certificate.Key = string(keyPEM)
+				cert.Certificate.KeyAlt = string(keyPEM)
 				return cert
 			},
 			wantErr: true,
@@ -152,8 +171,8 @@ func TestCertificate_Validate(t *testing.T) {
 			Certificate: func() Certificate {
 				cert := NewCertificate()
 				_ = cert.ProcessDefaults()
-				cert.Certificate.Cert = certPEM
-				cert.Certificate.Key = keyPEM
+				cert.Certificate.Cert = string(certPEM)
+				cert.Certificate.Key = string(keyPEM)
 				cert.Certificate.CertAlt = "a"
 				cert.Certificate.KeyAlt = "b"
 				return cert
@@ -177,8 +196,8 @@ func TestCertificate_Validate(t *testing.T) {
 			Certificate: func() Certificate {
 				cert := NewCertificate()
 				_ = cert.ProcessDefaults()
-				cert.Certificate.Cert = certPEM
-				cert.Certificate.Key = keyPEM
+				cert.Certificate.Cert = string(certPEM)
+				cert.Certificate.Key = string(keyPEM)
 				cert.Certificate.CertAlt = "a"
 				cert.Certificate.KeyAlt = "b"
 				return cert
@@ -198,12 +217,81 @@ func TestCertificate_Validate(t *testing.T) {
 			},
 		},
 		{
-			name: "valid certificate passes",
+			name: "certificate and key match alternate cert and key encryption algo throws an error",
 			Certificate: func() Certificate {
 				cert := NewCertificate()
 				_ = cert.ProcessDefaults()
-				cert.Certificate.Cert = certPEM
-				cert.Certificate.Key = keyPEM
+				cert.Certificate.Cert = string(certPEM)
+				cert.Certificate.Key = string(keyPEM)
+				cert.Certificate.CertAlt = string(certPEM)
+				cert.Certificate.KeyAlt = string(keyPEM)
+				return cert
+			},
+			wantErr: true,
+			Errs: []*model.ErrorDetail{
+				{
+					Type: model.ErrorType_ERROR_TYPE_ENTITY,
+					Messages: []string{"certificate and alternative certificate need to have different type" +
+						" (e.g. RSA and ECDSA), the provided certificates were both of the same type 'RSA'"},
+				},
+			},
+		},
+		{
+			name: "cert with non matching key throws an error",
+			Certificate: func() Certificate {
+				cert := NewCertificate()
+				_ = cert.ProcessDefaults()
+				cert.Certificate.Cert = string(certPEM)
+				cert.Certificate.Key = string(keyAltPEM)
+				return cert
+			},
+			wantErr: true,
+			Errs: []*model.ErrorDetail{
+				{
+					Type:     model.ErrorType_ERROR_TYPE_ENTITY,
+					Messages: []string{"certificate does not match key"},
+				},
+			},
+		},
+		{
+			name: "alternate cert with non matching key throws an error",
+			Certificate: func() Certificate {
+				cert := NewCertificate()
+				_ = cert.ProcessDefaults()
+				cert.Certificate.Cert = string(certPEM)
+				cert.Certificate.Key = string(keyPEM)
+				cert.Certificate.CertAlt = string(certAltPEM)
+				cert.Certificate.KeyAlt = string(keyPEM)
+				return cert
+			},
+			wantErr: true,
+			Errs: []*model.ErrorDetail{
+				{
+					Type:     model.ErrorType_ERROR_TYPE_ENTITY,
+					Messages: []string{"alternate certificate does not match key"},
+				},
+			},
+		},
+		{
+			name: "valid certificate and key passes",
+			Certificate: func() Certificate {
+				cert := NewCertificate()
+				_ = cert.ProcessDefaults()
+				cert.Certificate.Cert = string(certPEM)
+				cert.Certificate.Key = string(keyPEM)
+				return cert
+			},
+			wantErr: false,
+		},
+		{
+			name: "valid certificate and key with valid alternate cert and key passes",
+			Certificate: func() Certificate {
+				cert := NewCertificate()
+				_ = cert.ProcessDefaults()
+				cert.Certificate.Cert = string(certPEM)
+				cert.Certificate.Key = string(keyPEM)
+				cert.Certificate.CertAlt = string(certAltPEM)
+				cert.Certificate.KeyAlt = string(keyAltPEM)
 				return cert
 			},
 			wantErr: false,
@@ -222,4 +310,13 @@ func TestCertificate_Validate(t *testing.T) {
 			}
 		})
 	}
+}
+
+func createCert(pubKey, privKey interface{}) (certPEM []byte, err error) {
+	der, err := x509.CreateCertificate(rand.Reader, &certTemplate, &certTemplate, pubKey, privKey)
+	if err != nil {
+		return nil, err
+	}
+
+	return pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: der}), nil
 }
