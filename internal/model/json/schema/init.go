@@ -27,8 +27,10 @@ func initSchemas() {
 	if err != nil {
 		panic(err)
 	}
+
 	compiler := jsonschema.NewCompiler()
 	compiler.ExtractAnnotations = true
+	compiler.AssertFormat = true
 	for _, file := range files {
 		name := file.Name()
 		if !strings.HasSuffix(name, ".json") {

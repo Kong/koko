@@ -1,12 +1,15 @@
 {
   "swagger": "2.0",
   "info": {
-    "title": "kong/admin/model/v1/cluster.proto",
+    "title": "kong/admin/model/v1/certificate.proto",
     "version": "version not set"
   },
   "tags": [
     {
       "name": "MetaService"
+    },
+    {
+      "name": "CertificateService"
     },
     {
       "name": "ConsumerService"
@@ -49,6 +52,200 @@
     "application/json"
   ],
   "paths": {
+    "/v1/certificates": {
+      "get": {
+        "operationId": "CertificateService_ListCertificates",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/kong.admin.service.v1.ListCertificatesResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "cluster.id",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "page.size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "page.number",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "tags": [
+          "kong.admin.service.v1.CertificateService"
+        ]
+      },
+      "post": {
+        "operationId": "CertificateService_CreateCertificate",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/kong.admin.model.v1.Certificate"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/kong.admin.model.v1.Certificate"
+            }
+          },
+          {
+            "name": "cluster.id",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "kong.admin.service.v1.CertificateService"
+        ]
+      }
+    },
+    "/v1/certificates/{id}": {
+      "get": {
+        "operationId": "CertificateService_GetCertificate",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/kong.admin.model.v1.Certificate"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "cluster.id",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "kong.admin.service.v1.CertificateService"
+        ]
+      },
+      "delete": {
+        "operationId": "CertificateService_DeleteCertificate",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/kong.admin.service.v1.DeleteCertificateResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "cluster.id",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "kong.admin.service.v1.CertificateService"
+        ]
+      }
+    },
+    "/v1/certificates/{item.id}": {
+      "put": {
+        "operationId": "CertificateService_UpsertCertificate",
+        "responses": {
+          "200": {
+            "description": "",
+            "schema": {
+              "$ref": "#/definitions/kong.admin.model.v1.Certificate"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "item.id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/kong.admin.model.v1.Certificate"
+            }
+          },
+          {
+            "name": "cluster.id",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "kong.admin.service.v1.CertificateService"
+        ]
+      }
+    },
     "/v1/consumers": {
       "get": {
         "operationId": "ConsumerService_ListConsumers",
@@ -1687,6 +1884,54 @@
         }
       }
     },
+    "kong.admin.model.v1.Certificate": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "created_at": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "updated_at": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "cert": {
+          "type": "string",
+          "description": "PEM encoded certificate",
+          "required": [
+            "cert"
+          ]
+        },
+        "key": {
+          "type": "string",
+          "description": "PEM encoded private key",
+          "required": [
+            "key"
+          ]
+        },
+        "cert_alt": {
+          "type": "string",
+          "description": "PEM encoded certificate"
+        },
+        "key_alt": {
+          "type": "string",
+          "description": "PEM encoded private key"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "cert",
+        "key"
+      ]
+    },
     "kong.admin.model.v1.Condition": {
       "type": "object",
       "properties": {
@@ -2212,6 +2457,14 @@
         }
       }
     },
+    "kong.admin.service.v1.CreateCertificateResponse": {
+      "type": "object",
+      "properties": {
+        "item": {
+          "$ref": "#/definitions/kong.admin.model.v1.Certificate"
+        }
+      }
+    },
     "kong.admin.service.v1.CreateConsumerResponse": {
       "type": "object",
       "properties": {
@@ -2268,6 +2521,9 @@
         }
       }
     },
+    "kong.admin.service.v1.DeleteCertificateResponse": {
+      "type": "object"
+    },
     "kong.admin.service.v1.DeleteConsumerResponse": {
       "type": "object"
     },
@@ -2291,6 +2547,14 @@
     },
     "kong.admin.service.v1.DeleteUpstreamResponse": {
       "type": "object"
+    },
+    "kong.admin.service.v1.GetCertificateResponse": {
+      "type": "object",
+      "properties": {
+        "item": {
+          "$ref": "#/definitions/kong.admin.model.v1.Certificate"
+        }
+      }
     },
     "kong.admin.service.v1.GetConsumerResponse": {
       "type": "object",
@@ -2377,6 +2641,20 @@
       "properties": {
         "version": {
           "type": "string"
+        }
+      }
+    },
+    "kong.admin.service.v1.ListCertificatesResponse": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/kong.admin.model.v1.Certificate"
+          }
+        },
+        "page": {
+          "$ref": "#/definitions/kong.admin.model.v1.PaginationResponse"
         }
       }
     },
@@ -2489,6 +2767,14 @@
         },
         "page": {
           "$ref": "#/definitions/kong.admin.model.v1.PaginationResponse"
+        }
+      }
+    },
+    "kong.admin.service.v1.UpsertCertificateResponse": {
+      "type": "object",
+      "properties": {
+        "item": {
+          "$ref": "#/definitions/kong.admin.model.v1.Certificate"
         }
       }
     },
