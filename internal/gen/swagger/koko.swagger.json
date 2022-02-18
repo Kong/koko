@@ -401,13 +401,13 @@
             "type": "string"
           },
           {
-            "name": "service_id",
+            "name": "serviceId",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
-            "name": "route_id",
+            "name": "routeId",
             "in": "query",
             "required": false,
             "type": "string"
@@ -607,7 +607,7 @@
             "type": "string"
           },
           {
-            "name": "service_id",
+            "name": "serviceId",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1061,13 +1061,13 @@
             "type": "string"
           },
           {
-            "name": "ref_type",
+            "name": "refType",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
-            "name": "ref_id",
+            "name": "refId",
             "in": "query",
             "required": false,
             "type": "string"
@@ -1403,13 +1403,13 @@
         "healthy": {
           "$ref": "#/definitions/kong.admin.model.v1.ActiveHealthyCondition"
         },
-        "http_path": {
+        "httpPath": {
           "type": "string"
         },
-        "http_sni": {
+        "httpSni": {
           "type": "string"
         },
-        "https_verify_certificate": {
+        "httpsVerifyCertificate": {
           "type": "boolean"
         },
         "type": {
@@ -1427,7 +1427,7 @@
     "kong.admin.model.v1.ActiveHealthyCondition": {
       "type": "object",
       "properties": {
-        "http_statuses": {
+        "httpStatuses": {
           "type": "array",
           "items": {
             "type": "integer",
@@ -1447,15 +1447,15 @@
     "kong.admin.model.v1.ActiveUnhealthyCondition": {
       "type": "object",
       "properties": {
-        "http_failures": {
+        "httpFailures": {
           "type": "integer",
           "format": "int32"
         },
-        "tcp_failures": {
+        "tcpFailures": {
           "type": "integer",
           "format": "int32"
         },
-        "http_statuses": {
+        "httpStatuses": {
           "type": "array",
           "items": {
             "type": "integer",
@@ -1490,11 +1490,11 @@
         "id": {
           "type": "string"
         },
-        "created_at": {
+        "createdAt": {
           "type": "integer",
           "format": "int32"
         },
-        "updated_at": {
+        "updatedAt": {
           "type": "integer",
           "format": "int32"
         },
@@ -1512,11 +1512,11 @@
             "key"
           ]
         },
-        "cert_alt": {
+        "certAlt": {
           "type": "string",
           "description": "PEM encoded certificate"
         },
-        "key_alt": {
+        "keyAlt": {
           "type": "string",
           "description": "PEM encoded private key"
         },
@@ -1595,22 +1595,22 @@
         "hostname": {
           "type": "string"
         },
-        "last_ping": {
+        "lastPing": {
           "type": "integer",
           "format": "int32"
         },
         "type": {
           "type": "string"
         },
-        "created_at": {
+        "createdAt": {
           "type": "integer",
           "format": "int32"
         },
-        "updated_at": {
+        "updatedAt": {
           "type": "integer",
           "format": "int32"
         },
-        "config_hash": {
+        "configHash": {
           "type": "string"
         }
       }
@@ -1631,11 +1631,11 @@
     "kong.admin.model.v1.PaginationResponse": {
       "type": "object",
       "properties": {
-        "total_count": {
+        "totalCount": {
           "type": "integer",
           "format": "int32"
         },
-        "next_page_num": {
+        "nextPageNum": {
           "type": "integer",
           "format": "int32"
         }
@@ -1658,7 +1658,7 @@
     "kong.admin.model.v1.PassiveHealthyCondition": {
       "type": "object",
       "properties": {
-        "http_statuses": {
+        "httpStatuses": {
           "type": "array",
           "items": {
             "type": "integer",
@@ -1674,15 +1674,15 @@
     "kong.admin.model.v1.PassiveUnhealthyCondition": {
       "type": "object",
       "properties": {
-        "http_failures": {
+        "httpFailures": {
           "type": "integer",
           "format": "int32"
         },
-        "tcp_failures": {
+        "tcpFailures": {
           "type": "integer",
           "format": "int32"
         },
-        "http_statuses": {
+        "httpStatuses": {
           "type": "array",
           "items": {
             "type": "integer",
@@ -1704,11 +1704,11 @@
         "name": {
           "type": "string"
         },
-        "created_at": {
+        "createdAt": {
           "type": "integer",
           "format": "int32"
         },
-        "updated_at": {
+        "updatedAt": {
           "type": "integer",
           "format": "int32"
         },
@@ -1767,7 +1767,7 @@
             "type": "string"
           }
         },
-        "created_at": {
+        "createdAt": {
           "type": "integer",
           "format": "int32"
         },
@@ -1783,10 +1783,10 @@
             "type": "string"
           }
         },
-        "path_handling": {
+        "pathHandling": {
           "type": "string"
         },
-        "preserve_host": {
+        "preserveHost": {
           "type": "boolean"
         },
         "protocols": {
@@ -1795,14 +1795,14 @@
             "type": "string"
           }
         },
-        "regex_priority": {
+        "regexPriority": {
           "type": "integer",
           "format": "int32"
         },
-        "strip_path": {
+        "stripPath": {
           "type": "boolean"
         },
-        "updated_at": {
+        "updatedAt": {
           "type": "integer",
           "format": "int32"
         },
@@ -1830,14 +1830,14 @@
             "type": "string"
           }
         },
-        "https_redirect_status_code": {
+        "httpsRedirectStatusCode": {
           "type": "integer",
           "format": "int32"
         },
-        "request_buffering": {
+        "requestBuffering": {
           "type": "boolean"
         },
-        "response_buffering": {
+        "responseBuffering": {
           "type": "boolean"
         },
         "service": {
@@ -1854,11 +1854,11 @@
         "name": {
           "type": "string"
         },
-        "connect_timeout": {
+        "connectTimeout": {
           "type": "integer",
           "format": "int32"
         },
-        "created_at": {
+        "createdAt": {
           "type": "integer",
           "format": "int32"
         },
@@ -1875,7 +1875,7 @@
         "protocol": {
           "type": "string"
         },
-        "read_timeout": {
+        "readTimeout": {
           "type": "integer",
           "format": "int32"
         },
@@ -1883,14 +1883,14 @@
           "type": "integer",
           "format": "int32"
         },
-        "updated_at": {
+        "updatedAt": {
           "type": "integer",
           "format": "int32"
         },
         "url": {
           "type": "string"
         },
-        "write_timeout": {
+        "writeTimeout": {
           "type": "integer",
           "format": "int32"
         },
@@ -1900,14 +1900,14 @@
             "type": "string"
           }
         },
-        "tls_verify": {
+        "tlsVerify": {
           "type": "boolean"
         },
-        "tls_verify_depth": {
+        "tlsVerifyDepth": {
           "type": "integer",
           "format": "int32"
         },
-        "ca_certificates": {
+        "caCertificates": {
           "type": "array",
           "items": {
             "type": "string"
@@ -1922,7 +1922,7 @@
         "id": {
           "type": "string"
         },
-        "context_reference": {
+        "contextReference": {
           "$ref": "#/definitions/kong.admin.model.v1.EntityReference"
         },
         "conditions": {
@@ -1931,11 +1931,11 @@
             "$ref": "#/definitions/kong.admin.model.v1.Condition"
           }
         },
-        "created_at": {
+        "createdAt": {
           "type": "integer",
           "format": "int32"
         },
-        "updated_at": {
+        "updatedAt": {
           "type": "integer",
           "format": "int32"
         }
@@ -1953,30 +1953,30 @@
         "algorithm": {
           "type": "string"
         },
-        "created_at": {
+        "createdAt": {
           "type": "integer",
           "format": "int32"
         },
-        "updated_at": {
+        "updatedAt": {
           "type": "integer",
           "format": "int32"
         },
-        "hash_on": {
+        "hashOn": {
           "type": "string"
         },
-        "hash_fallback": {
+        "hashFallback": {
           "type": "string"
         },
-        "hash_on_header": {
+        "hashOnHeader": {
           "type": "string"
         },
-        "hash_fallback_header": {
+        "hashFallbackHeader": {
           "type": "string"
         },
-        "hash_on_cookie": {
+        "hashOnCookie": {
           "type": "string"
         },
-        "hash_on_cookie_path": {
+        "hashOnCookiePath": {
           "type": "string"
         },
         "slots": {
@@ -1992,7 +1992,7 @@
             "type": "string"
           }
         },
-        "host_header": {
+        "hostHeader": {
           "type": "string"
         }
       }
