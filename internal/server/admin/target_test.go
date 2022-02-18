@@ -83,6 +83,70 @@ func TestTargetCreate(t *testing.T) {
 		res = c.POST("/v1/targets").WithJSON(target).Expect()
 		res.Status(201)
 	})
+	t.Run("creating a target with an invalid target fails", func(t *testing.T) {
+		target := &v1.Target{
+			Target: "10.42.42.42.42",
+			Upstream: &v1.Upstream{
+				Id: upstream.Id,
+			},
+		}
+		res = c.POST("/v1/targets").WithJSON(target).Expect()
+		res.Status(400)
+		body := res.JSON().Object()
+		body.ValueEqual("message", "validation error")
+		body.Value("details").Array().Length().Equal(1)
+		err := body.Value("details").Array().Element(0)
+		err.Object().ValueEqual("type", v1.ErrorType_ERROR_TYPE_FIELD.String())
+		err.Object().ValueEqual("field", "target")
+	})
+	t.Run("creating a target with an invalid target fails", func(t *testing.T) {
+		target := &v1.Target{
+			Target: "invalid.domain:80:80",
+			Upstream: &v1.Upstream{
+				Id: upstream.Id,
+			},
+		}
+		res = c.POST("/v1/targets").WithJSON(target).Expect()
+		res.Status(400)
+		body := res.JSON().Object()
+		body.ValueEqual("message", "validation error")
+		body.Value("details").Array().Length().Equal(1)
+		err := body.Value("details").Array().Element(0)
+		err.Object().ValueEqual("type", v1.ErrorType_ERROR_TYPE_FIELD.String())
+		err.Object().ValueEqual("field", "target")
+	})
+	t.Run("creating a target with an invalid target fails", func(t *testing.T) {
+		target := &v1.Target{
+			Target: "invalid.domain:99999999999",
+			Upstream: &v1.Upstream{
+				Id: upstream.Id,
+			},
+		}
+		res = c.POST("/v1/targets").WithJSON(target).Expect()
+		res.Status(400)
+		body := res.JSON().Object()
+		body.ValueEqual("message", "validation error")
+		body.Value("details").Array().Length().Equal(1)
+		err := body.Value("details").Array().Element(0)
+		err.Object().ValueEqual("type", v1.ErrorType_ERROR_TYPE_FIELD.String())
+		err.Object().ValueEqual("field", "target")
+	})
+	t.Run("creating a target with an invalid target fails", func(t *testing.T) {
+		target := &v1.Target{
+			Target: "1000.42.42.42",
+			Upstream: &v1.Upstream{
+				Id: upstream.Id,
+			},
+		}
+		res = c.POST("/v1/targets").WithJSON(target).Expect()
+		res.Status(400)
+		body := res.JSON().Object()
+		body.ValueEqual("message", "validation error")
+		body.Value("details").Array().Length().Equal(1)
+		err := body.Value("details").Array().Element(0)
+		err.Object().ValueEqual("type", v1.ErrorType_ERROR_TYPE_FIELD.String())
+		err.Object().ValueEqual("field", "target")
+	})
 }
 
 func TestTargetUpsert(t *testing.T) {

@@ -24,11 +24,26 @@ const (
 	maxPortNumber     = 65535
 )
 
+var (
+	IPv4LikePattern       = regexp.MustCompile(`^[0-9.]+$`)
+	HostnamePattern       = regexp.MustCompile(typedefs.HostnamePattern)
+	IPv6HasPortPattern    = regexp.MustCompile(`\]\:\d+$`)
+	IPv6HasBracketPattern = regexp.MustCompile(`\[\S+\]$`)
+)
+
 var _ model.Object = Target{}
 
 var (
 	maxWeight           = 65535
 	defaultWeight int32 = 100
+)
+
+type hostnameType int
+
+const (
+	typeName = iota
+	typeIPv4
+	typeIPv6
 )
 
 func NewTarget() Target {
@@ -80,6 +95,18 @@ func (t Target) Validate() error {
 	if err != nil {
 		return err
 	}
+	_, err = validateAndFormatTarget(t.Target.Target)
+	if err != nil {
+		errWrap := validation.Error{}
+		errWrap.Errs = append(errWrap.Errs, &v1.ErrorDetail{
+			Type:  v1.ErrorType_ERROR_TYPE_FIELD,
+			Field: "target",
+			Messages: []string{
+				fmt.Sprintf("not a valid hostname or ip address: '%s'", t.Target.Target),
+			},
+		})
+		return errWrap
+	}
 	return nil
 }
 
@@ -92,14 +119,14 @@ func (t Target) ProcessDefaults() error {
 		t.Target.Weight = wrapperspb.Int32(defaultWeight)
 	}
 	var err error
-	target, err := formatTarget(t.Target.Target)
+	target, err := validateAndFormatTarget(t.Target.Target)
 	if err != nil {
 		errWrap := validation.Error{}
 		errWrap.Errs = append(errWrap.Errs, &v1.ErrorDetail{
 			Type:  v1.ErrorType_ERROR_TYPE_FIELD,
 			Field: "target",
 			Messages: []string{
-				fmt.Sprintf("not a valid hostname or ip address: %s", t.Target.Target),
+				fmt.Sprintf("not a valid hostname or ip address: '%s'", t.Target.Target),
 			},
 		})
 		return errWrap
@@ -155,16 +182,15 @@ func init() {
 // Does it includes multiple ':'           -> it's an ipv6
 // Is it a dot-separated string of numbers -> it's an ipv4
 // Otherwise                               -> it's a domain name.
-func hostnameType(hostname string) string {
+func hostnameCheck(hostname string) hostnameType {
 	parts := strings.Split(hostname, ":")
 	if len(parts) > 2 { //nolint:gomnd
-		return "ipv6"
+		return typeIPv6
 	}
-	re := regexp.MustCompile(`^[\d+\.]+$`)
-	if re.FindString(parts[0]) != "" {
-		return "ipv4"
+	if IPv4LikePattern.FindString(parts[0]) != "" {
+		return typeIPv4
 	}
-	return "name"
+	return typeName
 }
 
 func validatePort(portStr string) (int, error) {
@@ -172,7 +198,7 @@ func validatePort(portStr string) (int, error) {
 	if err != nil {
 		return port, fmt.Errorf("invalid port: %s", portStr)
 	}
-	if port > maxPortNumber {
+	if port > maxPortNumber || port < 0 {
 		return port, fmt.Errorf("invalid port number: %d", port)
 	}
 	return port, nil
@@ -195,8 +221,7 @@ func normalizeTargetHostname(target string) (string, error) {
 			return "", err
 		}
 	}
-	nameRegex := regexp.MustCompile(`^[\d\w\-\.\_]+$`)
-	if nameRegex.FindString(domain) == "" {
+	if HostnamePattern.FindString(domain) == "" {
 		return "", fmt.Errorf("invalid hostname: %s", domain)
 	}
 	return fmt.Sprintf("%s:%d", domain, port), nil
@@ -215,7 +240,7 @@ func normalizeIPv4(target string) (string, error) {
 		ip, portStr = parts[0], parts[1]
 		port, err = validatePort(portStr)
 		if err != nil {
-			return ip, err
+			return "", err
 		}
 	}
 	if net.ParseIP(ip).To4() == nil {
@@ -227,7 +252,7 @@ func normalizeIPv4(target string) (string, error) {
 // expandIPv6 decompress an ipv6 address into its 'long' format.
 // for example:
 //
-// from ::1 to [0000:0000:0000:0000:0000:0000:0000:0001]:8000.
+// from ::1 to 0000:0000:0000:0000:0000:0000:0000:0001.
 func expandIPv6(address string) string {
 	ip := net.ParseIP(address).To16()
 	dst := make([]byte, hex.EncodedLen(len(ip)))
@@ -251,20 +276,18 @@ func normalizeIPv6(target string) (string, error) {
 	var err error
 	ip := target
 	port := defaultTargetPort
-	hasPortRegex := regexp.MustCompile(`\]\:\d+$`)
-	match := hasPortRegex.FindStringSubmatch(target)
+	match := IPv6HasPortPattern.FindStringSubmatch(target)
 	if len(match) > 0 {
 		// has [address]:port pattern
 		portString := strings.ReplaceAll(match[0], "]:", "")
 		port, err = validatePort(portString)
 		if err != nil {
-			return ip, err
+			return "", err
 		}
 		ip = strings.ReplaceAll(target, match[0], "")
 		ip = removeBrackets(ip)
 	} else {
-		hasBracketRegex := regexp.MustCompile(`\[\S+\]$`)
-		match = hasBracketRegex.FindStringSubmatch(target)
+		match = IPv6HasBracketPattern.FindStringSubmatch(target)
 		if len(match) > 0 {
 			ip = removeBrackets(match[0])
 		}
@@ -275,19 +298,19 @@ func normalizeIPv6(target string) (string, error) {
 	return fmt.Sprintf("[%s]:%d", expandIPv6(ip), port), nil
 }
 
-func formatTarget(target string) (string, error) {
+func validateAndFormatTarget(target string) (string, error) {
 	if target == "" {
 		return target, nil
 	}
 	var err error
 	newTarget := target
-	targetType := hostnameType(target)
+	targetType := hostnameCheck(target)
 	switch targetType {
-	case "name":
+	case typeName:
 		newTarget, err = normalizeTargetHostname(target)
-	case "ipv4":
+	case typeIPv4:
 		newTarget, err = normalizeIPv4(target)
-	case "ipv6":
+	case typeIPv6:
 		newTarget, err = normalizeIPv6(target)
 	}
 	return newTarget, err
