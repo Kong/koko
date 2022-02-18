@@ -1710,15 +1710,15 @@
         "username": {
           "type": "string"
         },
-        "createdAt": {
+        "created_at": {
           "type": "integer",
           "format": "int32"
         },
-        "updatedAt": {
+        "updated_at": {
           "type": "integer",
           "format": "int32"
         },
-        "customId": {
+        "custom_id": {
           "type": "string"
         },
         "tags": {
