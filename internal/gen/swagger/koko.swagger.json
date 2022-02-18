@@ -9,6 +9,9 @@
       "name": "MetaService"
     },
     {
+      "name": "ConsumerService"
+    },
+    {
       "name": "NodeService"
     },
     {
@@ -46,6 +49,200 @@
     "application/json"
   ],
   "paths": {
+    "/v1/consumers": {
+      "get": {
+        "operationId": "ConsumerService_ListConsumers",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/kong.admin.service.v1.ListConsumersResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "cluster.id",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "page.size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "page.number",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "tags": [
+          "kong.admin.service.v1.ConsumerService"
+        ]
+      },
+      "post": {
+        "operationId": "ConsumerService_CreateConsumer",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/kong.admin.service.v1.CreateConsumerResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/kong.admin.model.v1.Consumer"
+            }
+          },
+          {
+            "name": "cluster.id",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "kong.admin.service.v1.ConsumerService"
+        ]
+      }
+    },
+    "/v1/consumers/{id}": {
+      "get": {
+        "operationId": "ConsumerService_GetConsumer",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/kong.admin.service.v1.GetConsumerResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "cluster.id",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "kong.admin.service.v1.ConsumerService"
+        ]
+      },
+      "delete": {
+        "operationId": "ConsumerService_DeleteConsumer",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/kong.admin.service.v1.DeleteConsumerResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "cluster.id",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "kong.admin.service.v1.ConsumerService"
+        ]
+      }
+    },
+    "/v1/consumers/{item.id}": {
+      "put": {
+        "operationId": "ConsumerService_UpsertConsumer",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/kong.admin.service.v1.UpsertConsumerResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "item.id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/kong.admin.model.v1.Consumer"
+            }
+          },
+          {
+            "name": "cluster.id",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "kong.admin.service.v1.ConsumerService"
+        ]
+      }
+    },
     "/v1/meta/version": {
       "get": {
         "operationId": "MetaService_GetVersion",
@@ -1504,6 +1701,34 @@
         }
       }
     },
+    "kong.admin.model.v1.Consumer": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "username": {
+          "type": "string"
+        },
+        "created_at": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "updated_at": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "custom_id": {
+          "type": "string"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
     "kong.admin.model.v1.EntityReference": {
       "type": "object",
       "properties": {
@@ -1987,6 +2212,14 @@
         }
       }
     },
+    "kong.admin.service.v1.CreateConsumerResponse": {
+      "type": "object",
+      "properties": {
+        "item": {
+          "$ref": "#/definitions/kong.admin.model.v1.Consumer"
+        }
+      }
+    },
     "kong.admin.service.v1.CreateNodeResponse": {
       "type": "object",
       "properties": {
@@ -2035,6 +2268,9 @@
         }
       }
     },
+    "kong.admin.service.v1.DeleteConsumerResponse": {
+      "type": "object"
+    },
     "kong.admin.service.v1.DeleteNodeResponse": {
       "type": "object"
     },
@@ -2055,6 +2291,14 @@
     },
     "kong.admin.service.v1.DeleteUpstreamResponse": {
       "type": "object"
+    },
+    "kong.admin.service.v1.GetConsumerResponse": {
+      "type": "object",
+      "properties": {
+        "item": {
+          "$ref": "#/definitions/kong.admin.model.v1.Consumer"
+        }
+      }
     },
     "kong.admin.service.v1.GetLuaSchemasPluginResponse": {
       "type": "object",
@@ -2133,6 +2377,20 @@
       "properties": {
         "version": {
           "type": "string"
+        }
+      }
+    },
+    "kong.admin.service.v1.ListConsumersResponse": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/kong.admin.model.v1.Consumer"
+          }
+        },
+        "page": {
+          "$ref": "#/definitions/kong.admin.model.v1.PaginationResponse"
         }
       }
     },
@@ -2231,6 +2489,14 @@
         },
         "page": {
           "$ref": "#/definitions/kong.admin.model.v1.PaginationResponse"
+        }
+      }
+    },
+    "kong.admin.service.v1.UpsertConsumerResponse": {
+      "type": "object",
+      "properties": {
+        "item": {
+          "$ref": "#/definitions/kong.admin.model.v1.Consumer"
         }
       }
     },
