@@ -16,7 +16,7 @@ const (
 	maxPathLength     = 1024
 
 	HTTPHeaderNamePattern = "^[A-Za-z0-9!#$%&'*+-.^_|~]{1,64}$"
-	hostnamePattern       = "^[a-z0-9]([-a-z0-9]*[a-z0-9])?(.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$"
+	HostnamePattern       = "^[a-z0-9]([-a-z0-9]*[a-z0-9])?(.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$"
 )
 
 var ID = &generator.Schema{
@@ -66,7 +66,7 @@ var Host = &generator.Schema{
 	Description: "must be a valid hostname",
 	Type:        "string",
 	MaxLength:   maxHostnameLength,
-	Pattern:     hostnamePattern,
+	Pattern:     HostnamePattern,
 }
 
 var Port = &generator.Schema{

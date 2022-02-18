@@ -210,5 +210,6 @@ func NewGRPC(opts HandlerOpts) *grpc.Server {
 	v1.RegisterSchemasServiceServer(server, services.schemas)
 	v1.RegisterNodeServiceServer(server, services.node)
 	v1.RegisterStatusServiceServer(server, services.status)
+
 	return server
 }
