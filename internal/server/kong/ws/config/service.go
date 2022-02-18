@@ -37,8 +37,11 @@ func (l *KongServiceLoader) Mutate(ctx context.Context,
 			break
 		}
 	}
-	res := make([]Map, 0, len(allServices))
+	res := make([]Map, 0)
 	for _, svc := range allServices {
+		if !svc.Enabled.Value {
+			continue
+		}
 		m, err := convert(svc)
 		if err != nil {
 			return err

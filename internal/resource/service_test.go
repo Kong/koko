@@ -8,6 +8,7 @@ import (
 	"github.com/kong/koko/internal/model/json/validation"
 	"github.com/kong/koko/internal/model/json/validation/typedefs"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
 func TestNewService(t *testing.T) {
@@ -59,6 +60,7 @@ func TestService_ProcessDefaults(t *testing.T) {
 			ConnectTimeout: 42,
 			ReadTimeout:    defaultTimeout,
 			WriteTimeout:   defaultTimeout,
+			Enabled:        wrapperspb.Bool(true),
 		}, r.Resource())
 	})
 }
