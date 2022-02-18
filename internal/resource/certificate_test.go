@@ -147,6 +147,25 @@ func TestCertificate_Validate(t *testing.T) {
 			},
 		},
 		{
+			name: "only alternate cert and key defined throws an error",
+			Certificate: func() Certificate {
+				cert := NewCertificate()
+				_ = cert.ProcessDefaults()
+				cert.Certificate.CertAlt = string(certAltPEM)
+				cert.Certificate.KeyAlt = string(keyAltPEM)
+				return cert
+			},
+			wantErr: true,
+			Errs: []*model.ErrorDetail{
+				{
+					Type: model.ErrorType_ERROR_TYPE_ENTITY,
+					Messages: []string{
+						"missing properties: 'cert', 'key'",
+					},
+				},
+			},
+		},
+		{
 			name: "certificate with an alt key and no alt cert throws an error",
 			Certificate: func() Certificate {
 				cert := NewCertificate()
