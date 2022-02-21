@@ -46,6 +46,7 @@ func (l *KongServiceLoader) Mutate(ctx context.Context,
 		if err != nil {
 			return err
 		}
+		delete(m, "enabled")
 		res = append(res, m)
 	}
 	config["services"] = res
