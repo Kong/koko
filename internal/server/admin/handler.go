@@ -59,6 +59,7 @@ type services struct {
 	upstream v1.UpstreamServiceServer
 	target   v1.TargetServiceServer
 	schemas  v1.SchemasServiceServer
+	consumer v1.ConsumerServiceServer
 
 	status v1.StatusServiceServer
 	node   v1.NodeServiceServer
@@ -117,6 +118,12 @@ func buildServices(opts HandlerOpts) services {
 				storeLoader: opts.StoreLoader,
 				logger: opts.Logger.With(zap.String("admin-service",
 					"node")),
+			},
+		},
+		consumer: &ConsumerService{
+			CommonOpts: CommonOpts{
+				storeLoader: opts.StoreLoader,
+				logger:      opts.Logger.With(zap.String("consumer-service", "consumer")),
 			},
 		},
 	}
@@ -185,6 +192,11 @@ func NewHandler(opts HandlerOpts) (http.Handler, error) {
 	if err != nil {
 		return nil, err
 	}
+	err = v1.RegisterConsumerServiceHandlerServer(context.Background(),
+		mux, services.consumer)
+	if err != nil {
+		return nil, err
+	}
 	return mux, nil
 }
 
@@ -210,6 +222,6 @@ func NewGRPC(opts HandlerOpts) *grpc.Server {
 	v1.RegisterSchemasServiceServer(server, services.schemas)
 	v1.RegisterNodeServiceServer(server, services.node)
 	v1.RegisterStatusServiceServer(server, services.status)
-
+	v1.RegisterConsumerServiceServer(server, services.consumer)
 	return server
 }
