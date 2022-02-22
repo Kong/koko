@@ -1,0 +1,1 @@
+create index if not exists store_key_txt_idx on store(key text_pattern_ops);
