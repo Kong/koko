@@ -1,0 +1,1 @@
+drop index if exists store_key_txt_idx;
