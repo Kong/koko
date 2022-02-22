@@ -153,6 +153,11 @@ func Run(ctx context.Context, config ServerConfig) error {
 		panic(err.Error())
 	}
 
+	err = loader.Register(&kongConfigWS.KongConsumerLoader{Client: configClient.Consumer})
+	if err != nil {
+		panic(err.Error())
+	}
+
 	err = loader.Register(&kongConfigWS.VersionLoader{})
 	if err != nil {
 		panic(err.Error())
