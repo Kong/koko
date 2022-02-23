@@ -163,9 +163,7 @@ func TestRouteUpsert(t *testing.T) {
 		res.Status(http.StatusOK)
 	})
 	t.Run("upsert correctly updates a route", func(t *testing.T) {
-		rid := uuid.NewString()
 		route := &v1.Route{
-			Id:    rid,
 			Name:  "r1",
 			Paths: []string{"/"},
 		}
@@ -173,6 +171,7 @@ func TestRouteUpsert(t *testing.T) {
 			WithJSON(route).
 			Expect()
 		res.Status(http.StatusCreated)
+		rid := res.JSON().Object().Path("$.item.id").String().Raw()
 
 		route = &v1.Route{
 			Name:  "r1",

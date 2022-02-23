@@ -288,11 +288,9 @@ func TestPluginUpsert(t *testing.T) {
 		errRes.Object().ValueEqual("field", "service.id")
 	})
 	t.Run("upsert correctly updates a plugin", func(t *testing.T) {
-		pid := uuid.NewString()
 		config, err := structpb.NewStruct(map[string]interface{}{"second": 42})
 		require.Nil(t, err)
 		plugin := &v1.Plugin{
-			Id:     pid,
 			Name:   "rate-limiting",
 			Config: config,
 		}
@@ -302,6 +300,7 @@ func TestPluginUpsert(t *testing.T) {
 		res.Status(http.StatusCreated)
 		res.JSON().Path("$.item.config.second").Number().Equal(42)
 		res.JSON().Path("$.item.config.day").Null()
+		pid := res.JSON().Object().Path("$.item.id").String().Raw()
 
 		config, err = structpb.NewStruct(map[string]interface{}{"day": 42})
 		require.Nil(t, err)

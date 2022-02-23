@@ -169,9 +169,9 @@ func TestTargetUpsert(t *testing.T) {
 	c := httpexpect.New(t, s.URL)
 
 	upstream := goodUpstream()
-	upstream.Id = uuid.NewString()
 	res := c.POST("/v1/upstreams").WithJSON(upstream).Expect()
 	res.Status(201)
+	upstreamID := res.JSON().Object().Path("$.item.id").String().Raw()
 
 	t.Run("creating a target with a non-existent upstream fails", func(t *testing.T) {
 		target := &v1.Target{
@@ -194,7 +194,7 @@ func TestTargetUpsert(t *testing.T) {
 		target := &v1.Target{
 			Target: "10.42.42.42",
 			Upstream: &v1.Upstream{
-				Id: upstream.Id,
+				Id: upstreamID,
 			},
 		}
 		targetID := uuid.NewString()
@@ -206,7 +206,7 @@ func TestTargetUpsert(t *testing.T) {
 		target := &v1.Target{
 			Target: "10.42.42.42",
 			Upstream: &v1.Upstream{
-				Id: upstream.Id,
+				Id: upstreamID,
 			},
 		}
 		targetID := uuid.NewString()
@@ -224,14 +224,14 @@ func TestTargetUpsert(t *testing.T) {
 		target := &v1.Target{
 			Target: "10.60.24.7",
 			Upstream: &v1.Upstream{
-				Id: upstream.Id,
+				Id: upstreamID,
 			},
 		}
 		targetID := uuid.NewString()
 		res = c.PUT("/v1/targets/" + targetID).WithJSON(target).Expect()
 		res.Status(200)
 		res.JSON().Object().Path("$.item.id").Equal(targetID)
-		res.JSON().Object().Path("$.item.upstream.id").Equal(upstream.Id)
+		res.JSON().Object().Path("$.item.upstream.id").Equal(upstreamID)
 
 		newUpstream := goodUpstream()
 		newUpstream.Name = "baz"
@@ -255,7 +255,7 @@ func TestTargetUpsert(t *testing.T) {
 		target := &v1.Target{
 			Target: "10.60.24.7",
 			Upstream: &v1.Upstream{
-				Id: upstream.Id,
+				Id: upstreamID,
 			},
 		}
 		res := c.PUT("/v1/targets/").

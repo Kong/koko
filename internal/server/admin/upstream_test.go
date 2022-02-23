@@ -125,15 +125,14 @@ func TestUpstreamUpsert(t *testing.T) {
 			err.Object().ValueEqual("field", "name")
 		})
 	t.Run("upsert correctly updates an upstream", func(t *testing.T) {
-		uid := uuid.NewString()
 		upstream := &v1.Upstream{
-			Id:   uid,
 			Name: "foo.com",
 		}
 		res := c.POST("/v1/upstreams").
 			WithJSON(upstream).
 			Expect()
 		res.Status(http.StatusCreated)
+		uid := res.JSON().Object().Path("$.item.id").String().Raw()
 
 		upstream = &v1.Upstream{
 			Id:           uid,

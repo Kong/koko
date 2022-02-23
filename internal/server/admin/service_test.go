@@ -148,9 +148,7 @@ func TestServiceUpsert(t *testing.T) {
 			err.Object().ValueEqual("field", "name")
 		})
 	t.Run("upsert correctly updates a route", func(t *testing.T) {
-		sid := uuid.NewString()
 		svc := &v1.Service{
-			Id:   sid,
 			Name: "r1",
 			Host: "example.com",
 			Path: "/bar",
@@ -159,6 +157,7 @@ func TestServiceUpsert(t *testing.T) {
 			WithJSON(svc).
 			Expect()
 		res.Status(http.StatusCreated)
+		sid := res.JSON().Object().Path("$.item.id").String().Raw()
 
 		svc = &v1.Service{
 			Id:   sid,
