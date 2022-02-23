@@ -12,7 +12,6 @@ import (
 
 	"github.com/cenkalti/backoff/v4"
 	"github.com/gavv/httpexpect/v2"
-	"github.com/google/uuid"
 	kongClient "github.com/kong/go-kong/kong"
 	"github.com/kong/koko/internal/cmd"
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
@@ -31,7 +30,6 @@ func TestSharedMTLS(t *testing.T) {
 	defer cleanup()
 
 	service := &v1.Service{
-		Id:   uuid.NewString(),
 		Name: "foo",
 		Host: "httpbin.org",
 		Path: "/",
@@ -39,11 +37,12 @@ func TestSharedMTLS(t *testing.T) {
 	c := httpexpect.New(t, "http://localhost:3000")
 	res := c.POST("/v1/services").WithJSON(service).Expect()
 	res.Status(201)
+	serviceID := res.JSON().Object().Path("$.item.id").String().Raw()
 	route := &v1.Route{
 		Name:  "bar",
 		Paths: []string{"/"},
 		Service: &v1.Service{
-			Id: service.Id,
+			Id: serviceID,
 		},
 	}
 	res = c.POST("/v1/routes").WithJSON(route).Expect()
@@ -70,7 +69,6 @@ func TestPKIMTLS(t *testing.T) {
 	defer cleanup()
 
 	service := &v1.Service{
-		Id:   uuid.NewString(),
 		Name: "foo",
 		Host: "httpbin.org",
 		Path: "/",
@@ -78,11 +76,12 @@ func TestPKIMTLS(t *testing.T) {
 	c := httpexpect.New(t, "http://localhost:3000")
 	res := c.POST("/v1/services").WithJSON(service).Expect()
 	res.Status(201)
+	serviceID := res.JSON().Object().Path("$.item.id").String().Raw()
 	route := &v1.Route{
 		Name:  "bar",
 		Paths: []string{"/"},
 		Service: &v1.Service{
-			Id: service.Id,
+			Id: serviceID,
 		},
 	}
 	res = c.POST("/v1/routes").WithJSON(route).Expect()
@@ -137,7 +136,6 @@ func TestNodesEndpoint(t *testing.T) {
 	defer cleanup()
 
 	service := &v1.Service{
-		Id:   uuid.NewString(),
 		Name: "foo",
 		Host: "httpbin.org",
 		Path: "/",
@@ -145,11 +143,12 @@ func TestNodesEndpoint(t *testing.T) {
 	c := httpexpect.New(t, "http://localhost:3000")
 	res := c.POST("/v1/services").WithJSON(service).Expect()
 	res.Status(201)
+	serviceID := res.JSON().Object().Path("$.item.id").String().Raw()
 	route := &v1.Route{
 		Name:  "bar",
 		Paths: []string{"/"},
 		Service: &v1.Service{
-			Id: service.Id,
+			Id: serviceID,
 		},
 	}
 	res = c.POST("/v1/routes").WithJSON(route).Expect()
@@ -194,7 +193,6 @@ func TestPluginSync(t *testing.T) {
 	defer cleanup()
 
 	service := &v1.Service{
-		Id:   uuid.NewString(),
 		Name: "foo",
 		Host: "example.com",
 		Path: "/",
@@ -202,23 +200,24 @@ func TestPluginSync(t *testing.T) {
 	c := httpexpect.New(t, "http://localhost:3000")
 	res := c.POST("/v1/services").WithJSON(service).Expect()
 	res.Status(201)
+	serviceID := res.JSON().Object().Path("$.item.id").String().Raw()
 
 	route := &v1.Route{
-		Id:    uuid.NewString(),
 		Name:  "bar",
 		Paths: []string{"/bar"},
 		Service: &v1.Service{
-			Id: service.Id,
+			Id: serviceID,
 		},
 	}
 	res = c.POST("/v1/routes").WithJSON(route).Expect()
 	res.Status(201)
+	routeID := res.JSON().Object().Path("$.item.id").String().Raw()
 
 	var expectedPlugins []*v1.Plugin
 	plugin := &v1.Plugin{
 		Name:      "key-auth",
 		Enabled:   wrapperspb.Bool(true),
-		Service:   &v1.Service{Id: service.Id},
+		Service:   &v1.Service{Id: serviceID},
 		Protocols: []string{"http", "https"},
 	}
 	pluginBytes, err := json.Marshal(plugin)
@@ -230,7 +229,7 @@ func TestPluginSync(t *testing.T) {
 	plugin = &v1.Plugin{
 		Name:      "basic-auth",
 		Enabled:   wrapperspb.Bool(true),
-		Route:     &v1.Route{Id: route.Id},
+		Route:     &v1.Route{Id: routeID},
 		Protocols: []string{"http", "https"},
 	}
 	pluginBytes, err = json.Marshal(plugin)
@@ -273,7 +272,6 @@ func TestUpstreamSync(t *testing.T) {
 	defer cleanup()
 
 	upstream := &v1.Upstream{
-		Id:   uuid.NewString(),
 		Name: "foo",
 	}
 	c := httpexpect.New(t, "http://localhost:3000")
@@ -300,14 +298,13 @@ func TestTargetSync(t *testing.T) {
 	cleanup := run.Koko(t)
 	defer cleanup()
 
-	uid := uuid.NewString()
 	upstream := &v1.Upstream{
-		Id:   uid,
 		Name: "foo",
 	}
 	c := httpexpect.New(t, "http://localhost:3000")
 	res := c.POST("/v1/upstreams").WithJSON(upstream).Expect()
 	res.Status(201)
+	uid := res.JSON().Object().Path("$.item.id").String().Raw()
 
 	target := &v1.Target{
 		Target:   "10.0.42.42:8000",
@@ -340,7 +337,6 @@ func TestRouteHeader(t *testing.T) {
 	defer cleanup()
 
 	service := &v1.Service{
-		Id:   uuid.NewString(),
 		Name: "foo",
 		Host: "httpbin.org",
 		Path: "/",
@@ -348,6 +344,7 @@ func TestRouteHeader(t *testing.T) {
 	c := httpexpect.New(t, "http://localhost:3000")
 	res := c.POST("/v1/services").WithJSON(service).Expect()
 	res.Status(201)
+	serviceID := res.JSON().Object().Path("$.item.id").String().Raw()
 	route := &v1.Route{
 		Name:  "bar",
 		Paths: []string{"/"},
@@ -357,7 +354,7 @@ func TestRouteHeader(t *testing.T) {
 			},
 		},
 		Service: &v1.Service{
-			Id: service.Id,
+			Id: serviceID,
 		},
 	}
 	res = c.POST("/v1/routes").WithJSON(route).Expect()
