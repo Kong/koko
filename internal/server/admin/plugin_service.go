@@ -47,6 +47,10 @@ func (s *PluginService) CreatePlugin(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
+	// ignore IDs for POST
+	if req.Item.Id != "" {
+		req.Item.Id = ""
+	}
 	res := resource.NewPlugin()
 	res.Plugin = req.Item
 	if err := db.Create(ctx, res); err != nil {

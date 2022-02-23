@@ -16,9 +16,9 @@ func TestTargetCreate(t *testing.T) {
 	c := httpexpect.New(t, s.URL)
 
 	upstream := goodUpstream()
-	upstream.Id = uuid.NewString()
 	res := c.POST("/v1/upstreams").WithJSON(upstream).Expect()
 	res.Status(201)
+	upstreamID := res.JSON().Object().Path("$.item.id").String().Raw()
 
 	t.Run("creating a target with a non-existent upstream fails",
 		func(t *testing.T) {
@@ -43,7 +43,7 @@ func TestTargetCreate(t *testing.T) {
 		target := &v1.Target{
 			Target: "10.42.42.42",
 			Upstream: &v1.Upstream{
-				Id: upstream.Id,
+				Id: upstreamID,
 			},
 		}
 		res = c.POST("/v1/targets").WithJSON(target).Expect()
@@ -54,7 +54,7 @@ func TestTargetCreate(t *testing.T) {
 			Id:     uuid.NewString(),
 			Target: "10.42.42.42",
 			Upstream: &v1.Upstream{
-				Id: upstream.Id,
+				Id: upstreamID,
 			},
 		}
 		res := c.PUT("/v1/targets/" + target.Id).WithJSON(target).Expect()
@@ -87,7 +87,7 @@ func TestTargetCreate(t *testing.T) {
 		target := &v1.Target{
 			Target: "10.42.42.42.42",
 			Upstream: &v1.Upstream{
-				Id: upstream.Id,
+				Id: upstreamID,
 			},
 		}
 		res = c.POST("/v1/targets").WithJSON(target).Expect()
@@ -103,7 +103,7 @@ func TestTargetCreate(t *testing.T) {
 		target := &v1.Target{
 			Target: "invalid.domain:80:80",
 			Upstream: &v1.Upstream{
-				Id: upstream.Id,
+				Id: upstreamID,
 			},
 		}
 		res = c.POST("/v1/targets").WithJSON(target).Expect()
@@ -119,7 +119,7 @@ func TestTargetCreate(t *testing.T) {
 		target := &v1.Target{
 			Target: "invalid.domain:99999999999",
 			Upstream: &v1.Upstream{
-				Id: upstream.Id,
+				Id: upstreamID,
 			},
 		}
 		res = c.POST("/v1/targets").WithJSON(target).Expect()
@@ -135,7 +135,7 @@ func TestTargetCreate(t *testing.T) {
 		target := &v1.Target{
 			Target: "1000.42.42.42",
 			Upstream: &v1.Upstream{
-				Id: upstream.Id,
+				Id: upstreamID,
 			},
 		}
 		res = c.POST("/v1/targets").WithJSON(target).Expect()
@@ -146,6 +146,20 @@ func TestTargetCreate(t *testing.T) {
 		err := body.Value("details").Array().Element(0)
 		err.Object().ValueEqual("type", v1.ErrorType_ERROR_TYPE_FIELD.String())
 		err.Object().ValueEqual("field", "target")
+	})
+	t.Run("ignore ID when creating a target", func(t *testing.T) {
+		target := &v1.Target{
+			Target: "10.43.43.43",
+			Upstream: &v1.Upstream{
+				Id: upstreamID,
+			},
+			Id: uuid.NewString(),
+		}
+		res = c.POST("/v1/targets").WithJSON(target).Expect()
+		res.Status(201)
+		body := res.JSON().Path("$.item").Object()
+		body.Value("target").String().Equal(target.Target + ":8000")
+		body.Value("id").String().NotEqual(target.Id)
 	})
 }
 

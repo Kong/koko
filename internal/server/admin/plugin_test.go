@@ -107,13 +107,14 @@ func TestPluginCreate(t *testing.T) {
 	})
 	t.Run("creating a plugin with a valid service.id succeeds", func(t *testing.T) {
 		service := goodService()
-		service.Id = uuid.NewString()
 		res := c.POST("/v1/services").WithJSON(service).Expect()
 		res.Status(201)
+		serviceID := res.JSON().Object().Path("$.item.id").String().Raw()
+
 		plugin := &v1.Plugin{
 			Name: "key-auth",
 			Service: &v1.Service{
-				Id: service.Id,
+				Id: serviceID,
 			},
 		}
 		pluginBytes, err := json.Marshal(plugin)
@@ -144,13 +145,13 @@ func TestPluginCreate(t *testing.T) {
 	})
 	t.Run("creating a plugin with a valid route.id succeeds", func(t *testing.T) {
 		route := goodRoute()
-		route.Id = uuid.NewString()
 		res := c.POST("/v1/routes").WithJSON(route).Expect()
 		res.Status(201)
+		routeID := res.JSON().Object().Path("$.item.id").String().Raw()
 		plugin := &v1.Plugin{
 			Name: "key-auth",
 			Route: &v1.Route{
-				Id: route.Id,
+				Id: routeID,
 			},
 		}
 		pluginBytes, err := json.Marshal(plugin)
@@ -161,24 +162,25 @@ func TestPluginCreate(t *testing.T) {
 	t.Run("creating a plugin with a valid route.id and service.id succeeds",
 		func(t *testing.T) {
 			service := goodService()
-			service.Id = uuid.NewString()
 			service.Name = "foo-plugin-service"
 			res := c.POST("/v1/services").WithJSON(service).Expect()
 			res.Status(201)
+			serviceID := res.JSON().Object().Path("$.item.id").String().Raw()
 
 			route := goodRoute()
 			route.Id = uuid.NewString()
 			route.Name = "foo-plugin-route"
 			res = c.POST("/v1/routes").WithJSON(route).Expect()
 			res.Status(201)
+			routeID := res.JSON().Object().Path("$.item.id").String().Raw()
 
 			plugin := &v1.Plugin{
 				Name: "key-auth",
 				Route: &v1.Route{
-					Id: route.Id,
+					Id: routeID,
 				},
 				Service: &v1.Service{
-					Id: service.Id,
+					Id: serviceID,
 				},
 			}
 			pluginBytes, err := json.Marshal(plugin)
@@ -206,6 +208,29 @@ func TestPluginCreate(t *testing.T) {
 				"plugin(no-auth) does not exist",
 			})
 		})
+	t.Run("ignore ID when creating a plugin", func(t *testing.T) {
+		service := goodService()
+		service.Name = "ignore-id"
+		res := c.POST("/v1/services").WithJSON(service).Expect()
+		res.Status(201)
+		serviceID := res.JSON().Object().Path("$.item.id").String().Raw()
+		plugin := &v1.Plugin{
+			Name: "key-auth",
+			Service: &v1.Service{
+				Id: serviceID,
+			},
+			Id: uuid.NewString(),
+		}
+
+		pluginBytes, err := json.Marshal(plugin)
+		require.Nil(t, err)
+		res = c.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
+		res.Status(201)
+		res.Header("grpc-metadata-koko-status-code").Empty()
+		body := res.JSON().Path("$.item").Object()
+		body.Value("id").String().NotEqual(plugin.Id)
+		validateKeyAuthPlugin(body)
+	})
 }
 
 func TestPluginUpsert(t *testing.T) {

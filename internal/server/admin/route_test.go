@@ -71,18 +71,30 @@ func TestRouteCreate(t *testing.T) {
 	})
 	t.Run("creating a route with a valid service.id succeeds", func(t *testing.T) {
 		service := goodService()
-		service.Id = uuid.NewString()
 		res := c.POST("/v1/services").WithJSON(service).Expect()
 		res.Status(201)
+		serviceID := res.JSON().Object().Path("$.item.id").String().Raw()
 		route := &v1.Route{
 			Name:  "bar",
 			Paths: []string{"/"},
 			Service: &v1.Service{
-				Id: service.Id,
+				Id: serviceID,
 			},
 		}
 		res = c.POST("/v1/routes").WithJSON(route).Expect()
 		res.Status(201)
+	})
+	t.Run("ignore ID when creating a route", func(t *testing.T) {
+		route := goodRoute()
+		route.Name = "ignore-id"
+		route.Id = uuid.NewString()
+		res := c.POST("/v1/routes").WithJSON(route).Expect()
+		res.Status(201)
+		res.Header("grpc-metadata-koko-status-code").Empty()
+		body := res.JSON().Path("$.item").Object()
+		body.Value("name").String().Equal(route.Name)
+		body.Value("id").String().NotEqual(route.Id)
+		validateGoodRoute(body)
 	})
 }
 

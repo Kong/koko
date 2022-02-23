@@ -63,6 +63,18 @@ func TestUpstreamCreate(t *testing.T) {
 		res := c.POST("/v1/upstreams").WithJSON(upstream).Expect()
 		res.Status(201)
 	})
+	t.Run("ignore ID when creating an upstream", func(t *testing.T) {
+		upstream := goodUpstream()
+		upstream.Name = "ignore-id"
+		upstream.Id = uuid.NewString()
+		res := c.POST("/v1/upstreams").WithJSON(upstream).Expect()
+		res.Status(201)
+		res.Header("grpc-metadata-koko-status-code").Empty()
+		body := res.JSON().Path("$.item").Object()
+		body.Value("name").String().Equal(upstream.Name)
+		body.Value("id").String().NotEqual(upstream.Id)
+		validateGoodUpstream(body)
+	})
 }
 
 func TestUpstreamUpsert(t *testing.T) {

@@ -45,6 +45,10 @@ func (s *ServiceService) CreateService(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
+	// ignore IDs for POST
+	if req.Item.Id != "" {
+		req.Item.Id = ""
+	}
 	res := resource.NewService()
 	res.Service = req.Item
 	if err := db.Create(ctx, res); err != nil {

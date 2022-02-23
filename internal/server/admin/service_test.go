@@ -85,6 +85,16 @@ func TestServiceCreate(t *testing.T) {
 		res := c.POST("/v1/services").WithJSON(svc).Expect()
 		res.Status(201)
 	})
+	t.Run("ignore ID when creating a service", func(t *testing.T) {
+		svc := goodService()
+		svc.Name = "ignore-id"
+		svc.Id = uuid.NewString()
+		res := c.POST("/v1/services").WithJSON(svc).Expect()
+		res.Status(201)
+		body := res.JSON().Path("$.item").Object()
+		body.Value("name").String().Equal(svc.Name)
+		body.Value("id").String().NotEqual(svc.Id)
+	})
 }
 
 func TestServiceUpsert(t *testing.T) {

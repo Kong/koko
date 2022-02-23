@@ -46,6 +46,10 @@ func (s *UpstreamService) CreateUpstream(ctx context.Context,
 		return nil, err
 	}
 	res := resource.NewUpstream()
+	// ignore IDs for POST
+	if req.Item.Id != "" {
+		req.Item.Id = ""
+	}
 	res.Upstream = req.Item
 	if err := db.Create(ctx, res); err != nil {
 		return nil, s.err(err)
