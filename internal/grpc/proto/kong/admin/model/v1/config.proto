@@ -9,6 +9,7 @@ import "kong/admin/model/v1/route.proto";
 import "kong/admin/model/v1/plugin.proto";
 import "kong/admin/model/v1/upstream.proto";
 import "kong/admin/model/v1/target.proto";
+import "kong/admin/model/v1/consumer.proto";
 
 message TestingConfig {
   repeated Service services = 1;
@@ -16,4 +17,5 @@ message TestingConfig {
   repeated Plugin plugins = 3;
   repeated Upstream upstreams = 4;
   repeated Target targets = 5;
+  repeated Consumer consumers = 6;
 }

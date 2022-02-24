@@ -312,6 +312,37 @@ func TestUpstreamSync(t *testing.T) {
 	})
 }
 
+func TestConsumerSync(t *testing.T) {
+	// ensure that consumers can be synced to Kong gateway
+	cleanup := run.Koko(t)
+	defer cleanup()
+
+	consumer := &v1.Consumer{
+		Id:       uuid.NewString(),
+		Username: "testConsumer",
+	}
+	// create the consumer in CP
+	c := httpexpect.New(t, "http://localhost:3000")
+	res := c.POST("/v1/consumers").WithJSON(consumer).Expect()
+	res.Status(201)
+
+	// launch the DP
+	dpCleanup := run.KongDP(kong.GetKongConfForShared())
+	defer dpCleanup()
+
+	// wait for DP to come-up
+	require.Nil(t, util.WaitForKongPort(t, 8001))
+
+	expectedConfig := &v1.TestingConfig{
+		Consumers: []*v1.Consumer{consumer},
+	}
+	util.WaitFunc(t, func() error {
+		err := util.EnsureConfig(expectedConfig)
+		t.Log("configuration mismatch for consumer", err)
+		return err
+	})
+}
+
 func TestTargetSync(t *testing.T) {
 	// ensure that target can be synced to Kong gateway
 	cleanup := run.Koko(t)
