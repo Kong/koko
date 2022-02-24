@@ -93,7 +93,7 @@ func TestConsumerCreate(t *testing.T) {
 				String())
 			err.Object().ValueEqual("field", "custom_id")
 		})
-	t.Run("creates a valid consumer specifying the ID", func(t *testing.T) {
+	t.Run("creates a valid consumer specifying the ID using POST", func(t *testing.T) {
 		consumer := goodConsumer()
 		consumer.Username = "withID"
 		consumer.CustomId = "withCustomID"

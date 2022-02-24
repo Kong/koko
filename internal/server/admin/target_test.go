@@ -147,7 +147,7 @@ func TestTargetCreate(t *testing.T) {
 		err.Object().ValueEqual("type", v1.ErrorType_ERROR_TYPE_FIELD.String())
 		err.Object().ValueEqual("field", "target")
 	})
-	t.Run("creates a valid target specifying the ID", func(t *testing.T) {
+	t.Run("creates a valid target specifying the ID using POST", func(t *testing.T) {
 		target := &v1.Target{
 			Target: "192.0.2.1",
 			Upstream: &v1.Upstream{

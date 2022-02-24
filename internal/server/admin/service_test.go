@@ -85,7 +85,7 @@ func TestServiceCreate(t *testing.T) {
 		res := c.POST("/v1/services").WithJSON(svc).Expect()
 		res.Status(201)
 	})
-	t.Run("creates a valid service specifying the ID", func(t *testing.T) {
+	t.Run("creates a valid service specifying the ID using POST", func(t *testing.T) {
 		service := goodService()
 		service.Name = "with-id"
 		service.Id = uuid.NewString()

@@ -84,7 +84,7 @@ func TestRouteCreate(t *testing.T) {
 		res = c.POST("/v1/routes").WithJSON(route).Expect()
 		res.Status(201)
 	})
-	t.Run("creates a valid route specifying the ID", func(t *testing.T) {
+	t.Run("creates a valid route specifying the ID using POST", func(t *testing.T) {
 		route := goodRoute()
 		route.Name = "with-id"
 		route.Id = uuid.NewString()

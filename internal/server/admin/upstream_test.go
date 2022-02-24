@@ -63,7 +63,7 @@ func TestUpstreamCreate(t *testing.T) {
 		res := c.POST("/v1/upstreams").WithJSON(upstream).Expect()
 		res.Status(201)
 	})
-	t.Run("creates a valid upstream specifying the ID", func(t *testing.T) {
+	t.Run("creates a valid upstream specifying the ID using POST", func(t *testing.T) {
 		upstream := goodUpstream()
 		upstream.Name = "with-id"
 		upstream.Id = uuid.NewString()
