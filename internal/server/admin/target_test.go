@@ -147,6 +147,19 @@ func TestTargetCreate(t *testing.T) {
 		err.Object().ValueEqual("type", v1.ErrorType_ERROR_TYPE_FIELD.String())
 		err.Object().ValueEqual("field", "target")
 	})
+	t.Run("creates a valid target specifying the ID", func(t *testing.T) {
+		target := &v1.Target{
+			Target: "192.0.2.1",
+			Upstream: &v1.Upstream{
+				Id: upstream.Id,
+			},
+			Id: uuid.NewString(),
+		}
+		res := c.POST("/v1/targets").WithJSON(target).Expect()
+		res.Status(201)
+		body := res.JSON().Path("$.item").Object()
+		body.Value("id").Equal(target.Id)
+	})
 }
 
 func TestTargetUpsert(t *testing.T) {

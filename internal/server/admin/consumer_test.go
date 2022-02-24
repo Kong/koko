@@ -93,6 +93,16 @@ func TestConsumerCreate(t *testing.T) {
 				String())
 			err.Object().ValueEqual("field", "custom_id")
 		})
+	t.Run("creates a valid consumer specifying the ID", func(t *testing.T) {
+		consumer := goodConsumer()
+		consumer.Username = "withID"
+		consumer.CustomId = "withCustomID"
+		consumer.Id = uuid.NewString()
+		res := c.POST("/v1/consumers").WithJSON(consumer).Expect()
+		res.Status(201)
+		body := res.JSON().Path("$.item").Object()
+		body.Value("id").Equal(consumer.Id)
+	})
 }
 
 func TestConsumerUpsert(t *testing.T) {
