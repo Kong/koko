@@ -370,7 +370,7 @@ func RegisterCertificateServiceHandlerServer(ctx context.Context, mux *runtime.S
 			return
 		}
 
-		forward_CertificateService_GetCertificate_0(ctx, mux, outboundMarshaler, w, req, response_CertificateService_GetCertificate_0{resp}, mux.GetForwardResponseOptions()...)
+		forward_CertificateService_GetCertificate_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -393,7 +393,7 @@ func RegisterCertificateServiceHandlerServer(ctx context.Context, mux *runtime.S
 			return
 		}
 
-		forward_CertificateService_CreateCertificate_0(ctx, mux, outboundMarshaler, w, req, response_CertificateService_CreateCertificate_0{resp}, mux.GetForwardResponseOptions()...)
+		forward_CertificateService_CreateCertificate_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -416,7 +416,7 @@ func RegisterCertificateServiceHandlerServer(ctx context.Context, mux *runtime.S
 			return
 		}
 
-		forward_CertificateService_UpsertCertificate_0(ctx, mux, outboundMarshaler, w, req, response_CertificateService_UpsertCertificate_0{resp}, mux.GetForwardResponseOptions()...)
+		forward_CertificateService_UpsertCertificate_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -523,7 +523,7 @@ func RegisterCertificateServiceHandlerClient(ctx context.Context, mux *runtime.S
 			return
 		}
 
-		forward_CertificateService_GetCertificate_0(ctx, mux, outboundMarshaler, w, req, response_CertificateService_GetCertificate_0{resp}, mux.GetForwardResponseOptions()...)
+		forward_CertificateService_GetCertificate_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -543,7 +543,7 @@ func RegisterCertificateServiceHandlerClient(ctx context.Context, mux *runtime.S
 			return
 		}
 
-		forward_CertificateService_CreateCertificate_0(ctx, mux, outboundMarshaler, w, req, response_CertificateService_CreateCertificate_0{resp}, mux.GetForwardResponseOptions()...)
+		forward_CertificateService_CreateCertificate_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -563,7 +563,7 @@ func RegisterCertificateServiceHandlerClient(ctx context.Context, mux *runtime.S
 			return
 		}
 
-		forward_CertificateService_UpsertCertificate_0(ctx, mux, outboundMarshaler, w, req, response_CertificateService_UpsertCertificate_0{resp}, mux.GetForwardResponseOptions()...)
+		forward_CertificateService_UpsertCertificate_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -608,33 +608,6 @@ func RegisterCertificateServiceHandlerClient(ctx context.Context, mux *runtime.S
 	})
 
 	return nil
-}
-
-type response_CertificateService_GetCertificate_0 struct {
-	proto.Message
-}
-
-func (m response_CertificateService_GetCertificate_0) XXX_ResponseBody() interface{} {
-	response := m.Message.(*GetCertificateResponse)
-	return response.Item
-}
-
-type response_CertificateService_CreateCertificate_0 struct {
-	proto.Message
-}
-
-func (m response_CertificateService_CreateCertificate_0) XXX_ResponseBody() interface{} {
-	response := m.Message.(*CreateCertificateResponse)
-	return response.Item
-}
-
-type response_CertificateService_UpsertCertificate_0 struct {
-	proto.Message
-}
-
-func (m response_CertificateService_UpsertCertificate_0) XXX_ResponseBody() interface{} {
-	response := m.Message.(*UpsertCertificateResponse)
-	return response.Item
 }
 
 var (

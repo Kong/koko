@@ -53,12 +53,13 @@ func (c CommonOpts) getDB(ctx context.Context,
 }
 
 type services struct {
-	service  v1.ServiceServiceServer
-	route    v1.RouteServiceServer
-	plugin   v1.PluginServiceServer
-	upstream v1.UpstreamServiceServer
-	target   v1.TargetServiceServer
-	schemas  v1.SchemasServiceServer
+	service     v1.ServiceServiceServer
+	route       v1.RouteServiceServer
+	plugin      v1.PluginServiceServer
+	upstream    v1.UpstreamServiceServer
+	target      v1.TargetServiceServer
+	schemas     v1.SchemasServiceServer
+	certificate v1.CertificateServiceServer
 
 	status v1.StatusServiceServer
 	node   v1.NodeServiceServer
@@ -119,6 +120,13 @@ func buildServices(opts HandlerOpts) services {
 					"node")),
 			},
 		},
+		certificate: &CertificateService{
+			CommonOpts: CommonOpts{
+				storeLoader: opts.StoreLoader,
+				logger: opts.Logger.With(zap.String("admin-service",
+					"certificate")),
+			},
+		},
 	}
 }
 
@@ -141,6 +149,12 @@ func NewHandler(opts HandlerOpts) (http.Handler, error) {
 	services := buildServices(opts)
 	err = v1.RegisterServiceServiceHandlerServer(context.Background(),
 		mux, services.service)
+	if err != nil {
+		return nil, err
+	}
+
+	err = v1.RegisterCertificateServiceHandlerServer(context.Background(),
+		mux, services.certificate)
 	if err != nil {
 		return nil, err
 	}
@@ -210,6 +224,7 @@ func NewGRPC(opts HandlerOpts) *grpc.Server {
 	v1.RegisterSchemasServiceServer(server, services.schemas)
 	v1.RegisterNodeServiceServer(server, services.node)
 	v1.RegisterStatusServiceServer(server, services.status)
+	v1.RegisterCertificateServiceServer(server, services.certificate)
 
 	return server
 }
