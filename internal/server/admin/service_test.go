@@ -100,6 +100,17 @@ func TestServiceCreate(t *testing.T) {
 		res := c.POST("/v1/services").WithJSON(svc).Expect()
 		res.Status(201)
 	})
+	t.Run("creates a valid service specifying the ID using POST", func(t *testing.T) {
+		service := goodService()
+		service.Name = "with-id"
+		service.Id = uuid.NewString()
+		res := c.POST("/v1/services").WithJSON(service).Expect()
+		res.Status(201)
+		res.Header("grpc-metadata-koko-status-code").Empty()
+		body := res.JSON().Path("$.item").Object()
+		body.Value("id").Equal(service.Id)
+		body.Value("name").Equal(service.Name)
+	})
 }
 
 func TestServiceUpsert(t *testing.T) {

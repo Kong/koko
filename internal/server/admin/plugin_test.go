@@ -206,6 +206,16 @@ func TestPluginCreate(t *testing.T) {
 				"plugin(no-auth) does not exist",
 			})
 		})
+	t.Run("creates a valid plugin specifying the ID using POST", func(t *testing.T) {
+		plugin := &v1.Plugin{
+			Name: "basic-auth",
+			Id:   uuid.NewString(),
+		}
+		res := c.POST("/v1/plugins").WithJSON(plugin).Expect()
+		res.Status(201)
+		body := res.JSON().Path("$.item").Object()
+		body.Value("id").Equal(plugin.Id)
+	})
 }
 
 func TestPluginUpsert(t *testing.T) {

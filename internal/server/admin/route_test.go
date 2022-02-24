@@ -84,6 +84,15 @@ func TestRouteCreate(t *testing.T) {
 		res = c.POST("/v1/routes").WithJSON(route).Expect()
 		res.Status(201)
 	})
+	t.Run("creates a valid route specifying the ID using POST", func(t *testing.T) {
+		route := goodRoute()
+		route.Name = "with-id"
+		route.Id = uuid.NewString()
+		res := c.POST("/v1/routes").WithJSON(route).Expect()
+		res.Status(201)
+		body := res.JSON().Path("$.item").Object()
+		body.Value("id").Equal(route.Id)
+	})
 }
 
 func TestRouteUpsert(t *testing.T) {
