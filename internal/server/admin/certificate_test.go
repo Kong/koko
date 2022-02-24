@@ -155,7 +155,9 @@ func TestCertificateRead(t *testing.T) {
 	}).Expect().Status(http.StatusCreated)
 	id := res.JSON().Path("$.item.id").String().Raw()
 	t.Run("read with an empty id returns 400", func(t *testing.T) {
-		c.GET("/v1/certificates/").Expect().Status(http.StatusBadRequest)
+		res := c.GET("/v1/certificates/").Expect().Status(http.StatusBadRequest)
+		body := res.JSON().Object()
+		body.ValueEqual("message", "required ID is missing")
 	})
 	t.Run("reading a non-existent certificate returns 404", func(t *testing.T) {
 		c.GET("/v1/certificates/{id}", uuid.NewString()).
