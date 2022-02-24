@@ -4,6 +4,8 @@ option go_package = "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1;
 
 package kong.admin.model.v1;
 
+import "google/protobuf/wrappers.proto";
+
 message Service {
   string id = 1;
   string name = 2;
@@ -23,4 +25,5 @@ message Service {
   int32 tls_verify_depth = 16;
   // Certificate client_certificate = 17;
   repeated string ca_certificates = 18;
+  google.protobuf.BoolValue enabled = 19;
 }

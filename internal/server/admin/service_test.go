@@ -8,7 +8,9 @@ import (
 	"github.com/gavv/httpexpect/v2"
 	"github.com/google/uuid"
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
+	"github.com/kong/koko/internal/json"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
 func goodService() *v1.Service {
@@ -32,6 +34,7 @@ func validateGoodService(body *httpexpect.Object) {
 	body.ValueEqual("port", 80)
 	body.ValueEqual("retries", 5)
 	body.ValueEqual("protocol", "http")
+	body.ValueEqual("enabled", true)
 }
 
 func TestServiceCreate(t *testing.T) {
@@ -44,6 +47,18 @@ func TestServiceCreate(t *testing.T) {
 		res.Header("grpc-metadata-koko-status-code").Empty()
 		body := res.JSON().Path("$.item").Object()
 		validateGoodService(body)
+	})
+	t.Run("creates a valid service with enabled=false", func(t *testing.T) {
+		service := goodService()
+		service.Name = "disabled-svc"
+		service.Enabled = wrapperspb.Bool(false)
+		serviceJSON, err := json.Marshal(service)
+		require.Nil(t, err)
+		res := c.POST("/v1/services").WithBytes(serviceJSON).Expect()
+		res.Status(201)
+		res.Header("grpc-metadata-koko-status-code").Empty()
+		body := res.JSON().Path("$.item").Object()
+		body.Value("enabled").Equal(false)
 	})
 	t.Run("creating invalid service fails with 400", func(t *testing.T) {
 		svc := &v1.Service{
