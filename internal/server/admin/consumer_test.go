@@ -235,6 +235,12 @@ func TestConsumerRead(t *testing.T) {
 		randomID := "071f5040-3e4a-46df-9d98-451e79e318fd"
 		c.GET("/v1/consumers/" + randomID).Expect().Status(http.StatusNotFound)
 	})
+	t.Run("read request without an ID returns 400", func(t *testing.T) {
+		res := c.GET("/v1/consumers/").Expect()
+		res.Status(http.StatusBadRequest)
+		body := res.JSON().Object()
+		body.ValueEqual("message", "required ID is missing")
+	})
 }
 
 func TestConsumerList(t *testing.T) {

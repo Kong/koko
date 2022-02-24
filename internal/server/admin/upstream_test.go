@@ -211,7 +211,10 @@ func TestUpstreamRead(t *testing.T) {
 		// validateGoodUpstream(body)
 	})
 	t.Run("read request without an ID returns 400", func(t *testing.T) {
-		c.GET("/v1/upstreams/").Expect().Status(400)
+		res := c.GET("/v1/upstreams/").Expect()
+		res.Status(http.StatusBadRequest)
+		body := res.JSON().Object()
+		body.ValueEqual("message", "required ID is missing")
 	})
 }
 
