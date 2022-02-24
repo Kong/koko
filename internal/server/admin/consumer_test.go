@@ -43,11 +43,11 @@ func TestConsumerCreate(t *testing.T) {
 		err := body.Value("details").Array().Element(0).Object()
 		err.ValueEqual("type", v1.ErrorType_ERROR_TYPE_ENTITY.String())
 		err.Value("messages").Array().Element(0).String().
-			Equal("at-least one of custom_id or username must be set")
+			Equal("at least one of custom_id or username must be set")
 	})
 	t.Run("recreating the consumer with the same username but different id fails",
 		func(t *testing.T) {
-			consumer := goodConsumer()
+			consumer := &v1.Consumer{}
 			// Change the name to something that does not exist in the DB
 			consumer.Username = "duplicateUserName"
 			consumer.CustomId = ""
@@ -124,7 +124,7 @@ func TestConsumerUpsert(t *testing.T) {
 		err := body.Value("details").Array().Element(0).Object()
 		err.ValueEqual("type", v1.ErrorType_ERROR_TYPE_ENTITY.String())
 		err.Value("messages").Array().Element(0).String().
-			Equal("at-least one of custom_id or username must be set")
+			Equal("at least one of custom_id or username must be set")
 	})
 	t.Run("recreating the consumer with the same username but different id fails",
 		func(t *testing.T) {

@@ -116,7 +116,6 @@ func (s *ConsumerService) ListConsumers(ctx context.Context,
 func consumersFromObjects(objects []model.Object) []*pbModel.Consumer {
 	res := make([]*pbModel.Consumer, 0, len(objects))
 	for _, obj := range objects {
-		// Try to cast
 		consumer, ok := obj.Resource().(*pbModel.Consumer)
 		if !ok {
 			panic(fmt.Sprintf("expected type '%T' but got '%T'",

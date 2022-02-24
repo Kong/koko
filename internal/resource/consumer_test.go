@@ -48,7 +48,7 @@ func TestConsumer_Validate(t *testing.T) {
 				Type: model.ErrorType_ERROR_TYPE_ENTITY,
 				Messages: []string{
 					"missing properties: 'id'",
-					"at-least one of custom_id or username must be set",
+					"at least one of custom_id or username must be set",
 				},
 			},
 		}
@@ -65,7 +65,7 @@ func TestConsumer_Validate(t *testing.T) {
 			{
 				Type: model.ErrorType_ERROR_TYPE_ENTITY,
 				Messages: []string{
-					"at-least one of custom_id or username must be set",
+					"at least one of custom_id or username must be set",
 				},
 			},
 		}

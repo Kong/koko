@@ -123,7 +123,7 @@ func buildServices(opts HandlerOpts) services {
 		consumer: &ConsumerService{
 			CommonOpts: CommonOpts{
 				storeLoader: opts.StoreLoader,
-				logger:      opts.Logger.With(zap.String("consumer-service", "consumer")),
+				logger:      opts.Logger.With(zap.String("admin-service", "consumer")),
 			},
 		},
 	}
@@ -222,6 +222,7 @@ func NewGRPC(opts HandlerOpts) *grpc.Server {
 	v1.RegisterSchemasServiceServer(server, services.schemas)
 	v1.RegisterNodeServiceServer(server, services.node)
 	v1.RegisterStatusServiceServer(server, services.status)
+
 	v1.RegisterConsumerServiceServer(server, services.consumer)
 	return server
 }
