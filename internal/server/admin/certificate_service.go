@@ -21,8 +21,8 @@ type CertificateService struct {
 
 func (s *CertificateService) GetCertificate(ctx context.Context,
 	req *v1.GetCertificateRequest) (*v1.GetCertificateResponse, error) {
-	if err := validUUID(req.Id); err != nil {
-		return nil, s.err(err)
+	if req.Id == "" {
+		return nil, s.err(util.ErrClient{Message: "required ID is missing"})
 	}
 	db, err := s.CommonOpts.getDB(ctx, req.Cluster)
 	if err != nil {
