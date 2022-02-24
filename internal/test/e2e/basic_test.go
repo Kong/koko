@@ -25,6 +25,23 @@ import (
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
+func goodService() *v1.Service {
+	return &v1.Service{
+		Name: "foo",
+		Host: "example.com",
+		Path: "/",
+	}
+}
+
+func disabledService() *v1.Service {
+	return &v1.Service{
+		Name:    "bar",
+		Host:    "example-bar.com",
+		Path:    "/",
+		Enabled: wrapperspb.Bool(false),
+	}
+}
+
 func TestSharedMTLS(t *testing.T) {
 	// ensure that Kong Gateway can connect using Shared MTLS mode
 	cleanup := run.Koko(t)
@@ -295,6 +312,37 @@ func TestUpstreamSync(t *testing.T) {
 	})
 }
 
+func TestConsumerSync(t *testing.T) {
+	// ensure that consumers can be synced to Kong gateway
+	cleanup := run.Koko(t)
+	defer cleanup()
+
+	consumer := &v1.Consumer{
+		Id:       uuid.NewString(),
+		Username: "testConsumer",
+	}
+	// create the consumer in CP
+	c := httpexpect.New(t, "http://localhost:3000")
+	res := c.POST("/v1/consumers").WithJSON(consumer).Expect()
+	res.Status(201)
+
+	// launch the DP
+	dpCleanup := run.KongDP(kong.GetKongConfForShared())
+	defer dpCleanup()
+
+	// wait for DP to come-up
+	require.Nil(t, util.WaitForKongPort(t, 8001))
+
+	expectedConfig := &v1.TestingConfig{
+		Consumers: []*v1.Consumer{consumer},
+	}
+	util.WaitFunc(t, func() error {
+		err := util.EnsureConfig(expectedConfig)
+		t.Log("configuration mismatch for consumer", err)
+		return err
+	})
+}
+
 func TestTargetSync(t *testing.T) {
 	// ensure that target can be synced to Kong gateway
 	cleanup := run.Koko(t)
@@ -324,6 +372,37 @@ func TestTargetSync(t *testing.T) {
 	expectedConfig := &v1.TestingConfig{
 		Upstreams: []*v1.Upstream{upstream},
 		Targets:   []*v1.Target{target},
+	}
+	util.WaitFunc(t, func() error {
+		err := util.EnsureConfig(expectedConfig)
+		t.Log("configuration mismatch", err)
+		return err
+	})
+}
+
+func TestServiceSync(t *testing.T) {
+	// ensure that services can be synced to Kong gateway
+	// only enabled services should be synced though
+	cleanup := run.Koko(t)
+	defer cleanup()
+
+	enabledService := goodService()
+	c := httpexpect.New(t, "http://localhost:3000")
+	res := c.POST("/v1/services").WithJSON(enabledService).Expect()
+	res.Status(201)
+
+	disabled, err := json.Marshal(disabledService())
+	require.Nil(t, err)
+	res = c.POST("/v1/services").WithBytes(disabled).Expect()
+	res.Status(201)
+
+	dpCleanup := run.KongDP(kong.GetKongConfForShared())
+	defer dpCleanup()
+
+	require.Nil(t, util.WaitForKongPort(t, 8001))
+
+	expectedConfig := &v1.TestingConfig{
+		Services: []*v1.Service{enabledService},
 	}
 	util.WaitFunc(t, func() error {
 		err := util.EnsureConfig(expectedConfig)

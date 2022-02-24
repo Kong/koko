@@ -153,6 +153,11 @@ func Run(ctx context.Context, config ServerConfig) error {
 		panic(err.Error())
 	}
 
+	err = loader.Register(&kongConfigWS.KongConsumerLoader{Client: configClient.Consumer})
+	if err != nil {
+		panic(err.Error())
+	}
+
 	err = loader.Register(&kongConfigWS.VersionLoader{})
 	if err != nil {
 		panic(err.Error())
@@ -263,6 +268,7 @@ func setupRelayClient() (ws.ConfigClient, error) {
 		Plugin:   v1.NewPluginServiceClient(cc),
 		Upstream: v1.NewUpstreamServiceClient(cc),
 		Target:   v1.NewTargetServiceClient(cc),
+		Consumer: v1.NewConsumerServiceClient(cc),
 
 		Node: v1.NewNodeServiceClient(cc),
 

@@ -63,6 +63,15 @@ func TestUpstreamCreate(t *testing.T) {
 		res := c.POST("/v1/upstreams").WithJSON(upstream).Expect()
 		res.Status(201)
 	})
+	t.Run("creates a valid upstream specifying the ID using POST", func(t *testing.T) {
+		upstream := goodUpstream()
+		upstream.Name = "with-id"
+		upstream.Id = uuid.NewString()
+		res := c.POST("/v1/upstreams").WithJSON(upstream).Expect()
+		res.Status(201)
+		body := res.JSON().Path("$.item").Object()
+		body.Value("id").Equal(upstream.Id)
+	})
 }
 
 func TestUpstreamUpsert(t *testing.T) {
@@ -211,7 +220,10 @@ func TestUpstreamRead(t *testing.T) {
 		// validateGoodUpstream(body)
 	})
 	t.Run("read request without an ID returns 400", func(t *testing.T) {
-		c.GET("/v1/upstreams/").Expect().Status(400)
+		res := c.GET("/v1/upstreams/").Expect()
+		res.Status(http.StatusBadRequest)
+		body := res.JSON().Object()
+		body.ValueEqual("message", "required ID is missing")
 	})
 }
 

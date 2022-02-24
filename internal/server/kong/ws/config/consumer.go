@@ -7,22 +7,25 @@ import (
 	admin "github.com/kong/koko/internal/gen/grpc/kong/admin/service/v1"
 )
 
-type KongServiceLoader struct {
-	Client admin.ServiceServiceClient
+type KongConsumerLoader struct {
+	Client admin.ConsumerServiceClient
 }
 
-func (l KongServiceLoader) Name() string {
-	return "service"
+func (l KongConsumerLoader) Name() string {
+	return "consumer"
 }
 
-func (l *KongServiceLoader) Mutate(ctx context.Context,
+// Mutate reads the Consumer data from CP persistence store and
+// populates the read data into config.
+func (l *KongConsumerLoader) Mutate(ctx context.Context,
 	opts MutatorOpts, config DataPlaneConfig) error {
 	ctx, cancel := context.WithTimeout(ctx, defaultRequestTimeout)
 	defer cancel()
+
 	var pageNum int32
-	var allServices []*v1.Service
+	var allConsumers []*v1.Consumer
 	for {
-		resp, err := l.Client.ListServices(ctx, &admin.ListServicesRequest{
+		resp, err := l.Client.ListConsumers(ctx, &admin.ListConsumersRequest{
 			Cluster: &v1.RequestCluster{Id: opts.ClusterID},
 			Page: &v1.PaginationRequest{
 				Size:   pageSize,
@@ -32,23 +35,20 @@ func (l *KongServiceLoader) Mutate(ctx context.Context,
 		if err != nil {
 			return err
 		}
-		allServices = append(allServices, resp.Items...)
+		allConsumers = append(allConsumers, resp.Items...)
 		if resp.Page == nil || resp.Page.NextPageNum == 0 {
 			break
 		}
 	}
-	res := make([]Map, 0)
-	for _, svc := range allServices {
-		if !svc.Enabled.Value {
-			continue
-		}
-		m, err := convert(svc)
+	res := make([]Map, 0, len(allConsumers))
+	for _, r := range allConsumers {
+		m, err := convert(r)
 		if err != nil {
 			return err
 		}
-		delete(m, "enabled")
+		delete(m, "updated_at")
 		res = append(res, m)
 	}
-	config["services"] = res
+	config["consumers"] = res
 	return nil
 }

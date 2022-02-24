@@ -236,6 +236,7 @@ type ConfigClient struct {
 	Target   admin.TargetServiceClient
 	Status   relay.StatusServiceClient
 	Node     admin.NodeServiceClient
+	Consumer admin.ConsumerServiceClient
 
 	Event relay.EventServiceClient
 }

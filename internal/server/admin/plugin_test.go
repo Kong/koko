@@ -206,6 +206,16 @@ func TestPluginCreate(t *testing.T) {
 				"plugin(no-auth) does not exist",
 			})
 		})
+	t.Run("creates a valid plugin specifying the ID using POST", func(t *testing.T) {
+		plugin := &v1.Plugin{
+			Name: "basic-auth",
+			Id:   uuid.NewString(),
+		}
+		res := c.POST("/v1/plugins").WithJSON(plugin).Expect()
+		res.Status(201)
+		body := res.JSON().Path("$.item").Object()
+		body.Value("id").Equal(plugin.Id)
+	})
 }
 
 func TestPluginUpsert(t *testing.T) {
@@ -355,7 +365,10 @@ func TestPluginRead(t *testing.T) {
 		validateKeyAuthPlugin(body)
 	})
 	t.Run("read request without an ID returns 400", func(t *testing.T) {
-		c.GET("/v1/plugins/").Expect().Status(400)
+		res := c.GET("/v1/plugins/").Expect()
+		res.Status(http.StatusBadRequest)
+		body := res.JSON().Object()
+		body.ValueEqual("message", "required ID is missing")
 	})
 }
 

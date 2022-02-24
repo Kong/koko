@@ -9,6 +9,7 @@ import (
 	"github.com/kong/koko/internal/model/json/generator"
 	"github.com/kong/koko/internal/model/json/validation"
 	"github.com/kong/koko/internal/model/json/validation/typedefs"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
 const (
@@ -29,6 +30,7 @@ var (
 		ConnectTimeout: defaultTimeout,
 		ReadTimeout:    defaultTimeout,
 		WriteTimeout:   defaultTimeout,
+		Enabled:        wrapperspb.Bool(true),
 	}
 	_ model.Object = Service{}
 )
@@ -66,7 +68,8 @@ func (r Service) ProcessDefaults() error {
 	if r.Service == nil {
 		return fmt.Errorf("invalid nil resource")
 	}
-	err := mergo.Merge(r.Service, defaultService)
+	err := mergo.Merge(r.Service, defaultService,
+		mergo.WithTransformers(wrappersPBTransformer{}))
 	if err != nil {
 		return err
 	}
@@ -125,6 +128,9 @@ func init() {
 			},
 			"created_at": typedefs.UnixEpoch,
 			"updated_at": typedefs.UnixEpoch,
+			"enabled": {
+				Type: "boolean",
+			},
 		},
 		AdditionalProperties: &falsy,
 		Required: []string{

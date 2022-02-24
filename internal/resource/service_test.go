@@ -8,6 +8,7 @@ import (
 	"github.com/kong/koko/internal/model/json/validation"
 	"github.com/kong/koko/internal/model/json/validation/typedefs"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
 func TestNewService(t *testing.T) {
@@ -47,6 +48,7 @@ func TestService_ProcessDefaults(t *testing.T) {
 		r.Service.Port = 4242
 		r.Service.Retries = 1
 		r.Service.Protocol = "grpc"
+		r.Service.Enabled = wrapperspb.Bool(false)
 		err := r.ProcessDefaults()
 		require.Nil(t, err)
 		require.True(t, validUUID(r.ID()))
@@ -59,6 +61,7 @@ func TestService_ProcessDefaults(t *testing.T) {
 			ConnectTimeout: 42,
 			ReadTimeout:    defaultTimeout,
 			WriteTimeout:   defaultTimeout,
+			Enabled:        wrapperspb.Bool(false),
 		}, r.Resource())
 	})
 }
@@ -451,6 +454,14 @@ func TestService_Validate(t *testing.T) {
 							" 'https'",
 					},
 				},
+			},
+		},
+		{
+			name: "enabled can be set to false",
+			Service: func() Service {
+				s := goodService()
+				s.Service.Enabled = wrapperspb.Bool(false)
+				return s
 			},
 		},
 	}

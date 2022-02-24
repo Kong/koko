@@ -2341,6 +2341,9 @@
             "type": "string"
           },
           "title": "Certificate client_certificate = 17;"
+        },
+        "enabled": {
+          "type": "boolean"
         }
       }
     },
