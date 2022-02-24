@@ -97,11 +97,11 @@ func init() {
 		Required:             []string{"id"},
 		AnyOf: []*generator.Schema{
 			{
-				Description: "at-least one of custom_id or username must be set",
+				Description: "at least one of custom_id or username must be set",
 				Required:    []string{"custom_id"},
 			},
 			{
-				Description: "at-least one of custom_id or username must be set",
+				Description: "at least one of custom_id or username must be set",
 				Required:    []string{"username"},
 			},
 		},
