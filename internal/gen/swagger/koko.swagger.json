@@ -99,9 +99,9 @@
         "operationId": "CertificateService_CreateCertificate",
         "responses": {
           "200": {
-            "description": "",
+            "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/kong.admin.model.v1.Certificate"
+              "$ref": "#/definitions/kong.admin.service.v1.CreateCertificateResponse"
             }
           },
           "default": {
@@ -137,9 +137,9 @@
         "operationId": "CertificateService_GetCertificate",
         "responses": {
           "200": {
-            "description": "",
+            "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/kong.admin.model.v1.Certificate"
+              "$ref": "#/definitions/kong.admin.service.v1.GetCertificateResponse"
             }
           },
           "default": {
@@ -207,9 +207,9 @@
         "operationId": "CertificateService_UpsertCertificate",
         "responses": {
           "200": {
-            "description": "",
+            "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/kong.admin.model.v1.Certificate"
+              "$ref": "#/definitions/kong.admin.service.v1.UpsertCertificateResponse"
             }
           },
           "default": {

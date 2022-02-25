@@ -53,13 +53,14 @@ func (c CommonOpts) getDB(ctx context.Context,
 }
 
 type services struct {
-	service  v1.ServiceServiceServer
-	route    v1.RouteServiceServer
-	plugin   v1.PluginServiceServer
-	upstream v1.UpstreamServiceServer
-	target   v1.TargetServiceServer
-	schemas  v1.SchemasServiceServer
-	consumer v1.ConsumerServiceServer
+	service     v1.ServiceServiceServer
+	route       v1.RouteServiceServer
+	plugin      v1.PluginServiceServer
+	upstream    v1.UpstreamServiceServer
+	target      v1.TargetServiceServer
+	schemas     v1.SchemasServiceServer
+	certificate v1.CertificateServiceServer
+	consumer    v1.ConsumerServiceServer
 
 	status v1.StatusServiceServer
 	node   v1.NodeServiceServer
@@ -120,10 +121,18 @@ func buildServices(opts HandlerOpts) services {
 					"node")),
 			},
 		},
+		certificate: &CertificateService{
+			CommonOpts: CommonOpts{
+				storeLoader: opts.StoreLoader,
+				logger: opts.Logger.With(zap.String("admin-service",
+					"certificate")),
+			},
+		},
 		consumer: &ConsumerService{
 			CommonOpts: CommonOpts{
 				storeLoader: opts.StoreLoader,
-				logger:      opts.Logger.With(zap.String("admin-service", "consumer")),
+				logger: opts.Logger.With(zap.String("admin-service",
+					"consumer")),
 			},
 		},
 	}
@@ -187,16 +196,25 @@ func NewHandler(opts HandlerOpts) (http.Handler, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	err = v1.RegisterStatusServiceHandlerServer(context.Background(),
 		mux, services.status)
 	if err != nil {
 		return nil, err
 	}
+
 	err = v1.RegisterConsumerServiceHandlerServer(context.Background(),
 		mux, services.consumer)
 	if err != nil {
 		return nil, err
 	}
+
+	err = v1.RegisterCertificateServiceHandlerServer(context.Background(),
+		mux, services.certificate)
+	if err != nil {
+		return nil, err
+	}
+
 	return mux, nil
 }
 
@@ -222,7 +240,7 @@ func NewGRPC(opts HandlerOpts) *grpc.Server {
 	v1.RegisterSchemasServiceServer(server, services.schemas)
 	v1.RegisterNodeServiceServer(server, services.node)
 	v1.RegisterStatusServiceServer(server, services.status)
-
+	v1.RegisterCertificateServiceServer(server, services.certificate)
 	v1.RegisterConsumerServiceServer(server, services.consumer)
 	return server
 }

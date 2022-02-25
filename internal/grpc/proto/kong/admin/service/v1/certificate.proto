@@ -13,21 +13,18 @@ service CertificateService {
   rpc GetCertificate(GetCertificateRequest) returns (GetCertificateResponse) {
     option (google.api.http) = {
       get: "/v1/certificates/{id}"
-      response_body: "item"
     };
   }
   rpc CreateCertificate(CreateCertificateRequest) returns (CreateCertificateResponse) {
     option (google.api.http) = {
       post: "/v1/certificates"
       body: "item"
-      response_body: "item"
     };
   }
   rpc UpsertCertificate(UpsertCertificateRequest) returns (UpsertCertificateResponse) {
     option (google.api.http) = {
       put: "/v1/certificates/{item.id}"
       body: "item"
-      response_body: "item"
     };
   }
   rpc DeleteCertificate(DeleteCertificateRequest) returns (DeleteCertificateResponse) {
