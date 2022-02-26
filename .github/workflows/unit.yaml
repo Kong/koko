@@ -21,7 +21,9 @@ jobs:
     - name: Cache Go modules
       uses: actions/cache@v2
       with:
-        path: ~/go/pkg/mod
+        path: |
+          ~/go/pkg/mod
+          ~/.cache/go-build
         key: ${{ runner.os }}-go-unit-${{ hashFiles('**/go.sum') }}
     - name: setup-db
       run: ./scripts/setup-db.sh &
