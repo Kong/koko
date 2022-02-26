@@ -9,12 +9,13 @@ import (
 )
 
 type KongConfig struct {
-	Services  []*kong.Service  `json:"services,omitempty"`
-	Routes    []*kong.Route    `json:"routes,omitempty"`
-	Plugins   []*kong.Plugin   `json:"plugins,omitempty"`
-	Upstreams []*kong.Upstream `json:"upstreams,omitempty"`
-	Targets   []*kong.Target   `json:"targets,omitempty"`
-	Consumers []*kong.Consumer `json:"consumers,omitempty"`
+	Services     []*kong.Service     `json:"services,omitempty"`
+	Routes       []*kong.Route       `json:"routes,omitempty"`
+	Plugins      []*kong.Plugin      `json:"plugins,omitempty"`
+	Upstreams    []*kong.Upstream    `json:"upstreams,omitempty"`
+	Targets      []*kong.Target      `json:"targets,omitempty"`
+	Consumers    []*kong.Consumer    `json:"consumers,omitempty"`
+	Certificates []*kong.Certificate `json:"certificates,omitempty"`
 }
 
 func EnsureConfig(expectedConfig *model.TestingConfig) error {
@@ -54,6 +55,10 @@ func fetchKongConfig() (KongConfig, error) {
 	if err != nil {
 		return KongConfig{}, fmt.Errorf("fetch consumers: %v", err)
 	}
+	certificates, err := client.Certificates.ListAll(ctx)
+	if err != nil {
+		return KongConfig{}, fmt.Errorf("fetch certificates: %v", err)
+	}
 	var allTargets []*kong.Target
 	for _, u := range upstreams {
 		targets, err := client.Targets.ListAll(ctx, u.ID)
@@ -64,11 +69,12 @@ func fetchKongConfig() (KongConfig, error) {
 		allTargets = append(allTargets, targets...)
 	}
 	return KongConfig{
-		Services:  services,
-		Routes:    routes,
-		Plugins:   plugins,
-		Upstreams: upstreams,
-		Consumers: consumers,
-		Targets:   allTargets,
+		Services:     services,
+		Routes:       routes,
+		Plugins:      plugins,
+		Upstreams:    upstreams,
+		Consumers:    consumers,
+		Certificates: certificates,
+		Targets:      allTargets,
 	}, nil
 }

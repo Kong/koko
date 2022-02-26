@@ -17,6 +17,7 @@ import (
 	"github.com/kong/koko/internal/cmd"
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
 	"github.com/kong/koko/internal/json"
+	"github.com/kong/koko/internal/test/certs"
 	"github.com/kong/koko/internal/test/kong"
 	"github.com/kong/koko/internal/test/run"
 	"github.com/kong/koko/internal/test/util"
@@ -339,6 +340,35 @@ func TestConsumerSync(t *testing.T) {
 	util.WaitFunc(t, func() error {
 		err := util.EnsureConfig(expectedConfig)
 		t.Log("configuration mismatch for consumer", err)
+		return err
+	})
+}
+
+func TestCertificateSync(t *testing.T) {
+	// ensure that certificates can be synced to Kong gateway
+	cleanup := run.Koko(t)
+	defer cleanup()
+
+	certificate := &v1.Certificate{
+		Id:   uuid.NewString(),
+		Cert: string(certs.DefaultSharedCert),
+		Key:  string(certs.DefaultSharedKey),
+	}
+	c := httpexpect.New(t, "http://localhost:3000")
+	res := c.POST("/v1/certificates").WithJSON(certificate).Expect()
+	res.Status(201)
+
+	dpCleanup := run.KongDP(kong.GetKongConfForShared())
+	defer dpCleanup()
+
+	require.Nil(t, util.WaitForKongPort(t, 8001))
+
+	expectedConfig := &v1.TestingConfig{
+		Certificates: []*v1.Certificate{certificate},
+	}
+	util.WaitFunc(t, func() error {
+		err := util.EnsureConfig(expectedConfig)
+		t.Log("configuration mismatch for certificate", err)
 		return err
 	})
 }
