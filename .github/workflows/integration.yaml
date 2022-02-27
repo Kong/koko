@@ -28,7 +28,9 @@ jobs:
     - name: Cache Go modules
       uses: actions/cache@v2
       with:
-        path: ~/go/pkg/mod
+        path: |
+          ~/go/pkg/mod
+          ~/.cache/go-build
         key: ${{ runner.os }}-go-integration-${{ hashFiles('**/go.sum') }}
     - name: make test-integration
       continue-on-error: ${{ matrix.experimental }}

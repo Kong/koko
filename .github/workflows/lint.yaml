@@ -17,6 +17,7 @@ jobs:
           ~/go/pkg/mod
           ~/.cache/golangci-lint
           ~/.cache/go-build
+          ~/.cache/buf
         key: ${{ runner.os }}-go-lint-${{ hashFiles('**/go.sum') }}
     - name: make install-tools
       run: make install-tools
