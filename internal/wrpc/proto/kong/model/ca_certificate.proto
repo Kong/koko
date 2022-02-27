@@ -9,5 +9,6 @@ message CACertificate {
   string cert = 2;
   string cert_digest = 3;
   int64 created_at = 4;
-  repeated string tags = 5;
+  int64 updated_at = 5;
+  repeated string tags = 6;
 }

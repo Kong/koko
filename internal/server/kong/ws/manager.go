@@ -229,15 +229,16 @@ func (m *Manager) broadcast() {
 }
 
 type ConfigClient struct {
-	Service     admin.ServiceServiceClient
-	Route       admin.RouteServiceClient
-	Plugin      admin.PluginServiceClient
-	Upstream    admin.UpstreamServiceClient
-	Target      admin.TargetServiceClient
-	Status      relay.StatusServiceClient
-	Node        admin.NodeServiceClient
-	Consumer    admin.ConsumerServiceClient
-	Certificate admin.CertificateServiceClient
+	Service       admin.ServiceServiceClient
+	Route         admin.RouteServiceClient
+	Plugin        admin.PluginServiceClient
+	Upstream      admin.UpstreamServiceClient
+	Target        admin.TargetServiceClient
+	Status        relay.StatusServiceClient
+	Node          admin.NodeServiceClient
+	Consumer      admin.ConsumerServiceClient
+	Certificate   admin.CertificateServiceClient
+	CACertificate admin.CACertificateServiceClient
 
 	Event relay.EventServiceClient
 }

@@ -373,6 +373,34 @@ func TestCertificateSync(t *testing.T) {
 	})
 }
 
+func TestCACertificateSync(t *testing.T) {
+	// ensure that certificates can be synced to Kong gateway
+	cleanup := run.Koko(t)
+	defer cleanup()
+
+	certificate := &v1.CACertificate{
+		Id:   uuid.NewString(),
+		Cert: string(certs.DefaultSharedCert),
+	}
+	c := httpexpect.New(t, "http://localhost:3000")
+	res := c.POST("/v1/ca-certificates").WithJSON(certificate).Expect()
+	res.Status(201)
+
+	dpCleanup := run.KongDP(kong.GetKongConfForShared())
+	defer dpCleanup()
+
+	require.Nil(t, util.WaitForKongPort(t, 8001))
+
+	expectedConfig := &v1.TestingConfig{
+		CaCertificates: []*v1.CACertificate{certificate},
+	}
+	util.WaitFunc(t, func() error {
+		err := util.EnsureConfig(expectedConfig)
+		t.Log("configuration mismatch for CA certificate", err)
+		return err
+	})
+}
+
 func TestTargetSync(t *testing.T) {
 	// ensure that target can be synced to Kong gateway
 	cleanup := run.Koko(t)
