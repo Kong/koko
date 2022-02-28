@@ -26,11 +26,12 @@ var testConfig = db.Config{
 }
 
 func CleanDB() error {
-	_, err := GetPersister()
+	_, cleanup, err := GetPersister()
+	defer cleanup()
 	return err
 }
 
-func GetPersister() (persistence.Persister, error) {
+func GetPersister() (persistence.Persister, func(), error) {
 	dbConfig := testConfig
 	dialect := os.Getenv("KOKO_TEST_DB")
 	if dialect == "" {
@@ -40,7 +41,7 @@ func GetPersister() (persistence.Persister, error) {
 	case "sqlite3":
 		dbClient, err := sqlite.NewSQLClient(dbConfig.SQLite)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 		// store may not exist always so ignore the error
 		// TODO(hbagdi): add "IF exists" clause
@@ -50,7 +51,7 @@ func GetPersister() (persistence.Persister, error) {
 	case "postgres":
 		dbClient, err := postgres.NewSQLClient(dbConfig.Postgres)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 		// store may not exist always so ignore the error
 		// TODO(hbagdi): add "IF exists" clause
@@ -60,13 +61,15 @@ func GetPersister() (persistence.Persister, error) {
 	}
 
 	if err := runMigrations(dbConfig); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	persister, err := db.NewPersister(dbConfig)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	return persister, nil
+	return persister, func() {
+		persister.Close()
+	}, nil
 }
 
 func runMigrations(config db.Config) error {

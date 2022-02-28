@@ -19,8 +19,9 @@ import (
 
 func TestRelayStatusServiceUpdate(t *testing.T) {
 	ctx := context.Background()
-	persister, err := util.GetPersister()
+	persister, cleanup, err := util.GetPersister()
 	require.Nil(t, err)
+	defer cleanup()
 	db := store.New(persister, log.Logger).ForCluster("default")
 	opts := StatusServiceOpts{
 		StoreLoader: serverUtil.DefaultStoreLoader{Store: db},
@@ -207,8 +208,9 @@ func TestRelayStatusServiceUpdate(t *testing.T) {
 
 func TestRelayStatusServiceClear(t *testing.T) {
 	ctx := context.Background()
-	persister, err := util.GetPersister()
+	persister, cleanup, err := util.GetPersister()
 	require.Nil(t, err)
+	defer cleanup()
 	db := store.New(persister, log.Logger).ForCluster("default")
 	opts := StatusServiceOpts{
 		StoreLoader: serverUtil.DefaultStoreLoader{Store: db},

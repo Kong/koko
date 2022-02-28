@@ -30,8 +30,9 @@ func equalJSON(t *testing.T, expected, actual []byte) {
 }
 
 func TestPersister(t *testing.T) {
-	p, err := util.GetPersister()
+	p, cleanup, err := util.GetPersister()
 	require.Nil(t, err)
+	defer cleanup()
 
 	t.Run("Get()", func(t *testing.T) {
 		t.Run("returns an existing value", func(t *testing.T) {

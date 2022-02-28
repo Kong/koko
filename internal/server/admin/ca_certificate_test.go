@@ -133,7 +133,7 @@ func TestCACertificateCreate(t *testing.T) {
 			"certificate expired, \"Not After\" time is in the past",
 		})
 	})
-	t.Run("creating  multiple CA certificates fails", func(t *testing.T) {
+	t.Run("creating multiple CA certificates fails", func(t *testing.T) {
 		cert := string(createCACert(t, &caCertTemplate)) + goodCert
 		res := c.POST("/v1/ca-certificates").WithJSON(&v1.CACertificate{
 			Cert: cert,

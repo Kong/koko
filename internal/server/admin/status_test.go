@@ -16,8 +16,9 @@ import (
 )
 
 func TestStatusRead(t *testing.T) {
-	p, err := util.GetPersister()
+	p, cleanup, err := util.GetPersister()
 	require.Nil(t, err)
+	defer cleanup()
 	objectStore := store.New(p, log.Logger)
 	store := objectStore.ForCluster("default")
 	status := resource.NewStatus()
@@ -64,8 +65,9 @@ func TestStatusRead(t *testing.T) {
 }
 
 func TestStatusDelete(t *testing.T) {
-	p, err := util.GetPersister()
+	p, cleanup, err := util.GetPersister()
 	require.Nil(t, err)
+	defer cleanup()
 	objectStore := store.New(p, log.Logger)
 	store := objectStore.ForCluster("default")
 	status := resource.NewStatus()
@@ -105,8 +107,9 @@ func TestStatusDelete(t *testing.T) {
 }
 
 func TestStatusList(t *testing.T) {
-	p, err := util.GetPersister()
+	p, cleanup, err := util.GetPersister()
 	require.Nil(t, err)
+	defer cleanup()
 	objectStore := store.New(p, log.Logger)
 	store := objectStore.ForCluster("default")
 	status := resource.NewStatus()
