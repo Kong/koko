@@ -1,7 +1,9 @@
 package util
 
 import (
+	"context"
 	"os"
+	"testing"
 
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/kong/koko/internal/db"
@@ -25,17 +27,19 @@ var testConfig = db.Config{
 	Logger: log.Logger,
 }
 
-func CleanDB() error {
-	_, err := GetPersister()
+func CleanDB(t *testing.T) error {
+	_, err := GetPersister(t)
 	return err
 }
 
-func GetPersister() (persistence.Persister, error) {
+func GetPersister(t *testing.T) (persistence.Persister, error) {
 	dbConfig := testConfig
 	dialect := os.Getenv("KOKO_TEST_DB")
 	if dialect == "" {
 		dialect = "sqlite3"
 	}
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	switch dialect {
 	case "sqlite3":
 		dbClient, err := sqlite.NewSQLClient(dbConfig.SQLite)
@@ -44,7 +48,7 @@ func GetPersister() (persistence.Persister, error) {
 		}
 		// store may not exist always so ignore the error
 		// TODO(hbagdi): add "IF exists" clause
-		_, _ = dbClient.Exec("delete from store;")
+		_, _ = dbClient.ExecContext(ctx, "delete from store;")
 
 		dbConfig.Dialect = db.DialectSQLite3
 	case "postgres":
@@ -54,8 +58,7 @@ func GetPersister() (persistence.Persister, error) {
 		}
 		// store may not exist always so ignore the error
 		// TODO(hbagdi): add "IF exists" clause
-		_, _ = dbClient.Exec("truncate table store;")
-
+		_, _ = dbClient.ExecContext(ctx, "truncate table store;")
 		dbConfig.Dialect = db.DialectPostgres
 	}
 
@@ -66,6 +69,9 @@ func GetPersister() (persistence.Persister, error) {
 	if err != nil {
 		return nil, err
 	}
+	t.Cleanup(func() {
+		persister.Close()
+	})
 	return persister, nil
 }
 

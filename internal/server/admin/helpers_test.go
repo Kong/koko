@@ -29,14 +29,13 @@ func init() {
 }
 
 func setup(t *testing.T) (*httptest.Server, func()) {
-	p, err := util.GetPersister()
+	p, err := util.GetPersister(t)
 	require.Nil(t, err)
 	objectStore := store.New(p, log.Logger)
 
 	server, cleanup := setupWithDB(t, objectStore.ForCluster("default"))
 	return server, func() {
 		cleanup()
-		p.Close()
 	}
 }
 
