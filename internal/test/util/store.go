@@ -4,6 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"os"
+	"sync"
+	"testing"
 
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/kong/koko/internal/db"
@@ -13,31 +15,31 @@ import (
 	"github.com/kong/koko/internal/persistence/sqlite"
 )
 
-var testConfig = db.Config{
-	SQLite: sqlite.Opts{
-		InMemory: true,
-	},
-	Postgres: postgres.Opts{
-		Hostname: "localhost",
-		Port:     postgres.DefaultPort,
-		User:     "koko",
-		Password: "koko",
-		DBName:   "koko",
-	},
-	Logger: log.Logger,
-}
+var (
+	testConfig = db.Config{
+		SQLite: sqlite.Opts{
+			InMemory: true,
+		},
+		Postgres: postgres.Opts{
+			Hostname: "localhost",
+			Port:     postgres.DefaultPort,
+			User:     "koko",
+			Password: "koko",
+			DBName:   "koko",
+		},
+		Logger: log.Logger,
+	}
 
-func CleanDB() error {
-	_, cleanup, err := GetPersister()
-	defer cleanup()
+	once     sync.Once
+	dbClient *sql.DB
+)
+
+func CleanDB(t *testing.T) error {
+	_, err := GetPersister(t)
 	return err
 }
 
-// cache DB client for tests.
-var dbClient *sql.DB
-
-func GetPersister() (persistence.Persister, func(), error) {
-	var err error
+func GetPersister(t *testing.T) (persistence.Persister, error) {
 	dbConfig := testConfig
 	dialect := os.Getenv("KOKO_TEST_DB")
 	if dialect == "" {
@@ -47,24 +49,26 @@ func GetPersister() (persistence.Persister, func(), error) {
 	defer cancel()
 	switch dialect {
 	case "sqlite3":
-		if dbClient == nil {
+		once.Do(func() {
+			var err error
 			dbClient, err = sqlite.NewSQLClient(dbConfig.SQLite)
 			if err != nil {
-				return nil, nil, err
+				t.Fatal(err)
 			}
-		}
+		})
 		// store may not exist always so ignore the error
 		// TODO(hbagdi): add "IF exists" clause
 		_, _ = dbClient.ExecContext(ctx, "delete from store;")
 
 		dbConfig.Dialect = db.DialectSQLite3
 	case "postgres":
-		if dbClient == nil {
+		once.Do(func() {
+			var err error
 			dbClient, err = postgres.NewSQLClient(dbConfig.Postgres)
 			if err != nil {
-				return nil, nil, err
+				t.Fatal(err)
 			}
-		}
+		})
 		// store may not exist always so ignore the error
 		// TODO(hbagdi): add "IF exists" clause
 		_, _ = dbClient.ExecContext(ctx, "truncate table store;")
@@ -72,15 +76,16 @@ func GetPersister() (persistence.Persister, func(), error) {
 	}
 
 	if err := runMigrations(dbConfig); err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	persister, err := db.NewPersister(dbConfig)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	return persister, func() {
+	t.Cleanup(func() {
 		persister.Close()
-	}, nil
+	})
+	return persister, nil
 }
 
 func runMigrations(config db.Config) error {

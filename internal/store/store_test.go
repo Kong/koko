@@ -23,9 +23,8 @@ import (
 )
 
 func TestCreate(t *testing.T) {
-	persister, cleanup, err := util.GetPersister()
+	persister, err := util.GetPersister(t)
 	require.Nil(t, err)
-	defer cleanup()
 	ctx := context.Background()
 	s := New(persister, log.Logger).ForCluster("default")
 	t.Run("creating a nil object fails", func(t *testing.T) {
@@ -129,9 +128,8 @@ func TestCreate(t *testing.T) {
 }
 
 func TestRead(t *testing.T) {
-	persister, cleanup, err := util.GetPersister()
+	persister, err := util.GetPersister(t)
 	require.Nil(t, err)
-	defer cleanup()
 	ctx := context.Background()
 	s := New(persister, log.Logger).ForCluster("default")
 	svc := resource.NewService()
@@ -212,9 +210,8 @@ func TestRead(t *testing.T) {
 }
 
 func TestDelete(t *testing.T) {
-	persister, cleanup, err := util.GetPersister()
+	persister, err := util.GetPersister(t)
 	require.Nil(t, err)
-	defer cleanup()
 	s := New(persister, log.Logger).ForCluster("default")
 	t.Run("deleting an existing object succeeds", func(t *testing.T) {
 		svc := resource.NewService()
@@ -242,9 +239,8 @@ func TestDelete(t *testing.T) {
 	})
 	t.Run("deleting an object with foreign-references fails", func(t *testing.T) {
 		ctx := context.Background()
-		persister, cleanup, err := util.GetPersister()
+		persister, err := util.GetPersister(t)
 		require.Nil(t, err)
-		defer cleanup()
 		s := New(persister, log.Logger).ForCluster("default")
 		svc := resource.NewService()
 		sid := uuid.NewString()
@@ -280,9 +276,8 @@ func TestDelete(t *testing.T) {
 }
 
 func TestUpsert(t *testing.T) {
-	persister, cleanup, err := util.GetPersister()
+	persister, err := util.GetPersister(t)
 	require.Nil(t, err)
-	defer cleanup()
 	s := New(persister, log.Logger).ForCluster("default")
 	ctx := context.Background()
 
@@ -424,9 +419,8 @@ func TestUpsert(t *testing.T) {
 	t.Run("object with foreign references are updated fine",
 		func(t *testing.T) {
 			ctx := context.Background()
-			persister, cleanup, err := util.GetPersister()
+			persister, err := util.GetPersister(t)
 			require.Nil(t, err)
-			defer cleanup()
 			s := New(persister, log.Logger).ForCluster("default")
 			svc := resource.NewService()
 			serviceID := uuid.NewString()
@@ -494,9 +488,8 @@ func TestUpsert(t *testing.T) {
 }
 
 func TestList(t *testing.T) {
-	persister, cleanup, err := util.GetPersister()
+	persister, err := util.GetPersister(t)
 	require.Nil(t, err)
-	defer cleanup()
 	s := New(persister, log.Logger).ForCluster("default")
 	t.Run("list returns zero results without an error", func(t *testing.T) {
 		svcs := resource.NewList(resource.TypeService)
@@ -585,9 +578,8 @@ func TestList(t *testing.T) {
 }
 
 func TestNew(t *testing.T) {
-	persister, cleanup, err := util.GetPersister()
+	persister, err := util.GetPersister(t)
 	require.Nil(t, err)
-	defer cleanup()
 
 	t.Run("panics if no logger is provided", func(t *testing.T) {
 		require.Panics(t, func() {
@@ -607,9 +599,8 @@ func TestNew(t *testing.T) {
 }
 
 func TestForCluster(t *testing.T) {
-	persister, cleanup, err := util.GetPersister()
+	persister, err := util.GetPersister(t)
 	require.Nil(t, err)
-	defer cleanup()
 	s := New(persister, log.Logger)
 	require.Empty(t, s.cluster)
 	// validate clusterRegex is being used
@@ -623,9 +614,8 @@ func TestForCluster(t *testing.T) {
 }
 
 func TestUpdateEvent(t *testing.T) {
-	persister, cleanup, err := util.GetPersister()
+	persister, err := util.GetPersister(t)
 	require.Nil(t, err)
-	defer cleanup()
 	s := New(persister, log.Logger).ForCluster("default")
 	ctx := context.Background()
 	t.Run("empty cluster has no update event", func(t *testing.T) {
@@ -726,9 +716,8 @@ func TestUpdateEvent(t *testing.T) {
 }
 
 func TestUpdateEventForNode(t *testing.T) {
-	persister, cleanup, err := util.GetPersister()
+	persister, err := util.GetPersister(t)
 	require.Nil(t, err)
-	defer cleanup()
 	s := New(persister, log.Logger).ForCluster("default")
 	ctx := context.Background()
 	t.Run("creating node doesn't create an update event", func(t *testing.T) {
@@ -786,9 +775,8 @@ func TestUpdateEventForNode(t *testing.T) {
 func TestStoredValue(t *testing.T) {
 	t.Run("stored value is a protobuf aware JSON", func(t *testing.T) {
 		ctx := context.Background()
-		persister, cleanup, err := util.GetPersister()
+		persister, err := util.GetPersister(t)
 		require.Nil(t, err)
-		defer cleanup()
 		s := New(persister, log.Logger).ForCluster("default")
 		route := resource.NewRoute()
 		id := uuid.NewString()
@@ -815,9 +803,8 @@ func TestStoredValue(t *testing.T) {
 }
 
 func TestPagination(t *testing.T) {
-	persister, cleanup, err := util.GetPersister()
+	persister, err := util.GetPersister(t)
 	require.Nil(t, err)
-	defer cleanup()
 	store := New(persister, log.Logger).ForCluster("default")
 	ctx := context.Background()
 	// Create 10 services and perform the pagination
@@ -952,9 +939,8 @@ func json(value string) []byte {
 }
 
 func TestFullListPaging(t *testing.T) {
-	p, cleanup, err := util.GetPersister()
+	p, err := util.GetPersister(t)
 	require.Nil(t, err)
-	defer cleanup()
 	t.Run("we retrieve full list despite default pagination", func(t *testing.T) {
 		ctx := context.Background()
 		tx, err := p.Tx(ctx)

@@ -19,9 +19,8 @@ import (
 
 func TestRelayStatusServiceUpdate(t *testing.T) {
 	ctx := context.Background()
-	persister, cleanup, err := util.GetPersister()
+	persister, err := util.GetPersister(t)
 	require.Nil(t, err)
-	defer cleanup()
 	db := store.New(persister, log.Logger).ForCluster("default")
 	opts := StatusServiceOpts{
 		StoreLoader: serverUtil.DefaultStoreLoader{Store: db},
@@ -41,7 +40,7 @@ func TestRelayStatusServiceUpdate(t *testing.T) {
 
 	t.Run("updates a given status", func(t *testing.T) {
 		defer func() {
-			util.CleanDB()
+			util.CleanDB(t)
 		}()
 		ctx, cancel := context.WithCancel(ctx)
 		defer cancel()
@@ -73,7 +72,7 @@ func TestRelayStatusServiceUpdate(t *testing.T) {
 	})
 	t.Run("update current upserts status for an existing reference", func(t *testing.T) {
 		defer func() {
-			util.CleanDB()
+			util.CleanDB(t)
 		}()
 		ctx, cancel := context.WithCancel(ctx)
 		defer cancel()
@@ -208,9 +207,8 @@ func TestRelayStatusServiceUpdate(t *testing.T) {
 
 func TestRelayStatusServiceClear(t *testing.T) {
 	ctx := context.Background()
-	persister, cleanup, err := util.GetPersister()
+	persister, err := util.GetPersister(t)
 	require.Nil(t, err)
-	defer cleanup()
 	db := store.New(persister, log.Logger).ForCluster("default")
 	opts := StatusServiceOpts{
 		StoreLoader: serverUtil.DefaultStoreLoader{Store: db},

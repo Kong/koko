@@ -19,9 +19,8 @@ import (
 )
 
 func TestEventService(t *testing.T) {
-	persister, cleanup, err := util.GetPersister()
+	persister, err := util.GetPersister(t)
 	require.Nil(t, err)
-	defer cleanup()
 	store := store.New(persister, log.Logger).ForCluster("default")
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
