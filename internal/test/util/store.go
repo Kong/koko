@@ -1,6 +1,8 @@
 package util
 
 import (
+	"context"
+	"database/sql"
 	"os"
 
 	"github.com/golang-migrate/migrate/v4"
@@ -31,32 +33,41 @@ func CleanDB() error {
 	return err
 }
 
+// cache DB client for tests.
+var dbClient *sql.DB
+
 func GetPersister() (persistence.Persister, func(), error) {
+	var err error
 	dbConfig := testConfig
 	dialect := os.Getenv("KOKO_TEST_DB")
 	if dialect == "" {
 		dialect = "sqlite3"
 	}
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	switch dialect {
 	case "sqlite3":
-		dbClient, err := sqlite.NewSQLClient(dbConfig.SQLite)
-		if err != nil {
-			return nil, nil, err
+		if dbClient == nil {
+			dbClient, err = sqlite.NewSQLClient(dbConfig.SQLite)
+			if err != nil {
+				return nil, nil, err
+			}
 		}
 		// store may not exist always so ignore the error
 		// TODO(hbagdi): add "IF exists" clause
-		_, _ = dbClient.Exec("delete from store;")
+		_, _ = dbClient.ExecContext(ctx, "delete from store;")
 
 		dbConfig.Dialect = db.DialectSQLite3
 	case "postgres":
-		dbClient, err := postgres.NewSQLClient(dbConfig.Postgres)
-		if err != nil {
-			return nil, nil, err
+		if dbClient == nil {
+			dbClient, err = postgres.NewSQLClient(dbConfig.Postgres)
+			if err != nil {
+				return nil, nil, err
+			}
 		}
 		// store may not exist always so ignore the error
 		// TODO(hbagdi): add "IF exists" clause
-		_, _ = dbClient.Exec("truncate table store;")
-
+		_, _ = dbClient.ExecContext(ctx, "truncate table store;")
 		dbConfig.Dialect = db.DialectPostgres
 	}
 
