@@ -265,10 +265,11 @@ func TestRoute_Validate(t *testing.T) {
 					Field: "protocols[0]",
 					Messages: []string{
 						`value must be one of "http", "https", "grpc", ` +
-							`"grpcs", "tcp", "udp", "tls"`,
+							`"grpcs", "tcp", "udp", "tls", "tls_passthrough"`,
 						"must contain only one subset [ http https ]",
 						"must contain only one subset [ tcp udp tls ]",
 						"must contain only one subset [ grpc grpcs ]",
+						"must contain only one subset [ tls_passthrough ]",
 					},
 				},
 			},
@@ -571,7 +572,7 @@ func TestRoute_Validate(t *testing.T) {
 					Type: model.ErrorType_ERROR_TYPE_ENTITY,
 					Messages: []string{
 						"'snis' can be set only when protocols has one of" +
-							" 'https', 'grpcs' or 'tls'",
+							" 'https', 'grpcs', 'tls' or 'tls_passthrough'",
 					},
 				},
 			},
@@ -596,7 +597,7 @@ func TestRoute_Validate(t *testing.T) {
 					Type: model.ErrorType_ERROR_TYPE_ENTITY,
 					Messages: []string{
 						"'snis' can be set only when protocols has one of" +
-							" 'https', 'grpcs' or 'tls'",
+							" 'https', 'grpcs', 'tls' or 'tls_passthrough'",
 					},
 				},
 			},
@@ -621,7 +622,7 @@ func TestRoute_Validate(t *testing.T) {
 					Type: model.ErrorType_ERROR_TYPE_ENTITY,
 					Messages: []string{
 						"'snis' can be set only when protocols has one of" +
-							" 'https', 'grpcs' or 'tls'",
+							" 'https', 'grpcs', 'tls' or 'tls_passthrough'",
 					},
 				},
 			},
@@ -703,7 +704,7 @@ func TestRoute_Validate(t *testing.T) {
 				{
 					Type: model.ErrorType_ERROR_TYPE_ENTITY,
 					Messages: []string{
-						"when protocol has 'tcp', 'tls' or 'udp', " +
+						"when protocol has 'tcp', 'tls', 'tls_passthrough' or 'udp', " +
 							"'methods', 'hosts', 'paths', 'headers' cannot be set",
 					},
 				},
@@ -732,7 +733,7 @@ func TestRoute_Validate(t *testing.T) {
 				{
 					Type: model.ErrorType_ERROR_TYPE_ENTITY,
 					Messages: []string{
-						"when protocol has 'tcp', 'tls' or 'udp', " +
+						"when protocol has 'tcp', 'tls', 'tls_passthrough' or 'udp', " +
 							"'methods', 'hosts', 'paths', 'headers' cannot be set",
 					},
 				},
@@ -763,7 +764,7 @@ func TestRoute_Validate(t *testing.T) {
 				{
 					Type: model.ErrorType_ERROR_TYPE_ENTITY,
 					Messages: []string{
-						"when protocol has 'tcp', 'tls' or 'udp', " +
+						"when protocol has 'tcp', 'tls', 'tls_passthrough' or 'udp', " +
 							"'methods', 'hosts', 'paths', 'headers' cannot be set",
 					},
 				},
@@ -792,7 +793,7 @@ func TestRoute_Validate(t *testing.T) {
 				{
 					Type: model.ErrorType_ERROR_TYPE_ENTITY,
 					Messages: []string{
-						"when protocol has 'tcp', 'tls' or 'udp', " +
+						"when protocol has 'tcp', 'tls', 'tls_passthrough' or 'udp', " +
 							"'methods', 'hosts', 'paths', 'headers' cannot be set",
 					},
 				},
@@ -945,6 +946,189 @@ func TestRoute_Validate(t *testing.T) {
 					Messages: []string{
 						"when protocols has 'grpcs', " +
 							"at least one of 'hosts', 'headers', 'paths' or 'snis' must be set",
+					},
+				},
+			},
+		},
+		{
+			name: "protocol has tls_passthrough, but no snis is set",
+			Route: func() Route {
+				r := NewRoute()
+				r.Route.Protocols = []string{
+					typedefs.ProtocolTLSPassthrough,
+				}
+				_ = r.ProcessDefaults()
+				return r
+			},
+			wantErr: true,
+			Errs: []*model.ErrorDetail{
+				{
+					Type: model.ErrorType_ERROR_TYPE_ENTITY,
+					Messages: []string{
+						"when protocols has 'tls_passthrough', 'snis' must be set",
+					},
+				},
+			},
+		},
+		{
+			name: "protocol has tls_passthrough, and snis are set",
+			Route: func() Route {
+				r := NewRoute()
+				r.Route.Protocols = []string{
+					typedefs.ProtocolTLSPassthrough,
+				}
+				r.Route.Snis = []string{"snis"}
+				_ = r.ProcessDefaults()
+				return r
+			},
+		},
+		{
+			name: "snis set but with unsupported protocol",
+			Route: func() Route {
+				r := NewRoute()
+				r.Route.Protocols = []string{
+					typedefs.ProtocolHTTP,
+				}
+				r.Route.Snis = []string{"snis"}
+				r.Route.Methods = []string{"GET"}
+				_ = r.ProcessDefaults()
+				return r
+			},
+			wantErr: true,
+			Errs: []*model.ErrorDetail{
+				{
+					Type: model.ErrorType_ERROR_TYPE_ENTITY,
+					Messages: []string{
+						"'snis' can be set only when protocols has one of" +
+							" 'https', 'grpcs', 'tls' or 'tls_passthrough'",
+					},
+				},
+			},
+		},
+		{
+			name: "snis set with supported protocol",
+			Route: func() Route {
+				r := NewRoute()
+				r.Route.Protocols = []string{
+					typedefs.ProtocolTLSPassthrough,
+				}
+				r.Route.Snis = []string{"snis"}
+				_ = r.ProcessDefaults()
+				return r
+			},
+		},
+		{
+			name: "cannot set methods with tls_passthrough protocol",
+			Route: func() Route {
+				r := NewRoute()
+				r.Route.Protocols = []string{
+					typedefs.ProtocolTLSPassthrough,
+				}
+				r.Route.Methods = []string{"GET"}
+				r.Route.Snis = []string{"snis"}
+				_ = r.ProcessDefaults()
+				return r
+			},
+			wantErr: true,
+			Errs: []*model.ErrorDetail{
+				{
+					Type: model.ErrorType_ERROR_TYPE_ENTITY,
+					Messages: []string{
+						"when protocol has 'tcp', 'tls', 'tls_passthrough' or 'udp', " +
+							"'methods', 'hosts', 'paths', 'headers' cannot be set",
+					},
+				},
+			},
+		}, {
+			name: "setting methods with TLSPassthrough protocol errors",
+			Route: func() Route {
+				r := NewRoute()
+				_ = r.ProcessDefaults()
+				r.Route.Methods = []string{"GET"}
+				r.Route.Protocols = []string{
+					typedefs.ProtocolTLSPassthrough,
+				}
+				r.Route.Snis = []string{"snis"}
+				return r
+			},
+			wantErr: true,
+			Errs: []*model.ErrorDetail{
+				{
+					Type: model.ErrorType_ERROR_TYPE_ENTITY,
+					Messages: []string{
+						"when protocol has 'tcp', 'tls', 'tls_passthrough' or 'udp', " +
+							"'methods', 'hosts', 'paths', 'headers' cannot be set",
+					},
+				},
+			},
+		},
+		{
+			name: "setting paths with TLSPassthrough protocol errors",
+			Route: func() Route {
+				r := NewRoute()
+				_ = r.ProcessDefaults()
+				r.Route.Paths = []string{"/foo"}
+				r.Route.Protocols = []string{
+					typedefs.ProtocolTLSPassthrough,
+				}
+				r.Route.Snis = []string{"snis"}
+				return r
+			},
+			wantErr: true,
+			Errs: []*model.ErrorDetail{
+				{
+					Type: model.ErrorType_ERROR_TYPE_ENTITY,
+					Messages: []string{
+						"when protocol has 'tcp', 'tls', 'tls_passthrough' or 'udp', " +
+							"'methods', 'hosts', 'paths', 'headers' cannot be set",
+					},
+				},
+			},
+		},
+		{
+			name: "setting headers with TLSPassthrough protocol errors",
+			Route: func() Route {
+				r := NewRoute()
+				_ = r.ProcessDefaults()
+				r.Route.Headers = map[string]*model.HeaderValues{
+					"foo": {Values: []string{"bar"}},
+				}
+				r.Route.Protocols = []string{
+					typedefs.ProtocolTLSPassthrough,
+				}
+				r.Route.Snis = []string{"snis"}
+				return r
+			},
+			wantErr: true,
+			Errs: []*model.ErrorDetail{
+				{
+					Type: model.ErrorType_ERROR_TYPE_ENTITY,
+					Messages: []string{
+						"when protocol has 'tcp', 'tls', 'tls_passthrough' or 'udp', " +
+							"'methods', 'hosts', 'paths', 'headers' cannot be set",
+					},
+				},
+			},
+		},
+		{
+			name: "setting hosts with TLSPassthrough protocol errors",
+			Route: func() Route {
+				r := NewRoute()
+				_ = r.ProcessDefaults()
+				r.Route.Hosts = []string{"foo.example.com"}
+				r.Route.Protocols = []string{
+					typedefs.ProtocolTLSPassthrough,
+				}
+				r.Route.Snis = []string{"snis"}
+				return r
+			},
+			wantErr: true,
+			Errs: []*model.ErrorDetail{
+				{
+					Type: model.ErrorType_ERROR_TYPE_ENTITY,
+					Messages: []string{
+						"when protocol has 'tcp', 'tls', 'tls_passthrough' or 'udp', " +
+							"'methods', 'hosts', 'paths', 'headers' cannot be set",
 					},
 				},
 			},
