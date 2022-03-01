@@ -1041,29 +1041,6 @@ func TestRoute_Validate(t *testing.T) {
 			},
 		},
 		{
-			name: "setting methods with TLSPassthrough protocol errors",
-			Route: func() Route {
-				r := NewRoute()
-				_ = r.ProcessDefaults()
-				r.Route.Methods = []string{"GET"}
-				r.Route.Protocols = []string{
-					typedefs.ProtocolTLSPassthrough,
-				}
-				r.Route.Snis = []string{"snis"}
-				return r
-			},
-			wantErr: true,
-			Errs: []*model.ErrorDetail{
-				{
-					Type: model.ErrorType_ERROR_TYPE_ENTITY,
-					Messages: []string{
-						"when protocol has 'tcp', 'tls', 'tls_passthrough' or 'udp', " +
-							"'methods', 'hosts', 'paths', 'headers' cannot be set",
-					},
-				},
-			},
-		},
-		{
 			name: "setting paths with TLSPassthrough protocol errors",
 			Route: func() Route {
 				r := NewRoute()
