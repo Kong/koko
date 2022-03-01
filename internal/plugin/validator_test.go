@@ -284,6 +284,28 @@ func TestValidate(t *testing.T) {
 		err = validator.Validate(p)
 		require.Nil(t, err)
 	})
+	t.Run("aws-lambda plugin errors out when custom_entity_check fails", func(t *testing.T) {
+		var config structpb.Struct
+		configString := `{"proxy_url": "https://my-proxy-server:3128"}`
+		require.Nil(t, json.Unmarshal([]byte(configString), &config))
+		p := &model.Plugin{
+			Name:      "aws-lambda",
+			Protocols: []string{"http", "https"},
+			Enabled:   wrapperspb.Bool(true),
+			Config:    &config,
+		}
+		require.Nil(t, validator.ProcessDefaults(p))
+		err := validator.Validate(p)
+		validationErr, ok := err.(validation.Error)
+		require.True(t, ok)
+		expected := []*model.ErrorDetail{
+			{
+				Type:     model.ErrorType_ERROR_TYPE_ENTITY,
+				Messages: []string{"proxy_url scheme must be http"},
+			},
+		}
+		require.Equal(t, expected, validationErr.Errs)
+	})
 }
 
 type testPluginSchema struct {
