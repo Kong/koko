@@ -198,7 +198,7 @@ func TestPlugin_Validate(t *testing.T) {
 					Field: "protocols[0]",
 					Messages: []string{
 						`value must be one of "http", "https", ` +
-							`"grpc", "grpcs", "tcp", "udp", "tls"`,
+							`"grpc", "grpcs", "tcp", "udp", "tls", "tls_passthrough"`,
 					},
 				},
 			},

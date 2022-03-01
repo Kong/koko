@@ -304,7 +304,7 @@ func TestService_Validate(t *testing.T) {
 					Field: "protocol",
 					Messages: []string{
 						`value must be one of "http", "https", "grpc", ` +
-							`"grpcs", "tcp", "udp", "tls"`,
+							`"grpcs", "tcp", "udp", "tls", "tls_passthrough"`,
 					},
 				},
 			},

@@ -151,6 +151,15 @@ func init() {
 							},
 						},
 					},
+					{
+						Description: "must contain only one subset [ tls_passthrough ]",
+						Items: &generator.Schema{
+							Type: "string",
+							Enum: []interface{}{
+								typedefs.ProtocolTLSPassthrough,
+							},
+						},
+					},
 				},
 			},
 			"methods": {
@@ -258,7 +267,7 @@ func init() {
 		AllOf: []*generator.Schema{
 			{
 				Description: "'snis' can be set only when protocols has one of" +
-					" 'https', 'grpcs' or 'tls'",
+					" 'https', 'grpcs', 'tls' or 'tls_passthrough'",
 				If: &generator.Schema{
 					Required: []string{"snis"},
 				},
@@ -278,6 +287,10 @@ func init() {
 									{
 										Type:  "string",
 										Const: typedefs.ProtocolTLS,
+									},
+									{
+										Type:  "string",
+										Const: typedefs.ProtocolTLSPassthrough,
 									},
 								},
 							},
@@ -390,7 +403,7 @@ func init() {
 				},
 			},
 			{
-				Description: "when protocol has 'tcp', 'tls' or 'udp', " +
+				Description: "when protocol has 'tcp', 'tls', 'tls_passthrough' or 'udp', " +
 					"'methods', 'hosts', 'paths', 'headers' cannot be set",
 				If: &generator.Schema{
 					Required: []string{"protocols"},
@@ -409,6 +422,10 @@ func init() {
 									{
 										Type:  "string",
 										Const: typedefs.ProtocolTLS,
+									},
+									{
+										Type:  "string",
+										Const: typedefs.ProtocolTLSPassthrough,
 									},
 								},
 							},
@@ -547,6 +564,27 @@ func init() {
 						{
 							Required: []string{"paths"},
 						},
+						{
+							Required: []string{"snis"},
+						},
+					},
+				},
+			},
+			{
+				Description: "when protocols has 'tls_passthrough', " +
+					"'snis' must be set",
+				If: &generator.Schema{
+					Required: []string{"protocols"},
+					Properties: map[string]*generator.Schema{
+						"protocols": {
+							Contains: &generator.Schema{
+								Const: typedefs.ProtocolTLSPassthrough,
+							},
+						},
+					},
+				},
+				Then: &generator.Schema{
+					AnyOf: []*generator.Schema{
 						{
 							Required: []string{"snis"},
 						},

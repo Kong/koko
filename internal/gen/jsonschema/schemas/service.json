@@ -78,7 +78,8 @@
         "grpcs",
         "tcp",
         "udp",
-        "tls"
+        "tls",
+        "tls_passthrough"
       ],
       "type": "string"
     },
