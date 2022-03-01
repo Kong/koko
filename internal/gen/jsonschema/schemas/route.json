@@ -155,7 +155,8 @@
           "grpcs",
           "tcp",
           "udp",
-          "tls"
+          "tls",
+          "tls_passthrough"
         ],
         "type": "string"
       },
@@ -191,6 +192,15 @@
             "type": "string"
           },
           "description": "must contain only one subset [ grpc grpcs ]"
+        },
+        {
+          "items": {
+            "enum": [
+              "tls_passthrough"
+            ],
+            "type": "string"
+          },
+          "description": "must contain only one subset [ tls_passthrough ]"
         }
       ]
     },
@@ -291,7 +301,7 @@
   "type": "object",
   "allOf": [
     {
-      "description": "'snis' can be set only when protocols has one of 'https', 'grpcs' or 'tls'",
+      "description": "'snis' can be set only when protocols has one of 'https', 'grpcs', 'tls' or 'tls_passthrough'",
       "if": {
         "required": [
           "snis"
@@ -313,6 +323,10 @@
                 {
                   "type": "string",
                   "const": "tls"
+                },
+                {
+                  "type": "string",
+                  "const": "tls_passthrough"
                 }
               ]
             }
@@ -450,7 +464,7 @@
       }
     },
     {
-      "description": "when protocol has 'tcp', 'tls' or 'udp', 'methods', 'hosts', 'paths', 'headers' cannot be set",
+      "description": "when protocol has 'tcp', 'tls', 'tls_passthrough' or 'udp', 'methods', 'hosts', 'paths', 'headers' cannot be set",
       "if": {
         "required": [
           "protocols"
@@ -470,6 +484,10 @@
                 {
                   "type": "string",
                   "const": "tls"
+                },
+                {
+                  "type": "string",
+                  "const": "tls_passthrough"
                 }
               ]
             }
@@ -647,6 +665,30 @@
               "paths"
             ]
           },
+          {
+            "required": [
+              "snis"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "description": "when protocols has 'tls_passthrough', 'snis' must be set",
+      "if": {
+        "required": [
+          "protocols"
+        ],
+        "properties": {
+          "protocols": {
+            "contains": {
+              "const": "tls_passthrough"
+            }
+          }
+        }
+      },
+      "then": {
+        "anyOf": [
           {
             "required": [
               "snis"

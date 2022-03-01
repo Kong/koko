@@ -59,6 +59,7 @@ var Protocol = &generator.Schema{
 		ProtocolTCP,
 		ProtocolUDP,
 		ProtocolTLS,
+		ProtocolTLSPassthrough,
 	},
 }
 
