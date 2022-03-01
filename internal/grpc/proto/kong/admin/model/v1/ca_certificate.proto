@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+option go_package = "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1;v1";
+
+package kong.admin.model.v1;
+
+import "google/api/field_behavior.proto";
+import "protoc-gen-openapiv2/options/annotations.proto";
+
+message CACertificate {
+    string id = 1;
+    int32 created_at = 2;
+    int32 updated_at = 3;
+    string cert = 4 [(google.api.field_behavior) = REQUIRED,
+        (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "PEM encoded certificate"}];
+    string cert_digest = 5;
+    repeated string tags = 6;
+}
