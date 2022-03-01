@@ -13,21 +13,19 @@ import (
 	"github.com/kong/koko/internal/persistence/sqlite"
 )
 
-var (
-	testConfig = db.Config{
-		SQLite: sqlite.Opts{
-			InMemory: true,
-		},
-		Postgres: postgres.Opts{
-			Hostname: "localhost",
-			Port:     postgres.DefaultPort,
-			User:     "koko",
-			Password: "koko",
-			DBName:   "koko",
-		},
-		Logger: log.Logger,
-	}
-)
+var testConfig = db.Config{
+	SQLite: sqlite.Opts{
+		InMemory: true,
+	},
+	Postgres: postgres.Opts{
+		Hostname: "localhost",
+		Port:     postgres.DefaultPort,
+		User:     "koko",
+		Password: "koko",
+		DBName:   "koko",
+	},
+	Logger: log.Logger,
+}
 
 func CleanDB(t *testing.T) error {
 	_, err := GetPersister(t)
