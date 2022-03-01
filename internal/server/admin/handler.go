@@ -53,14 +53,15 @@ func (c CommonOpts) getDB(ctx context.Context,
 }
 
 type services struct {
-	service     v1.ServiceServiceServer
-	route       v1.RouteServiceServer
-	plugin      v1.PluginServiceServer
-	upstream    v1.UpstreamServiceServer
-	target      v1.TargetServiceServer
-	schemas     v1.SchemasServiceServer
-	certificate v1.CertificateServiceServer
-	consumer    v1.ConsumerServiceServer
+	service       v1.ServiceServiceServer
+	route         v1.RouteServiceServer
+	plugin        v1.PluginServiceServer
+	upstream      v1.UpstreamServiceServer
+	target        v1.TargetServiceServer
+	schemas       v1.SchemasServiceServer
+	certificate   v1.CertificateServiceServer
+	consumer      v1.ConsumerServiceServer
+	caCertificate v1.CACertificateServiceServer
 
 	status v1.StatusServiceServer
 	node   v1.NodeServiceServer
@@ -126,6 +127,13 @@ func buildServices(opts HandlerOpts) services {
 				storeLoader: opts.StoreLoader,
 				logger: opts.Logger.With(zap.String("admin-service",
 					"certificate")),
+			},
+		},
+		caCertificate: &CACertificateService{
+			CommonOpts: CommonOpts{
+				storeLoader: opts.StoreLoader,
+				logger: opts.Logger.With(zap.String("admin-service",
+					"ca_certificate")),
 			},
 		},
 		consumer: &ConsumerService{
@@ -215,6 +223,12 @@ func NewHandler(opts HandlerOpts) (http.Handler, error) {
 		return nil, err
 	}
 
+	err = v1.RegisterCACertificateServiceHandlerServer(context.Background(),
+		mux, services.caCertificate)
+	if err != nil {
+		return nil, err
+	}
+
 	return mux, nil
 }
 
@@ -241,6 +255,7 @@ func NewGRPC(opts HandlerOpts) *grpc.Server {
 	v1.RegisterNodeServiceServer(server, services.node)
 	v1.RegisterStatusServiceServer(server, services.status)
 	v1.RegisterCertificateServiceServer(server, services.certificate)
+	v1.RegisterCACertificateServiceServer(server, services.caCertificate)
 	v1.RegisterConsumerServiceServer(server, services.consumer)
 	return server
 }
