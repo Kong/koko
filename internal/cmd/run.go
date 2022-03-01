@@ -163,6 +163,11 @@ func Run(ctx context.Context, config ServerConfig) error {
 		panic(err.Error())
 	}
 
+	err = loader.Register(&kongConfigWS.KongCACertificateLoader{Client: configClient.CACertificate})
+	if err != nil {
+		panic(err.Error())
+	}
+
 	err = loader.Register(&kongConfigWS.VersionLoader{})
 	if err != nil {
 		panic(err.Error())
@@ -268,13 +273,14 @@ func setupRelayClient() (ws.ConfigClient, error) {
 		return ws.ConfigClient{}, err
 	}
 	return ws.ConfigClient{
-		Service:     v1.NewServiceServiceClient(cc),
-		Route:       v1.NewRouteServiceClient(cc),
-		Plugin:      v1.NewPluginServiceClient(cc),
-		Upstream:    v1.NewUpstreamServiceClient(cc),
-		Target:      v1.NewTargetServiceClient(cc),
-		Consumer:    v1.NewConsumerServiceClient(cc),
-		Certificate: v1.NewCertificateServiceClient(cc),
+		Service:       v1.NewServiceServiceClient(cc),
+		Route:         v1.NewRouteServiceClient(cc),
+		Plugin:        v1.NewPluginServiceClient(cc),
+		Upstream:      v1.NewUpstreamServiceClient(cc),
+		Target:        v1.NewTargetServiceClient(cc),
+		Consumer:      v1.NewConsumerServiceClient(cc),
+		Certificate:   v1.NewCertificateServiceClient(cc),
+		CACertificate: v1.NewCACertificateServiceClient(cc),
 
 		Node: v1.NewNodeServiceClient(cc),
 

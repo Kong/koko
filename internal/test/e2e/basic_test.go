@@ -26,6 +26,26 @@ import (
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
+var caCert = `
+-----BEGIN CERTIFICATE-----
+MIICtjCCAZ6gAwIBAgIJAIZrp1vGJl5qMA0GCSqGSIb3DQEBCwUAMBAxDjAMBgNV
+BAMMBUhlbGxvMB4XDTIyMDMwMTE0NTgzN1oXDTIyMDMzMTE0NTgzN1owEDEOMAwG
+A1UEAwwFSGVsbG8wggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQCoqIjt
+9ng7UWeft0vzOvWZiWYnMlcF1zYEMry8GwgplFrqkAmXz+LL7crUFvOKiYza6PA2
+SCg2td5zecFKmiMmjWdlQ/ODSsLAnMSLRzyqRU7xPdcuXlCiDRrNmqdDOFsATHRd
+8n7TW5JvJ249B3lWlMwHZ1loex8ZDkBGXYGj532P+8hby8RS7L/bOOuVpf/xiFHE
+/hGlUjscTuCUB/UU2NJ1u2DTXg4d2iBuimCIawggxtsEAEn6JSwm1CMyGJQUA/Wf
+3tbcsKw/22JuL+Sj/LKcv7pug4UUWv23egpcQkHdHz2JXlRdl4idbWmg62Id9kAn
+p9vDGJHAvTKWlG4HAgMBAAGjEzARMA8GA1UdEwQIMAYBAf8CAQAwDQYJKoZIhvcN
+AQELBQADggEBAGY3ffbz8ItkIsQerO3Jk2gvPhVMKOlUuhOb288TghvpJ5eXkTy3
+MVsWjcfyvmacUKy2QyJHyuD+mFJ+zTXNLpmSs27uJQHVJrDcMO4JnKF5zqK4IL1v
+4ATLw1/3jT8Fj4aRyomAyWwey0Na8qPMAl96r5VsFHcGJNxOXTrGSq7E9uJVJKq3
+ScI2hombBlYipTe+F66J4dISKnpu3gP2OFQvKX06zfzZrqb7KIjPJrAQC1DmQrsy
+zAcpz/q84Mcu+SXYF7Jk6doUrSZUK35qUNEaI02ewqGgW9Rmld9BgS3e139lfxSa
+RJkz03rqoCPKh7YpJw+3RThdYRfUyp32+q4=
+-----END CERTIFICATE-----
+`
+
 func goodService() *v1.Service {
 	return &v1.Service{
 		Name: "foo",
@@ -369,6 +389,34 @@ func TestCertificateSync(t *testing.T) {
 	util.WaitFunc(t, func() error {
 		err := util.EnsureConfig(expectedConfig)
 		t.Log("configuration mismatch for certificate", err)
+		return err
+	})
+}
+
+func TestCACertificateSync(t *testing.T) {
+	// ensure that certificates can be synced to Kong gateway
+	cleanup := run.Koko(t)
+	defer cleanup()
+
+	certificate := &v1.CACertificate{
+		Id:   uuid.NewString(),
+		Cert: caCert,
+	}
+	c := httpexpect.New(t, "http://localhost:3000")
+	res := c.POST("/v1/ca-certificates").WithJSON(certificate).Expect()
+	res.Status(201)
+
+	dpCleanup := run.KongDP(kong.GetKongConfForShared())
+	defer dpCleanup()
+
+	require.Nil(t, util.WaitForKongPort(t, 8001))
+
+	expectedConfig := &v1.TestingConfig{
+		CaCertificates: []*v1.CACertificate{certificate},
+	}
+	util.WaitFunc(t, func() error {
+		err := util.EnsureConfig(expectedConfig)
+		t.Log("configuration mismatch for CA certificate", err)
 		return err
 	})
 }

@@ -11,6 +11,7 @@ import "kong/admin/model/v1/upstream.proto";
 import "kong/admin/model/v1/target.proto";
 import "kong/admin/model/v1/consumer.proto";
 import "kong/admin/model/v1/certificate.proto";
+import "kong/admin/model/v1/ca_certificate.proto";
 
 message TestingConfig {
   repeated Service services = 1;
@@ -20,4 +21,5 @@ message TestingConfig {
   repeated Target targets = 5;
   repeated Consumer consumers = 6;
   repeated Certificate certificates = 7;
+  repeated CACertificate ca_certificates = 8;
 }
