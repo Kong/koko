@@ -51,7 +51,7 @@ type tlsErrorWriter struct {
 }
 
 func (w *tlsErrorWriter) Write(p []byte) (int, error) {
-	if strings.HasPrefix(string(p), tlsHandshakeError) {
+	if strings.Contains(string(p), tlsHandshakeError) {
 		return len(p), nil
 	}
 	// for non tls handshake error, log it as usual
