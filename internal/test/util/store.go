@@ -2,9 +2,7 @@ package util
 
 import (
 	"context"
-	"database/sql"
 	"os"
-	"sync"
 	"testing"
 
 	"github.com/golang-migrate/migrate/v4"
@@ -29,9 +27,6 @@ var (
 		},
 		Logger: log.Logger,
 	}
-
-	once     sync.Once
-	dbClient *sql.DB
 )
 
 func CleanDB(t *testing.T) error {
@@ -49,26 +44,20 @@ func GetPersister(t *testing.T) (persistence.Persister, error) {
 	defer cancel()
 	switch dialect {
 	case "sqlite3":
-		once.Do(func() {
-			var err error
-			dbClient, err = sqlite.NewSQLClient(dbConfig.SQLite)
-			if err != nil {
-				t.Fatal(err)
-			}
-		})
+		dbClient, err := sqlite.NewSQLClient(dbConfig.SQLite)
+		if err != nil {
+			t.Fatal(err)
+		}
 		// store may not exist always so ignore the error
 		// TODO(hbagdi): add "IF exists" clause
 		_, _ = dbClient.ExecContext(ctx, "delete from store;")
 
 		dbConfig.Dialect = db.DialectSQLite3
 	case "postgres":
-		once.Do(func() {
-			var err error
-			dbClient, err = postgres.NewSQLClient(dbConfig.Postgres)
-			if err != nil {
-				t.Fatal(err)
-			}
-		})
+		dbClient, err := postgres.NewSQLClient(dbConfig.Postgres)
+		if err != nil {
+			t.Fatal(err)
+		}
 		// store may not exist always so ignore the error
 		// TODO(hbagdi): add "IF exists" clause
 		_, _ = dbClient.ExecContext(ctx, "truncate table store;")
@@ -93,6 +82,8 @@ func runMigrations(config db.Config) error {
 	if err != nil {
 		return err
 	}
+	defer m.Close()
+
 	err = m.Up()
 	if err != nil && err != migrate.ErrNoChange {
 		return err
