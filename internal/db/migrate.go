@@ -162,3 +162,7 @@ func (m *Migrator) Up() error {
 func (m *Migrator) Reset() error {
 	return m.m.Down()
 }
+
+func (m *Migrator) Close() (error, error) {
+	return m.m.Close()
+}

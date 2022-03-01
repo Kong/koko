@@ -99,7 +99,7 @@ func Koko(t *testing.T, options ...ServerConfigOpt) func() {
 		require.Nil(t, err)
 	}
 
-	require.Nil(t, util.CleanDB())
+	require.Nil(t, util.CleanDB(t))
 
 	var wg sync.WaitGroup
 	ctx, cancel := context.WithCancel(context.Background())

@@ -23,7 +23,7 @@ import (
 )
 
 func TestCreate(t *testing.T) {
-	persister, err := util.GetPersister()
+	persister, err := util.GetPersister(t)
 	require.Nil(t, err)
 	ctx := context.Background()
 	s := New(persister, log.Logger).ForCluster("default")
@@ -128,7 +128,7 @@ func TestCreate(t *testing.T) {
 }
 
 func TestRead(t *testing.T) {
-	persister, err := util.GetPersister()
+	persister, err := util.GetPersister(t)
 	require.Nil(t, err)
 	ctx := context.Background()
 	s := New(persister, log.Logger).ForCluster("default")
@@ -210,7 +210,7 @@ func TestRead(t *testing.T) {
 }
 
 func TestDelete(t *testing.T) {
-	persister, err := util.GetPersister()
+	persister, err := util.GetPersister(t)
 	require.Nil(t, err)
 	s := New(persister, log.Logger).ForCluster("default")
 	t.Run("deleting an existing object succeeds", func(t *testing.T) {
@@ -239,7 +239,7 @@ func TestDelete(t *testing.T) {
 	})
 	t.Run("deleting an object with foreign-references fails", func(t *testing.T) {
 		ctx := context.Background()
-		persister, err := util.GetPersister()
+		persister, err := util.GetPersister(t)
 		require.Nil(t, err)
 		s := New(persister, log.Logger).ForCluster("default")
 		svc := resource.NewService()
@@ -276,7 +276,7 @@ func TestDelete(t *testing.T) {
 }
 
 func TestUpsert(t *testing.T) {
-	persister, err := util.GetPersister()
+	persister, err := util.GetPersister(t)
 	require.Nil(t, err)
 	s := New(persister, log.Logger).ForCluster("default")
 	ctx := context.Background()
@@ -419,7 +419,7 @@ func TestUpsert(t *testing.T) {
 	t.Run("object with foreign references are updated fine",
 		func(t *testing.T) {
 			ctx := context.Background()
-			persister, err := util.GetPersister()
+			persister, err := util.GetPersister(t)
 			require.Nil(t, err)
 			s := New(persister, log.Logger).ForCluster("default")
 			svc := resource.NewService()
@@ -488,7 +488,7 @@ func TestUpsert(t *testing.T) {
 }
 
 func TestList(t *testing.T) {
-	persister, err := util.GetPersister()
+	persister, err := util.GetPersister(t)
 	require.Nil(t, err)
 	s := New(persister, log.Logger).ForCluster("default")
 	t.Run("list returns zero results without an error", func(t *testing.T) {
@@ -578,7 +578,7 @@ func TestList(t *testing.T) {
 }
 
 func TestNew(t *testing.T) {
-	persister, err := util.GetPersister()
+	persister, err := util.GetPersister(t)
 	require.Nil(t, err)
 
 	t.Run("panics if no logger is provided", func(t *testing.T) {
@@ -599,7 +599,7 @@ func TestNew(t *testing.T) {
 }
 
 func TestForCluster(t *testing.T) {
-	persister, err := util.GetPersister()
+	persister, err := util.GetPersister(t)
 	require.Nil(t, err)
 	s := New(persister, log.Logger)
 	require.Empty(t, s.cluster)
@@ -614,7 +614,7 @@ func TestForCluster(t *testing.T) {
 }
 
 func TestUpdateEvent(t *testing.T) {
-	persister, err := util.GetPersister()
+	persister, err := util.GetPersister(t)
 	require.Nil(t, err)
 	s := New(persister, log.Logger).ForCluster("default")
 	ctx := context.Background()
@@ -716,7 +716,7 @@ func TestUpdateEvent(t *testing.T) {
 }
 
 func TestUpdateEventForNode(t *testing.T) {
-	persister, err := util.GetPersister()
+	persister, err := util.GetPersister(t)
 	require.Nil(t, err)
 	s := New(persister, log.Logger).ForCluster("default")
 	ctx := context.Background()
@@ -775,7 +775,7 @@ func TestUpdateEventForNode(t *testing.T) {
 func TestStoredValue(t *testing.T) {
 	t.Run("stored value is a protobuf aware JSON", func(t *testing.T) {
 		ctx := context.Background()
-		persister, err := util.GetPersister()
+		persister, err := util.GetPersister(t)
 		require.Nil(t, err)
 		s := New(persister, log.Logger).ForCluster("default")
 		route := resource.NewRoute()
@@ -803,7 +803,7 @@ func TestStoredValue(t *testing.T) {
 }
 
 func TestPagination(t *testing.T) {
-	persister, err := util.GetPersister()
+	persister, err := util.GetPersister(t)
 	require.Nil(t, err)
 	store := New(persister, log.Logger).ForCluster("default")
 	ctx := context.Background()
@@ -939,7 +939,7 @@ func json(value string) []byte {
 }
 
 func TestFullListPaging(t *testing.T) {
-	p, err := util.GetPersister()
+	p, err := util.GetPersister(t)
 	require.Nil(t, err)
 	t.Run("we retrieve full list despite default pagination", func(t *testing.T) {
 		ctx := context.Background()

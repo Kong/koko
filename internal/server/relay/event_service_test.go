@@ -19,7 +19,7 @@ import (
 )
 
 func TestEventService(t *testing.T) {
-	persister, err := util.GetPersister()
+	persister, err := util.GetPersister(t)
 	require.Nil(t, err)
 	store := store.New(persister, log.Logger).ForCluster("default")
 	ctx, cancel := context.WithCancel(context.Background())

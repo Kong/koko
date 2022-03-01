@@ -33,7 +33,7 @@ func goodNode() *model.Node {
 }
 
 func TestNodeCreateUpsert(t *testing.T) {
-	p, err := util.GetPersister()
+	p, err := util.GetPersister(t)
 	require.Nil(t, err)
 	objectStore := store.New(p, log.Logger)
 
@@ -120,7 +120,7 @@ func TestNodeCreateUpsert(t *testing.T) {
 }
 
 func TestNodeDelete(t *testing.T) {
-	p, err := util.GetPersister()
+	p, err := util.GetPersister(t)
 	require.Nil(t, err)
 	objectStore := store.New(p, log.Logger)
 
@@ -177,7 +177,7 @@ func TestNodeDelete(t *testing.T) {
 }
 
 func TestNodeRead(t *testing.T) {
-	p, err := util.GetPersister()
+	p, err := util.GetPersister(t)
 	require.Nil(t, err)
 	objectStore := store.New(p, log.Logger)
 
@@ -240,7 +240,7 @@ func TestNodeRead(t *testing.T) {
 }
 
 func TestNodeList(t *testing.T) {
-	p, err := util.GetPersister()
+	p, err := util.GetPersister(t)
 	require.Nil(t, err)
 	objectStore := store.New(p, log.Logger)
 
