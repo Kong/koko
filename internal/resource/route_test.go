@@ -1039,7 +1039,8 @@ func TestRoute_Validate(t *testing.T) {
 					},
 				},
 			},
-		}, {
+		},
+		{
 			name: "setting methods with TLSPassthrough protocol errors",
 			Route: func() Route {
 				r := NewRoute()
