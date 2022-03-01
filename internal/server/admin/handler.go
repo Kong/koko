@@ -133,7 +133,7 @@ func buildServices(opts HandlerOpts) services {
 			CommonOpts: CommonOpts{
 				storeLoader: opts.StoreLoader,
 				logger: opts.Logger.With(zap.String("admin-service",
-					"ca_certificate")),
+					"ca-certificate")),
 			},
 		},
 		consumer: &ConsumerService{
