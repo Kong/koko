@@ -2477,11 +2477,7 @@
           "type": "string"
         },
         "name": {
-          "type": "string",
-          "description": "hostname or hostname with wildcard",
-          "required": [
-            "name"
-          ]
+          "type": "string"
         },
         "certificate": {
           "$ref": "#/definitions/kong.admin.model.v1.Certificate"
@@ -2500,11 +2496,7 @@
             "type": "string"
           }
         }
-      },
-      "required": [
-        "certificate",
-        "name"
-      ]
+      }
     },
     "kong.admin.model.v1.Service": {
       "type": "object",

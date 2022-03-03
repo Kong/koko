@@ -5,19 +5,11 @@ option go_package = "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1;
 package kong.admin.model.v1;
 
 import "kong/admin/model/v1/certificate.proto";
-import "google/api/field_behavior.proto";
-import "protoc-gen-openapiv2/options/annotations.proto";
 
 message SNI {
-    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_schema) = {
-      json_schema: {
-        required: ["certificate"]
-      }
-    };
     string id = 1;
-    string name = 2 [(google.api.field_behavior) = REQUIRED,
-      (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "hostname or hostname with wildcard"}];
-    Certificate certificate = 3 [(google.api.field_behavior) = REQUIRED];
+    string name = 2;
+    Certificate certificate = 3;
     int32 created_at = 4;
     int32 updated_at = 5;
     repeated string tags = 6;
