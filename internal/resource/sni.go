@@ -1,6 +1,7 @@
 package resource
 
 import (
+	"errors"
 	"fmt"
 
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
@@ -56,6 +57,9 @@ func (r SNI) ProcessDefaults() error {
 }
 
 func (r SNI) Indexes() []model.Index {
+	if r.SNI.Certificate == nil {
+		panic(errors.New("Certificate can not be nil"))
+	}
 	res := []model.Index{
 		{
 			Name:      "unique-name",
@@ -64,15 +68,13 @@ func (r SNI) Indexes() []model.Index {
 			FieldName: "name",
 		},
 	}
-	if r.SNI.Certificate != nil {
-		res = append(res, model.Index{
-			Name:        "certificate_id",
-			Type:        model.IndexForeign,
-			ForeignType: TypeCertificate,
-			FieldName:   "certificate.id",
-			Value:       r.SNI.Certificate.Id,
-		})
-	}
+	res = append(res, model.Index{
+		Name:        "certificate_id",
+		Type:        model.IndexForeign,
+		ForeignType: TypeCertificate,
+		FieldName:   "certificate.id",
+		Value:       r.SNI.Certificate.Id,
+	})
 	return res
 }
 

@@ -133,11 +133,33 @@ func TestSNI_Validate(t *testing.T) {
 			},
 		},
 		{
+			name: "SNI with an invalid wildcard position returns an error",
+			SNI: func() SNI {
+				res := NewSNI()
+				_ = res.ProcessDefaults()
+				res.SNI.Name = "foo.example.*"
+				res.SNI.Certificate = &v1.Certificate{
+					Id: uuid.NewString(),
+				}
+				return res
+			},
+			wantErr: true,
+			Errs: []*v1.ErrorDetail{
+				{
+					Field: "name",
+					Type:  v1.ErrorType_ERROR_TYPE_FIELD,
+					Messages: []string{
+						"must be a valid hostname with a wildcard prefix '*' or without",
+					},
+				},
+			},
+		},
+		{
 			name: "valid SNI with wildcard hostname returns no errors",
 			SNI: func() SNI {
 				res := NewSNI()
 				_ = res.ProcessDefaults()
-				res.SNI.Name = "*.test.com"
+				res.SNI.Name = "*.example.com"
 				res.SNI.Certificate = &v1.Certificate{
 					Id: uuid.NewString(),
 				}
@@ -150,7 +172,7 @@ func TestSNI_Validate(t *testing.T) {
 			SNI: func() SNI {
 				res := NewSNI()
 				_ = res.ProcessDefaults()
-				res.SNI.Name = "one-two.test.com"
+				res.SNI.Name = "one-two.example.com"
 				res.SNI.Certificate = &v1.Certificate{
 					Id: uuid.NewString(),
 				}
