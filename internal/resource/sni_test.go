@@ -77,7 +77,7 @@ func TestSNI_Validate(t *testing.T) {
 			SNI: func() SNI {
 				res := NewSNI()
 				_ = res.ProcessDefaults()
-				res.SNI.Name = "test.com"
+				res.SNI.Name = "example.com"
 				return res
 			},
 			wantErr: true,
