@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+option go_package = "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1;v1";
+
+package kong.admin.model.v1;
+
+import "kong/admin/model/v1/certificate.proto";
+
+message SNI {
+    string id = 1;
+    string name = 2;
+    Certificate certificate = 3;
+    int32 created_at = 4;
+    int32 updated_at = 5;
+    repeated string tags = 6;
+}

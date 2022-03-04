@@ -1,0 +1,53 @@
+{
+  "required": [
+    "id",
+    "name",
+    "certificate"
+  ],
+  "properties": {
+    "certificate": {
+      "required": [
+        "id"
+      ],
+      "properties": {
+        "id": {
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+          "type": "string",
+          "description": "must be a valid UUID"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "created_at": {
+      "minimum": 1,
+      "type": "integer"
+    },
+    "id": {
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+      "type": "string",
+      "description": "must be a valid UUID"
+    },
+    "name": {
+      "maxLength": 256,
+      "pattern": "^(\\*\\.)?[a-z0-9]([-a-z0-9]*[a-z0-9])?(.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$",
+      "type": "string",
+      "description": "must be a valid hostname with a wildcard prefix '*' or without"
+    },
+    "tags": {
+      "items": {
+        "maxLength": 128,
+        "minLength": 1,
+        "pattern": "^[0-9a-zA-Z.\\-_~]*$",
+        "type": "string"
+      },
+      "maxItems": 8,
+      "type": "array"
+    },
+    "updated_at": {
+      "minimum": 1,
+      "type": "integer"
+    }
+  },
+  "type": "object"
+}

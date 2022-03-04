@@ -14,9 +14,14 @@ const (
 	namePattern       = `^[0-9a-zA-Z.\-_~]*$`
 	maxHostnameLength = 256
 	maxPathLength     = 1024
+	hostnamePattern   = "[a-z0-9]([-a-z0-9]*[a-z0-9])?(.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$"
 
 	HTTPHeaderNamePattern = "^[A-Za-z0-9!#$%&'*+-.^_|~]{1,64}$"
-	HostnamePattern       = "^[a-z0-9]([-a-z0-9]*[a-z0-9])?(.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$"
+)
+
+var (
+	HostnamePattern        = fmt.Sprintf("^%s", hostnamePattern)
+	WilcardHostnamePattern = fmt.Sprintf("^(\\*\\.)?%s", hostnamePattern)
 )
 
 var ID = &generator.Schema{
@@ -68,6 +73,13 @@ var Host = &generator.Schema{
 	Type:        "string",
 	MaxLength:   maxHostnameLength,
 	Pattern:     HostnamePattern,
+}
+
+var WilcardHost = &generator.Schema{
+	Description: "must be a valid hostname with a wildcard prefix '*' or without",
+	Type:        "string",
+	MaxLength:   maxHostnameLength,
+	Pattern:     WilcardHostnamePattern,
 }
 
 var Port = &generator.Schema{

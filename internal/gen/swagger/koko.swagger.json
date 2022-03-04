@@ -33,6 +33,9 @@
       "name": "ServiceService"
     },
     {
+      "name": "SNIService"
+    },
+    {
       "name": "StatusService"
     },
     {
@@ -1433,6 +1436,200 @@
         ]
       }
     },
+    "/v1/snis": {
+      "get": {
+        "operationId": "SNIService_ListSNIs",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/kong.admin.service.v1.ListSNIsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "cluster.id",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "page.size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "page.number",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "tags": [
+          "kong.admin.service.v1.SNIService"
+        ]
+      },
+      "post": {
+        "operationId": "SNIService_CreateSNI",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/kong.admin.service.v1.CreateSNIResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/kong.admin.model.v1.SNI"
+            }
+          },
+          {
+            "name": "cluster.id",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "kong.admin.service.v1.SNIService"
+        ]
+      }
+    },
+    "/v1/snis/{id}": {
+      "get": {
+        "operationId": "SNIService_GetSNI",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/kong.admin.service.v1.GetSNIResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "cluster.id",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "kong.admin.service.v1.SNIService"
+        ]
+      },
+      "delete": {
+        "operationId": "SNIService_DeleteSNI",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/kong.admin.service.v1.DeleteSNIResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "cluster.id",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "kong.admin.service.v1.SNIService"
+        ]
+      }
+    },
+    "/v1/snis/{item.id}": {
+      "put": {
+        "operationId": "SNIService_UpsertSNI",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/kong.admin.service.v1.UpsertSNIResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "item.id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/kong.admin.model.v1.SNI"
+            }
+          },
+          {
+            "name": "cluster.id",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "kong.admin.service.v1.SNIService"
+        ]
+      }
+    },
     "/v1/statuses": {
       "get": {
         "operationId": "StatusService_ListStatuses",
@@ -2505,6 +2702,34 @@
         }
       }
     },
+    "kong.admin.model.v1.SNI": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "certificate": {
+          "$ref": "#/definitions/kong.admin.model.v1.Certificate"
+        },
+        "created_at": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "updated_at": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
     "kong.admin.model.v1.Service": {
       "type": "object",
       "properties": {
@@ -2740,6 +2965,14 @@
         }
       }
     },
+    "kong.admin.service.v1.CreateSNIResponse": {
+      "type": "object",
+      "properties": {
+        "item": {
+          "$ref": "#/definitions/kong.admin.model.v1.SNI"
+        }
+      }
+    },
     "kong.admin.service.v1.CreateServiceResponse": {
       "type": "object",
       "properties": {
@@ -2780,6 +3013,9 @@
       "type": "object"
     },
     "kong.admin.service.v1.DeleteRouteResponse": {
+      "type": "object"
+    },
+    "kong.admin.service.v1.DeleteSNIResponse": {
       "type": "object"
     },
     "kong.admin.service.v1.DeleteServiceResponse": {
@@ -2847,6 +3083,14 @@
       "properties": {
         "item": {
           "$ref": "#/definitions/kong.admin.model.v1.Route"
+        }
+      }
+    },
+    "kong.admin.service.v1.GetSNIResponse": {
+      "type": "object",
+      "properties": {
+        "item": {
+          "$ref": "#/definitions/kong.admin.model.v1.SNI"
         }
       }
     },
@@ -2982,6 +3226,20 @@
         }
       }
     },
+    "kong.admin.service.v1.ListSNIsResponse": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/kong.admin.model.v1.SNI"
+          }
+        },
+        "page": {
+          "$ref": "#/definitions/kong.admin.model.v1.PaginationResponse"
+        }
+      }
+    },
     "kong.admin.service.v1.ListServicesResponse": {
       "type": "object",
       "properties": {
@@ -3083,6 +3341,14 @@
       "properties": {
         "item": {
           "$ref": "#/definitions/kong.admin.model.v1.Route"
+        }
+      }
+    },
+    "kong.admin.service.v1.UpsertSNIResponse": {
+      "type": "object",
+      "properties": {
+        "item": {
+          "$ref": "#/definitions/kong.admin.model.v1.SNI"
         }
       }
     },
