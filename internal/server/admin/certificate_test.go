@@ -163,7 +163,7 @@ func TestCertificateRead(t *testing.T) {
 		c.GET("/v1/certificates/{id}", uuid.NewString()).
 			Expect().Status(http.StatusNotFound)
 	})
-	t.Run("reading with an exisiting certificate by returns 200", func(t *testing.T) {
+	t.Run("reading with an existing certificate id returns 200", func(t *testing.T) {
 		res := c.GET("/v1/certificates/{id}", id).
 			Expect().Status(http.StatusOK)
 		body := res.JSON().Path("$.item").Object()
