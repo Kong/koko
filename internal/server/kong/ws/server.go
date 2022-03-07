@@ -33,6 +33,9 @@ func NewHandler(opts HandlerOpts) (http.Handler, error) {
 	) {
 		w.WriteHeader(http.StatusOK)
 	})
+	mux.Handle("/version-handshake", NegotiationHandler{
+		logger: opts.Logger,
+	})
 
 	return mux, nil
 }
