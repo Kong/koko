@@ -147,7 +147,7 @@ func buildServices(opts HandlerOpts) services {
 		sni: &SNIService{
 			CommonOpts: CommonOpts{
 				storeLoader: opts.StoreLoader,
-				logger: opts.Logger.With(zap.String("sni-service",
+				logger: opts.Logger.With(zap.String("admin-service",
 					"sni")),
 			},
 		},
