@@ -107,12 +107,14 @@ func TestSNIUpsert(t *testing.T) {
 		}).Expect().Status(http.StatusCreated)
 		sniID := res.JSON().Path("$.item.id").String().Raw()
 		res = c.PUT("/v1/snis/{id}", sniID).WithJSON(&v1.SNI{
-			Name: "*.test.example.com",
+			Name: "*.test-up-name.example.com",
 			Certificate: &v1.Certificate{
 				Id: certID,
 			},
 		}).Expect().Status(http.StatusOK)
-		res.JSON().Path("$.item.id").String().Equal(sniID)
+		body := res.JSON().Path("$.item").Object()
+		body.Value("id").String().Equal(sniID)
+		body.Value("name").String().Equal("*.test-up-name.example.com")
 	})
 	t.Run("upsert an SNI without an id fails", func(t *testing.T) {
 		res := c.PUT("/v1/snis/").WithJSON(&v1.SNI{
