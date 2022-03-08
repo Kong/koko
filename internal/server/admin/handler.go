@@ -62,6 +62,7 @@ type services struct {
 	certificate   v1.CertificateServiceServer
 	consumer      v1.ConsumerServiceServer
 	caCertificate v1.CACertificateServiceServer
+	sni           v1.SNIServiceServer
 
 	status v1.StatusServiceServer
 	node   v1.NodeServiceServer
@@ -141,6 +142,13 @@ func buildServices(opts HandlerOpts) services {
 				storeLoader: opts.StoreLoader,
 				logger: opts.Logger.With(zap.String("admin-service",
 					"consumer")),
+			},
+		},
+		sni: &SNIService{
+			CommonOpts: CommonOpts{
+				storeLoader: opts.StoreLoader,
+				logger: opts.Logger.With(zap.String("admin-service",
+					"sni")),
 			},
 		},
 	}
@@ -229,6 +237,12 @@ func NewHandler(opts HandlerOpts) (http.Handler, error) {
 		return nil, err
 	}
 
+	err = v1.RegisterSNIServiceHandlerServer(context.Background(),
+		mux, services.sni)
+	if err != nil {
+		return nil, err
+	}
+
 	return mux, nil
 }
 
@@ -257,5 +271,6 @@ func NewGRPC(opts HandlerOpts) *grpc.Server {
 	v1.RegisterCertificateServiceServer(server, services.certificate)
 	v1.RegisterCACertificateServiceServer(server, services.caCertificate)
 	v1.RegisterConsumerServiceServer(server, services.consumer)
+	v1.RegisterSNIServiceServer(server, services.sni)
 	return server
 }
