@@ -17,6 +17,7 @@ type KongConfig struct {
 	Consumers      []*kong.Consumer      `json:"consumers,omitempty"`
 	Certificates   []*kong.Certificate   `json:"certificates,omitempty"`
 	CACertificates []*kong.CACertificate `json:"ca_certificates,omitempty"`
+	SNIs           []*kong.SNI           `json:"snis,omitempty"`
 }
 
 func EnsureConfig(expectedConfig *model.TestingConfig) error {
@@ -64,6 +65,10 @@ func fetchKongConfig() (KongConfig, error) {
 	if err != nil {
 		return KongConfig{}, fmt.Errorf("fetch CA certificates: %v", err)
 	}
+	snis, err := client.SNIs.ListAll(ctx)
+	if err != nil {
+		return KongConfig{}, fmt.Errorf("fetch SNIs: %v", err)
+	}
 	var allTargets []*kong.Target
 	for _, u := range upstreams {
 		targets, err := client.Targets.ListAll(ctx, u.ID)
@@ -81,6 +86,7 @@ func fetchKongConfig() (KongConfig, error) {
 		Consumers:      consumers,
 		Certificates:   certificates,
 		CACertificates: caCertificates,
+		SNIs:           snis,
 		Targets:        allTargets,
 	}, nil
 }

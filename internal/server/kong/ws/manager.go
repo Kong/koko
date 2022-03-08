@@ -239,6 +239,7 @@ type ConfigClient struct {
 	Consumer      admin.ConsumerServiceClient
 	Certificate   admin.CertificateServiceClient
 	CACertificate admin.CACertificateServiceClient
+	SNI           admin.SNIServiceClient
 
 	Event relay.EventServiceClient
 }

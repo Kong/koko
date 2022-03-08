@@ -6,49 +6,49 @@
   },
   "tags": [
     {
-      "name": "kong.admin.service.v1.MetaService"
+      "name": "MetaService"
     },
     {
-      "name": "kong.admin.service.v1.CACertificateService"
+      "name": "CACertificateService"
     },
     {
-      "name": "kong.admin.service.v1.CertificateService"
+      "name": "CertificateService"
     },
     {
-      "name": "kong.admin.service.v1.ConsumerService"
+      "name": "ConsumerService"
     },
     {
-      "name": "kong.admin.service.v1.NodeService"
+      "name": "NodeService"
     },
     {
-      "name": "kong.admin.service.v1.PluginService"
+      "name": "PluginService"
     },
     {
-      "name": "kong.admin.service.v1.RouteService"
+      "name": "RouteService"
     },
     {
-      "name": "kong.admin.service.v1.SchemasService"
+      "name": "SchemasService"
     },
     {
-      "name": "kong.admin.service.v1.ServiceService"
+      "name": "ServiceService"
     },
     {
-      "name": "kong.admin.service.v1.SNIService"
+      "name": "SNIService"
     },
     {
-      "name": "kong.admin.service.v1.StatusService"
+      "name": "StatusService"
     },
     {
-      "name": "kong.admin.service.v1.TargetService"
+      "name": "TargetService"
     },
     {
-      "name": "kong.admin.service.v1.UpstreamService"
+      "name": "UpstreamService"
     },
     {
-      "name": "kong.relay.service.v1.EventService"
+      "name": "EventService"
     },
     {
-      "name": "kong.relay.service.v1.StatusService"
+      "name": "StatusService"
     }
   ],
   "consumes": [
@@ -119,7 +119,7 @@
         },
         "parameters": [
           {
-            "name": "item",
+            "name": "body",
             "in": "body",
             "required": true,
             "schema": {
@@ -233,40 +233,11 @@
             "type": "string"
           },
           {
-            "name": "item",
+            "name": "body",
             "in": "body",
             "required": true,
             "schema": {
-              "type": "object",
-              "properties": {
-                "created_at": {
-                  "type": "integer",
-                  "format": "int32"
-                },
-                "updated_at": {
-                  "type": "integer",
-                  "format": "int32"
-                },
-                "cert": {
-                  "type": "string",
-                  "description": "PEM encoded certificate",
-                  "required": [
-                    "cert"
-                  ]
-                },
-                "cert_digest": {
-                  "type": "string"
-                },
-                "tags": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
-                }
-              },
-              "required": [
-                "cert"
-              ]
+              "$ref": "#/definitions/kong.admin.model.v1.CACertificate"
             }
           },
           {
@@ -342,7 +313,7 @@
         },
         "parameters": [
           {
-            "name": "item",
+            "name": "body",
             "in": "body",
             "required": true,
             "schema": {
@@ -456,53 +427,11 @@
             "type": "string"
           },
           {
-            "name": "item",
+            "name": "body",
             "in": "body",
             "required": true,
             "schema": {
-              "type": "object",
-              "properties": {
-                "created_at": {
-                  "type": "integer",
-                  "format": "int32"
-                },
-                "updated_at": {
-                  "type": "integer",
-                  "format": "int32"
-                },
-                "cert": {
-                  "type": "string",
-                  "description": "PEM encoded certificate",
-                  "required": [
-                    "cert"
-                  ]
-                },
-                "key": {
-                  "type": "string",
-                  "description": "PEM encoded private key",
-                  "required": [
-                    "key"
-                  ]
-                },
-                "cert_alt": {
-                  "type": "string",
-                  "description": "PEM encoded certificate"
-                },
-                "key_alt": {
-                  "type": "string",
-                  "description": "PEM encoded private key"
-                },
-                "tags": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
-                }
-              },
-              "required": [
-                "cert",
-                "key"
-              ]
+              "$ref": "#/definitions/kong.admin.model.v1.Certificate"
             }
           },
           {
@@ -578,7 +507,7 @@
         },
         "parameters": [
           {
-            "name": "item",
+            "name": "body",
             "in": "body",
             "required": true,
             "schema": {
@@ -692,33 +621,11 @@
             "type": "string"
           },
           {
-            "name": "item",
+            "name": "body",
             "in": "body",
             "required": true,
             "schema": {
-              "type": "object",
-              "properties": {
-                "username": {
-                  "type": "string"
-                },
-                "created_at": {
-                  "type": "integer",
-                  "format": "int32"
-                },
-                "updated_at": {
-                  "type": "integer",
-                  "format": "int32"
-                },
-                "custom_id": {
-                  "type": "string"
-                },
-                "tags": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
-                }
-              }
+              "$ref": "#/definitions/kong.admin.model.v1.Consumer"
             }
           },
           {
@@ -942,7 +849,7 @@
         },
         "parameters": [
           {
-            "name": "item",
+            "name": "body",
             "in": "body",
             "required": true,
             "schema": {
@@ -1056,48 +963,11 @@
             "type": "string"
           },
           {
-            "name": "item",
+            "name": "body",
             "in": "body",
             "required": true,
             "schema": {
-              "type": "object",
-              "properties": {
-                "name": {
-                  "type": "string"
-                },
-                "created_at": {
-                  "type": "integer",
-                  "format": "int32"
-                },
-                "updated_at": {
-                  "type": "integer",
-                  "format": "int32"
-                },
-                "enabled": {
-                  "type": "boolean"
-                },
-                "protocols": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
-                },
-                "tags": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
-                },
-                "service": {
-                  "$ref": "#/definitions/kong.admin.model.v1.Service"
-                },
-                "route": {
-                  "$ref": "#/definitions/kong.admin.model.v1.Route"
-                },
-                "config": {
-                  "type": "object"
-                }
-              }
+              "$ref": "#/definitions/kong.admin.model.v1.Plugin"
             }
           },
           {
@@ -1179,7 +1049,7 @@
         },
         "parameters": [
           {
-            "name": "item",
+            "name": "body",
             "in": "body",
             "required": true,
             "schema": {
@@ -1293,104 +1163,11 @@
             "type": "string"
           },
           {
-            "name": "item",
+            "name": "body",
             "in": "body",
             "required": true,
             "schema": {
-              "type": "object",
-              "properties": {
-                "name": {
-                  "type": "string"
-                },
-                "headers": {
-                  "type": "object",
-                  "additionalProperties": {
-                    "$ref": "#/definitions/kong.admin.model.v1.HeaderValues"
-                  }
-                },
-                "hosts": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
-                },
-                "created_at": {
-                  "type": "integer",
-                  "format": "int32"
-                },
-                "methods": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
-                },
-                "paths": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
-                },
-                "path_handling": {
-                  "type": "string"
-                },
-                "preserve_host": {
-                  "type": "boolean"
-                },
-                "protocols": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
-                },
-                "regex_priority": {
-                  "type": "integer",
-                  "format": "int32"
-                },
-                "strip_path": {
-                  "type": "boolean"
-                },
-                "updated_at": {
-                  "type": "integer",
-                  "format": "int32"
-                },
-                "snis": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
-                },
-                "sources": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/definitions/kong.admin.model.v1.CIDRPort"
-                  }
-                },
-                "destinations": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/definitions/kong.admin.model.v1.CIDRPort"
-                  }
-                },
-                "tags": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
-                },
-                "https_redirect_status_code": {
-                  "type": "integer",
-                  "format": "int32"
-                },
-                "request_buffering": {
-                  "type": "boolean"
-                },
-                "response_buffering": {
-                  "type": "boolean"
-                },
-                "service": {
-                  "$ref": "#/definitions/kong.admin.model.v1.Service"
-                }
-              }
+              "$ref": "#/definitions/kong.admin.model.v1.Route"
             }
           },
           {
@@ -1526,7 +1303,7 @@
         },
         "parameters": [
           {
-            "name": "item",
+            "name": "body",
             "in": "body",
             "required": true,
             "schema": {
@@ -1640,79 +1417,11 @@
             "type": "string"
           },
           {
-            "name": "item",
+            "name": "body",
             "in": "body",
             "required": true,
             "schema": {
-              "type": "object",
-              "properties": {
-                "name": {
-                  "type": "string"
-                },
-                "connect_timeout": {
-                  "type": "integer",
-                  "format": "int32"
-                },
-                "created_at": {
-                  "type": "integer",
-                  "format": "int32"
-                },
-                "host": {
-                  "type": "string"
-                },
-                "path": {
-                  "type": "string"
-                },
-                "port": {
-                  "type": "integer",
-                  "format": "int32"
-                },
-                "protocol": {
-                  "type": "string"
-                },
-                "read_timeout": {
-                  "type": "integer",
-                  "format": "int32"
-                },
-                "retries": {
-                  "type": "integer",
-                  "format": "int32"
-                },
-                "updated_at": {
-                  "type": "integer",
-                  "format": "int32"
-                },
-                "url": {
-                  "type": "string"
-                },
-                "write_timeout": {
-                  "type": "integer",
-                  "format": "int32"
-                },
-                "tags": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
-                },
-                "tls_verify": {
-                  "type": "boolean"
-                },
-                "tls_verify_depth": {
-                  "type": "integer",
-                  "format": "int32"
-                },
-                "ca_certificates": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  },
-                  "title": "Certificate client_certificate = 17;"
-                },
-                "enabled": {
-                  "type": "boolean"
-                }
-              }
+              "$ref": "#/definitions/kong.admin.model.v1.Service"
             }
           },
           {
@@ -1788,7 +1497,7 @@
         },
         "parameters": [
           {
-            "name": "item",
+            "name": "body",
             "in": "body",
             "required": true,
             "schema": {
@@ -1902,33 +1611,11 @@
             "type": "string"
           },
           {
-            "name": "item",
+            "name": "body",
             "in": "body",
             "required": true,
             "schema": {
-              "type": "object",
-              "properties": {
-                "name": {
-                  "type": "string"
-                },
-                "certificate": {
-                  "$ref": "#/definitions/kong.admin.model.v1.Certificate"
-                },
-                "created_at": {
-                  "type": "integer",
-                  "format": "int32"
-                },
-                "updated_at": {
-                  "type": "integer",
-                  "format": "int32"
-                },
-                "tags": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
-                }
-              }
+              "$ref": "#/definitions/kong.admin.model.v1.SNI"
             }
           },
           {
@@ -2136,7 +1823,7 @@
         },
         "parameters": [
           {
-            "name": "item",
+            "name": "body",
             "in": "body",
             "required": true,
             "schema": {
@@ -2250,37 +1937,11 @@
             "type": "string"
           },
           {
-            "name": "item",
+            "name": "body",
             "in": "body",
             "required": true,
             "schema": {
-              "type": "object",
-              "properties": {
-                "target": {
-                  "type": "string"
-                },
-                "weight": {
-                  "type": "integer",
-                  "format": "int32"
-                },
-                "created_at": {
-                  "type": "integer",
-                  "format": "int32"
-                },
-                "updated_at": {
-                  "type": "integer",
-                  "format": "int32"
-                },
-                "tags": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
-                },
-                "upstream": {
-                  "$ref": "#/definitions/kong.admin.model.v1.Upstream"
-                }
-              }
+              "$ref": "#/definitions/kong.admin.model.v1.Target"
             }
           },
           {
@@ -2356,7 +2017,7 @@
         },
         "parameters": [
           {
-            "name": "item",
+            "name": "body",
             "in": "body",
             "required": true,
             "schema": {
@@ -2470,61 +2131,11 @@
             "type": "string"
           },
           {
-            "name": "item",
+            "name": "body",
             "in": "body",
             "required": true,
             "schema": {
-              "type": "object",
-              "properties": {
-                "name": {
-                  "type": "string"
-                },
-                "algorithm": {
-                  "type": "string"
-                },
-                "created_at": {
-                  "type": "integer",
-                  "format": "int32"
-                },
-                "updated_at": {
-                  "type": "integer",
-                  "format": "int32"
-                },
-                "hash_on": {
-                  "type": "string"
-                },
-                "hash_fallback": {
-                  "type": "string"
-                },
-                "hash_on_header": {
-                  "type": "string"
-                },
-                "hash_fallback_header": {
-                  "type": "string"
-                },
-                "hash_on_cookie": {
-                  "type": "string"
-                },
-                "hash_on_cookie_path": {
-                  "type": "string"
-                },
-                "slots": {
-                  "type": "integer",
-                  "format": "int32"
-                },
-                "healthchecks": {
-                  "$ref": "#/definitions/kong.admin.model.v1.Healthchecks"
-                },
-                "tags": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
-                },
-                "host_header": {
-                  "type": "string"
-                }
-              }
+              "$ref": "#/definitions/kong.admin.model.v1.Upstream"
             }
           },
           {
