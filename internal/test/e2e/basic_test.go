@@ -432,7 +432,8 @@ func TestSNISync(t *testing.T) {
 		Key:  string(certs.DefaultSharedKey),
 	}
 	c := httpexpect.New(t, "http://localhost:3000")
-	c.POST("/v1/certificates").WithJSON(certificate).Expect().Status(201)
+	res := c.POST("/v1/certificates").WithJSON(certificate).Expect()
+	res.Status(201)
 
 	sni := &v1.SNI{
 		Id:   uuid.NewString(),
@@ -441,7 +442,8 @@ func TestSNISync(t *testing.T) {
 			Id: certificate.Id,
 		},
 	}
-	c.POST("/v1/snis").WithJSON(sni).Expect().Status(201)
+	res := c.POST("/v1/snis").WithJSON(sni).Expect()
+	res.Status(201)
 
 	dpCleanup := run.KongDP(kong.GetKongConfForShared())
 	defer dpCleanup()
