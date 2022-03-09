@@ -436,7 +436,7 @@ func TestSNISync(t *testing.T) {
 
 	sni := &v1.SNI{
 		Id:   uuid.NewString(),
-		Name: "*.example.com",
+		Name: "test-one.example.com",
 		Certificate: &v1.Certificate{
 			Id: certificate.Id,
 		},
@@ -449,7 +449,8 @@ func TestSNISync(t *testing.T) {
 	require.Nil(t, util.WaitForKongPort(t, 8001))
 
 	expectedConfig := &v1.TestingConfig{
-		Snis: []*v1.SNI{sni},
+		Certificate: []*v1.Certificate{certificate},
+		Snis:        []*v1.SNI{sni},
 	}
 	util.WaitFunc(t, func() error {
 		err := util.EnsureConfig(expectedConfig)
