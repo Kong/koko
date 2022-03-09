@@ -442,7 +442,7 @@ func TestSNISync(t *testing.T) {
 			Id: certificate.Id,
 		},
 	}
-	res := c.POST("/v1/snis").WithJSON(sni).Expect()
+	res = c.POST("/v1/snis").WithJSON(sni).Expect()
 	res.Status(201)
 
 	dpCleanup := run.KongDP(kong.GetKongConfForShared())
