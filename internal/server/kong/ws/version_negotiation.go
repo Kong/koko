@@ -6,7 +6,6 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/google/uuid"
 	"github.com/santhosh-tekuri/jsonschema/v5"
 	"go.uber.org/zap"
 )
@@ -56,6 +55,7 @@ func (h NegotiationHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	h.logger.Debug("decoded request", zap.Any("req", req))
 
 	resp := negotiateServices(req)
+	resp.Node.ID = m.Cluster.Get()
 	negVers := negotiatedVersions{}
 	for _, serv := range resp.ServicesAccepted {
 		negVers[serv.Name] = serv.Version
@@ -212,7 +212,6 @@ type versionResponse struct {
 
 func negotiateServices(req versionRequest) versionResponse {
 	resp := versionResponse{
-		Node:             versionNode{ID: uuid.New().String()},
 		ServicesAccepted: []versionServiceAccepted{},
 		ServicesRejected: []versionServiceRejected{},
 	}

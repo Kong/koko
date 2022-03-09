@@ -57,7 +57,7 @@ func Test_acceptVersion(t *testing.T) {
 type dummyAuthenticator struct{}
 
 func (dummyAuthenticator) Authenticate(r *http.Request) (*Manager, error) {
-	return NewManager(ManagerOpts{}), nil
+	return NewManager(ManagerOpts{Cluster: DefaultCluster{}}), nil
 }
 
 func dummyNegotiationHandler() NegotiationHandler {
