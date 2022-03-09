@@ -37,12 +37,13 @@ func truncateHash(s32 string) (sum, error) {
 }
 
 type Node struct {
-	ID       string
-	Version  string
-	Hostname string
-	conn     *websocket.Conn
-	logger   *zap.Logger
-	hash     sum
+	ID          string
+	Version     string
+	Hostname    string
+	conn        *websocket.Conn
+	logger      *zap.Logger
+	hash        sum
+	negVersions negotiatedVersions
 }
 
 type ErrConnClosed struct {

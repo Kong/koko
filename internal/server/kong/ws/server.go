@@ -34,7 +34,8 @@ func NewHandler(opts HandlerOpts) (http.Handler, error) {
 		w.WriteHeader(http.StatusOK)
 	})
 	mux.Handle("/version-handshake", NegotiationHandler{
-		logger: opts.Logger,
+		logger:        opts.Logger,
+		authenticator: opts.Authenticator,
 	})
 
 	return mux, nil
@@ -83,14 +84,16 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	queryParams := r.URL.Query()
+	nodeID := queryParams.Get(nodeIDKey)
 	node := Node{
-		ID:       queryParams.Get(nodeIDKey),
+		ID:       nodeID,
 		Hostname: queryParams.Get(nodeHostnameKey),
 		Version:  queryParams.Get(nodeVersionKey),
 		conn:     c,
 		logger: h.logger.With(
 			zap.String("client-ip", c.RemoteAddr().String()),
 		),
+		negVersions: m.popNodeNegotiatedVersions(nodeID),
 	}
 	m.AddNode(node)
 }

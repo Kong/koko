@@ -2,6 +2,7 @@ package ws
 
 import (
 	"encoding/json"
+	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
@@ -9,6 +10,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 )
+
+// Unittesting the individual negotiation function
 
 func Test_rejectUnknownService(t *testing.T) {
 	assert := assert.New(t)
@@ -51,13 +54,26 @@ func Test_acceptVersion(t *testing.T) {
 	assert.NotEmpty(m)
 }
 
+type dummyAuthenticator struct{}
+
+func (dummyAuthenticator) Authenticate(r *http.Request) (*Manager, error) {
+	return NewManager(ManagerOpts{}), nil
+}
+
+func dummyNegotiationHandler() NegotiationHandler {
+	return NegotiationHandler{
+		logger:        zap.NewNop(),
+		authenticator: dummyAuthenticator{},
+	}
+}
+
 func Test_rejectEmptyRequest(t *testing.T) {
 	assert := assert.New(t)
 
 	req := httptest.NewRequest("POST", "/version-handshake", strings.NewReader(""))
 	rr := httptest.NewRecorder()
 
-	NegotiationHandler{logger: zap.NewNop()}.ServeHTTP(rr, req)
+	dummyNegotiationHandler().ServeHTTP(rr, req)
 
 	assert.Equal(400, rr.Code)
 	assert.JSONEq(`{"message": "Invalid request"}`, rr.Body.String())
@@ -70,7 +86,7 @@ func Test_rejectTextRequest(t *testing.T) {
 	req.Header.Add("content-type", "plain/text")
 	rr := httptest.NewRecorder()
 
-	NegotiationHandler{logger: zap.NewNop()}.ServeHTTP(rr, req)
+	dummyNegotiationHandler().ServeHTTP(rr, req)
 
 	assert.Equal(400, rr.Code)
 	assert.JSONEq(`{"message": "Invalid request"}`, rr.Body.String())
@@ -83,7 +99,7 @@ func Test_rejectEmptyJSONRequest(t *testing.T) {
 	req.Header.Add("content-type", "application/json")
 	rr := httptest.NewRecorder()
 
-	NegotiationHandler{logger: zap.NewNop()}.ServeHTTP(rr, req)
+	dummyNegotiationHandler().ServeHTTP(rr, req)
 
 	assert.Equal(400, rr.Code)
 
@@ -91,7 +107,7 @@ func Test_rejectEmptyJSONRequest(t *testing.T) {
 	req.Header.Add("content-type", "application/json")
 	rr = httptest.NewRecorder()
 
-	NegotiationHandler{logger: zap.NewNop()}.ServeHTTP(rr, req)
+	dummyNegotiationHandler().ServeHTTP(rr, req)
 
 	assert.Equal(400, rr.Code)
 }
@@ -109,7 +125,7 @@ func Test_rejectIncompleteRequest(t *testing.T) {
 	req.Header.Add("content-type", "application/json")
 	rr := httptest.NewRecorder()
 
-	NegotiationHandler{logger: zap.NewNop()}.ServeHTTP(rr, req)
+	dummyNegotiationHandler().ServeHTTP(rr, req)
 
 	assert.Equal(400, rr.Code)
 
@@ -123,7 +139,7 @@ func Test_rejectIncompleteRequest(t *testing.T) {
 	req.Header.Add("content-type", "application/json")
 	rr = httptest.NewRecorder()
 
-	NegotiationHandler{logger: zap.NewNop()}.ServeHTTP(rr, req)
+	dummyNegotiationHandler().ServeHTTP(rr, req)
 
 	assert.Equal(400, rr.Code)
 
@@ -138,7 +154,7 @@ func Test_rejectIncompleteRequest(t *testing.T) {
 	req.Header.Add("content-type", "application/json")
 	rr = httptest.NewRecorder()
 
-	NegotiationHandler{logger: zap.NewNop()}.ServeHTTP(rr, req)
+	dummyNegotiationHandler().ServeHTTP(rr, req)
 
 	assert.Equal(400, rr.Code)
 
@@ -153,7 +169,7 @@ func Test_rejectIncompleteRequest(t *testing.T) {
 	req.Header.Add("content-type", "application/json")
 	rr = httptest.NewRecorder()
 
-	NegotiationHandler{logger: zap.NewNop()}.ServeHTTP(rr, req)
+	dummyNegotiationHandler().ServeHTTP(rr, req)
 
 	assert.Equal(400, rr.Code)
 }
@@ -179,7 +195,7 @@ func Test_acceptFullRequest(t *testing.T) {
 	req.Header.Add("content-type", "application/json")
 	rr := httptest.NewRecorder()
 
-	NegotiationHandler{logger: zap.NewNop()}.ServeHTTP(rr, req)
+	dummyNegotiationHandler().ServeHTTP(rr, req)
 
 	assert.Equal(200, rr.Code)
 

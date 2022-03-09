@@ -50,13 +50,14 @@ func NewManager(opts ManagerOpts) *Manager {
 	}
 
 	return &Manager{
-		Cluster:      opts.Cluster,
-		configClient: opts.Client,
-		logger:       opts.Logger,
-		configLoader: opts.DPConfigLoader,
-		payload:      payload,
-		nodes:        &NodeList{},
-		config:       opts.Config,
+		Cluster:         opts.Cluster,
+		configClient:    opts.Client,
+		logger:          opts.Logger,
+		configLoader:    opts.DPConfigLoader,
+		payload:         payload,
+		nodes:           &NodeList{},
+		config:          opts.Config,
+		negotiatedNodes: map[string]negotiatedVersions{},
 	}
 }
 
@@ -81,6 +82,9 @@ type Manager struct {
 
 	latestExpectedHash string
 	hashMu             sync.RWMutex
+
+	negotiatedNodes map[string]negotiatedVersions
+	negMu           sync.RWMutex
 }
 
 func (m *Manager) reqCluster() *model.RequestCluster {
@@ -167,6 +171,21 @@ func (m *Manager) setupPingHandler(node Node) {
 
 		return err
 	})
+}
+
+func (m *Manager) setNodeNegotiatedVersions(nodeID string, nodeVersions negotiatedVersions) {
+	m.negMu.Lock()
+	defer m.negMu.Unlock()
+
+	m.negotiatedNodes[nodeID] = nodeVersions
+}
+
+func (m *Manager) popNodeNegotiatedVersions(nodeID string) negotiatedVersions {
+	m.negMu.RLock()
+	defer m.negMu.RUnlock()
+
+	nodeVersions := m.negotiatedNodes[nodeID]
+	return nodeVersions
 }
 
 func (m *Manager) AddNode(node Node) {

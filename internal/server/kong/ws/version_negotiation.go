@@ -22,14 +22,30 @@ var knownServices = map[string][]struct {
 }
 
 type NegotiationHandler struct {
-	logger *zap.Logger
+	logger        *zap.Logger
+	authenticator Authenticator
 }
+
+type negotiatedVersions map[string]string
 
 func (h NegotiationHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "POST" || r.Header.Get("Content-Type") != "application/json" {
 		http.Error(w, `{"message": "Invalid request"}`, http.StatusBadRequest)
 		return
 	}
+
+	m, err := h.authenticator.Authenticate(r)
+	if err != nil {
+		autherr, ok := err.(ErrAuth)
+		if ok {
+			jsonErr(w, errMessage{Message: autherr.Message}, autherr.HTTPStatus)
+		} else {
+			jsonErr(w, errMessage{Message: "error while authenticating"}, http.StatusInternalServerError)
+			h.logger.With(zap.Error(err)).Error("error while authenticating")
+		}
+		return
+	}
+
 	req, err := readJBody(*r)
 	if err != nil {
 		h.logger.With(zap.Error(err)).Error("bad request")
@@ -40,6 +56,11 @@ func (h NegotiationHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	h.logger.Debug("decoded request", zap.Any("req", req))
 
 	resp := negotiateServices(req)
+	negVers := negotiatedVersions{}
+	for _, serv := range resp.ServicesAccepted {
+		negVers[serv.Name] = serv.Version
+	}
+	m.setNodeNegotiatedVersions(req.Node.ID, negVers)
 
 	jsonbody, err := json.Marshal(resp)
 	if err != nil {
