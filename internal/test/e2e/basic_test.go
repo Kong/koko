@@ -441,7 +441,6 @@ func TestSNISync(t *testing.T) {
 			Id: certificate.Id,
 		},
 	}
-	c = httpexpect.New(t, "http://localhost:3000")
 	c.POST("/v1/snis").WithJSON(sni).Expect().Status(201)
 
 	dpCleanup := run.KongDP(kong.GetKongConfForShared())
