@@ -449,8 +449,8 @@ func TestSNISync(t *testing.T) {
 	require.Nil(t, util.WaitForKongPort(t, 8001))
 
 	expectedConfig := &v1.TestingConfig{
-		Certificate: []*v1.Certificate{certificate},
-		Snis:        []*v1.SNI{sni},
+		Certificates: []*v1.Certificate{certificate},
+		Snis:         []*v1.SNI{sni},
 	}
 	util.WaitFunc(t, func() error {
 		err := util.EnsureConfig(expectedConfig)
