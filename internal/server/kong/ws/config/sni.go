@@ -44,6 +44,7 @@ func (l *KongSNILoader) Mutate(ctx context.Context,
 		if err != nil {
 			return err
 		}
+		flattenForeign(m, "certificate")
 		delete(m, "updated_at")
 		res = append(res, m)
 	}
