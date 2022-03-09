@@ -168,6 +168,11 @@ func Run(ctx context.Context, config ServerConfig) error {
 		panic(err.Error())
 	}
 
+	err = loader.Register(&kongConfigWS.KongSNILoader{Client: configClient.SNI})
+	if err != nil {
+		panic(err.Error())
+	}
+
 	err = loader.Register(&kongConfigWS.VersionLoader{})
 	if err != nil {
 		panic(err.Error())
@@ -281,6 +286,7 @@ func setupRelayClient() (ws.ConfigClient, error) {
 		Consumer:      v1.NewConsumerServiceClient(cc),
 		Certificate:   v1.NewCertificateServiceClient(cc),
 		CACertificate: v1.NewCACertificateServiceClient(cc),
+		SNI:           v1.NewSNIServiceClient(cc),
 
 		Node: v1.NewNodeServiceClient(cc),
 

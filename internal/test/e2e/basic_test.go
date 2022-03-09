@@ -421,6 +421,44 @@ func TestCACertificateSync(t *testing.T) {
 	})
 }
 
+func TestSNISync(t *testing.T) {
+	// ensure that SNIs can be synced to Kong gateway
+	cleanup := run.Koko(t)
+	defer cleanup()
+
+	certificate := &v1.Certificate{
+		Id:   uuid.NewString(),
+		Cert: string(certs.DefaultSharedCert),
+		Key:  string(certs.DefaultSharedKey),
+	}
+	c := httpexpect.New(t, "http://localhost:3000")
+	c.POST("/v1/certificates").WithJSON(certificate).Expect().Status(201)
+
+	sni := &v1.SNI{
+		Id:   uuid.NewString(),
+		Name: "test-one.example.com",
+		Certificate: &v1.Certificate{
+			Id: certificate.Id,
+		},
+	}
+	c.POST("/v1/snis").WithJSON(sni).Expect().Status(201)
+
+	dpCleanup := run.KongDP(kong.GetKongConfForShared())
+	defer dpCleanup()
+
+	require.Nil(t, util.WaitForKongPort(t, 8001))
+
+	expectedConfig := &v1.TestingConfig{
+		Certificates: []*v1.Certificate{certificate},
+		Snis:         []*v1.SNI{sni},
+	}
+	util.WaitFunc(t, func() error {
+		err := util.EnsureConfig(expectedConfig)
+		t.Log("configuration mismatch for SNI", err)
+		return err
+	})
+}
+
 func TestTargetSync(t *testing.T) {
 	// ensure that target can be synced to Kong gateway
 	cleanup := run.Koko(t)
