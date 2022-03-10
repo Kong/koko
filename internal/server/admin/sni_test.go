@@ -183,7 +183,7 @@ func TestSNIDelete(t *testing.T) {
 	}).Expect().Status(http.StatusCreated)
 	sniID := res.JSON().Path("$.item.id").String().Raw()
 	t.Run("deleting an existing SNI succeeds", func(t *testing.T) {
-		c.DELETE("/v1/snis/{id}", sniID).Expect().Status(http.StatusOK)
+		c.DELETE("/v1/snis/{id}", sniID).Expect().Status(http.StatusNoContent)
 	})
 	t.Run("deleting a non-existent SNI fails", func(t *testing.T) {
 		c.DELETE("/v1/snis/{id}", uuid.NewString()).Expect().Status(http.StatusNotFound)

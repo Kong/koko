@@ -84,6 +84,7 @@ func (s *SNIService) DeleteSNI(ctx context.Context, req *v1.DeleteSNIRequest) (*
 		store.DeleteByType(resource.TypeSNI)); err != nil {
 		return nil, s.err(err)
 	}
+	util.SetHeader(ctx, http.StatusNoContent)
 	return &v1.DeleteSNIResponse{}, nil
 }
 
