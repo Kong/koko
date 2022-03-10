@@ -46,7 +46,29 @@ func isPEMEncodedPrivateKey(v interface{}) bool {
 	return err == nil
 }
 
+func isPEMEncodedPublicKey(v interface{}) bool {
+	var block *pem.Block
+	switch v := v.(type) {
+	case []byte:
+		block, _ = pem.Decode(v)
+	case string:
+		block, _ = pem.Decode([]byte(v))
+	default:
+		return false
+	}
+	if block == nil {
+		return false
+	}
+	_, err := x509.ParsePKIXPublicKey(block.Bytes)
+	if err == nil {
+		return true
+	}
+	_, err = x509.ParsePKCS1PublicKey(block.Bytes)
+	return err == nil
+}
+
 func init() {
 	jsonschema.Formats["pem-encoded-cert"] = isPEMEncodedCertificate
 	jsonschema.Formats["pem-encoded-private-key"] = isPEMEncodedPrivateKey
+	jsonschema.Formats["pem-encoded-public-key"] = isPEMEncodedPublicKey
 }
