@@ -26,8 +26,8 @@ require (
 	github.com/tidwall/gjson v1.14.0
 	github.com/yuin/gopher-lua v0.0.0-20210529063254-f4c35e4016d9
 	go.uber.org/zap v1.21.0
-	google.golang.org/genproto v0.0.0-20220302033224-9aa15565e42a
-	google.golang.org/grpc v1.45.0-dev.0.20220209221444-a354b1eec350
+	google.golang.org/genproto v0.0.0-20220314164441-57ef72a4c106
+	google.golang.org/grpc v1.45.0
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.2.0
 	google.golang.org/protobuf v1.27.1
 )
