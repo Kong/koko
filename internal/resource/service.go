@@ -78,7 +78,7 @@ func (r Service) ProcessDefaults() error {
 }
 
 func (r Service) Indexes() []model.Index {
-	return []model.Index{
+	indexes := []model.Index{
 		{
 			Name:      "name",
 			Type:      model.IndexUnique,
@@ -86,6 +86,16 @@ func (r Service) Indexes() []model.Index {
 			FieldName: "name",
 		},
 	}
+	for _, cert := range r.Service.CaCertificates {
+		indexes = append(indexes, model.Index{
+			Name:        "ca_certificate_id",
+			Type:        model.IndexForeign,
+			ForeignType: TypeCACertificate,
+			FieldName:   "ca_certificate.id",
+			Value:       cert,
+		})
+	}
+	return indexes
 }
 
 func init() {

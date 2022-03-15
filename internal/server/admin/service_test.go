@@ -113,12 +113,18 @@ func TestServiceCreate(t *testing.T) {
 	})
 	t.Run("creates a service referencing a not-existing CA cert fails", func(t *testing.T) {
 		service := goodService()
+		service.Protocol = "https"
 		service.Name = "with-cert"
 		service.CaCertificates = []string{"7d0527d0-fabc-426e-8976-d60fdab506de"}
 		res := c.POST("/v1/services").WithJSON(service).Expect()
 		res.Status(http.StatusBadRequest)
 		body := res.JSON().Object()
-		body.ValueEqual("message", "cert not found: 7d0527d0-fabc-426e-8976-d60fdab506de")
+		body.ValueEqual("message", "data constraint error")
+		body.Value("details").Array().Length().Equal(1)
+		err := body.Value("details").Array().Element(0)
+		err.Object().ValueEqual("type", v1.ErrorType_ERROR_TYPE_REFERENCE.
+			String())
+		err.Object().ValueEqual("field", "ca_certificate.id")
 	})
 	t.Run("creates a valid service referencing a CA cert successfully", func(t *testing.T) {
 		// create CA certificate
@@ -237,6 +243,7 @@ func TestServiceUpsert(t *testing.T) {
 	})
 	t.Run("upsert service with not existing CA cert fails", func(t *testing.T) {
 		svc := goodService()
+		svc.Name = "with-cert"
 		svc.Protocol = "https"
 		svc.CaCertificates = []string{"7d0527d0-fabc-426e-8976-d60fdab506de"}
 		res := c.PUT("/v1/services/" + uuid.NewString()).
@@ -244,7 +251,12 @@ func TestServiceUpsert(t *testing.T) {
 			Expect()
 		res.Status(http.StatusBadRequest)
 		body := res.JSON().Object()
-		body.ValueEqual("message", "cert not found: 7d0527d0-fabc-426e-8976-d60fdab506de")
+		body.ValueEqual("message", "data constraint error")
+		body.Value("details").Array().Length().Equal(1)
+		err := body.Value("details").Array().Element(0)
+		err.Object().ValueEqual("type", v1.ErrorType_ERROR_TYPE_REFERENCE.
+			String())
+		err.Object().ValueEqual("field", "ca_certificate.id")
 	})
 	t.Run("upsert a service referencing multiple CA certs successfully", func(t *testing.T) {
 		// create CA certificates

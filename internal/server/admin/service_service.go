@@ -45,9 +45,6 @@ func (s *ServiceService) CreateService(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-	if err := checkCACertReferences(ctx, db, req.Item.CaCertificates); err != nil {
-		return nil, s.err(util.ErrClient{Message: err.Error()})
-	}
 	res := resource.NewService()
 	res.Service = req.Item
 	if err := db.Create(ctx, res); err != nil {
@@ -67,9 +64,6 @@ func (s *ServiceService) UpsertService(ctx context.Context,
 	db, err := s.CommonOpts.getDB(ctx, req.Cluster)
 	if err != nil {
 		return nil, err
-	}
-	if err := checkCACertReferences(ctx, db, req.Item.CaCertificates); err != nil {
-		return nil, s.err(util.ErrClient{Message: err.Error()})
 	}
 	res := resource.NewService()
 	res.Service = req.Item
@@ -136,15 +130,4 @@ func servicesFromObjects(objects []model.Object) []*pbModel.Service {
 		res = append(res, service)
 	}
 	return res
-}
-
-func checkCACertReferences(ctx context.Context, db store.Store, caCertificates []string) error {
-	caCertResource := resource.NewCACertificate()
-	for _, cert := range caCertificates {
-		err := db.Read(ctx, caCertResource, store.GetByID(cert))
-		if err != nil {
-			return fmt.Errorf("cert not found: %s", cert)
-		}
-	}
-	return nil
 }
