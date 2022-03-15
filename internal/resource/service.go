@@ -247,13 +247,6 @@ func init() {
 					},
 				},
 			},
-			{
-				// NYI
-				Description: "ca_certificates are not yet implemented",
-				Not: &generator.Schema{
-					Required: []string{"ca_certificates"},
-				},
-			},
 		},
 	}
 	err = generator.Register(string(TypeService), serviceSchema)

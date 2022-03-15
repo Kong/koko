@@ -111,6 +111,39 @@ func TestServiceCreate(t *testing.T) {
 		body.Value("id").Equal(service.Id)
 		body.Value("name").Equal(service.Name)
 	})
+	t.Run("creates a service referencing a not-existing CA cert fails", func(t *testing.T) {
+		service := goodService()
+		service.Name = "with-cert"
+		service.CaCertificates = []string{"7d0527d0-fabc-426e-8976-d60fdab506de"}
+		res := c.POST("/v1/services").WithJSON(service).Expect()
+		res.Status(http.StatusBadRequest)
+		body := res.JSON().Object()
+		body.ValueEqual("message", "cert not found: 7d0527d0-fabc-426e-8976-d60fdab506de")
+	})
+	t.Run("creates a valid service referencing a CA cert successfully", func(t *testing.T) {
+		// create CA certificate
+		res := c.POST("/v1/ca-certificates").WithJSON(&v1.CACertificate{
+			Cert: goodCertOne,
+		}).Expect()
+		res.Status(http.StatusCreated)
+		res.Header("grpc-metadata-koko-status-code").Empty()
+		body := res.JSON().Path("$.item").Object()
+		body.Value("cert").String().Equal(goodCertOne)
+		caCertID := body.Value("id").String().Raw()
+
+		// create service
+		service := goodService()
+		service.Name = "with-good-cert"
+		service.Protocol = "https"
+		service.CaCertificates = []string{caCertID}
+		res = c.POST("/v1/services").WithJSON(service).Expect()
+		res.Status(201)
+		res.Header("grpc-metadata-koko-status-code").Empty()
+		body = res.JSON().Path("$.item").Object()
+		body.Value("ca_certificates").Array().Length().Equal(1)
+		gotCACertID := body.Value("ca_certificates").Array().Element(0).String().Raw()
+		require.True(t, caCertID == gotCACertID)
+	})
 }
 
 func TestServiceUpsert(t *testing.T) {
@@ -201,6 +234,60 @@ func TestServiceUpsert(t *testing.T) {
 		res.Status(http.StatusBadRequest)
 		body := res.JSON().Object()
 		body.ValueEqual("message", " '' is not a valid uuid")
+	})
+	t.Run("upsert service with not existing CA cert fails", func(t *testing.T) {
+		svc := goodService()
+		svc.Protocol = "https"
+		svc.CaCertificates = []string{"7d0527d0-fabc-426e-8976-d60fdab506de"}
+		res := c.PUT("/v1/services/" + uuid.NewString()).
+			WithJSON(svc).
+			Expect()
+		res.Status(http.StatusBadRequest)
+		body := res.JSON().Object()
+		body.ValueEqual("message", "cert not found: 7d0527d0-fabc-426e-8976-d60fdab506de")
+	})
+	t.Run("upsert a service referencing multiple CA certs successfully", func(t *testing.T) {
+		// create CA certificates
+		res := c.POST("/v1/ca-certificates").WithJSON(&v1.CACertificate{
+			Cert: goodCertOne,
+		}).Expect()
+		res.Status(http.StatusCreated)
+		body := res.JSON().Path("$.item").Object()
+		caCertIDOne := body.Value("id").String().Raw()
+
+		// upsert service
+		service := goodService()
+		service.Name = "with-good-certs"
+		service.Protocol = "https"
+		service.CaCertificates = []string{caCertIDOne}
+		res = c.POST("/v1/services").WithJSON(service).Expect()
+		res.Status(201)
+		res.Header("grpc-metadata-koko-status-code").Empty()
+		body = res.JSON().Path("$.item").Object()
+		svcID := body.Value("id").String().Raw()
+		body.Value("ca_certificates").Array().Length().Equal(1)
+		gotCACertID := body.Value("ca_certificates").Array().Element(0).String().Raw()
+		require.True(t, caCertIDOne == gotCACertID)
+
+		// create new CA cert
+		res = c.POST("/v1/ca-certificates").WithJSON(&v1.CACertificate{
+			Cert: goodCertTwo,
+		}).Expect()
+		res.Status(http.StatusCreated)
+		body = res.JSON().Path("$.item").Object()
+		caCertIDTwo := body.Value("id").String().Raw()
+
+		// upsert service
+		service.CaCertificates = []string{caCertIDOne, caCertIDTwo}
+		res = c.PUT("/v1/services/" + svcID).WithJSON(service).Expect()
+		res.Status(http.StatusOK)
+		res.Header("grpc-metadata-koko-status-code").Empty()
+		body = res.JSON().Path("$.item").Object()
+		body.Value("ca_certificates").Array().Length().Equal(2)
+		gotCACertIDOne := body.Value("ca_certificates").Array().Element(0).String().Raw()
+		gotCACertIDTwo := body.Value("ca_certificates").Array().Element(1).String().Raw()
+		require.True(t, caCertIDOne == gotCACertIDOne)
+		require.True(t, caCertIDTwo == gotCACertIDTwo)
 	})
 }
 

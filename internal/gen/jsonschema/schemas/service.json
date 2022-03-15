@@ -243,14 +243,6 @@
           }
         }
       }
-    },
-    {
-      "not": {
-        "required": [
-          "ca_certificates"
-        ]
-      },
-      "description": "ca_certificates are not yet implemented"
     }
   ]
 }
