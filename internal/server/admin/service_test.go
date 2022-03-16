@@ -115,7 +115,7 @@ func TestServiceCreate(t *testing.T) {
 		service := goodService()
 		service.Protocol = "https"
 		service.Name = "with-cert"
-		service.CaCertificates = []string{"7d0527d0-fabc-426e-8976-d60fdab506de"}
+		service.CaCertificates = []string{uuid.NewString()}
 		res := c.POST("/v1/services").WithJSON(service).Expect()
 		res.Status(http.StatusBadRequest)
 		body := res.JSON().Object()
@@ -124,7 +124,7 @@ func TestServiceCreate(t *testing.T) {
 		err := body.Value("details").Array().Element(0)
 		err.Object().ValueEqual("type", v1.ErrorType_ERROR_TYPE_REFERENCE.
 			String())
-		err.Object().ValueEqual("field", "ca_certificate.id")
+		err.Object().ValueEqual("field", "ca_certificates.id")
 	})
 	t.Run("creates a valid service referencing a CA cert successfully", func(t *testing.T) {
 		// create CA certificate
@@ -245,7 +245,7 @@ func TestServiceUpsert(t *testing.T) {
 		svc := goodService()
 		svc.Name = "with-cert"
 		svc.Protocol = "https"
-		svc.CaCertificates = []string{"7d0527d0-fabc-426e-8976-d60fdab506de"}
+		svc.CaCertificates = []string{uuid.NewString()}
 		res := c.PUT("/v1/services/" + uuid.NewString()).
 			WithJSON(svc).
 			Expect()
@@ -256,7 +256,7 @@ func TestServiceUpsert(t *testing.T) {
 		err := body.Value("details").Array().Element(0)
 		err.Object().ValueEqual("type", v1.ErrorType_ERROR_TYPE_REFERENCE.
 			String())
-		err.Object().ValueEqual("field", "ca_certificate.id")
+		err.Object().ValueEqual("field", "ca_certificates.id")
 	})
 	t.Run("upsert a service referencing multiple CA certs successfully", func(t *testing.T) {
 		// create CA certificates
@@ -329,6 +329,43 @@ func TestServiceDelete(t *testing.T) {
 		res.Status(http.StatusBadRequest)
 		body := res.JSON().Object()
 		body.ValueEqual("message", " 'Not-Valid' is not a valid uuid")
+	})
+	t.Run("delete a CA certificate referenced in a service fails", func(t *testing.T) {
+		// create CA certificates
+		res := c.POST("/v1/ca-certificates").WithJSON(&v1.CACertificate{
+			Cert: goodCertOne,
+		}).Expect()
+		res.Status(http.StatusCreated)
+		body := res.JSON().Path("$.item").Object()
+		caCertID := body.Value("id").String().Raw()
+
+		// upsert service
+		service := goodService()
+		service.Protocol = "https"
+		service.CaCertificates = []string{caCertID}
+		res = c.POST("/v1/services").WithJSON(service).Expect()
+		res.Status(201)
+		res.Header("grpc-metadata-koko-status-code").Empty()
+		body = res.JSON().Path("$.item").Object()
+		body.Value("ca_certificates").Array().Length().Equal(1)
+		gotCACertID := body.Value("ca_certificates").Array().Element(0).String().Raw()
+		require.True(t, caCertID == gotCACertID)
+		svcID := body.Value("id").String().Raw()
+
+		// delete CA certificates
+		res = c.DELETE("/v1/ca-certificates/" + caCertID).Expect()
+		res.Status(http.StatusBadRequest)
+		body = res.JSON().Object()
+		body.ValueEqual("message", "data constraint error")
+		body.Value("details").Array().Length().Equal(1)
+		err := body.Value("details").Array().Element(0)
+		err.Object().ValueEqual("type", v1.ErrorType_ERROR_TYPE_REFERENCE.
+			String())
+		err.Object().Value("messages").Array().Length().Equal(1)
+		gotErrMsg := err.Object().Value("messages").Array().Element(0).Raw()
+		errMsg := fmt.Sprintf(" (type: foreign) constraint failed for value '%s': "+
+			"foreign reference exist: service (id: %s)", caCertID, svcID)
+		require.True(t, gotErrMsg == errMsg)
 	})
 }
 

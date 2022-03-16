@@ -86,13 +86,13 @@ func (r Service) Indexes() []model.Index {
 			FieldName: "name",
 		},
 	}
-	for _, cert := range r.Service.CaCertificates {
+	for _, certID := range r.Service.CaCertificates {
 		indexes = append(indexes, model.Index{
 			Name:        "ca_certificate_id",
 			Type:        model.IndexForeign,
 			ForeignType: TypeCACertificate,
-			FieldName:   "ca_certificate.id",
-			Value:       cert,
+			FieldName:   "ca_certificates.id",
+			Value:       certID,
 		})
 	}
 	return indexes
