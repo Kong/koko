@@ -23,6 +23,7 @@ func goodService() *v1.Service {
 
 func validateGoodService(body *httpexpect.Object) {
 	body.ContainsKey("id")
+	body.NotContainsKey("url")
 	body.ContainsKey("created_at")
 	body.ContainsKey("updated_at")
 	body.ValueEqual("write_timeout", 60000)
@@ -59,6 +60,24 @@ func TestServiceCreate(t *testing.T) {
 		res.Header("grpc-metadata-koko-status-code").Empty()
 		body := res.JSON().Path("$.item").Object()
 		body.Value("enabled").Equal(false)
+	})
+	t.Run("creates a valid service with url set", func(t *testing.T) {
+		service := &v1.Service{
+			Name: "with-url-svc",
+			Url:  "https://example.com:8080/sample/path",
+		}
+		serviceJSON, err := json.Marshal(service)
+		require.Nil(t, err)
+		res := c.POST("/v1/services").WithBytes(serviceJSON).Expect()
+		res.Status(201)
+		res.Header("grpc-metadata-koko-status-code").Empty()
+		body := res.JSON().Path("$.item").Object()
+		body.NotContainsKey("url")
+		body.Value("name").Equal(service.Name)
+		body.Value("protocol").Equal("https")
+		body.Value("host").Equal("example.com")
+		body.Value("port").Equal(8080)
+		body.Value("path").Equal("/sample/path")
 	})
 	t.Run("creating invalid service fails with 400", func(t *testing.T) {
 		svc := &v1.Service{

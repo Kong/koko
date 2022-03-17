@@ -115,6 +115,9 @@
       "minimum": 1,
       "type": "integer"
     },
+    "url": {
+      "type": "string"
+    },
     "write_timeout": {
       "maximum": 2147483646,
       "minimum": 1,
@@ -200,6 +203,11 @@
               }
             ]
           }
+        },
+        "not": {
+          "required": [
+            "url"
+          ]
         }
       },
       "then": {

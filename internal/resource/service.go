@@ -68,6 +68,11 @@ func (r Service) ProcessDefaults() error {
 	if r.Service == nil {
 		return fmt.Errorf("invalid nil resource")
 	}
+	if r.Service.Url != "" {
+		if err := parseURL(r.Service); err != nil {
+			return fmt.Errorf("failed while unpacking URL: %v", err)
+		}
+	}
 	err := mergo.Merge(r.Service, defaultService,
 		mergo.WithTransformers(wrappersPBTransformer{}))
 	if err != nil {
@@ -141,6 +146,9 @@ func init() {
 			"enabled": {
 				Type: "boolean",
 			},
+			"url": {
+				Type: "string",
+			},
 		},
 		AdditionalProperties: &falsy,
 		Required: []string{
@@ -206,6 +214,9 @@ func init() {
 			{
 				Description: "path is required when protocol is http or https",
 				If: &generator.Schema{
+					Not: &generator.Schema{
+						Required: []string{"url"},
+					},
 					Required: []string{"protocol"},
 					Properties: map[string]*generator.Schema{
 						"protocol": {

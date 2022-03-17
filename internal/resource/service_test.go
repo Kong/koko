@@ -64,6 +64,26 @@ func TestService_ProcessDefaults(t *testing.T) {
 			Enabled:        wrapperspb.Bool(false),
 		}, r.Resource())
 	})
+	t.Run("url unpacked correctly", func(t *testing.T) {
+		r := NewService()
+		r.Service.Url = "https://test.org:8080/sample"
+		err := r.ProcessDefaults()
+		require.Nil(t, err)
+		require.True(t, validUUID(r.ID()))
+		// empty out the id and ts for equality comparison
+		r.Service.Id = ""
+		require.Equal(t, &model.Service{
+			Protocol:       "https",
+			Port:           8080,
+			Host:           "test.org",
+			Path:           "/sample",
+			Retries:        5,
+			ReadTimeout:    defaultTimeout,
+			WriteTimeout:   defaultTimeout,
+			ConnectTimeout: defaultTimeout,
+			Enabled:        wrapperspb.Bool(true),
+		}, r.Resource())
+	})
 }
 
 func goodService() Service {
