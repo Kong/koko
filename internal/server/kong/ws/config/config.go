@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"sync"
 )
 
@@ -9,12 +10,29 @@ type Map map[string]interface{}
 type Payload struct {
 	compressed []byte
 	mu         sync.RWMutex
+	vc         VersionCompatibility
 }
 
-func (p *Payload) Payload() []byte {
+type PayloadOpts struct {
+	VersionCompatibilityProcessor VersionCompatibility
+}
+
+func NewPayload(opts PayloadOpts) (*Payload, error) {
+	if opts.VersionCompatibilityProcessor == nil {
+		return nil, fmt.Errorf("opts.VersionCompatibilityProcessor required")
+	}
+
+	return &Payload{
+		vc: opts.VersionCompatibilityProcessor,
+	}, nil
+}
+
+func (p *Payload) Payload(versionStr string) ([]byte, error) {
 	p.mu.RLock()
-	defer p.mu.RUnlock()
-	return p.compressed
+	payload := p.compressed
+	p.mu.RUnlock()
+
+	return p.vc.ProcessConfigTableUpdates(versionStr, payload)
 }
 
 func (p *Payload) UpdateBinary(c []byte) error {

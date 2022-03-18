@@ -27,7 +27,8 @@ type ManagerOpts struct {
 	Logger  *zap.Logger
 	Config  ManagerConfig
 
-	DPConfigLoader config.Loader
+	DPConfigLoader         config.Loader
+	DPVersionCompatibility config.VersionCompatibility
 }
 
 type Cluster interface {
@@ -41,12 +42,19 @@ func (d DefaultCluster) Get() string {
 }
 
 func NewManager(opts ManagerOpts) *Manager {
+	payload, err := config.NewPayload(config.PayloadOpts{
+		VersionCompatibilityProcessor: opts.DPVersionCompatibility,
+	})
+	if err != nil {
+		panic(err)
+	}
+
 	return &Manager{
 		Cluster:      opts.Cluster,
 		configClient: opts.Client,
 		logger:       opts.Logger,
 		configLoader: opts.DPConfigLoader,
-		payload:      &config.Payload{},
+		payload:      payload,
 		nodes:        &NodeList{},
 		config:       opts.Config,
 	}
@@ -215,13 +223,17 @@ func (m *Manager) AddNode(node Node) {
 func (m *Manager) broadcast() {
 	m.broadcastMutex.Lock()
 	defer m.broadcastMutex.Unlock()
-	payload := m.payload.Payload()
 	for _, node := range m.nodes.All() {
+		payload, err := m.payload.Payload(node.Version)
+		if err != nil {
+			m.logger.With(zap.Error(err)).Error("unable to gather payload")
+			return
+		}
 		loggerWithNode := m.logger.With(zap.String("client-ip",
 			node.conn.RemoteAddr().String()))
 		loggerWithNode.Debug("broadcasting to node")
 		// TODO(hbagdi): perf: use websocket.PreparedMessage
-		err := node.write(payload)
+		err = node.write(payload)
 		if err != nil {
 			m.logger.With(zap.Error(err)).Error("broadcast failed")
 			// TODO(hbagdi: remove the node if connection has been closed?

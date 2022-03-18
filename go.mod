@@ -3,6 +3,7 @@ module github.com/kong/koko
 go 1.18
 
 require (
+	github.com/blang/semver/v4 v4.0.0
 	github.com/bufbuild/buf v1.3.0
 	github.com/cenkalti/backoff/v4 v4.1.2
 	github.com/gavv/httpexpect/v2 v2.3.1
@@ -24,6 +25,7 @@ require (
 	github.com/spf13/cobra v1.4.0
 	github.com/stretchr/testify v1.7.1
 	github.com/tidwall/gjson v1.14.0
+	github.com/tidwall/sjson v1.2.4
 	github.com/yuin/gopher-lua v0.0.0-20210529063254-f4c35e4016d9
 	go.uber.org/zap v1.21.0
 	google.golang.org/genproto v0.0.0-20220317150908-0efb43f6373e
@@ -35,7 +37,6 @@ require (
 require (
 	github.com/ajg/form v1.5.1 // indirect
 	github.com/andybalholm/brotli v1.0.4 // indirect
-	github.com/blang/semver/v4 v4.0.0 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.1 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/fatih/structs v1.0.0 // indirect
