@@ -73,20 +73,20 @@ func WaitFor(t *testing.T, port int, method, path, component string,
 }
 
 const (
-	defaultKongHTTPPort      = 8000
-	defaultKongAdminHTTPPort = 8001
+	defaultKongHTTPProxyPort = 8000
+	defaultKongHTTPAdminPort = 8001
 )
 
 func WaitForKong(t *testing.T) error {
-	return WaitForKongPort(t, defaultKongHTTPPort)
+	return WaitForKongPort(t, defaultKongHTTPProxyPort)
 }
 
 func WaitForKongAdminAPI(t *testing.T) error {
 	return WaitFor(t,
-		defaultKongAdminHTTPPort,
+		defaultKongHTTPAdminPort,
 		http.MethodGet,
 		"/",
-		fmt.Sprintf("kong-dp-admin-%d", defaultKongAdminHTTPPort),
+		fmt.Sprintf("kong-dp-admin-%d", defaultKongHTTPAdminPort),
 		http.StatusOK,
 	)
 }
