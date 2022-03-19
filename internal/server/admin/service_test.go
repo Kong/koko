@@ -124,7 +124,7 @@ func TestServiceCreate(t *testing.T) {
 		err := body.Value("details").Array().Element(0)
 		err.Object().ValueEqual("type", v1.ErrorType_ERROR_TYPE_REFERENCE.
 			String())
-		err.Object().ValueEqual("field", "ca_certificates.id")
+		err.Object().ValueEqual("field", "ca_certificates")
 	})
 	t.Run("creates a valid service referencing a CA cert successfully", func(t *testing.T) {
 		// create CA certificate
@@ -256,7 +256,7 @@ func TestServiceUpsert(t *testing.T) {
 		err := body.Value("details").Array().Element(0)
 		err.Object().ValueEqual("type", v1.ErrorType_ERROR_TYPE_REFERENCE.
 			String())
-		err.Object().ValueEqual("field", "ca_certificates.id")
+		err.Object().ValueEqual("field", "ca_certificates")
 	})
 	t.Run("upsert a service referencing multiple CA certs successfully", func(t *testing.T) {
 		// create CA certificates

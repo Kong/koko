@@ -91,7 +91,7 @@ func (r Service) Indexes() []model.Index {
 			Name:        "ca_certificate_id",
 			Type:        model.IndexForeign,
 			ForeignType: TypeCACertificate,
-			FieldName:   "ca_certificates.id",
+			FieldName:   "ca_certificates",
 			Value:       certID,
 		})
 	}
