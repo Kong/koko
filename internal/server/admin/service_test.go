@@ -111,6 +111,45 @@ func TestServiceCreate(t *testing.T) {
 		body.Value("id").Equal(service.Id)
 		body.Value("name").Equal(service.Name)
 	})
+	t.Run("creates a service referencing a not-existing CA cert fails", func(t *testing.T) {
+		service := goodService()
+		service.Protocol = "https"
+		service.Name = "with-cert"
+		service.CaCertificates = []string{uuid.NewString()}
+		res := c.POST("/v1/services").WithJSON(service).Expect()
+		res.Status(http.StatusBadRequest)
+		body := res.JSON().Object()
+		body.ValueEqual("message", "data constraint error")
+		body.Value("details").Array().Length().Equal(1)
+		err := body.Value("details").Array().Element(0)
+		err.Object().ValueEqual("type", v1.ErrorType_ERROR_TYPE_REFERENCE.
+			String())
+		err.Object().ValueEqual("field", "ca_certificates")
+	})
+	t.Run("creates a valid service referencing a CA cert successfully", func(t *testing.T) {
+		// create CA certificate
+		res := c.POST("/v1/ca-certificates").WithJSON(&v1.CACertificate{
+			Cert: goodCertOne,
+		}).Expect()
+		res.Status(http.StatusCreated)
+		res.Header("grpc-metadata-koko-status-code").Empty()
+		body := res.JSON().Path("$.item").Object()
+		body.Value("cert").String().Equal(goodCertOne)
+		caCertID := body.Value("id").String().Raw()
+
+		// create service
+		service := goodService()
+		service.Name = "with-good-cert"
+		service.Protocol = "https"
+		service.CaCertificates = []string{caCertID}
+		res = c.POST("/v1/services").WithJSON(service).Expect()
+		res.Status(201)
+		res.Header("grpc-metadata-koko-status-code").Empty()
+		body = res.JSON().Path("$.item").Object()
+		body.Value("ca_certificates").Array().Length().Equal(1)
+		gotCACertID := body.Value("ca_certificates").Array().Element(0).String().Raw()
+		require.True(t, caCertID == gotCACertID)
+	})
 }
 
 func TestServiceUpsert(t *testing.T) {
@@ -202,6 +241,66 @@ func TestServiceUpsert(t *testing.T) {
 		body := res.JSON().Object()
 		body.ValueEqual("message", " '' is not a valid uuid")
 	})
+	t.Run("upsert service with not existing CA cert fails", func(t *testing.T) {
+		svc := goodService()
+		svc.Name = "with-cert"
+		svc.Protocol = "https"
+		svc.CaCertificates = []string{uuid.NewString()}
+		res := c.PUT("/v1/services/" + uuid.NewString()).
+			WithJSON(svc).
+			Expect()
+		res.Status(http.StatusBadRequest)
+		body := res.JSON().Object()
+		body.ValueEqual("message", "data constraint error")
+		body.Value("details").Array().Length().Equal(1)
+		err := body.Value("details").Array().Element(0)
+		err.Object().ValueEqual("type", v1.ErrorType_ERROR_TYPE_REFERENCE.
+			String())
+		err.Object().ValueEqual("field", "ca_certificates")
+	})
+	t.Run("upsert a service referencing multiple CA certs successfully", func(t *testing.T) {
+		// create CA certificates
+		res := c.POST("/v1/ca-certificates").WithJSON(&v1.CACertificate{
+			Cert: goodCertOne,
+		}).Expect()
+		res.Status(http.StatusCreated)
+		body := res.JSON().Path("$.item").Object()
+		caCertIDOne := body.Value("id").String().Raw()
+
+		// upsert service
+		service := goodService()
+		service.Name = "with-good-certs"
+		service.Protocol = "https"
+		service.CaCertificates = []string{caCertIDOne}
+		res = c.POST("/v1/services").WithJSON(service).Expect()
+		res.Status(201)
+		res.Header("grpc-metadata-koko-status-code").Empty()
+		body = res.JSON().Path("$.item").Object()
+		svcID := body.Value("id").String().Raw()
+		body.Value("ca_certificates").Array().Length().Equal(1)
+		gotCACertID := body.Value("ca_certificates").Array().Element(0).String().Raw()
+		require.True(t, caCertIDOne == gotCACertID)
+
+		// create new CA cert
+		res = c.POST("/v1/ca-certificates").WithJSON(&v1.CACertificate{
+			Cert: goodCertTwo,
+		}).Expect()
+		res.Status(http.StatusCreated)
+		body = res.JSON().Path("$.item").Object()
+		caCertIDTwo := body.Value("id").String().Raw()
+
+		// upsert service
+		service.CaCertificates = []string{caCertIDOne, caCertIDTwo}
+		res = c.PUT("/v1/services/" + svcID).WithJSON(service).Expect()
+		res.Status(http.StatusOK)
+		res.Header("grpc-metadata-koko-status-code").Empty()
+		body = res.JSON().Path("$.item").Object()
+		body.Value("ca_certificates").Array().Length().Equal(2)
+		gotCACertIDOne := body.Value("ca_certificates").Array().Element(0).String().Raw()
+		gotCACertIDTwo := body.Value("ca_certificates").Array().Element(1).String().Raw()
+		require.True(t, caCertIDOne == gotCACertIDOne)
+		require.True(t, caCertIDTwo == gotCACertIDTwo)
+	})
 }
 
 func TestServiceDelete(t *testing.T) {
@@ -230,6 +329,43 @@ func TestServiceDelete(t *testing.T) {
 		res.Status(http.StatusBadRequest)
 		body := res.JSON().Object()
 		body.ValueEqual("message", " 'Not-Valid' is not a valid uuid")
+	})
+	t.Run("delete a CA certificate referenced in a service fails", func(t *testing.T) {
+		// create CA certificates
+		res := c.POST("/v1/ca-certificates").WithJSON(&v1.CACertificate{
+			Cert: goodCertOne,
+		}).Expect()
+		res.Status(http.StatusCreated)
+		body := res.JSON().Path("$.item").Object()
+		caCertID := body.Value("id").String().Raw()
+
+		// upsert service
+		service := goodService()
+		service.Protocol = "https"
+		service.CaCertificates = []string{caCertID}
+		res = c.POST("/v1/services").WithJSON(service).Expect()
+		res.Status(201)
+		res.Header("grpc-metadata-koko-status-code").Empty()
+		body = res.JSON().Path("$.item").Object()
+		body.Value("ca_certificates").Array().Length().Equal(1)
+		gotCACertID := body.Value("ca_certificates").Array().Element(0).String().Raw()
+		require.True(t, caCertID == gotCACertID)
+		svcID := body.Value("id").String().Raw()
+
+		// delete CA certificates
+		res = c.DELETE("/v1/ca-certificates/" + caCertID).Expect()
+		res.Status(http.StatusBadRequest)
+		body = res.JSON().Object()
+		body.ValueEqual("message", "data constraint error")
+		body.Value("details").Array().Length().Equal(1)
+		err := body.Value("details").Array().Element(0)
+		err.Object().ValueEqual("type", v1.ErrorType_ERROR_TYPE_REFERENCE.
+			String())
+		err.Object().Value("messages").Array().Length().Equal(1)
+		gotErrMsg := err.Object().Value("messages").Array().Element(0).Raw()
+		errMsg := fmt.Sprintf(" (type: foreign) constraint failed for value '%s': "+
+			"foreign reference exist: service (id: %s)", caCertID, svcID)
+		require.True(t, gotErrMsg == errMsg)
 	})
 }
 

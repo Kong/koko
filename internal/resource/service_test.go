@@ -398,12 +398,6 @@ func TestService_Validate(t *testing.T) {
 						"must be a valid UUID",
 					},
 				},
-				{
-					Type: model.ErrorType_ERROR_TYPE_ENTITY,
-					Messages: []string{
-						"ca_certificates are not yet implemented",
-					},
-				},
 			},
 		},
 		{
