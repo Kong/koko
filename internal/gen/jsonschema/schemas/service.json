@@ -251,6 +251,14 @@
           }
         }
       }
+    },
+    {
+      "not": {
+        "required": [
+          "url"
+        ]
+      },
+      "description": "url should not be set"
     }
   ]
 }

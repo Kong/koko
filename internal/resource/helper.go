@@ -1,10 +1,12 @@
 package resource
 
 import (
+	"fmt"
 	"net"
 	"net/url"
 	"reflect"
 	"strconv"
+	"strings"
 
 	"github.com/google/uuid"
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
@@ -18,23 +20,37 @@ func defaultID(id *string) {
 }
 
 func parseURL(s *v1.Service) error {
-	u, err := url.Parse(s.Url)
+	svcURL := s.Url
+	s.Url = ""
+	u, err := url.Parse(svcURL)
 	if err != nil {
-		return err
+		return fmt.Errorf("parse url field: %v", err)
+	}
+	if u.Host == "" {
+		return nil
 	}
 	s.Protocol = u.Scheme
-	host, port, err := net.SplitHostPort(u.Host)
-	if err != nil {
-		return err
+	if s.Protocol == "http" {
+		s.Port = 80
+	} else if s.Protocol == "https" {
+		s.Port = 443
 	}
-	intPort, err := strconv.Atoi(port) //nolint:gosec
-	if err != nil {
-		return err
+	host := u.Host
+	if strings.Contains(host, ":") {
+		var portStr string
+		host, portStr, err = net.SplitHostPort(u.Host)
+		if err != nil {
+			return fmt.Errorf("unpack host and port: %v", err)
+		}
+		port, err := strconv.Atoi(portStr) //nolint:gosec
+		if err != nil {
+			return fmt.Errorf("convert port field to int: %v", err)
+		}
+
+		s.Port = int32(port)
 	}
-	s.Port = int32(intPort)
 	s.Host = host
 	s.Path = u.Path
-	s.Url = ""
 	return nil
 }
 

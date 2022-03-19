@@ -268,6 +268,12 @@ func init() {
 					},
 				},
 			},
+			{
+				Description: "url should not be set",
+				Not: &generator.Schema{
+					Required: []string{"url"},
+				},
+			},
 		},
 	}
 	err = generator.Register(string(TypeService), serviceSchema)

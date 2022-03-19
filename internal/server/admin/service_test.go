@@ -69,7 +69,7 @@ func TestServiceCreate(t *testing.T) {
 		serviceJSON, err := json.Marshal(service)
 		require.Nil(t, err)
 		res := c.POST("/v1/services").WithBytes(serviceJSON).Expect()
-		res.Status(201)
+		res.Status(http.StatusCreated)
 		res.Header("grpc-metadata-koko-status-code").Empty()
 		body := res.JSON().Path("$.item").Object()
 		body.NotContainsKey("url")
@@ -78,6 +78,83 @@ func TestServiceCreate(t *testing.T) {
 		body.Value("host").Equal("example.com")
 		body.Value("port").Equal(8080)
 		body.Value("path").Equal("/sample/path")
+	})
+	t.Run("creates a valid service with url without port set", func(t *testing.T) {
+		service := &v1.Service{
+			Name: "with-url-without-port-svc",
+			Url:  "https://foo/bar",
+		}
+		serviceJSON, err := json.Marshal(service)
+		require.Nil(t, err)
+		res := c.POST("/v1/services").WithBytes(serviceJSON).Expect()
+		res.Status(http.StatusCreated)
+		res.Header("grpc-metadata-koko-status-code").Empty()
+		body := res.JSON().Path("$.item").Object()
+		body.NotContainsKey("url")
+		body.Value("name").Equal(service.Name)
+		body.Value("protocol").Equal("https")
+		body.Value("host").Equal("foo")
+		body.Value("port").Equal(443)
+		body.Value("path").Equal("/bar")
+	})
+	t.Run("creates a service with invalid url set fails", func(t *testing.T) {
+		service := &v1.Service{
+			Name: "invalid",
+			Url:  "foo.com",
+		}
+		serviceJSON, err := json.Marshal(service)
+		require.Nil(t, err)
+		res := c.POST("/v1/services").WithBytes(serviceJSON).Expect()
+		res.Status(http.StatusBadRequest)
+		body := res.JSON().Object()
+		body.ValueEqual("message", "validation error")
+		body.Value("details").Array().Length().Equal(1)
+		gotErr := body.Value("details").Array().Element(0)
+		gotErr.Object().ValueEqual("type", v1.ErrorType_ERROR_TYPE_ENTITY.
+			String())
+		gotErr.Object().ValueEqual("messages", []string{
+			"missing properties: 'host'",
+			"path is required when protocol is http or https",
+		})
+	})
+	t.Run("creates a service with invalid protocol fails", func(t *testing.T) {
+		service := &v1.Service{
+			Name: "invalid",
+			Url:  "ftp://foo.com",
+		}
+		serviceJSON, err := json.Marshal(service)
+		require.Nil(t, err)
+		res := c.POST("/v1/services").WithBytes(serviceJSON).Expect()
+		res.Status(http.StatusBadRequest)
+		body := res.JSON().Object()
+		body.ValueEqual("message", "validation error")
+		body.Value("details").Array().Length().Equal(1)
+		gotErr := body.Value("details").Array().Element(0)
+		gotErr.Object().ValueEqual("type", v1.ErrorType_ERROR_TYPE_FIELD.
+			String())
+		gotErr.Object().ValueEqual("messages", []string{
+			`value must be one of "http", "https", "grpc", ` +
+				`"grpcs", "tcp", "udp", "tls", "tls_passthrough"`,
+		})
+	})
+	t.Run("creates a service with url set but missing path fails", func(t *testing.T) {
+		service := &v1.Service{
+			Name: "invalid",
+			Url:  "https://foo",
+		}
+		serviceJSON, err := json.Marshal(service)
+		require.Nil(t, err)
+		res := c.POST("/v1/services").WithBytes(serviceJSON).Expect()
+		res.Status(http.StatusBadRequest)
+		body := res.JSON().Object()
+		body.ValueEqual("message", "validation error")
+		body.Value("details").Array().Length().Equal(1)
+		gotErr := body.Value("details").Array().Element(0)
+		gotErr.Object().ValueEqual("type", v1.ErrorType_ERROR_TYPE_ENTITY.
+			String())
+		gotErr.Object().ValueEqual("messages", []string{
+			"path is required when protocol is http or https",
+		})
 	})
 	t.Run("creating invalid service fails with 400", func(t *testing.T) {
 		svc := &v1.Service{
