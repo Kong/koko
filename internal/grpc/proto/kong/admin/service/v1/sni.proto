@@ -76,7 +76,8 @@ message DeleteSNIResponse{
 
 message ListSNIsRequest{
   model.v1.RequestCluster cluster = 1;
-  model.v1.PaginationRequest page = 2;
+  string certificate_id = 2;
+  model.v1.PaginationRequest page = 3;
 }
 
 message ListSNIsResponse{
