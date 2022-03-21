@@ -137,7 +137,7 @@ func TestServiceCreate(t *testing.T) {
 				`"grpcs", "tcp", "udp", "tls", "tls_passthrough"`,
 		})
 	})
-	t.Run("creates a service with url set but missing path fails", func(t *testing.T) {
+	t.Run("creates a service with url set but missing path successfully", func(t *testing.T) {
 		service := &v1.Service{
 			Name: "invalid",
 			Url:  "https://foo",
@@ -145,16 +145,15 @@ func TestServiceCreate(t *testing.T) {
 		serviceJSON, err := json.Marshal(service)
 		require.Nil(t, err)
 		res := c.POST("/v1/services").WithBytes(serviceJSON).Expect()
-		res.Status(http.StatusBadRequest)
-		body := res.JSON().Object()
-		body.ValueEqual("message", "validation error")
-		body.Value("details").Array().Length().Equal(1)
-		gotErr := body.Value("details").Array().Element(0)
-		gotErr.Object().ValueEqual("type", v1.ErrorType_ERROR_TYPE_ENTITY.
-			String())
-		gotErr.Object().ValueEqual("messages", []string{
-			"path is required when protocol is http or https",
-		})
+		res.Status(http.StatusCreated)
+		res.Header("grpc-metadata-koko-status-code").Empty()
+		body := res.JSON().Path("$.item").Object()
+		body.NotContainsKey("url")
+		body.Value("name").Equal(service.Name)
+		body.Value("protocol").Equal("https")
+		body.Value("host").Equal("foo")
+		body.Value("port").Equal(443)
+		body.Value("path").Equal("/")
 	})
 	t.Run("creating invalid service fails with 400", func(t *testing.T) {
 		svc := &v1.Service{

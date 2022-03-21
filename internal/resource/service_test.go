@@ -538,22 +538,14 @@ func TestService_Validate(t *testing.T) {
 			},
 		},
 		{
-			name: "url unpack with missing path fails",
+			name: "url unpack with missing path successfully",
 			Service: func() Service {
 				s := NewService()
 				s.Service.Url = "https://foo"
 				_ = s.ProcessDefaults()
 				return s
 			},
-			wantErr: true,
-			Errs: []*model.ErrorDetail{
-				{
-					Type: model.ErrorType_ERROR_TYPE_ENTITY,
-					Messages: []string{
-						"path is required when protocol is http or https",
-					},
-				},
-			},
+			wantErr: false,
 		},
 	}
 	for _, tt := range tests {

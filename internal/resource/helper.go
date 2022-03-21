@@ -50,7 +50,13 @@ func parseURL(s *v1.Service) error {
 		s.Port = int32(port)
 	}
 	s.Host = host
-	s.Path = u.Path
+
+	// default to '/' if path is not provided
+	path := u.Path
+	if path == "" {
+		path = "/"
+	}
+	s.Path = path
 	return nil
 }
 

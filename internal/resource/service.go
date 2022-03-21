@@ -214,9 +214,6 @@ func init() {
 			{
 				Description: "path is required when protocol is http or https",
 				If: &generator.Schema{
-					Not: &generator.Schema{
-						Required: []string{"url"},
-					},
 					Required: []string{"protocol"},
 					Properties: map[string]*generator.Schema{
 						"protocol": {
