@@ -163,8 +163,9 @@ func (m *Manager) setupPingHandler(node Node) {
 }
 
 func (m *Manager) AddNode(node Node) {
-	loggerWithNode := m.logger.With(zap.String("client-ip",
-		node.conn.RemoteAddr().String()))
+	loggerWithNode := m.logger.With(
+		zap.String("node-id", node.ID),
+		zap.String("client-ip", node.conn.RemoteAddr().String()))
 	// track each authenticated node
 	m.writeNode(node)
 	// check if node is compatible
