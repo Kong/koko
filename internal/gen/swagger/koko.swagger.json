@@ -1764,6 +1764,12 @@
             "required": false,
             "type": "integer",
             "format": "int32"
+          },
+          {
+            "name": "certificate_id",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [

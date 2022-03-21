@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 
+	"github.com/google/uuid"
 	pb "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/service/v1"
 	"github.com/kong/koko/internal/model"
@@ -93,14 +95,30 @@ func (s *SNIService) ListSNIs(ctx context.Context, req *v1.ListSNIsRequest) (*v1
 	if err != nil {
 		return nil, err
 	}
+
+	certID := strings.TrimSpace(req.CertificateId)
+	listFn := []store.ListOptsFunc{}
+	if len(certID) > 0 {
+		if _, err := uuid.Parse(certID); err != nil {
+			return nil, s.err(util.ErrClient{
+				Message: fmt.Sprintf("certificate_id '%s' is not a UUID", req.CertificateId),
+			})
+		}
+		listFn = append(listFn, store.ListFor(resource.TypeCertificate, certID))
+	}
+
 	list := resource.NewList(resource.TypeSNI)
 	listOptFns, err := listOptsFromReq(req.Page)
 	if err != nil {
 		return nil, s.err(util.ErrClient{Message: err.Error()})
 	}
-	if err := db.List(ctx, list, listOptFns...); err != nil {
+
+	listFn = append(listFn, listOptFns...)
+
+	if err := db.List(ctx, list, listFn...); err != nil {
 		return nil, s.err(err)
 	}
+
 	return &v1.ListSNIsResponse{
 		Items: snisFromObjects(list.GetAll()),
 		Page:  getPaginationResponse(list.GetTotalCount(), list.GetNextPage()),
