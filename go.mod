@@ -11,7 +11,7 @@ require (
 	github.com/golang/protobuf v1.5.2
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/websocket v1.5.0
-	github.com/grpc-ecosystem/grpc-gateway/v2 v2.8.0
+	github.com/grpc-ecosystem/grpc-gateway/v2 v2.9.0
 	github.com/hbagdi/gang v0.1.0
 	github.com/imdario/mergo v0.3.12
 	github.com/jeremywohl/flatten v1.0.1
