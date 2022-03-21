@@ -1752,12 +1752,6 @@
             "type": "string"
           },
           {
-            "name": "certificate_id",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
             "name": "page.size",
             "in": "query",
             "required": false,
@@ -1770,6 +1764,12 @@
             "required": false,
             "type": "integer",
             "format": "int32"
+          },
+          {
+            "name": "certificate_id",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [
