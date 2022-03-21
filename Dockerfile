@@ -1,4 +1,4 @@
-FROM golang:1.17.7 AS build
+FROM golang:1.18 AS build
 
 WORKDIR /koko
 
