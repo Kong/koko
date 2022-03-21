@@ -39,7 +39,8 @@ func (l *KongConfigurationLoader) Register(mutator Mutator) error {
 }
 
 func (l *KongConfigurationLoader) Load(ctx context.Context,
-	clusterID string) ([]byte, error) {
+	clusterID string,
+) ([]byte, error) {
 	var configTable DataPlaneConfig = map[string]interface{}{}
 	for _, m := range l.mutators {
 		err := m.Mutate(ctx, MutatorOpts{ClusterID: clusterID},

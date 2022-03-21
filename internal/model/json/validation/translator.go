@@ -25,7 +25,8 @@ func (t ErrorTranslator) result() Error {
 }
 
 func (t ErrorTranslator) addErr(field string, errorType model.ErrorType,
-	message string) {
+	message string,
+) {
 	err, ok := t.errs[field]
 	if !ok {
 		err = &model.ErrorDetail{
@@ -43,7 +44,8 @@ func (t ErrorTranslator) addErr(field string, errorType model.ErrorType,
 }
 
 func (t ErrorTranslator) renderErrs(schemaErr jsonschema.Detailed,
-	schema *jsonschema.Schema) {
+	schema *jsonschema.Schema,
+) {
 	ok := t.getErr(schemaErr, schema)
 	if ok {
 		return
@@ -85,13 +87,15 @@ func pretty(input string) string {
 }
 
 func (t ErrorTranslator) getErr(schemaErr jsonschema.Detailed,
-	schema *jsonschema.Schema) bool {
+	schema *jsonschema.Schema,
+) bool {
 	var (
 		ok    bool
 		field = schemaErr.InstanceLocation
 	)
 	walk(schemaErr.KeywordLocation, schema, func(schema *jsonschema.Schema,
-		hint string) bool {
+		hint string,
+	) bool {
 		var message string
 		switch hint {
 		case "properties":
@@ -163,7 +167,8 @@ func (t ErrorTranslator) getErr(schemaErr jsonschema.Detailed,
 }
 
 func walk(location string, schema *jsonschema.Schema,
-	fn func(*jsonschema.Schema, string) bool) {
+	fn func(*jsonschema.Schema, string) bool,
+) {
 	if location == "" {
 		return
 	}

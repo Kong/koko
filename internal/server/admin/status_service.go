@@ -23,7 +23,8 @@ type StatusService struct {
 }
 
 func (s *StatusService) GetStatus(ctx context.Context,
-	req *v1.GetStatusRequest) (*v1.GetStatusResponse, error) {
+	req *v1.GetStatusRequest,
+) (*v1.GetStatusResponse, error) {
 	if req.Id == "" {
 		return nil, s.err(util.ErrClient{Message: "required ID is missing"})
 	}
@@ -43,7 +44,8 @@ func (s *StatusService) GetStatus(ctx context.Context,
 }
 
 func (s *StatusService) DeleteStatus(ctx context.Context,
-	req *v1.DeleteStatusRequest) (*v1.DeleteStatusResponse, error) {
+	req *v1.DeleteStatusRequest,
+) (*v1.DeleteStatusResponse, error) {
 	if req.Id == "" {
 		return nil, s.err(util.ErrClient{Message: "required ID is missing"})
 	}
@@ -61,7 +63,8 @@ func (s *StatusService) DeleteStatus(ctx context.Context,
 }
 
 func (s *StatusService) ListStatuses(ctx context.Context,
-	req *v1.ListStatusesRequest) (*v1.ListStatusesResponse, error) {
+	req *v1.ListStatusesRequest,
+) (*v1.ListStatusesResponse, error) {
 	db, err := s.CommonOpts.getDB(ctx, req.Cluster)
 	if err != nil {
 		return nil, err
@@ -105,7 +108,8 @@ func validateRefs(refType, refID string) error {
 }
 
 func (s *StatusService) listStatusForEntity(ctx context.Context,
-	db store.Store, refType, refID string) (*v1.ListStatusesResponse, error) {
+	db store.Store, refType, refID string,
+) (*v1.ListStatusesResponse, error) {
 	if err := validateRefs(refType, refID); err != nil {
 		return nil, err
 	}

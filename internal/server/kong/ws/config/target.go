@@ -16,7 +16,8 @@ func (l KongTargetLoader) Name() string {
 }
 
 func (l *KongTargetLoader) Mutate(ctx context.Context,
-	opts MutatorOpts, config DataPlaneConfig) error {
+	opts MutatorOpts, config DataPlaneConfig,
+) error {
 	ctx, cancel := context.WithTimeout(ctx, defaultRequestTimeout)
 	defer cancel()
 	var pageNum int32

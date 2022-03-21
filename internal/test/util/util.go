@@ -31,7 +31,8 @@ func init() {
 
 func WaitFunc(t *testing.T, fn func() error) {
 	err := backoff.RetryNotify(fn, TestBackoff, func(err error,
-		duration time.Duration) {
+		duration time.Duration,
+	) {
 		if err != nil {
 			t.Log("waiting for func to complete")
 		}
@@ -42,7 +43,8 @@ func WaitFunc(t *testing.T, fn func() error) {
 }
 
 func WaitFor(t *testing.T, port int, method, path, component string,
-	wantHTTPCode int) error {
+	wantHTTPCode int,
+) error {
 	return backoff.RetryNotify(func() error {
 		ctx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
 		defer cancel()

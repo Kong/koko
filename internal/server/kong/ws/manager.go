@@ -146,7 +146,7 @@ func (m *Manager) setupPingHandler(node Node) {
 			time.Now().Add(writeWait))
 		if err == websocket.ErrCloseSent {
 			return nil
-		} else if e, ok := err.(net.Error); ok && e.Temporary() {
+		} else if _, ok := err.(net.Error); ok {
 			return nil
 		}
 		m.logger.Debug("pingHandler received hash", zap.String("hash", appData))
@@ -270,7 +270,8 @@ func (m *Manager) Run(ctx context.Context) {
 }
 
 func (m *Manager) setupStream(ctx context.Context) (relay.
-	EventService_FetchReconfigureEventsClient, error) {
+	EventService_FetchReconfigureEventsClient, error,
+) {
 	var stream relay.EventService_FetchReconfigureEventsClient
 
 	backoffer := newBackOff(ctx, 0) // retry forever
@@ -294,7 +295,8 @@ func (m *Manager) setupStream(ctx context.Context) (relay.
 }
 
 func (m *Manager) streamUpdateEvents(ctx context.Context, stream relay.
-	EventService_FetchReconfigureEventsClient) {
+	EventService_FetchReconfigureEventsClient,
+) {
 	m.logger.Debug("start read from event stream")
 	for {
 		up, err := stream.Recv()

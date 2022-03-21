@@ -76,7 +76,8 @@ func New(opts Opts) (persistence.Persister, error) {
 }
 
 func (s *Postgres) withinTx(ctx context.Context,
-	fn func(tx persistence.Tx) error) error {
+	fn func(tx persistence.Tx) error,
+) error {
 	tx, err := s.Tx(ctx)
 	if err != nil {
 		return err
@@ -115,7 +116,8 @@ func (s *Postgres) Delete(ctx context.Context, key string) error {
 }
 
 func (s *Postgres) List(ctx context.Context, prefix string, opts *persistence.ListOpts) (persistence.ListResult,
-	error) {
+	error,
+) {
 	var res persistence.ListResult
 	err := s.withinTx(ctx, func(tx persistence.Tx) error {
 		var err error
@@ -197,7 +199,8 @@ func (t *sqliteTx) Delete(ctx context.Context, key string) error {
 }
 
 func (t *sqliteTx) List(ctx context.Context, prefix string, opts *persistence.ListOpts) (persistence.ListResult,
-	error) {
+	error,
+) {
 	kvlist := make([]persistence.KVResult, 0, opts.Limit)
 	rows, err := t.tx.QueryContext(ctx, listQueryPaging, prefix, opts.Limit, opts.Offset)
 	if err != nil {

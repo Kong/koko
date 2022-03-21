@@ -22,7 +22,8 @@ type TargetService struct {
 }
 
 func (s *TargetService) GetTarget(ctx context.Context,
-	req *v1.GetTargetRequest) (*v1.GetTargetResponse, error) {
+	req *v1.GetTargetRequest,
+) (*v1.GetTargetResponse, error) {
 	if req.Id == "" {
 		return nil, s.err(util.ErrClient{Message: "required ID is missing"})
 	}
@@ -42,7 +43,8 @@ func (s *TargetService) GetTarget(ctx context.Context,
 }
 
 func (s *TargetService) CreateTarget(ctx context.Context,
-	req *v1.CreateTargetRequest) (*v1.CreateTargetResponse, error) {
+	req *v1.CreateTargetRequest,
+) (*v1.CreateTargetResponse, error) {
 	db, err := s.CommonOpts.getDB(ctx, req.Cluster)
 	if err != nil {
 		return nil, err
@@ -59,7 +61,8 @@ func (s *TargetService) CreateTarget(ctx context.Context,
 }
 
 func (s *TargetService) UpsertTarget(ctx context.Context,
-	req *v1.UpsertTargetRequest) (*v1.UpsertTargetResponse, error) {
+	req *v1.UpsertTargetRequest,
+) (*v1.UpsertTargetResponse, error) {
 	if err := validUUID(req.Item.Id); err != nil {
 		return nil, s.err(err)
 	}
@@ -78,7 +81,8 @@ func (s *TargetService) UpsertTarget(ctx context.Context,
 }
 
 func (s *TargetService) DeleteTarget(ctx context.Context,
-	req *v1.DeleteTargetRequest) (*v1.DeleteTargetResponse, error) {
+	req *v1.DeleteTargetRequest,
+) (*v1.DeleteTargetResponse, error) {
 	if err := validUUID(req.Id); err != nil {
 		return nil, s.err(err)
 	}
@@ -96,7 +100,8 @@ func (s *TargetService) DeleteTarget(ctx context.Context,
 }
 
 func (s *TargetService) ListTargets(ctx context.Context,
-	req *v1.ListTargetsRequest) (*v1.ListTargetsResponse, error) {
+	req *v1.ListTargetsRequest,
+) (*v1.ListTargetsResponse, error) {
 	db, err := s.CommonOpts.getDB(ctx, req.Cluster)
 	if err != nil {
 		return nil, err

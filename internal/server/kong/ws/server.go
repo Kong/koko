@@ -29,7 +29,8 @@ func NewHandler(opts HandlerOpts) (http.Handler, error) {
 		authenticator: opts.Authenticator,
 	})
 	mux.HandleFunc("/health", func(w http.ResponseWriter,
-		_ *http.Request) {
+		_ *http.Request,
+	) {
 		w.WriteHeader(http.StatusOK)
 	})
 
@@ -92,7 +93,8 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h Handler) respondWithErr(w http.ResponseWriter, _ *http.Request,
-	err error) {
+	err error,
+) {
 	authErr, ok := err.(ErrAuth)
 	if ok {
 		resp, err := json.Marshal(map[string]string{"message": authErr.Message})

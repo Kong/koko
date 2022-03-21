@@ -22,7 +22,8 @@ type PluginService struct {
 }
 
 func (s *PluginService) GetPlugin(ctx context.Context,
-	req *v1.GetPluginRequest) (*v1.GetPluginResponse, error) {
+	req *v1.GetPluginRequest,
+) (*v1.GetPluginResponse, error) {
 	if req.Id == "" {
 		return nil, s.err(util.ErrClient{Message: "required ID is missing"})
 	}
@@ -42,7 +43,8 @@ func (s *PluginService) GetPlugin(ctx context.Context,
 }
 
 func (s *PluginService) CreatePlugin(ctx context.Context,
-	req *v1.CreatePluginRequest) (*v1.CreatePluginResponse, error) {
+	req *v1.CreatePluginRequest,
+) (*v1.CreatePluginResponse, error) {
 	db, err := s.CommonOpts.getDB(ctx, req.Cluster)
 	if err != nil {
 		return nil, err
@@ -59,7 +61,8 @@ func (s *PluginService) CreatePlugin(ctx context.Context,
 }
 
 func (s *PluginService) UpsertPlugin(ctx context.Context,
-	req *v1.UpsertPluginRequest) (*v1.UpsertPluginResponse, error) {
+	req *v1.UpsertPluginRequest,
+) (*v1.UpsertPluginResponse, error) {
 	if err := validUUID(req.Item.Id); err != nil {
 		return nil, s.err(err)
 	}
@@ -78,7 +81,8 @@ func (s *PluginService) UpsertPlugin(ctx context.Context,
 }
 
 func (s *PluginService) DeletePlugin(ctx context.Context,
-	req *v1.DeletePluginRequest) (*v1.DeletePluginResponse, error) {
+	req *v1.DeletePluginRequest,
+) (*v1.DeletePluginResponse, error) {
 	if err := validUUID(req.Id); err != nil {
 		return nil, s.err(err)
 	}
@@ -96,7 +100,8 @@ func (s *PluginService) DeletePlugin(ctx context.Context,
 }
 
 func (s *PluginService) ListPlugins(ctx context.Context,
-	req *v1.ListPluginsRequest) (*v1.ListPluginsResponse, error) {
+	req *v1.ListPluginsRequest,
+) (*v1.ListPluginsResponse, error) {
 	db, err := s.CommonOpts.getDB(ctx, req.Cluster)
 	if err != nil {
 		return nil, err

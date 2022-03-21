@@ -18,7 +18,8 @@ func (l KongConsumerLoader) Name() string {
 // Mutate reads the Consumer data from CP persistence store and
 // populates the read data into config.
 func (l *KongConsumerLoader) Mutate(ctx context.Context,
-	opts MutatorOpts, config DataPlaneConfig) error {
+	opts MutatorOpts, config DataPlaneConfig,
+) error {
 	ctx, cancel := context.WithTimeout(ctx, defaultRequestTimeout)
 	defer cancel()
 

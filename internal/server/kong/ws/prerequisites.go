@@ -10,7 +10,8 @@ import (
 )
 
 func checkPreReqs(attr nodeAttributes,
-	checks []*grpcKongUtil.DataPlanePrerequisite) []*model.Condition {
+	checks []*grpcKongUtil.DataPlanePrerequisite,
+) []*model.Condition {
 	var res []*model.Condition
 	for _, check := range checks {
 		if check.GetRequiredPlugins() != nil {

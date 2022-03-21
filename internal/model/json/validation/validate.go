@@ -37,7 +37,8 @@ func Validate(typ string, message proto.Message) error {
 }
 
 func renderErrs(schemaErr jsonschema.Detailed,
-	schema *jsonschema.Schema) Error {
+	schema *jsonschema.Schema,
+) Error {
 	t := ErrorTranslator{
 		errs: map[string]*model.ErrorDetail{},
 	}

@@ -20,7 +20,8 @@ type CertificateService struct {
 }
 
 func (s *CertificateService) GetCertificate(ctx context.Context,
-	req *v1.GetCertificateRequest) (*v1.GetCertificateResponse, error) {
+	req *v1.GetCertificateRequest,
+) (*v1.GetCertificateResponse, error) {
 	if req.Id == "" {
 		return nil, s.err(util.ErrClient{Message: "required ID is missing"})
 	}
@@ -40,7 +41,8 @@ func (s *CertificateService) GetCertificate(ctx context.Context,
 }
 
 func (s *CertificateService) CreateCertificate(ctx context.Context,
-	req *v1.CreateCertificateRequest) (*v1.CreateCertificateResponse, error) {
+	req *v1.CreateCertificateRequest,
+) (*v1.CreateCertificateResponse, error) {
 	db, err := s.CommonOpts.getDB(ctx, req.Cluster)
 	if err != nil {
 		return nil, err
@@ -57,7 +59,8 @@ func (s *CertificateService) CreateCertificate(ctx context.Context,
 }
 
 func (s *CertificateService) UpsertCertificate(ctx context.Context,
-	req *v1.UpsertCertificateRequest) (*v1.UpsertCertificateResponse, error) {
+	req *v1.UpsertCertificateRequest,
+) (*v1.UpsertCertificateResponse, error) {
 	if err := validUUID(req.Item.Id); err != nil {
 		return nil, s.err(err)
 	}
@@ -76,7 +79,8 @@ func (s *CertificateService) UpsertCertificate(ctx context.Context,
 }
 
 func (s *CertificateService) DeleteCertificate(ctx context.Context,
-	req *v1.DeleteCertificateRequest) (*v1.DeleteCertificateResponse, error) {
+	req *v1.DeleteCertificateRequest,
+) (*v1.DeleteCertificateResponse, error) {
 	if err := validUUID(req.Id); err != nil {
 		return nil, s.err(err)
 	}
@@ -94,7 +98,8 @@ func (s *CertificateService) DeleteCertificate(ctx context.Context,
 }
 
 func (s *CertificateService) ListCertificates(ctx context.Context,
-	req *v1.ListCertificatesRequest) (*v1.ListCertificatesResponse, error) {
+	req *v1.ListCertificatesRequest,
+) (*v1.ListCertificatesResponse, error) {
 	db, err := s.CommonOpts.getDB(ctx, req.Cluster)
 	if err != nil {
 		return nil, err

@@ -41,7 +41,8 @@ type CommonOpts struct {
 }
 
 func (c CommonOpts) getDB(ctx context.Context,
-	cluster *model.RequestCluster) (store.Store, error) {
+	cluster *model.RequestCluster,
+) (store.Store, error) {
 	store, err := c.storeLoader.Load(ctx, cluster)
 	if err != nil {
 		if storeLoadErr, ok := err.(util.StoreLoadErr); ok {

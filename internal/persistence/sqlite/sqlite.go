@@ -67,7 +67,8 @@ func New(opts Opts) (persistence.Persister, error) {
 }
 
 func (s *SQLite) withinTx(ctx context.Context,
-	fn func(tx persistence.Tx) error) error {
+	fn func(tx persistence.Tx) error,
+) error {
 	tx, err := s.Tx(ctx)
 	if err != nil {
 		return err
@@ -187,7 +188,8 @@ func (t *sqliteTx) Delete(ctx context.Context, key string) error {
 }
 
 func (t *sqliteTx) List(ctx context.Context, prefix string,
-	opts *persistence.ListOpts) (persistence.ListResult, error) {
+	opts *persistence.ListOpts,
+) (persistence.ListResult, error) {
 	rows, err := t.tx.QueryContext(ctx, listQueryPaging, prefix, opts.Limit, opts.Offset)
 	if err != nil {
 		return persistence.ListResult{}, err

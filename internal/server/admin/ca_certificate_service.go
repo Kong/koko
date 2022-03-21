@@ -20,7 +20,8 @@ type CACertificateService struct {
 }
 
 func (s *CACertificateService) GetCACertificate(ctx context.Context,
-	req *v1.GetCACertificateRequest) (*v1.GetCACertificateResponse, error) {
+	req *v1.GetCACertificateRequest,
+) (*v1.GetCACertificateResponse, error) {
 	if req.Id == "" {
 		return nil, s.err(util.ErrClient{Message: "required ID is missing"})
 	}
@@ -40,7 +41,8 @@ func (s *CACertificateService) GetCACertificate(ctx context.Context,
 }
 
 func (s *CACertificateService) CreateCACertificate(ctx context.Context,
-	req *v1.CreateCACertificateRequest) (*v1.CreateCACertificateResponse, error) {
+	req *v1.CreateCACertificateRequest,
+) (*v1.CreateCACertificateResponse, error) {
 	db, err := s.CommonOpts.getDB(ctx, req.Cluster)
 	if err != nil {
 		return nil, err
@@ -57,7 +59,8 @@ func (s *CACertificateService) CreateCACertificate(ctx context.Context,
 }
 
 func (s *CACertificateService) UpsertCACertificate(ctx context.Context,
-	req *v1.UpsertCACertificateRequest) (*v1.UpsertCACertificateResponse, error) {
+	req *v1.UpsertCACertificateRequest,
+) (*v1.UpsertCACertificateResponse, error) {
 	if err := validUUID(req.Item.Id); err != nil {
 		return nil, s.err(err)
 	}
@@ -76,7 +79,8 @@ func (s *CACertificateService) UpsertCACertificate(ctx context.Context,
 }
 
 func (s *CACertificateService) DeleteCACertificate(ctx context.Context,
-	req *v1.DeleteCACertificateRequest) (*v1.DeleteCACertificateResponse, error) {
+	req *v1.DeleteCACertificateRequest,
+) (*v1.DeleteCACertificateResponse, error) {
 	if err := validUUID(req.Id); err != nil {
 		return nil, s.err(err)
 	}
@@ -94,7 +98,8 @@ func (s *CACertificateService) DeleteCACertificate(ctx context.Context,
 }
 
 func (s *CACertificateService) ListCACertificates(ctx context.Context,
-	req *v1.ListCACertificatesRequest) (*v1.ListCACertificatesResponse, error) {
+	req *v1.ListCACertificatesRequest,
+) (*v1.ListCACertificatesResponse, error) {
 	db, err := s.CommonOpts.getDB(ctx, req.Cluster)
 	if err != nil {
 		return nil, err

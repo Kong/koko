@@ -20,7 +20,8 @@ type NodeService struct {
 }
 
 func (s *NodeService) GetNode(ctx context.Context,
-	req *v1.GetNodeRequest) (*v1.GetNodeResponse, error) {
+	req *v1.GetNodeRequest,
+) (*v1.GetNodeResponse, error) {
 	if req.Id == "" {
 		return nil, s.err(util.ErrClient{Message: "required ID is missing"})
 	}
@@ -40,7 +41,8 @@ func (s *NodeService) GetNode(ctx context.Context,
 }
 
 func (s *NodeService) CreateNode(ctx context.Context,
-	req *v1.CreateNodeRequest) (*v1.CreateNodeResponse, error) {
+	req *v1.CreateNodeRequest,
+) (*v1.CreateNodeResponse, error) {
 	db, err := s.CommonOpts.getDB(ctx, req.Cluster)
 	if err != nil {
 		return nil, err
@@ -57,7 +59,8 @@ func (s *NodeService) CreateNode(ctx context.Context,
 }
 
 func (s *NodeService) UpsertNode(ctx context.Context,
-	req *v1.UpsertNodeRequest) (*v1.UpsertNodeResponse, error) {
+	req *v1.UpsertNodeRequest,
+) (*v1.UpsertNodeResponse, error) {
 	db, err := s.CommonOpts.getDB(ctx, req.Cluster)
 	if err != nil {
 		return nil, err
@@ -73,7 +76,8 @@ func (s *NodeService) UpsertNode(ctx context.Context,
 }
 
 func (s *NodeService) DeleteNode(ctx context.Context,
-	req *v1.DeleteNodeRequest) (*v1.DeleteNodeResponse, error) {
+	req *v1.DeleteNodeRequest,
+) (*v1.DeleteNodeResponse, error) {
 	if req.Id == "" {
 		return nil, s.err(util.ErrClient{Message: "required ID is missing"})
 	}
@@ -91,7 +95,8 @@ func (s *NodeService) DeleteNode(ctx context.Context,
 }
 
 func (s *NodeService) ListNodes(ctx context.Context,
-	req *v1.ListNodesRequest) (*v1.ListNodesResponse, error) {
+	req *v1.ListNodesRequest,
+) (*v1.ListNodesResponse, error) {
 	db, err := s.CommonOpts.getDB(ctx, req.Cluster)
 	if err != nil {
 		return nil, err

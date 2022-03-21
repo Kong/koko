@@ -20,7 +20,8 @@ type ServiceService struct {
 }
 
 func (s *ServiceService) GetService(ctx context.Context,
-	req *v1.GetServiceRequest) (*v1.GetServiceResponse, error) {
+	req *v1.GetServiceRequest,
+) (*v1.GetServiceResponse, error) {
 	if req.Id == "" {
 		return nil, s.err(util.ErrClient{Message: "required ID is missing"})
 	}
@@ -40,7 +41,8 @@ func (s *ServiceService) GetService(ctx context.Context,
 }
 
 func (s *ServiceService) CreateService(ctx context.Context,
-	req *v1.CreateServiceRequest) (*v1.CreateServiceResponse, error) {
+	req *v1.CreateServiceRequest,
+) (*v1.CreateServiceResponse, error) {
 	db, err := s.CommonOpts.getDB(ctx, req.Cluster)
 	if err != nil {
 		return nil, err
@@ -57,7 +59,8 @@ func (s *ServiceService) CreateService(ctx context.Context,
 }
 
 func (s *ServiceService) UpsertService(ctx context.Context,
-	req *v1.UpsertServiceRequest) (*v1.UpsertServiceResponse, error) {
+	req *v1.UpsertServiceRequest,
+) (*v1.UpsertServiceResponse, error) {
 	if err := validUUID(req.Item.Id); err != nil {
 		return nil, s.err(err)
 	}
@@ -76,7 +79,8 @@ func (s *ServiceService) UpsertService(ctx context.Context,
 }
 
 func (s *ServiceService) DeleteService(ctx context.Context,
-	req *v1.DeleteServiceRequest) (*v1.DeleteServiceResponse, error) {
+	req *v1.DeleteServiceRequest,
+) (*v1.DeleteServiceResponse, error) {
 	if err := validUUID(req.Id); err != nil {
 		return nil, s.err(err)
 	}
@@ -94,7 +98,8 @@ func (s *ServiceService) DeleteService(ctx context.Context,
 }
 
 func (s *ServiceService) ListServices(ctx context.Context,
-	req *v1.ListServicesRequest) (*v1.ListServicesResponse, error) {
+	req *v1.ListServicesRequest,
+) (*v1.ListServicesResponse, error) {
 	db, err := s.CommonOpts.getDB(ctx, req.Cluster)
 	if err != nil {
 		return nil, err
