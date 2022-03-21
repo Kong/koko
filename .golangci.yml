@@ -99,3 +99,6 @@ issues:
       - forcetypeassert
     text: "type assertion must be checked"
     path: _test\.go
+  - linters:
+      - gofumpt
+    path: internal/gen/wrpc
