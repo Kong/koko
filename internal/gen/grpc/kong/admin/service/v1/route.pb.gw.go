@@ -357,12 +357,13 @@ func RegisterRouteServiceHandlerServer(ctx context.Context, mux *runtime.ServeMu
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kong.admin.service.v1.RouteService/GetRoute", runtime.WithHTTPPathPattern("/v1/routes/{id}"))
+		var err error
+		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/kong.admin.service.v1.RouteService/GetRoute", runtime.WithHTTPPathPattern("/v1/routes/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_RouteService_GetRoute_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_RouteService_GetRoute_0(ctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -380,12 +381,13 @@ func RegisterRouteServiceHandlerServer(ctx context.Context, mux *runtime.ServeMu
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kong.admin.service.v1.RouteService/CreateRoute", runtime.WithHTTPPathPattern("/v1/routes"))
+		var err error
+		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/kong.admin.service.v1.RouteService/CreateRoute", runtime.WithHTTPPathPattern("/v1/routes"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_RouteService_CreateRoute_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_RouteService_CreateRoute_0(ctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -403,12 +405,13 @@ func RegisterRouteServiceHandlerServer(ctx context.Context, mux *runtime.ServeMu
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kong.admin.service.v1.RouteService/UpsertRoute", runtime.WithHTTPPathPattern("/v1/routes/{item.id}"))
+		var err error
+		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/kong.admin.service.v1.RouteService/UpsertRoute", runtime.WithHTTPPathPattern("/v1/routes/{item.id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_RouteService_UpsertRoute_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_RouteService_UpsertRoute_0(ctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -426,12 +429,13 @@ func RegisterRouteServiceHandlerServer(ctx context.Context, mux *runtime.ServeMu
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kong.admin.service.v1.RouteService/DeleteRoute", runtime.WithHTTPPathPattern("/v1/routes/{id}"))
+		var err error
+		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/kong.admin.service.v1.RouteService/DeleteRoute", runtime.WithHTTPPathPattern("/v1/routes/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_RouteService_DeleteRoute_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_RouteService_DeleteRoute_0(ctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -449,12 +453,13 @@ func RegisterRouteServiceHandlerServer(ctx context.Context, mux *runtime.ServeMu
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kong.admin.service.v1.RouteService/ListRoutes", runtime.WithHTTPPathPattern("/v1/routes"))
+		var err error
+		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/kong.admin.service.v1.RouteService/ListRoutes", runtime.WithHTTPPathPattern("/v1/routes"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_RouteService_ListRoutes_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_RouteService_ListRoutes_0(ctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -511,12 +516,13 @@ func RegisterRouteServiceHandlerClient(ctx context.Context, mux *runtime.ServeMu
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kong.admin.service.v1.RouteService/GetRoute", runtime.WithHTTPPathPattern("/v1/routes/{id}"))
+		var err error
+		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/kong.admin.service.v1.RouteService/GetRoute", runtime.WithHTTPPathPattern("/v1/routes/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_RouteService_GetRoute_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_RouteService_GetRoute_0(ctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
@@ -531,12 +537,13 @@ func RegisterRouteServiceHandlerClient(ctx context.Context, mux *runtime.ServeMu
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kong.admin.service.v1.RouteService/CreateRoute", runtime.WithHTTPPathPattern("/v1/routes"))
+		var err error
+		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/kong.admin.service.v1.RouteService/CreateRoute", runtime.WithHTTPPathPattern("/v1/routes"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_RouteService_CreateRoute_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_RouteService_CreateRoute_0(ctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
@@ -551,12 +558,13 @@ func RegisterRouteServiceHandlerClient(ctx context.Context, mux *runtime.ServeMu
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kong.admin.service.v1.RouteService/UpsertRoute", runtime.WithHTTPPathPattern("/v1/routes/{item.id}"))
+		var err error
+		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/kong.admin.service.v1.RouteService/UpsertRoute", runtime.WithHTTPPathPattern("/v1/routes/{item.id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_RouteService_UpsertRoute_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_RouteService_UpsertRoute_0(ctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
@@ -571,12 +579,13 @@ func RegisterRouteServiceHandlerClient(ctx context.Context, mux *runtime.ServeMu
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kong.admin.service.v1.RouteService/DeleteRoute", runtime.WithHTTPPathPattern("/v1/routes/{id}"))
+		var err error
+		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/kong.admin.service.v1.RouteService/DeleteRoute", runtime.WithHTTPPathPattern("/v1/routes/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_RouteService_DeleteRoute_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_RouteService_DeleteRoute_0(ctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
@@ -591,12 +600,13 @@ func RegisterRouteServiceHandlerClient(ctx context.Context, mux *runtime.ServeMu
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kong.admin.service.v1.RouteService/ListRoutes", runtime.WithHTTPPathPattern("/v1/routes"))
+		var err error
+		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/kong.admin.service.v1.RouteService/ListRoutes", runtime.WithHTTPPathPattern("/v1/routes"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_RouteService_ListRoutes_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_RouteService_ListRoutes_0(ctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)

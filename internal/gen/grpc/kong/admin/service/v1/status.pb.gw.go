@@ -219,12 +219,13 @@ func RegisterStatusServiceHandlerServer(ctx context.Context, mux *runtime.ServeM
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kong.admin.service.v1.StatusService/GetStatus", runtime.WithHTTPPathPattern("/v1/statuses/{id}"))
+		var err error
+		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/kong.admin.service.v1.StatusService/GetStatus", runtime.WithHTTPPathPattern("/v1/statuses/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_StatusService_GetStatus_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_StatusService_GetStatus_0(ctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -242,12 +243,13 @@ func RegisterStatusServiceHandlerServer(ctx context.Context, mux *runtime.ServeM
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kong.admin.service.v1.StatusService/DeleteStatus", runtime.WithHTTPPathPattern("/v1/statuses/{id}"))
+		var err error
+		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/kong.admin.service.v1.StatusService/DeleteStatus", runtime.WithHTTPPathPattern("/v1/statuses/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_StatusService_DeleteStatus_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_StatusService_DeleteStatus_0(ctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -265,12 +267,13 @@ func RegisterStatusServiceHandlerServer(ctx context.Context, mux *runtime.ServeM
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kong.admin.service.v1.StatusService/ListStatuses", runtime.WithHTTPPathPattern("/v1/statuses"))
+		var err error
+		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/kong.admin.service.v1.StatusService/ListStatuses", runtime.WithHTTPPathPattern("/v1/statuses"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_StatusService_ListStatuses_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_StatusService_ListStatuses_0(ctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -327,12 +330,13 @@ func RegisterStatusServiceHandlerClient(ctx context.Context, mux *runtime.ServeM
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kong.admin.service.v1.StatusService/GetStatus", runtime.WithHTTPPathPattern("/v1/statuses/{id}"))
+		var err error
+		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/kong.admin.service.v1.StatusService/GetStatus", runtime.WithHTTPPathPattern("/v1/statuses/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_StatusService_GetStatus_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_StatusService_GetStatus_0(ctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
@@ -347,12 +351,13 @@ func RegisterStatusServiceHandlerClient(ctx context.Context, mux *runtime.ServeM
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kong.admin.service.v1.StatusService/DeleteStatus", runtime.WithHTTPPathPattern("/v1/statuses/{id}"))
+		var err error
+		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/kong.admin.service.v1.StatusService/DeleteStatus", runtime.WithHTTPPathPattern("/v1/statuses/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_StatusService_DeleteStatus_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_StatusService_DeleteStatus_0(ctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
@@ -367,12 +372,13 @@ func RegisterStatusServiceHandlerClient(ctx context.Context, mux *runtime.ServeM
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kong.admin.service.v1.StatusService/ListStatuses", runtime.WithHTTPPathPattern("/v1/statuses"))
+		var err error
+		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/kong.admin.service.v1.StatusService/ListStatuses", runtime.WithHTTPPathPattern("/v1/statuses"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_StatusService_ListStatuses_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_StatusService_ListStatuses_0(ctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
