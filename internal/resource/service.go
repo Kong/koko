@@ -68,6 +68,11 @@ func (r Service) ProcessDefaults() error {
 	if r.Service == nil {
 		return fmt.Errorf("invalid nil resource")
 	}
+	if r.Service.Url != "" {
+		if err := parseURL(r.Service); err != nil {
+			return fmt.Errorf("failed while unpacking URL: %v", err)
+		}
+	}
 	err := mergo.Merge(r.Service, defaultService,
 		mergo.WithTransformers(wrappersPBTransformer{}))
 	if err != nil {
@@ -140,6 +145,9 @@ func init() {
 			"updated_at": typedefs.UnixEpoch,
 			"enabled": {
 				Type: "boolean",
+			},
+			"url": {
+				Type: "string",
 			},
 		},
 		AdditionalProperties: &falsy,
@@ -255,6 +263,12 @@ func init() {
 					Properties: map[string]*generator.Schema{
 						"path": {Not: &generator.Schema{}},
 					},
+				},
+			},
+			{
+				Description: "url should not be set",
+				Not: &generator.Schema{
+					Required: []string{"url"},
 				},
 			},
 		},

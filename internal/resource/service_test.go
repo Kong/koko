@@ -64,6 +64,46 @@ func TestService_ProcessDefaults(t *testing.T) {
 			Enabled:        wrapperspb.Bool(false),
 		}, r.Resource())
 	})
+	t.Run("url unpacked correctly", func(t *testing.T) {
+		r := NewService()
+		r.Service.Url = "https://test.org:8080/sample"
+		err := r.ProcessDefaults()
+		require.Nil(t, err)
+		require.True(t, validUUID(r.ID()))
+		// empty out the id and ts for equality comparison
+		r.Service.Id = ""
+		require.Equal(t, &model.Service{
+			Protocol:       "https",
+			Port:           8080,
+			Host:           "test.org",
+			Path:           "/sample",
+			Retries:        5,
+			ReadTimeout:    defaultTimeout,
+			WriteTimeout:   defaultTimeout,
+			ConnectTimeout: defaultTimeout,
+			Enabled:        wrapperspb.Bool(true),
+		}, r.Resource())
+	})
+	t.Run("url without port unpacked correctly", func(t *testing.T) {
+		r := NewService()
+		r.Service.Url = "https://foo/bar"
+		err := r.ProcessDefaults()
+		require.Nil(t, err)
+		require.True(t, validUUID(r.ID()))
+		// empty out the id and ts for equality comparison
+		r.Service.Id = ""
+		require.Equal(t, &model.Service{
+			Protocol:       "https",
+			Port:           443,
+			Host:           "foo",
+			Path:           "/bar",
+			Retries:        5,
+			ReadTimeout:    defaultTimeout,
+			WriteTimeout:   defaultTimeout,
+			ConnectTimeout: defaultTimeout,
+			Enabled:        wrapperspb.Bool(true),
+		}, r.Resource())
+	})
 }
 
 func goodService() Service {
@@ -457,6 +497,55 @@ func TestService_Validate(t *testing.T) {
 				s.Service.Enabled = wrapperspb.Bool(false)
 				return s
 			},
+		},
+		{
+			name: "invalid url unpack fails",
+			Service: func() Service {
+				s := NewService()
+				s.Service.Url = "foo.org"
+				_ = s.ProcessDefaults()
+				return s
+			},
+			wantErr: true,
+			Errs: []*model.ErrorDetail{
+				{
+					Type: model.ErrorType_ERROR_TYPE_ENTITY,
+					Messages: []string{
+						"missing properties: 'host'",
+						"path is required when protocol is http or https",
+					},
+				},
+			},
+		},
+		{
+			name: "url unpack with invalid protocol fails",
+			Service: func() Service {
+				s := NewService()
+				s.Service.Url = "ftp://foo.com:420"
+				_ = s.ProcessDefaults()
+				return s
+			},
+			wantErr: true,
+			Errs: []*model.ErrorDetail{
+				{
+					Type:  model.ErrorType_ERROR_TYPE_FIELD,
+					Field: "protocol",
+					Messages: []string{
+						`value must be one of "http", "https", "grpc", ` +
+							`"grpcs", "tcp", "udp", "tls", "tls_passthrough"`,
+					},
+				},
+			},
+		},
+		{
+			name: "url unpack with missing path successfully",
+			Service: func() Service {
+				s := NewService()
+				s.Service.Url = "https://foo"
+				_ = s.ProcessDefaults()
+				return s
+			},
+			wantErr: false,
 		},
 	}
 	for _, tt := range tests {
