@@ -357,12 +357,13 @@ func RegisterCertificateServiceHandlerServer(ctx context.Context, mux *runtime.S
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kong.admin.service.v1.CertificateService/GetCertificate", runtime.WithHTTPPathPattern("/v1/certificates/{id}"))
+		var err error
+		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/kong.admin.service.v1.CertificateService/GetCertificate", runtime.WithHTTPPathPattern("/v1/certificates/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_CertificateService_GetCertificate_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_CertificateService_GetCertificate_0(ctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -380,12 +381,13 @@ func RegisterCertificateServiceHandlerServer(ctx context.Context, mux *runtime.S
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kong.admin.service.v1.CertificateService/CreateCertificate", runtime.WithHTTPPathPattern("/v1/certificates"))
+		var err error
+		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/kong.admin.service.v1.CertificateService/CreateCertificate", runtime.WithHTTPPathPattern("/v1/certificates"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_CertificateService_CreateCertificate_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_CertificateService_CreateCertificate_0(ctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -403,12 +405,13 @@ func RegisterCertificateServiceHandlerServer(ctx context.Context, mux *runtime.S
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kong.admin.service.v1.CertificateService/UpsertCertificate", runtime.WithHTTPPathPattern("/v1/certificates/{item.id}"))
+		var err error
+		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/kong.admin.service.v1.CertificateService/UpsertCertificate", runtime.WithHTTPPathPattern("/v1/certificates/{item.id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_CertificateService_UpsertCertificate_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_CertificateService_UpsertCertificate_0(ctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -426,12 +429,13 @@ func RegisterCertificateServiceHandlerServer(ctx context.Context, mux *runtime.S
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kong.admin.service.v1.CertificateService/DeleteCertificate", runtime.WithHTTPPathPattern("/v1/certificates/{id}"))
+		var err error
+		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/kong.admin.service.v1.CertificateService/DeleteCertificate", runtime.WithHTTPPathPattern("/v1/certificates/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_CertificateService_DeleteCertificate_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_CertificateService_DeleteCertificate_0(ctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -449,12 +453,13 @@ func RegisterCertificateServiceHandlerServer(ctx context.Context, mux *runtime.S
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/kong.admin.service.v1.CertificateService/ListCertificates", runtime.WithHTTPPathPattern("/v1/certificates"))
+		var err error
+		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/kong.admin.service.v1.CertificateService/ListCertificates", runtime.WithHTTPPathPattern("/v1/certificates"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_CertificateService_ListCertificates_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_CertificateService_ListCertificates_0(ctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -511,12 +516,13 @@ func RegisterCertificateServiceHandlerClient(ctx context.Context, mux *runtime.S
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kong.admin.service.v1.CertificateService/GetCertificate", runtime.WithHTTPPathPattern("/v1/certificates/{id}"))
+		var err error
+		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/kong.admin.service.v1.CertificateService/GetCertificate", runtime.WithHTTPPathPattern("/v1/certificates/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_CertificateService_GetCertificate_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_CertificateService_GetCertificate_0(ctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
@@ -531,12 +537,13 @@ func RegisterCertificateServiceHandlerClient(ctx context.Context, mux *runtime.S
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kong.admin.service.v1.CertificateService/CreateCertificate", runtime.WithHTTPPathPattern("/v1/certificates"))
+		var err error
+		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/kong.admin.service.v1.CertificateService/CreateCertificate", runtime.WithHTTPPathPattern("/v1/certificates"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_CertificateService_CreateCertificate_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_CertificateService_CreateCertificate_0(ctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
@@ -551,12 +558,13 @@ func RegisterCertificateServiceHandlerClient(ctx context.Context, mux *runtime.S
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kong.admin.service.v1.CertificateService/UpsertCertificate", runtime.WithHTTPPathPattern("/v1/certificates/{item.id}"))
+		var err error
+		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/kong.admin.service.v1.CertificateService/UpsertCertificate", runtime.WithHTTPPathPattern("/v1/certificates/{item.id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_CertificateService_UpsertCertificate_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_CertificateService_UpsertCertificate_0(ctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
@@ -571,12 +579,13 @@ func RegisterCertificateServiceHandlerClient(ctx context.Context, mux *runtime.S
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kong.admin.service.v1.CertificateService/DeleteCertificate", runtime.WithHTTPPathPattern("/v1/certificates/{id}"))
+		var err error
+		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/kong.admin.service.v1.CertificateService/DeleteCertificate", runtime.WithHTTPPathPattern("/v1/certificates/{id}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_CertificateService_DeleteCertificate_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_CertificateService_DeleteCertificate_0(ctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
@@ -591,12 +600,13 @@ func RegisterCertificateServiceHandlerClient(ctx context.Context, mux *runtime.S
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/kong.admin.service.v1.CertificateService/ListCertificates", runtime.WithHTTPPathPattern("/v1/certificates"))
+		var err error
+		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/kong.admin.service.v1.CertificateService/ListCertificates", runtime.WithHTTPPathPattern("/v1/certificates"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_CertificateService_ListCertificates_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_CertificateService_ListCertificates_0(ctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
