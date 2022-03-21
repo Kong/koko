@@ -20,7 +20,8 @@ type SchemasService struct {
 }
 
 func (s *SchemasService) GetSchemas(ctx context.Context,
-	req *v1.GetSchemasRequest) (*v1.GetSchemasResponse, error) {
+	req *v1.GetSchemasRequest,
+) (*v1.GetSchemasResponse, error) {
 	if req.Name == "" {
 		return nil, s.err(util.ErrClient{Message: "required name is missing"})
 	}
@@ -44,7 +45,8 @@ func (s *SchemasService) GetSchemas(ctx context.Context,
 }
 
 func (s *SchemasService) GetLuaSchemasPlugin(ctx context.Context,
-	req *v1.GetLuaSchemasPluginRequest) (*v1.GetLuaSchemasPluginResponse, error) {
+	req *v1.GetLuaSchemasPluginRequest,
+) (*v1.GetLuaSchemasPluginResponse, error) {
 	if req.Name == "" {
 		return nil, s.err(util.ErrClient{Message: "required name is missing"})
 	}

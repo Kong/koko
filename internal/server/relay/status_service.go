@@ -36,7 +36,8 @@ type StatusService struct {
 }
 
 func (s StatusService) UpdateStatus(ctx context.Context,
-	req *relay.UpdateStatusRequest) (*relay.UpdateStatusResponse, error) {
+	req *relay.UpdateStatusRequest,
+) (*relay.UpdateStatusResponse, error) {
 	err := validateRef(req.Item.ContextReference)
 	if err != nil {
 		return nil, util.ErrClient{Message: err.Error()}
@@ -69,7 +70,8 @@ func (s StatusService) UpdateStatus(ctx context.Context,
 
 func (s StatusService) getCurrentStatusID(ctx context.Context, db store.Store,
 	refType, refID string) (string,
-	error) {
+	error,
+) {
 	currentStatus := resource.NewStatus()
 	err := db.Read(ctx, currentStatus,
 		store.GetByIndex("ctx_ref", model.MultiValueIndex(refType, refID)),
@@ -86,7 +88,8 @@ func (s StatusService) getCurrentStatusID(ctx context.Context, db store.Store,
 }
 
 func (s StatusService) ClearStatus(ctx context.Context,
-	req *relay.ClearStatusRequest) (*relay.ClearStatusResponse, error) {
+	req *relay.ClearStatusRequest,
+) (*relay.ClearStatusResponse, error) {
 	err := validateRef(req.ContextReference)
 	if err != nil {
 		return nil, util.ErrClient{Message: err.Error()}
@@ -122,7 +125,8 @@ func (s StatusService) ClearStatus(ctx context.Context,
 }
 
 func (s StatusService) getDB(ctx context.Context,
-	cluster *adminModel.RequestCluster) (store.Store, error) {
+	cluster *adminModel.RequestCluster,
+) (store.Store, error) {
 	store, err := s.storeLoader.Load(ctx, cluster)
 	if err != nil {
 		if storeLoadErr, ok := err.(util.StoreLoadErr); ok {

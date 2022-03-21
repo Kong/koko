@@ -20,7 +20,8 @@ type ConsumerService struct {
 }
 
 func (s *ConsumerService) GetConsumer(ctx context.Context,
-	req *v1.GetConsumerRequest) (*v1.GetConsumerResponse, error) {
+	req *v1.GetConsumerRequest,
+) (*v1.GetConsumerResponse, error) {
 	if req.Id == "" {
 		return nil, s.err(util.ErrClient{Message: "required ID is missing"})
 	}
@@ -40,7 +41,8 @@ func (s *ConsumerService) GetConsumer(ctx context.Context,
 }
 
 func (s *ConsumerService) CreateConsumer(ctx context.Context,
-	req *v1.CreateConsumerRequest) (*v1.CreateConsumerResponse, error) {
+	req *v1.CreateConsumerRequest,
+) (*v1.CreateConsumerResponse, error) {
 	db, err := s.CommonOpts.getDB(ctx, req.Cluster)
 	if err != nil {
 		return nil, err
@@ -57,7 +59,8 @@ func (s *ConsumerService) CreateConsumer(ctx context.Context,
 }
 
 func (s *ConsumerService) UpsertConsumer(ctx context.Context,
-	req *v1.UpsertConsumerRequest) (*v1.UpsertConsumerResponse, error) {
+	req *v1.UpsertConsumerRequest,
+) (*v1.UpsertConsumerResponse, error) {
 	if err := validUUID(req.Item.Id); err != nil {
 		return nil, s.err(err)
 	}
@@ -76,7 +79,8 @@ func (s *ConsumerService) UpsertConsumer(ctx context.Context,
 }
 
 func (s *ConsumerService) DeleteConsumer(ctx context.Context,
-	req *v1.DeleteConsumerRequest) (*v1.DeleteConsumerResponse, error) {
+	req *v1.DeleteConsumerRequest,
+) (*v1.DeleteConsumerResponse, error) {
 	if req.Id == "" {
 		return nil, s.err(util.ErrClient{Message: "required ID is missing"})
 	}
@@ -94,7 +98,8 @@ func (s *ConsumerService) DeleteConsumer(ctx context.Context,
 }
 
 func (s *ConsumerService) ListConsumers(ctx context.Context,
-	req *v1.ListConsumersRequest) (*v1.ListConsumersResponse, error) {
+	req *v1.ListConsumersRequest,
+) (*v1.ListConsumersResponse, error) {
 	db, err := s.CommonOpts.getDB(ctx, req.Cluster)
 	if err != nil {
 		return nil, err

@@ -22,7 +22,8 @@ type RouteService struct {
 }
 
 func (s *RouteService) GetRoute(ctx context.Context,
-	req *v1.GetRouteRequest) (*v1.GetRouteResponse, error) {
+	req *v1.GetRouteRequest,
+) (*v1.GetRouteResponse, error) {
 	if req.Id == "" {
 		return nil, s.err(util.ErrClient{Message: "required ID is missing"})
 	}
@@ -42,7 +43,8 @@ func (s *RouteService) GetRoute(ctx context.Context,
 }
 
 func (s *RouteService) CreateRoute(ctx context.Context,
-	req *v1.CreateRouteRequest) (*v1.CreateRouteResponse, error) {
+	req *v1.CreateRouteRequest,
+) (*v1.CreateRouteResponse, error) {
 	db, err := s.CommonOpts.getDB(ctx, req.Cluster)
 	if err != nil {
 		return nil, err
@@ -59,7 +61,8 @@ func (s *RouteService) CreateRoute(ctx context.Context,
 }
 
 func (s *RouteService) UpsertRoute(ctx context.Context,
-	req *v1.UpsertRouteRequest) (*v1.UpsertRouteResponse, error) {
+	req *v1.UpsertRouteRequest,
+) (*v1.UpsertRouteResponse, error) {
 	if err := validUUID(req.Item.Id); err != nil {
 		return nil, s.err(err)
 	}
@@ -78,7 +81,8 @@ func (s *RouteService) UpsertRoute(ctx context.Context,
 }
 
 func (s *RouteService) DeleteRoute(ctx context.Context,
-	req *v1.DeleteRouteRequest) (*v1.DeleteRouteResponse, error) {
+	req *v1.DeleteRouteRequest,
+) (*v1.DeleteRouteResponse, error) {
 	if err := validUUID(req.Id); err != nil {
 		return nil, s.err(err)
 	}
@@ -96,7 +100,8 @@ func (s *RouteService) DeleteRoute(ctx context.Context,
 }
 
 func (s *RouteService) ListRoutes(ctx context.Context,
-	req *v1.ListRoutesRequest) (*v1.ListRoutesResponse, error) {
+	req *v1.ListRoutesRequest,
+) (*v1.ListRoutesResponse, error) {
 	db, err := s.CommonOpts.getDB(ctx, req.Cluster)
 	if err != nil {
 		return nil, err

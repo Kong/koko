@@ -45,7 +45,8 @@ type client struct {
 }
 
 func (e *EventService) FetchReconfigureEvents(req *relay.FetchReconfigureEventsRequest,
-	stream relay.EventService_FetchReconfigureEventsServer) error {
+	stream relay.EventService_FetchReconfigureEventsServer,
+) error {
 	if req.Cluster == nil || req.Cluster.Id == "" {
 		return fmt.Errorf("no cluster")
 	}

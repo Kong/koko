@@ -72,7 +72,8 @@ func (s *ObjectStore) ForCluster(cluster string) *ObjectStore {
 }
 
 func (s *ObjectStore) withTx(ctx context.Context,
-	fn func(tx persistence.Tx) error) error {
+	fn func(tx persistence.Tx) error,
+) error {
 	tx, err := s.store.Tx(ctx)
 	if err != nil {
 		return err
@@ -89,7 +90,8 @@ func (s *ObjectStore) withTx(ctx context.Context,
 }
 
 func (s *ObjectStore) Create(ctx context.Context, object model.Object,
-	_ ...CreateOptsFunc) error {
+	_ ...CreateOptsFunc,
+) error {
 	ctx, cancel := context.WithTimeout(ctx, DefaultDBQueryTimeout)
 	defer cancel()
 	if object == nil {
@@ -120,7 +122,8 @@ func (s *ObjectStore) Create(ctx context.Context, object model.Object,
 }
 
 func (s *ObjectStore) Upsert(ctx context.Context, object model.Object,
-	_ ...CreateOptsFunc) error {
+	_ ...CreateOptsFunc,
+) error {
 	ctx, cancel := context.WithTimeout(ctx, DefaultDBQueryTimeout)
 	defer cancel()
 	if object == nil {
@@ -180,7 +183,8 @@ func (s *ObjectStore) Upsert(ctx context.Context, object model.Object,
 }
 
 func (s *ObjectStore) updateEvent(ctx context.Context, tx persistence.Tx,
-	object model.Object) error {
+	object model.Object,
+) error {
 	if object.Type() == resource.TypeNode {
 		return nil
 	}
@@ -220,7 +224,8 @@ func preProcess(object model.Object) error {
 }
 
 func (s *ObjectStore) Read(ctx context.Context, object model.Object,
-	opts ...ReadOptsFunc) error {
+	opts ...ReadOptsFunc,
+) error {
 	ctx, cancel := context.WithTimeout(ctx, DefaultDBQueryTimeout)
 	defer cancel()
 	opt := NewReadOpts(opts...)
@@ -243,7 +248,8 @@ func (s *ObjectStore) Read(ctx context.Context, object model.Object,
 }
 
 func (s *ObjectStore) readByIdx(ctx context.Context, tx persistence.Tx,
-	idxName, idxValue string, object model.Object) error {
+	idxName, idxValue string, object model.Object,
+) error {
 	key := s.uniqueIndexKey(object.Type(), idxName, idxValue)
 	value, err := tx.Get(ctx, key)
 	if err != nil {
@@ -264,12 +270,14 @@ func (s *ObjectStore) readByIdx(ctx context.Context, tx persistence.Tx,
 }
 
 func (s *ObjectStore) readByName(ctx context.Context, tx persistence.Tx,
-	name string, object model.Object) error {
+	name string, object model.Object,
+) error {
 	return s.readByIdx(ctx, tx, "name", name, object)
 }
 
 func (s *ObjectStore) readByTypeID(ctx context.Context, tx persistence.Tx,
-	typ model.Type, id string, object model.Object) error {
+	typ model.Type, id string, object model.Object,
+) error {
 	typeID, err := s.genID(typ, id)
 	if err != nil {
 		return err
@@ -289,7 +297,8 @@ func (s *ObjectStore) readByTypeID(ctx context.Context, tx persistence.Tx,
 }
 
 func (s *ObjectStore) Delete(ctx context.Context,
-	opts ...DeleteOptsFunc) error {
+	opts ...DeleteOptsFunc,
+) error {
 	ctx, cancel := context.WithTimeout(ctx, DefaultDBQueryTimeout)
 	defer cancel()
 	opt := NewDeleteOpts(opts...)

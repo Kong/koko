@@ -16,7 +16,8 @@ func (l KongSNILoader) Name() string {
 }
 
 func (l *KongSNILoader) Mutate(ctx context.Context,
-	opts MutatorOpts, config DataPlaneConfig) error {
+	opts MutatorOpts, config DataPlaneConfig,
+) error {
 	ctx, cancel := context.WithTimeout(ctx, defaultRequestTimeout)
 	defer cancel()
 

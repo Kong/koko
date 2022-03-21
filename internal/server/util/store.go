@@ -34,6 +34,7 @@ type DefaultStoreLoader struct {
 }
 
 func (d DefaultStoreLoader) Load(_ context.Context,
-	_ *model.RequestCluster) (store.Store, error) {
+	_ *model.RequestCluster,
+) (store.Store, error) {
 	return d.Store, nil
 }

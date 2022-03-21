@@ -13,7 +13,8 @@ type MetaService struct {
 }
 
 func (m *MetaService) GetVersion(_ context.Context,
-	_ *v1.GetVersionRequest) (*v1.GetVersionResponse, error) {
+	_ *v1.GetVersionRequest,
+) (*v1.GetVersionResponse, error) {
 	return &v1.GetVersionResponse{
 		Version: "dev",
 	}, nil

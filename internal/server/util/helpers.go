@@ -40,7 +40,8 @@ func SetHeader(ctx context.Context, code int) {
 }
 
 func SetHTTPStatus(ctx context.Context, w http.ResponseWriter,
-	_ proto2.Message) error {
+	_ proto2.Message,
+) error {
 	md, ok := runtime.ServerMetadataFromContext(ctx)
 	if !ok {
 		return fmt.Errorf("no server metadata in context")

@@ -21,7 +21,8 @@ func (s *ObjectStore) uniqueIndexKey(typ model.Type, indexName, indexValue strin
 }
 
 func (s *ObjectStore) foreignIndexKey(foreignType model.Type,
-	foreignValue string, objectType model.Type, objectID string) string {
+	foreignValue string, objectType model.Type, objectID string,
+) string {
 	if foreignType == "" || foreignValue == "" ||
 		objectType == "" || objectID == "" {
 		panic("foreign index with invalid values")
@@ -33,7 +34,8 @@ func (s *ObjectStore) foreignIndexKey(foreignType model.Type,
 }
 
 func (s *ObjectStore) indexKV(index model.Index, object model.Object) (string,
-	[]byte, error) {
+	[]byte, error,
+) {
 	if index.Name == "" || index.Value == "" {
 		return "", nil, nil
 	}
@@ -72,7 +74,8 @@ func (e ErrConstraint) Error() string {
 }
 
 func (s *ObjectStore) createIndexes(ctx context.Context,
-	tx persistence.Tx, object model.Object) error {
+	tx persistence.Tx, object model.Object,
+) error {
 	indexes := object.Indexes()
 	for _, index := range indexes {
 		switch index.Type {
@@ -139,7 +142,8 @@ func (s *ObjectStore) createIndexes(ctx context.Context,
 }
 
 func (s *ObjectStore) checkIndex(ctx context.Context, tx persistence.Tx,
-	index model.Index, key string) error {
+	index model.Index, key string,
+) error {
 	_, err := tx.Get(ctx, key)
 	switch {
 	case err == nil:
@@ -157,7 +161,8 @@ func (s *ObjectStore) checkIndex(ctx context.Context, tx persistence.Tx,
 }
 
 func (s *ObjectStore) deleteIndexes(ctx context.Context, tx persistence.Tx,
-	object model.Object) error {
+	object model.Object,
+) error {
 	indexes := object.Indexes()
 	for _, index := range indexes {
 		switch index.Type {
@@ -206,7 +211,8 @@ func (s *ObjectStore) deleteIndexes(ctx context.Context, tx persistence.Tx,
 
 func (s *ObjectStore) checkForeignIndexesForDelete(ctx context.Context,
 	tx persistence.Tx,
-	object model.Object) error {
+	object model.Object,
+) error {
 	key := s.clusterKey(fmt.Sprintf("ix/f/%s/%s", object.Type(), object.ID()))
 	listResult, err := getFullList(ctx, tx, key)
 	if err != nil {
