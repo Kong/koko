@@ -13,7 +13,13 @@ func TestReconfigurePayload(t *testing.T) {
 	res, err := ReconfigurePayload(configTable)
 	require.Nil(t, err)
 
-	payload, err := UncompressPayload(res)
+	payload, err := UncompressPayload(res.Payload)
 	require.Nil(t, err)
-	require.Equal(t, string(payload), "{\"config_table\":{\"plugins\":[\"test\"]},\"type\":\"reconfigure\"}\n")
+	require.JSONEq(t,
+		`{
+			"type":"reconfigure",
+			"config_table":{"plugins":["test"]},
+			"config_hash":"1133ae8be08017e5460160635daa22f2"
+		}`,
+		string(payload))
 }

@@ -7,10 +7,15 @@ import (
 
 type Map map[string]interface{}
 
+type State struct {
+	Payload []byte
+	Hash    string
+}
+
 type Payload struct {
-	compressed []byte
-	mu         sync.RWMutex
-	vc         VersionCompatibility
+	content State
+	mu      sync.RWMutex
+	vc      VersionCompatibility
 }
 
 type PayloadOpts struct {
@@ -27,22 +32,25 @@ func NewPayload(opts PayloadOpts) (*Payload, error) {
 	}, nil
 }
 
-func (p *Payload) Payload(versionStr string) ([]byte, error) {
+func (p *Payload) Payload(versionStr string) (State, error) {
 	p.mu.RLock()
-	payload := p.compressed
+	content := p.content
 	p.mu.RUnlock()
 
 	// TODO(fero): perf create cache; version aware
-	updatedPayload, err := p.vc.ProcessConfigTableUpdates(versionStr, payload)
+	updatedPayload, err := p.vc.ProcessConfigTableUpdates(versionStr, content.Payload)
 	if err != nil {
-		return nil, fmt.Errorf("downgrade config: %v", err)
+		return State{}, fmt.Errorf("downgrade config: %v", err)
 	}
-	return updatedPayload, nil
+	return State{
+		Payload: updatedPayload,
+		Hash:    content.Hash,
+	}, nil
 }
 
-func (p *Payload) UpdateBinary(c []byte) error {
+func (p *Payload) UpdateBinary(c State) error {
 	p.mu.Lock()
 	defer p.mu.Unlock()
-	p.compressed = c
+	p.content = c
 	return nil
 }

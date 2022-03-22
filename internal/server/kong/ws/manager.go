@@ -237,7 +237,12 @@ func (m *Manager) broadcast() {
 			node.conn.RemoteAddr().String()))
 		loggerWithNode.Debug("broadcasting to node")
 		// TODO(hbagdi): perf: use websocket.PreparedMessage
-		err = node.write(payload)
+		hash, err := truncateHash(payload.Hash)
+		if err != nil {
+			m.logger.With(zap.Error(err)).Sugar().Errorf("invalid hash [%v]", hash)
+			// TODO(hbagdi: remove the node if connection has been closed?
+		}
+		err = node.write(payload.Payload, hash)
 		if err != nil {
 			m.logger.With(zap.Error(err)).Error("broadcast failed")
 			// TODO(hbagdi: remove the node if connection has been closed?
@@ -256,6 +261,7 @@ func (m *Manager) reconcileKongPayload(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+
 	return m.payload.UpdateBinary(config)
 }
 
