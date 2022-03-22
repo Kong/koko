@@ -46,6 +46,7 @@ func (l *KongPluginLoader) Mutate(ctx context.Context,
 		}
 		flattenForeign(m, "service")
 		flattenForeign(m, "route")
+		flattenForeign(m, "consumer")
 		delete(m, "updated_at")
 		res = append(res, m)
 	}

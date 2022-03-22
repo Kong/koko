@@ -81,7 +81,7 @@ func TestPluginCreate(t *testing.T) {
 		resErr.Object().ValueEqual("type", v1.ErrorType_ERROR_TYPE_REFERENCE.String())
 		resErr.Object().ValueEqual("messages", []string{
 			"unique-plugin-per-entity (" +
-				"type: unique) constraint failed for value 'key-auth..': ",
+				"type: unique) constraint failed for value 'key-auth...': ",
 		})
 	})
 	t.Run("creating a plugin with a non-existent service fails", func(t *testing.T) {
@@ -158,6 +158,28 @@ func TestPluginCreate(t *testing.T) {
 		res = c.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
 		res.Status(201)
 	})
+
+	t.Run("creating a plugin with a valid consumer.id succeeds", func(t *testing.T) {
+		consumer := goodConsumer()
+		res := c.POST("/v1/consumers").WithJSON(consumer).Expect()
+		res.Status(http.StatusCreated)
+		body := res.JSON().Path("$.item").Object()
+		consumerID := body.Value("id").String().Raw()
+
+		plugin := &v1.Plugin{
+			Name: "key-auth",
+			Consumer: &v1.Consumer{
+				Id: consumerID,
+			},
+		}
+		pluginBytes, err := json.Marshal(plugin)
+		require.Nil(t, err)
+		res = c.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
+		res.Status(http.StatusCreated)
+		body = res.JSON().Path("$.item").Object()
+		body.Value("consumer").Object().Value("id").Equal(consumerID)
+	})
+
 	t.Run("creating a plugin with a valid route.id and service.id succeeds",
 		func(t *testing.T) {
 			service := goodService()
@@ -248,7 +270,7 @@ func TestPluginUpsert(t *testing.T) {
 				v1.ErrorType_ERROR_TYPE_REFERENCE.String())
 			resErr.Object().ValueEqual("messages", []string{
 				"unique-plugin-per-entity (" +
-					"type: unique) constraint failed for value 'key-auth..': ",
+					"type: unique) constraint failed for value 'key-auth...': ",
 			})
 		})
 	t.Run("upserting a plugin with a non-existent service fails", func(t *testing.T) {
