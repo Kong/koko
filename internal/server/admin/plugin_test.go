@@ -165,12 +165,15 @@ func TestPluginCreate(t *testing.T) {
 		res.Status(http.StatusCreated)
 		body := res.JSON().Path("$.item").Object()
 		consumerID := body.Value("id").String().Raw()
-
+		var config structpb.Struct
+		configString := `{"allow":["10.10.10.10"]}`
+		require.Nil(t, json.Unmarshal([]byte(configString), &config))
 		plugin := &v1.Plugin{
-			Name: "key-auth",
+			Name: "ip-restriction",
 			Consumer: &v1.Consumer{
 				Id: consumerID,
 			},
+			Config: &config,
 		}
 		pluginBytes, err := json.Marshal(plugin)
 		require.Nil(t, err)
