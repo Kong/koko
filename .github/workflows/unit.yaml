@@ -26,7 +26,10 @@ jobs:
           ~/.cache/go-build
         key: ${{ runner.os }}-go-unit-${{ hashFiles('**/go.sum') }}
     - name: setup-db
-      run: ./scripts/setup-db.sh &
+      if: ${{ matrix.database == 'postgres'}}
+      run: |
+        ./scripts/setup-db.sh &
+        ./scripts/wait-for-db.sh
     - name: make test-race
       run: make test-race
 
