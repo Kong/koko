@@ -197,7 +197,7 @@ func TestRoute_Validate(t *testing.T) {
 					Type:  model.ErrorType_ERROR_TYPE_FIELD,
 					Field: "tags[0]",
 					Messages: []string{
-						"must match pattern '^[0-9a-zA-Z.\\-_~]*$'",
+						"must match pattern '^[0-9a-zA-Z.\\-_~:]*$'",
 					},
 				},
 			},
