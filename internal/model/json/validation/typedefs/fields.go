@@ -12,6 +12,7 @@ const (
 	maxTimeout        = (1 << 31) - 2 //nolint:gomnd
 	maxTags           = 8
 	namePattern       = `^[0-9a-zA-Z.\-_~]*$`
+	tagPattern        = `^[0-9a-zA-Z.\-_~:]*$`
 	maxHostnameLength = 256
 	maxPathLength     = 1024
 	hostnamePattern   = "[a-z0-9]([-a-z0-9]*[a-z0-9])?(.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$"
@@ -93,9 +94,16 @@ var UnixEpoch = &generator.Schema{
 	Minimum: intP(1),
 }
 
+var tag = &generator.Schema{
+	Type:      "string",
+	Pattern:   tagPattern,
+	MinLength: 1,
+	MaxLength: maxNameLength,
+}
+
 var Tags = &generator.Schema{
 	Type:     "array",
-	Items:    Name,
+	Items:    tag,
 	MaxItems: maxTags,
 }
 
