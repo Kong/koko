@@ -209,9 +209,8 @@ func (s *ObjectStore) deleteIndexes(ctx context.Context, tx persistence.Tx,
 	return nil
 }
 
-func (s *ObjectStore) checkForeignIndexesForDelete(ctx context.Context,
-	tx persistence.Tx,
-	object model.Object,
+func (s *ObjectStore) onDeleteCascade(ctx context.Context,
+	tx persistence.Tx, object model.Object,
 ) error {
 	key := s.clusterKey(fmt.Sprintf("ix/f/%s/%s", object.Type(), object.ID()))
 	listResult, err := getFullList(ctx, tx, key)
@@ -219,15 +218,15 @@ func (s *ObjectStore) checkForeignIndexesForDelete(ctx context.Context,
 		return err
 	}
 	if len(listResult.KVList) > 0 {
-		refTypeID := strings.TrimPrefix(string(listResult.KVList[0].Key), key+"/")
-		typeAndID := strings.Split(refTypeID, "/")
-		return ErrConstraint{
-			Index: model.Index{
-				Type:  model.IndexForeign,
-				Value: object.ID(),
-			},
-			Message: fmt.Sprintf("foreign reference exist: %s (id: %s)",
-				typeAndID[0], typeAndID[1]),
+		for _, ref := range listResult.KVList {
+			refTypeID := strings.TrimPrefix(string(ref.Key), key+"/")
+			typeAndID := strings.Split(refTypeID, "/")
+			typ := typeAndID[0]
+			id := typeAndID[1]
+			err := s.delete(ctx, tx, model.Type(typ), id)
+			if err != nil {
+				return err
+			}
 		}
 	}
 	return nil
