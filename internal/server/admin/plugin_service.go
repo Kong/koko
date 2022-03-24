@@ -114,7 +114,7 @@ func (s *PluginService) ListPlugins(ctx context.Context,
 	if len(serviceID) > 0 && len(routeID) > 0 {
 		return nil, s.err(util.ErrClient{Message: "service_id and route_id are mutually exclusive"})
 	}
-	// TODO: rajkong need a better way but in a hurry
+	// TODO(rajkong): need a better way to check for exclusiveness
 	if len(serviceID) > 0 && len(consumerID) > 0 {
 		return nil, s.err(util.ErrClient{Message: "service_id and consumer_id are mutually exclusive"})
 	}
@@ -122,7 +122,7 @@ func (s *PluginService) ListPlugins(ctx context.Context,
 		return nil, s.err(util.ErrClient{Message: "route_id and consumer_id are mutually exclusive"})
 	}
 
-	//nolint:gocritic  // TODO rajkong
+	//nolint:gocritic  // TODO(rajkong): remove the nolint
 	if len(serviceID) > 0 {
 		if _, err := uuid.Parse(serviceID); err != nil {
 			return nil, s.err(util.ErrClient{

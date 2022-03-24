@@ -651,6 +651,24 @@ func TestPluginList(t *testing.T) {
 		body.ValueEqual("code", 3)
 		body.ValueEqual("message", "service_id and route_id are mutually exclusive")
 	})
+	t.Run("list plugins by route and consumer - invalid request", func(t *testing.T) {
+		body := c.GET("/v1/plugins").
+			WithQuery("consumer_id", uuid.NewString()).
+			WithQuery("route_id", routeID1).
+			Expect().Status(http.StatusBadRequest).JSON().Object()
+		body.Keys().Length().Equal(2)
+		body.ValueEqual("code", 3)
+		body.ValueEqual("message", "route_id and consumer_id are mutually exclusive")
+	})
+	t.Run("list plugins by service and consumer - invalid request", func(t *testing.T) {
+		body := c.GET("/v1/plugins").
+			WithQuery("consumer_id", uuid.NewString()).
+			WithQuery("service_id", serviceID2).
+			Expect().Status(http.StatusBadRequest).JSON().Object()
+		body.Keys().Length().Equal(2)
+		body.ValueEqual("code", 3)
+		body.ValueEqual("message", "service_id and consumer_id are mutually exclusive")
+	})
 	t.Run("list returns multiple plugins with paging", func(t *testing.T) {
 		// Get First Page
 		body := c.GET("/v1/plugins").
@@ -736,7 +754,7 @@ func TestPluginListByConsumer(t *testing.T) {
 	body = res.JSON().Path("$.item").Object()
 	PluginIDTwo := body.Value("id").String().Raw()
 
-	// create one  more for entropy
+	// create one more to ensure filter works
 	plugin = &v1.Plugin{
 		Name:      "request-size-limiting",
 		Enabled:   wrapperspb.Bool(true),
