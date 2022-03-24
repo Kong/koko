@@ -3,7 +3,6 @@ package store
 import (
 	"context"
 	encodingJSON "encoding/json"
-	"errors"
 	"fmt"
 	"sort"
 	"strings"
@@ -237,7 +236,8 @@ func TestDelete(t *testing.T) {
 		)
 		require.IsType(t, ErrNotFound, err)
 	})
-	t.Run("deleting an object with foreign-references fails", func(t *testing.T) {
+	t.Run("deleting an object with foreign-references "+
+		"also deletes referenced items", func(t *testing.T) {
 		ctx := context.Background()
 		persister, err := util.GetPersister(t)
 		require.Nil(t, err)
@@ -266,12 +266,10 @@ func TestDelete(t *testing.T) {
 
 		err = s.Delete(ctx, DeleteByType(resource.TypeService),
 			DeleteByID(sid))
-		require.NotNil(t, err)
-		constraintErr, ok := err.(ErrConstraint)
-		require.True(t, ok)
-		errMessage := fmt.Sprintf("foreign reference exist: %s (id: %s)",
-			"route", rid)
-		require.Equal(t, errMessage, constraintErr.Message)
+		require.Nil(t, err)
+
+		err = s.Read(ctx, resource.NewRoute(), GetByID(rid))
+		require.IsType(t, ErrNotFound, err)
 	})
 }
 
@@ -482,8 +480,7 @@ func TestUpsert(t *testing.T) {
 
 			err = s.Delete(ctx, DeleteByType(resource.TypeService),
 				DeleteByID(serviceID2))
-			require.NotNil(t, err)
-			require.True(t, errors.As(err, &ErrConstraint{}))
+			require.Nil(t, err)
 		})
 }
 
