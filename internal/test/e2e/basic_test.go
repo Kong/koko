@@ -288,7 +288,7 @@ func TestPluginSync(t *testing.T) {
 	expectedPlugins = append(expectedPlugins, plugin)
 
 	var config structpb.Struct
-	configString := `{"allow":["10.10.10.10"]}`
+	configString := `{"allow":["10.10.10.11"]}`
 	require.Nil(t, json.Unmarshal([]byte(configString), &config))
 	plugin = &v1.Plugin{
 		Name: "ip-restriction",
