@@ -230,19 +230,9 @@ func (m *Manager) broadcast() {
 }
 
 type ConfigClient struct {
-	Service       admin.ServiceServiceClient
-	Route         admin.RouteServiceClient
-	Plugin        admin.PluginServiceClient
-	Upstream      admin.UpstreamServiceClient
-	Target        admin.TargetServiceClient
-	Status        relay.StatusServiceClient
-	Node          admin.NodeServiceClient
-	Consumer      admin.ConsumerServiceClient
-	Certificate   admin.CertificateServiceClient
-	CACertificate admin.CACertificateServiceClient
-	SNI           admin.SNIServiceClient
-
-	Event relay.EventServiceClient
+	Status relay.StatusServiceClient
+	Node   admin.NodeServiceClient
+	Event  relay.EventServiceClient
 }
 
 func (m *Manager) reconcileKongPayload(ctx context.Context) error {

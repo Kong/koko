@@ -123,52 +123,52 @@ func Run(ctx context.Context, config ServerConfig) error {
 	g.AddWithCtxE(grpcServer.Run)
 
 	// setup relay client
-	configClient, err := setupRelayClient()
+	grpcClients, err := setupGRPCClients()
 	if err != nil {
 		return err
 	}
 
 	loader := &kongConfigWS.KongConfigurationLoader{}
-	err = loader.Register(&kongConfigWS.KongServiceLoader{Client: configClient.
+	err = loader.Register(&kongConfigWS.KongServiceLoader{Client: grpcClients.
 		Service})
 	if err != nil {
 		panic(err.Error())
 	}
-	err = loader.Register(&kongConfigWS.KongRouteLoader{Client: configClient.Route})
+	err = loader.Register(&kongConfigWS.KongRouteLoader{Client: grpcClients.Route})
 	if err != nil {
 		panic(err.Error())
 	}
-	err = loader.Register(&kongConfigWS.KongPluginLoader{Client: configClient.Plugin})
-	if err != nil {
-		panic(err.Error())
-	}
-
-	err = loader.Register(&kongConfigWS.KongUpstreamLoader{Client: configClient.Upstream})
+	err = loader.Register(&kongConfigWS.KongPluginLoader{Client: grpcClients.Plugin})
 	if err != nil {
 		panic(err.Error())
 	}
 
-	err = loader.Register(&kongConfigWS.KongTargetLoader{Client: configClient.Target})
+	err = loader.Register(&kongConfigWS.KongUpstreamLoader{Client: grpcClients.Upstream})
 	if err != nil {
 		panic(err.Error())
 	}
 
-	err = loader.Register(&kongConfigWS.KongConsumerLoader{Client: configClient.Consumer})
+	err = loader.Register(&kongConfigWS.KongTargetLoader{Client: grpcClients.Target})
 	if err != nil {
 		panic(err.Error())
 	}
 
-	err = loader.Register(&kongConfigWS.KongCertificateLoader{Client: configClient.Certificate})
+	err = loader.Register(&kongConfigWS.KongConsumerLoader{Client: grpcClients.Consumer})
 	if err != nil {
 		panic(err.Error())
 	}
 
-	err = loader.Register(&kongConfigWS.KongCACertificateLoader{Client: configClient.CACertificate})
+	err = loader.Register(&kongConfigWS.KongCertificateLoader{Client: grpcClients.Certificate})
 	if err != nil {
 		panic(err.Error())
 	}
 
-	err = loader.Register(&kongConfigWS.KongSNILoader{Client: configClient.SNI})
+	err = loader.Register(&kongConfigWS.KongCACertificateLoader{Client: grpcClients.CACertificate})
+	if err != nil {
+		panic(err.Error())
+	}
+
+	err = loader.Register(&kongConfigWS.KongSNILoader{Client: grpcClients.SNI})
 	if err != nil {
 		panic(err.Error())
 	}
@@ -184,8 +184,12 @@ func Run(ctx context.Context, config ServerConfig) error {
 	m := ws.NewManager(ws.ManagerOpts{
 		Logger:         controlLogger,
 		DPConfigLoader: loader,
-		Client:         configClient,
-		Cluster:        ws.DefaultCluster{},
+		Client: ws.ConfigClient{
+			Node:   grpcClients.Node,
+			Status: grpcClients.Status,
+			Event:  grpcClients.Event,
+		},
+		Cluster: ws.DefaultCluster{},
 		// TODO(hbagdi): make this configurable
 		Config: ws.ManagerConfig{
 			DataPlaneRequisites: []*grpcKongUtil.DataPlanePrerequisite{
@@ -271,13 +275,29 @@ func Run(ctx context.Context, config ServerConfig) error {
 	return nil
 }
 
-func setupRelayClient() (ws.ConfigClient, error) {
+type grpcClients struct {
+	Service       v1.ServiceServiceClient
+	Route         v1.RouteServiceClient
+	Plugin        v1.PluginServiceClient
+	Upstream      v1.UpstreamServiceClient
+	Target        v1.TargetServiceClient
+	Consumer      v1.ConsumerServiceClient
+	Certificate   v1.CertificateServiceClient
+	CACertificate v1.CACertificateServiceClient
+	SNI           v1.SNIServiceClient
+
+	Status relay.StatusServiceClient
+	Node   v1.NodeServiceClient
+	Event  relay.EventServiceClient
+}
+
+func setupGRPCClients() (grpcClients, error) {
 	cc, err := grpc.Dial("localhost:3001",
 		grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		return ws.ConfigClient{}, err
+		return grpcClients{}, err
 	}
-	return ws.ConfigClient{
+	return grpcClients{
 		Service:       v1.NewServiceServiceClient(cc),
 		Route:         v1.NewRouteServiceClient(cc),
 		Plugin:        v1.NewPluginServiceClient(cc),
@@ -288,8 +308,7 @@ func setupRelayClient() (ws.ConfigClient, error) {
 		CACertificate: v1.NewCACertificateServiceClient(cc),
 		SNI:           v1.NewSNIServiceClient(cc),
 
-		Node: v1.NewNodeServiceClient(cc),
-
+		Node:   v1.NewNodeServiceClient(cc),
 		Event:  relay.NewEventServiceClient(cc),
 		Status: relay.NewStatusServiceClient(cc),
 	}, nil
