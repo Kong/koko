@@ -23,6 +23,7 @@ import (
 	"github.com/kong/koko/internal/test/util"
 	"github.com/stretchr/testify/require"
 	"github.com/tidwall/gjson"
+	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
@@ -252,6 +253,15 @@ func TestPluginSync(t *testing.T) {
 	res = c.POST("/v1/routes").WithJSON(route).Expect()
 	res.Status(201)
 
+	consumer := &v1.Consumer{
+		Id:       uuid.NewString(),
+		Username: "testConsumer",
+	}
+	// create the consumer in CP
+	c = httpexpect.New(t, "http://localhost:3000")
+	res = c.POST("/v1/consumers").WithJSON(consumer).Expect()
+	res.Status(201)
+
 	var expectedPlugins []*v1.Plugin
 	plugin := &v1.Plugin{
 		Name:      "key-auth",
@@ -277,6 +287,22 @@ func TestPluginSync(t *testing.T) {
 	res.Status(201)
 	expectedPlugins = append(expectedPlugins, plugin)
 
+	var config structpb.Struct
+	configString := `{"allow":["10.10.10.10"]}`
+	require.Nil(t, json.Unmarshal([]byte(configString), &config))
+	plugin = &v1.Plugin{
+		Name: "ip-restriction",
+		Consumer: &v1.Consumer{
+			Id: consumer.Id,
+		},
+		Config: &config,
+	}
+	pluginBytes, err = json.Marshal(plugin)
+	require.Nil(t, err)
+	res = c.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
+	res.Status(201)
+	expectedPlugins = append(expectedPlugins, plugin)
+
 	plugin = &v1.Plugin{
 		Name:      "request-transformer",
 		Enabled:   wrapperspb.Bool(true),
@@ -294,9 +320,10 @@ func TestPluginSync(t *testing.T) {
 	require.Nil(t, util.WaitForKongPort(t, 8001))
 
 	expectedConfig := &v1.TestingConfig{
-		Services: []*v1.Service{service},
-		Routes:   []*v1.Route{route},
-		Plugins:  expectedPlugins,
+		Services:  []*v1.Service{service},
+		Routes:    []*v1.Route{route},
+		Consumers: []*v1.Consumer{consumer},
+		Plugins:   expectedPlugins,
 	}
 	util.WaitFunc(t, func() error {
 		err := util.EnsureConfig(expectedConfig)
