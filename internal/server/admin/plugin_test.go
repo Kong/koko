@@ -166,10 +166,11 @@ func TestPluginCreate(t *testing.T) {
 		body := res.JSON().Path("$.item").Object()
 		consumerID := body.Value("id").String().Raw()
 		var config structpb.Struct
-		configString := `{"allow":["10.10.10.10"]}`
+		configString := `{"header_name": "Kong-Request-ID", "generator": "uuid#counter", "echo_downstream": true }`
 		require.Nil(t, json.Unmarshal([]byte(configString), &config))
 		plugin := &v1.Plugin{
-			Name: "ip-restriction",
+			Name:      "correlation-id",
+			Protocols: []string{"http", "https"},
 			Consumer: &v1.Consumer{
 				Id: consumerID,
 			},
