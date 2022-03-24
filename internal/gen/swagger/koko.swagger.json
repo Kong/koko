@@ -1096,6 +1096,9 @@
                 },
                 "config": {
                   "type": "object"
+                },
+                "consumer": {
+                  "$ref": "#/definitions/kong.admin.model.v1.Consumer"
                 }
               }
             }
@@ -2987,6 +2990,9 @@
         },
         "config": {
           "type": "object"
+        },
+        "consumer": {
+          "$ref": "#/definitions/kong.admin.model.v1.Consumer"
         }
       }
     },

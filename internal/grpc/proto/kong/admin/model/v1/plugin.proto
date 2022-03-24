@@ -8,6 +8,7 @@ import "kong/admin/model/v1/service.proto";
 import "kong/admin/model/v1/route.proto";
 import "google/protobuf/wrappers.proto";
 import "google/protobuf/struct.proto";
+import "kong/admin/model/v1/consumer.proto";
 
 message Plugin {
   string id = 1;
@@ -20,4 +21,5 @@ message Plugin {
   Service service = 8;
   Route route = 9;
   google.protobuf.Struct config = 10;
+  Consumer consumer = 11;
 }

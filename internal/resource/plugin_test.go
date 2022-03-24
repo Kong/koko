@@ -238,7 +238,7 @@ func TestPlugin_Indexes(t *testing.T) {
 				{
 					Name:  "unique-plugin-per-entity",
 					Type:  internalModel.IndexUnique,
-					Value: "key-auth..",
+					Value: "key-auth...",
 				},
 			},
 		},
@@ -256,7 +256,7 @@ func TestPlugin_Indexes(t *testing.T) {
 				{
 					Name:  "unique-plugin-per-entity",
 					Type:  internalModel.IndexUnique,
-					Value: "key-auth.a03e65a1-a2f8-4953-9fca-2995d6ff4f6aB.",
+					Value: "key-auth.a03e65a1-a2f8-4953-9fca-2995d6ff4f6aB..",
 				},
 				{
 					Name:        "service_id",
@@ -281,7 +281,7 @@ func TestPlugin_Indexes(t *testing.T) {
 				{
 					Name:  "unique-plugin-per-entity",
 					Type:  internalModel.IndexUnique,
-					Value: "key-auth..7ed5812a-1281-4af0-aaaa-0490c1144451",
+					Value: "key-auth..7ed5812a-1281-4af0-aaaa-0490c1144451.",
 				},
 				{
 					Name:        "route_id",
@@ -293,7 +293,32 @@ func TestPlugin_Indexes(t *testing.T) {
 			},
 		},
 		{
-			name: "returns indexes for a route asd service-level plugin",
+			name: "returns indexes for a consumer-level plugin",
+			fields: fields{
+				Plugin: &model.Plugin{
+					Name: "key-auth",
+					Consumer: &model.Consumer{
+						Id: "7ed5812a-1281-4af0-aaaa-0490c1144451",
+					},
+				},
+			},
+			want: []internalModel.Index{
+				{
+					Name:  "unique-plugin-per-entity",
+					Type:  internalModel.IndexUnique,
+					Value: "key-auth...7ed5812a-1281-4af0-aaaa-0490c1144451",
+				},
+				{
+					Name:        "consumer_id",
+					Type:        internalModel.IndexForeign,
+					FieldName:   "consumer.id",
+					ForeignType: TypeConsumer,
+					Value:       "7ed5812a-1281-4af0-aaaa-0490c1144451",
+				},
+			},
+		},
+		{
+			name: "returns indexes for a route and service-level plugin",
 			fields: fields{
 				Plugin: &model.Plugin{
 					Name: "key-auth",
@@ -309,7 +334,7 @@ func TestPlugin_Indexes(t *testing.T) {
 				{
 					Name:  "unique-plugin-per-entity",
 					Type:  internalModel.IndexUnique,
-					Value: "key-auth.33c3e0cc-bd5f-44bb-b642-e8441eaa4c56.7ed5812a-1281-4af0-aaaa-0490c1144451",
+					Value: "key-auth.33c3e0cc-bd5f-44bb-b642-e8441eaa4c56.7ed5812a-1281-4af0-aaaa-0490c1144451.",
 				},
 				{
 					Name:        "route_id",
@@ -324,6 +349,52 @@ func TestPlugin_Indexes(t *testing.T) {
 					FieldName:   "service.id",
 					ForeignType: TypeService,
 					Value:       "33c3e0cc-bd5f-44bb-b642-e8441eaa4c56",
+				},
+			},
+		},
+		{
+			name: "returns indexes for a route, service and consumer-level plugin",
+			fields: fields{
+				Plugin: &model.Plugin{
+					Name: "key-auth",
+					Route: &model.Route{
+						Id: "7ed5812a-1281-4af0-aaaa-0490c1144451",
+					},
+					Service: &model.Service{
+						Id: "33c3e0cc-bd5f-44bb-b642-e8441eaa4c56",
+					},
+					Consumer: &model.Consumer{
+						Id: "11267db4-6e48-471b-932c-ca8693e68376",
+					},
+				},
+			},
+			want: []internalModel.Index{
+				{
+					Name: "unique-plugin-per-entity",
+					Type: internalModel.IndexUnique,
+					Value: "key-auth.33c3e0cc-bd5f-44bb-b642-e8441eaa4c56.7ed5812a-1281-4af0-aaaa-0490c1144451." +
+						"11267db4-6e48-471b-932c-ca8693e68376",
+				},
+				{
+					Name:        "route_id",
+					Type:        internalModel.IndexForeign,
+					FieldName:   "route.id",
+					ForeignType: TypeRoute,
+					Value:       "7ed5812a-1281-4af0-aaaa-0490c1144451",
+				},
+				{
+					Name:        "service_id",
+					Type:        internalModel.IndexForeign,
+					FieldName:   "service.id",
+					ForeignType: TypeService,
+					Value:       "33c3e0cc-bd5f-44bb-b642-e8441eaa4c56",
+				},
+				{
+					Name:        "consumer_id",
+					Type:        internalModel.IndexForeign,
+					FieldName:   "consumer.id",
+					ForeignType: TypeConsumer,
+					Value:       "11267db4-6e48-471b-932c-ca8693e68376",
 				},
 			},
 		},
