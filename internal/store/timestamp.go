@@ -5,6 +5,11 @@ import (
 	"time"
 )
 
+const (
+	fieldCreatedAt = "CreatedAt"
+	fieldUpdatedAt = "UpdatedAt"
+)
+
 func setTSField(obj interface{}, field string, override bool) {
 	ptr := reflect.ValueOf(obj)
 	if ptr.Kind() != reflect.Ptr {
@@ -18,8 +23,28 @@ func setTSField(obj interface{}, field string, override bool) {
 	}
 }
 
+func getCreationTimestamp(obj interface{}) int32 {
+	ptr := reflect.ValueOf(obj)
+	if ptr.Kind() != reflect.Ptr {
+		return 0
+	}
+	v := reflect.Indirect(ptr)
+	ts := v.FieldByName(fieldCreatedAt)
+	return int32(ts.Int())
+}
+
+func setCreationTimestamp(obj interface{}, val int32) {
+	ptr := reflect.ValueOf(obj)
+	if ptr.Kind() != reflect.Ptr {
+		return
+	}
+	v := reflect.Indirect(ptr)
+	ts := v.FieldByName(fieldCreatedAt)
+	ts.Set(reflect.ValueOf(val))
+}
+
 func addTS(obj interface{}) {
 	// TODO(hbagdi): make this configuration for update operations
-	setTSField(obj, "CreatedAt", true)
-	setTSField(obj, "UpdatedAt", true)
+	setTSField(obj, fieldUpdatedAt, true)
+	setTSField(obj, fieldCreatedAt, true)
 }
