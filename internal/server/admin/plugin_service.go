@@ -109,11 +109,20 @@ func (s *PluginService) ListPlugins(ctx context.Context,
 
 	serviceID := strings.TrimSpace(req.GetServiceId())
 	routeID := strings.TrimSpace(req.GetRouteId())
+	consumerID := strings.TrimSpace(req.GetConsumerId())
 	listFn := []store.ListOptsFunc{}
 	if len(serviceID) > 0 && len(routeID) > 0 {
 		return nil, s.err(util.ErrClient{Message: "service_id and route_id are mutually exclusive"})
 	}
+	// TODO: rajkong need a better way but in a hurry
+	if len(serviceID) > 0 && len(consumerID) > 0 {
+		return nil, s.err(util.ErrClient{Message: "service_id and consumer_id are mutually exclusive"})
+	}
+	if len(routeID) > 0 && len(consumerID) > 0 {
+		return nil, s.err(util.ErrClient{Message: "route_id and consumer_id are mutually exclusive"})
+	}
 
+	//nolint:gocritic  // TODO rajkong
 	if len(serviceID) > 0 {
 		if _, err := uuid.Parse(serviceID); err != nil {
 			return nil, s.err(util.ErrClient{
@@ -128,6 +137,13 @@ func (s *PluginService) ListPlugins(ctx context.Context,
 			})
 		}
 		listFn = append(listFn, store.ListFor(resource.TypeRoute, routeID))
+	} else if len(consumerID) > 0 {
+		if _, err := uuid.Parse(consumerID); err != nil {
+			return nil, s.err(util.ErrClient{
+				Message: fmt.Sprintf("consumer_id '%s' is not a UUID", req.GetConsumerId()),
+			})
+		}
+		listFn = append(listFn, store.ListFor(resource.TypeConsumer, consumerID))
 	}
 
 	list := resource.NewList(resource.TypePlugin)

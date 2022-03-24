@@ -689,3 +689,71 @@ func TestPluginList(t *testing.T) {
 		}, gotIDs)
 	})
 }
+
+func TestPluginListByConsumer(t *testing.T) {
+	s, cleanup := setup(t)
+	defer cleanup()
+	c := httpexpect.New(t, s.URL)
+
+	consumer := goodConsumer()
+	res := c.POST("/v1/consumers").WithJSON(consumer).Expect()
+	res.Status(http.StatusCreated)
+	body := res.JSON().Path("$.item").Object()
+	consumerID := body.Value("id").String().Raw()
+	var config structpb.Struct
+	configString := `{"header_name": "Kong-Request-ID", "generator": "uuid#counter", "echo_downstream": true }`
+	require.Nil(t, json.Unmarshal([]byte(configString), &config))
+	plugin := &v1.Plugin{
+		Name:      "correlation-id",
+		Protocols: []string{"http", "https"},
+		Consumer: &v1.Consumer{
+			Id: consumerID,
+		},
+		Config: &config,
+	}
+	pluginBytes, err := json.Marshal(plugin)
+	require.Nil(t, err)
+	res = c.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
+	res.Status(http.StatusCreated)
+	body = res.JSON().Path("$.item").Object()
+	PluginIDOne := body.Value("id").String().Raw()
+
+	configString = `{"allow": ["10.10.10.10"]}`
+	require.Nil(t, json.Unmarshal([]byte(configString), &config))
+
+	plugin = &v1.Plugin{
+		Name:      "ip-restriction",
+		Protocols: []string{"http", "https"},
+		Consumer: &v1.Consumer{
+			Id: consumerID,
+		},
+		Config: &config,
+	}
+	pluginBytes, err = json.Marshal(plugin)
+	require.Nil(t, err)
+	res = c.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
+	res.Status(http.StatusCreated)
+	body = res.JSON().Path("$.item").Object()
+	PluginIDTwo := body.Value("id").String().Raw()
+
+	// create one  more for entropy
+	plugin = &v1.Plugin{
+		Name:      "request-size-limiting",
+		Enabled:   wrapperspb.Bool(true),
+		Protocols: []string{"http", "https"},
+	}
+	pluginBytes, err = json.Marshal(plugin)
+	require.Nil(t, err)
+	res = c.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
+	res.Status(201)
+
+	body = c.GET("/v1/plugins").WithQuery("consumer_id", consumerID).
+		Expect().Status(http.StatusOK).JSON().Object()
+	items := body.Value("items").Array()
+	items.Length().Equal(2)
+	var gotIDs []string
+	for _, item := range items.Iter() {
+		gotIDs = append(gotIDs, item.Object().Value("id").String().Raw())
+	}
+	require.ElementsMatch(t, []string{PluginIDOne, PluginIDTwo}, gotIDs)
+}
