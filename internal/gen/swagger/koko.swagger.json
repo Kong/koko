@@ -733,6 +733,36 @@
         ]
       }
     },
+    "/v1/inuse_plugins": {
+      "get": {
+        "operationId": "PluginService_GetInUsePlugins",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/kong.admin.service.v1.GetInUsePluginsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "cluster.id",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "kong.admin.service.v1.PluginService"
+        ]
+      }
+    },
     "/v1/meta/version": {
       "get": {
         "operationId": "MetaService_GetVersion",
@@ -3446,6 +3476,17 @@
       "properties": {
         "item": {
           "$ref": "#/definitions/kong.admin.model.v1.Consumer"
+        }
+      }
+    },
+    "kong.admin.service.v1.GetInUsePluginsResponse": {
+      "type": "object",
+      "properties": {
+        "names": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         }
       }
     },

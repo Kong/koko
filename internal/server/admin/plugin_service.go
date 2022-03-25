@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"sort"
 	"strings"
 
 	"github.com/google/uuid"
@@ -13,6 +14,7 @@ import (
 	"github.com/kong/koko/internal/resource"
 	"github.com/kong/koko/internal/server/util"
 	"github.com/kong/koko/internal/store"
+	"github.com/samber/lo"
 	"go.uber.org/zap"
 )
 
@@ -147,8 +149,48 @@ func (s *PluginService) ListPlugins(ctx context.Context,
 	}, nil
 }
 
+func (s *PluginService) GetInUsePlugins(ctx context.Context,
+	req *v1.GetInUsePluginsRequest,
+) (*v1.GetInUsePluginsResponse, error) {
+	db, err := s.CommonOpts.getDB(ctx, req.Cluster)
+	if err != nil {
+		return nil, err
+	}
+
+	opts := []store.ListOptsFunc{store.ListForType(resource.TypeService), store.ListWithPageSize(store.MaxPageSize)}
+	svcplugins := resource.NewList(resource.TypePlugin)
+	if err := db.List(ctx, svcplugins, opts...); err != nil {
+		return nil, s.err(err)
+	}
+
+	opts = []store.ListOptsFunc{store.ListForType(resource.TypeRoute), store.ListWithPageSize(store.MaxPageSize)}
+	routeplugins := resource.NewList(resource.TypePlugin)
+	if err := db.List(ctx, routeplugins, opts...); err != nil {
+		return nil, s.err(err)
+	}
+
+	names := lo.Keys(lo.Assign(getPluginNames(svcplugins.GetAll()), getPluginNames(routeplugins.GetAll())))
+	sort.Strings(names)
+	return &v1.GetInUsePluginsResponse{
+		Names: names,
+	}, nil
+}
+
 func (s *PluginService) err(err error) error {
 	return util.HandleErr(s.logger, err)
+}
+
+func getPluginNames(objects []model.Object) map[string]struct{} {
+	names := map[string]struct{}{}
+	for _, object := range objects {
+		plugin, ok := object.Resource().(*pbModel.Plugin)
+		if !ok {
+			panic(fmt.Sprintf("expected type '%T' but got '%T'",
+				&pbModel.Plugin{}, object.Resource()))
+		}
+		names[plugin.Name] = struct{}{}
+	}
+	return names
 }
 
 func pluginsFromObjects(objects []model.Object) []*pbModel.Plugin {

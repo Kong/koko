@@ -372,6 +372,95 @@ func TestPluginRead(t *testing.T) {
 	})
 }
 
+func TestInUsePluginsList(t *testing.T) {
+	s, cleanup := setup(t)
+	defer cleanup()
+	c := httpexpect.New(t, s.URL)
+
+	svc := &v1.Service{
+		Id:   uuid.NewString(),
+		Name: "foo",
+		Host: "example.com",
+		Path: "/foo",
+	}
+	c.POST("/v1/services").WithJSON(svc).
+		Expect().Status(http.StatusCreated)
+
+	route := &v1.Route{
+		Id:    uuid.NewString(),
+		Name:  "quux",
+		Paths: []string{"/quux"},
+	}
+	c.POST("/v1/routes").WithJSON(route).
+		Expect().Status(http.StatusCreated)
+
+	plugin := &v1.Plugin{
+		Name:      "request-transformer",
+		Enabled:   wrapperspb.Bool(true),
+		Protocols: []string{"http", "https"},
+	}
+	pluginBytes, err := json.Marshal(plugin)
+	require.Nil(t, err)
+	c.POST("/v1/plugins").WithBytes(pluginBytes).
+		Expect().Status(http.StatusCreated)
+
+	plugin = &v1.Plugin{
+		Name:      "basic-auth",
+		Enabled:   wrapperspb.Bool(true),
+		Protocols: []string{"http", "https"},
+		Service: &v1.Service{
+			Id: svc.Id,
+		},
+	}
+	pluginBytes, err = json.Marshal(plugin)
+	require.Nil(t, err)
+	c.POST("/v1/plugins").WithBytes(pluginBytes).
+		Expect().Status(http.StatusCreated)
+
+	plugin = &v1.Plugin{
+		Name:      "basic-auth",
+		Enabled:   wrapperspb.Bool(true),
+		Protocols: []string{"http", "https"},
+		Route: &v1.Route{
+			Id: route.Id,
+		},
+	}
+	pluginBytes, err = json.Marshal(plugin)
+	require.Nil(t, err)
+	c.POST("/v1/plugins").WithBytes(pluginBytes).
+		Expect().Status(http.StatusCreated)
+
+	t.Run("get in use plugins only returns basic-auth", func(t *testing.T) {
+		body := c.GET("/v1/inuse_plugins").Expect().
+			Status(http.StatusOK).JSON()
+		names := body.Path("$.names").Array()
+		names.Contains("basic-auth")
+		names.Length().Equal(1)
+	})
+
+	t.Run("get in use plugins return basic-auth and request-transformer", func(t *testing.T) {
+		plg := &v1.Plugin{
+			Name:      "request-size-limiting",
+			Enabled:   wrapperspb.Bool(true),
+			Protocols: []string{"http", "https"},
+			Route: &v1.Route{
+				Id: route.Id,
+			},
+		}
+		pbytes, err := json.Marshal(plg)
+		require.Nil(t, err)
+		c.POST("/v1/plugins").WithBytes(pbytes).
+			Expect().Status(http.StatusCreated)
+
+		body := c.GET("/v1/inuse_plugins").Expect().
+			Status(http.StatusOK).JSON()
+		names := body.Path("$.names").Array()
+		names.Contains("basic-auth")
+		names.Contains("request-size-limiting")
+		names.Length().Equal(2)
+	})
+}
+
 func TestPluginList(t *testing.T) {
 	s, cleanup := setup(t)
 	defer cleanup()
@@ -625,6 +714,7 @@ func TestPluginList(t *testing.T) {
 		body.ValueEqual("code", 3)
 		body.ValueEqual("message", "service_id and route_id are mutually exclusive")
 	})
+
 	t.Run("list returns multiple plugins with paging", func(t *testing.T) {
 		// Get First Page
 		body := c.GET("/v1/plugins").

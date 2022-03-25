@@ -32,6 +32,8 @@ require (
 	google.golang.org/protobuf v1.28.0
 )
 
+require golang.org/x/exp v0.0.0-20220303212507-bbda1eaf7a17 // indirect
+
 require (
 	github.com/ajg/form v1.5.1 // indirect
 	github.com/andybalholm/brotli v1.0.4 // indirect
@@ -60,6 +62,7 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rogpeppe/go-internal v1.8.0 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
+	github.com/samber/lo v1.11.0
 	github.com/sergi/go-diff v1.0.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/tidwall/match v1.1.1 // indirect

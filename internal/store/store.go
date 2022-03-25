@@ -16,7 +16,10 @@ import (
 	"go.uber.org/zap"
 )
 
-const DefaultDBQueryTimeout = 5 * time.Second
+const (
+	DefaultDBQueryTimeout = 5 * time.Second
+	uuidLength            = 36
+)
 
 var (
 	errNoObject = fmt.Errorf("no object")
@@ -338,7 +341,7 @@ func (s *ObjectStore) List(ctx context.Context, list model.ObjectList, opts ...L
 	defer cancel()
 	typ := list.Type()
 	opt := NewListOpts(opts...)
-	if opt != nil && opt.ReferenceType != "" && opt.ReferenceID != "" {
+	if opt != nil && opt.ReferenceType != "" {
 		return s.referencedList(ctx, list, opt)
 	}
 
@@ -377,7 +380,6 @@ func (s *ObjectStore) referencedList(ctx context.Context, list model.ObjectList,
 			return err
 		}
 
-		keyPrefixLen := len(keyPrefix)
 		for _, kv := range listResult.KVList {
 			key := string(kv.Key)
 			value := kv.Value
@@ -389,7 +391,7 @@ func (s *ObjectStore) referencedList(ctx context.Context, list model.ObjectList,
 			if err != nil {
 				return err
 			}
-			err = s.readByTypeID(ctx, tx, typ, key[keyPrefixLen:], object)
+			err = s.readByTypeID(ctx, tx, typ, key[len(key)-uuidLength:], object)
 			if err != nil {
 				return err
 			}
@@ -406,8 +408,11 @@ func (s *ObjectStore) referencedList(ctx context.Context, list model.ObjectList,
 }
 
 func (s *ObjectStore) referencedListKey(typ model.Type, opt *ListOpts) string {
-	return s.clusterKey(fmt.Sprintf("ix/f/%s/%s/%s/",
-		opt.ReferenceType, opt.ReferenceID, typ))
+	if opt.ReferenceID != "" {
+		return s.clusterKey(fmt.Sprintf("ix/f/%s/%s/%s/",
+			opt.ReferenceType, opt.ReferenceID, typ))
+	}
+	return s.clusterKey(fmt.Sprintf("ix/f/%s/%%/%s/", opt.ReferenceType, typ))
 }
 
 func (s *ObjectStore) listKey(typ model.Type) string {
