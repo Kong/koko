@@ -176,7 +176,7 @@ func (s *PluginService) GetConfiguredPlugins(ctx context.Context,
 	page := 1
 	for page != 0 {
 		plugins := resource.NewList(resource.TypePlugin)
-		if err := db.List(ctx, plugins, store.ListWithPageNum(page)); err != nil {
+		if err := db.List(ctx, plugins, store.ListWithPageSize(store.MaxPageSize), store.ListWithPageNum(page)); err != nil {
 			return nil, s.err(err)
 		}
 		for name := range getPluginNames(plugins.GetAll()) {
