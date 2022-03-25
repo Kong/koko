@@ -305,35 +305,41 @@ func (s *ObjectStore) Delete(ctx context.Context,
 	ctx, cancel := context.WithTimeout(ctx, DefaultDBQueryTimeout)
 	defer cancel()
 	opt := NewDeleteOpts(opts...)
-	object, err := model.NewObject(opt.typ)
+	return s.withTx(ctx, func(tx persistence.Tx) error {
+		return s.delete(ctx, tx, opt.typ, opt.id)
+	})
+}
+
+func (s *ObjectStore) delete(ctx context.Context, tx persistence.Tx,
+	typ model.Type, id string,
+) error {
+	object, err := model.NewObject(typ)
 	if err != nil {
 		return err
 	}
-	return s.withTx(ctx, func(tx persistence.Tx) error {
-		err = s.readByTypeID(ctx, tx, opt.typ, opt.id, object)
-		if err != nil {
-			return err
-		}
+	err = s.readByTypeID(ctx, tx, typ, id, object)
+	if err != nil {
+		return err
+	}
 
-		err = s.checkForeignIndexesForDelete(ctx, tx, object)
-		if err != nil {
-			return err
-		}
+	err = s.onDeleteCascade(ctx, tx, object)
+	if err != nil {
+		return err
+	}
 
-		key, err := s.genID(opt.typ, opt.id)
-		if err != nil {
-			return err
-		}
+	key, err := s.genID(typ, id)
+	if err != nil {
+		return err
+	}
 
-		err = tx.Delete(ctx, key)
-		if err != nil {
-			return err
-		}
-		if err := s.deleteIndexes(ctx, tx, object); err != nil {
-			return err
-		}
-		return s.updateEvent(ctx, tx, object)
-	})
+	err = tx.Delete(ctx, key)
+	if err != nil {
+		return err
+	}
+	if err := s.deleteIndexes(ctx, tx, object); err != nil {
+		return err
+	}
+	return s.updateEvent(ctx, tx, object)
 }
 
 func (s *ObjectStore) List(ctx context.Context, list model.ObjectList, opts ...ListOptsFunc) error {

@@ -60,15 +60,18 @@ func (r Plugin) ProcessDefaults() error {
 }
 
 func (r Plugin) Indexes() []model.Index {
-	serviceID, routeID := "", ""
+	serviceID, routeID, consumerID := "", "", ""
 	if r.Plugin.Service != nil {
 		serviceID = r.Plugin.Service.Id
 	}
 	if r.Plugin.Route != nil {
 		routeID = r.Plugin.Route.Id
 	}
-	uniqueValue := fmt.Sprintf("%s.%s.%s", r.Plugin.Name,
-		serviceID, routeID)
+	if r.Plugin.Consumer != nil {
+		consumerID = r.Plugin.Consumer.Id
+	}
+	uniqueValue := fmt.Sprintf("%s.%s.%s.%s", r.Plugin.Name,
+		serviceID, routeID, consumerID)
 
 	res := []model.Index{
 		{
@@ -96,6 +99,15 @@ func (r Plugin) Indexes() []model.Index {
 			ForeignType: TypeService,
 			FieldName:   "service.id",
 			Value:       r.Plugin.Service.Id,
+		})
+	}
+	if r.Plugin.Consumer != nil {
+		res = append(res, model.Index{
+			Name:        "consumer_id",
+			Type:        model.IndexForeign,
+			ForeignType: TypeConsumer,
+			FieldName:   "consumer.id",
+			Value:       r.Plugin.Consumer.Id,
 		})
 	}
 	return res
@@ -130,8 +142,9 @@ func init() {
 				Type:                 "object",
 				AdditionalProperties: &truthy,
 			},
-			"service": typedefs.ReferenceObject,
-			"route":   typedefs.ReferenceObject,
+			"service":  typedefs.ReferenceObject,
+			"route":    typedefs.ReferenceObject,
+			"consumer": typedefs.ReferenceObject,
 		},
 		AdditionalProperties: &falsy,
 		Required: []string{

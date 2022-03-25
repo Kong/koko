@@ -948,6 +948,12 @@
             "required": false,
             "type": "integer",
             "format": "int32"
+          },
+          {
+            "name": "consumer_id",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [
@@ -1126,6 +1132,9 @@
                 },
                 "config": {
                   "type": "object"
+                },
+                "consumer": {
+                  "$ref": "#/definitions/kong.admin.model.v1.Consumer"
                 }
               }
             }
@@ -3017,6 +3026,9 @@
         },
         "config": {
           "type": "object"
+        },
+        "consumer": {
+          "$ref": "#/definitions/kong.admin.model.v1.Consumer"
         }
       }
     },

@@ -425,7 +425,7 @@ func TestServiceDelete(t *testing.T) {
 		body := res.JSON().Object()
 		body.ValueEqual("message", " 'Not-Valid' is not a valid uuid")
 	})
-	t.Run("delete a CA certificate referenced in a service fails", func(t *testing.T) {
+	t.Run("deletes a CA certificate referenced in a service", func(t *testing.T) {
 		// create CA certificates
 		res := c.POST("/v1/ca-certificates").WithJSON(&v1.CACertificate{
 			Cert: goodCertOne,
@@ -445,22 +445,40 @@ func TestServiceDelete(t *testing.T) {
 		body.Value("ca_certificates").Array().Length().Equal(1)
 		gotCACertID := body.Value("ca_certificates").Array().Element(0).String().Raw()
 		require.True(t, caCertID == gotCACertID)
-		svcID := body.Value("id").String().Raw()
 
 		// delete CA certificates
 		res = c.DELETE("/v1/ca-certificates/" + caCertID).Expect()
-		res.Status(http.StatusBadRequest)
-		body = res.JSON().Object()
-		body.ValueEqual("message", "data constraint error")
-		body.Value("details").Array().Length().Equal(1)
-		err := body.Value("details").Array().Element(0)
-		err.Object().ValueEqual("type", v1.ErrorType_ERROR_TYPE_REFERENCE.
-			String())
-		err.Object().Value("messages").Array().Length().Equal(1)
-		gotErrMsg := err.Object().Value("messages").Array().Element(0).Raw()
-		errMsg := fmt.Sprintf(" (type: foreign) constraint failed for value '%s': "+
-			"foreign reference exist: service (id: %s)", caCertID, svcID)
-		require.True(t, gotErrMsg == errMsg)
+		res.Status(http.StatusNoContent)
+	})
+	t.Run("deleting a service deletes its plugins, routes and plugin on the route", func(t *testing.T) {
+		svc := goodService()
+		svc.Name = "bar"
+		res := c.POST("/v1/services").WithJSON(svc).Expect()
+		res.Status(http.StatusCreated)
+		sid := res.JSON().Path("$.item.id").String().Raw()
+
+		route := goodRoute()
+		route.Service = &v1.Service{Id: sid}
+		res = c.POST("/v1/routes").WithJSON(route).Expect()
+		res.Status(http.StatusCreated)
+		rid := res.JSON().Path("$.item.id").String().Raw()
+
+		plugin := goodKeyAuthPlugin()
+		plugin.Service = &v1.Service{Id: sid}
+		res = c.POST("/v1/plugins").WithJSON(plugin).Expect()
+		res.Status(http.StatusCreated)
+		servicePluginID := res.JSON().Path("$.item.id").String().Raw()
+
+		plugin = goodKeyAuthPlugin()
+		plugin.Route = &v1.Route{Id: rid}
+		res = c.POST("/v1/plugins").WithJSON(plugin).Expect()
+		res.Status(http.StatusCreated)
+		routePluginID := res.JSON().Path("$.item.id").String().Raw()
+
+		c.DELETE("/v1/services/" + sid).Expect().Status(http.StatusNoContent)
+		c.GET("/v1/routes/" + rid).Expect().Status(http.StatusNotFound)
+		c.GET("/v1/plugins/" + servicePluginID).Expect().Status(http.StatusNotFound)
+		c.GET("/v1/plugins/" + routePluginID).Expect().Status(http.StatusNotFound)
 	})
 }
 
