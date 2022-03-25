@@ -151,23 +151,11 @@ func TestValidate(t *testing.T) {
 					"at least one of these fields must be non-empty: 'config.second'" +
 						", 'config.minute', 'config.hour', 'config.day', 'config.month', 'config.year'",
 					"failed conditional validation given value of field 'config.policy'",
-					"failed conditional validation given value of field 'config.policy'",
-					"failed conditional validation given value of field 'config.policy'",
 				},
 			},
 			{
 				Type:     model.ErrorType_ERROR_TYPE_FIELD,
 				Field:    "config.redis_host",
-				Messages: []string{"required field missing"},
-			},
-			{
-				Type:     model.ErrorType_ERROR_TYPE_FIELD,
-				Field:    "config.redis_port",
-				Messages: []string{"required field missing"},
-			},
-			{
-				Type:     model.ErrorType_ERROR_TYPE_FIELD,
-				Field:    "config.redis_timeout",
 				Messages: []string{"required field missing"},
 			},
 		}
