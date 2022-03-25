@@ -398,7 +398,7 @@ func TestPluginRead(t *testing.T) {
 	})
 }
 
-func TestInUsePluginsList(t *testing.T) {
+func TestConfiguredPluginsList(t *testing.T) {
 	s, cleanup := setup(t)
 	defer cleanup()
 	c := httpexpect.New(t, s.URL)
@@ -456,34 +456,27 @@ func TestInUsePluginsList(t *testing.T) {
 	c.POST("/v1/plugins").WithBytes(pluginBytes).
 		Expect().Status(http.StatusCreated)
 
-	t.Run("get in use plugins only returns basic-auth", func(t *testing.T) {
-		body := c.GET("/v1/inuse_plugins").Expect().
-			Status(http.StatusOK).JSON()
-		names := body.Path("$.names").Array()
-		names.Contains("basic-auth")
-		names.Length().Equal(1)
-	})
+	plugin = &v1.Plugin{
+		Name:      "request-size-limiting",
+		Enabled:   wrapperspb.Bool(true),
+		Protocols: []string{"http", "https"},
+		Route: &v1.Route{
+			Id: route.Id,
+		},
+	}
+	pluginBytes, err = json.Marshal(plugin)
+	require.Nil(t, err)
+	c.POST("/v1/plugins").WithBytes(pluginBytes).
+		Expect().Status(http.StatusCreated)
 
-	t.Run("get in use plugins return basic-auth and request-transformer", func(t *testing.T) {
-		plg := &v1.Plugin{
-			Name:      "request-size-limiting",
-			Enabled:   wrapperspb.Bool(true),
-			Protocols: []string{"http", "https"},
-			Route: &v1.Route{
-				Id: route.Id,
-			},
-		}
-		pbytes, err := json.Marshal(plg)
-		require.Nil(t, err)
-		c.POST("/v1/plugins").WithBytes(pbytes).
-			Expect().Status(http.StatusCreated)
-
-		body := c.GET("/v1/inuse_plugins").Expect().
+	t.Run("get configured plugins returns unique plugin names", func(t *testing.T) {
+		body := c.GET("/v1/configured_plugins").Expect().
 			Status(http.StatusOK).JSON()
 		names := body.Path("$.names").Array()
 		names.Contains("basic-auth")
 		names.Contains("request-size-limiting")
-		names.Length().Equal(2)
+		names.Contains("request-transformer")
+		names.Length().Equal(3)
 	})
 }
 

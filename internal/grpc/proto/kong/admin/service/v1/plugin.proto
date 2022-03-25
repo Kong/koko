@@ -10,9 +10,9 @@ import "kong/admin/model/v1/cluster.proto";
 import "kong/admin/model/v1/pagination.proto";
 
 service PluginService {
-  rpc GetInUsePlugins(GetInUsePluginsRequest) returns (GetInUsePluginsResponse) {
+  rpc GetConfiguredPlugins(GetConfiguredPluginsRequest) returns (GetConfiguredPluginsResponse) {
     option (google.api.http) = {
-      get: "/v1/inuse_plugins"
+      get: "/v1/configured_plugins"
     };
   }
   rpc GetPlugin(GetPluginRequest) returns (GetPluginResponse) {
@@ -92,10 +92,10 @@ message ListPluginsResponse{
   model.v1.PaginationResponse page = 2;
 }
 
-message GetInUsePluginsRequest{
+message GetConfiguredPluginsRequest{
   model.v1.RequestCluster cluster = 1;
 }
 
-message GetInUsePluginsResponse{
+message GetConfiguredPluginsResponse{
   repeated string names = 1;
 }

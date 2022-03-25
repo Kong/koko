@@ -14,7 +14,6 @@ import (
 	"github.com/kong/koko/internal/resource"
 	"github.com/kong/koko/internal/server/util"
 	"github.com/kong/koko/internal/store"
-	"github.com/samber/lo"
 	"go.uber.org/zap"
 )
 
@@ -165,29 +164,33 @@ func (s *PluginService) ListPlugins(ctx context.Context,
 	}, nil
 }
 
-func (s *PluginService) GetInUsePlugins(ctx context.Context,
-	req *v1.GetInUsePluginsRequest,
-) (*v1.GetInUsePluginsResponse, error) {
+func (s *PluginService) GetConfiguredPlugins(ctx context.Context,
+	req *v1.GetConfiguredPluginsRequest,
+) (*v1.GetConfiguredPluginsResponse, error) {
 	db, err := s.CommonOpts.getDB(ctx, req.Cluster)
 	if err != nil {
 		return nil, err
 	}
 
-	opts := []store.ListOptsFunc{store.ListForType(resource.TypeService), store.ListWithPageSize(store.MaxPageSize)}
-	svcplugins := resource.NewList(resource.TypePlugin)
-	if err := db.List(ctx, svcplugins, opts...); err != nil {
-		return nil, s.err(err)
+	pluginNames := map[string]struct{}{}
+	page := 1
+	for page != 0 {
+		plugins := resource.NewList(resource.TypePlugin)
+		if err := db.List(ctx, plugins, store.ListWithPageSize(1), store.ListWithPageNum(page)); err != nil {
+			return nil, s.err(err)
+		}
+		for name := range getPluginNames(plugins.GetAll()) {
+			pluginNames[name] = struct{}{}
+		}
+		page = plugins.GetNextPage()
 	}
 
-	opts = []store.ListOptsFunc{store.ListForType(resource.TypeRoute), store.ListWithPageSize(store.MaxPageSize)}
-	routeplugins := resource.NewList(resource.TypePlugin)
-	if err := db.List(ctx, routeplugins, opts...); err != nil {
-		return nil, s.err(err)
+	names := make([]string, 0, len(pluginNames))
+	for name := range pluginNames {
+		names = append(names, name)
 	}
-
-	names := lo.Keys(lo.Assign(getPluginNames(svcplugins.GetAll()), getPluginNames(routeplugins.GetAll())))
 	sort.Strings(names)
-	return &v1.GetInUsePluginsResponse{
+	return &v1.GetConfiguredPluginsResponse{
 		Names: names,
 	}, nil
 }

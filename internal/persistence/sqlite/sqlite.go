@@ -190,7 +190,9 @@ func (t *sqliteTx) Delete(ctx context.Context, key string) error {
 func (t *sqliteTx) List(ctx context.Context, prefix string,
 	opts *persistence.ListOpts,
 ) (persistence.ListResult, error) {
-	rows, err := t.tx.QueryContext(ctx, listQueryPaging, prefix, opts.Limit, opts.Offset)
+	var rows *sql.Rows
+	var err error
+	rows, err = t.tx.QueryContext(ctx, listQueryPaging, prefix, opts.Limit, opts.Offset)
 	if err != nil {
 		return persistence.ListResult{}, err
 	}

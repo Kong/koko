@@ -101,12 +101,6 @@ func ListFor(typ model.Type, id string) ListOptsFunc {
 	}
 }
 
-func ListForType(typ model.Type) ListOptsFunc {
-	return func(opt *ListOpts) {
-		opt.ReferenceType = typ
-	}
-}
-
 func ListWithPageNum(page int) ListOptsFunc {
 	return func(opt *ListOpts) {
 		if page == 0 {

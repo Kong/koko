@@ -22,7 +22,7 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type PluginServiceClient interface {
-	GetInUsePlugins(ctx context.Context, in *GetInUsePluginsRequest, opts ...grpc.CallOption) (*GetInUsePluginsResponse, error)
+	GetConfiguredPlugins(ctx context.Context, in *GetConfiguredPluginsRequest, opts ...grpc.CallOption) (*GetConfiguredPluginsResponse, error)
 	GetPlugin(ctx context.Context, in *GetPluginRequest, opts ...grpc.CallOption) (*GetPluginResponse, error)
 	CreatePlugin(ctx context.Context, in *CreatePluginRequest, opts ...grpc.CallOption) (*CreatePluginResponse, error)
 	UpsertPlugin(ctx context.Context, in *UpsertPluginRequest, opts ...grpc.CallOption) (*UpsertPluginResponse, error)
@@ -38,9 +38,9 @@ func NewPluginServiceClient(cc grpc.ClientConnInterface) PluginServiceClient {
 	return &pluginServiceClient{cc}
 }
 
-func (c *pluginServiceClient) GetInUsePlugins(ctx context.Context, in *GetInUsePluginsRequest, opts ...grpc.CallOption) (*GetInUsePluginsResponse, error) {
-	out := new(GetInUsePluginsResponse)
-	err := c.cc.Invoke(ctx, "/kong.admin.service.v1.PluginService/GetInUsePlugins", in, out, opts...)
+func (c *pluginServiceClient) GetConfiguredPlugins(ctx context.Context, in *GetConfiguredPluginsRequest, opts ...grpc.CallOption) (*GetConfiguredPluginsResponse, error) {
+	out := new(GetConfiguredPluginsResponse)
+	err := c.cc.Invoke(ctx, "/kong.admin.service.v1.PluginService/GetConfiguredPlugins", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -96,7 +96,7 @@ func (c *pluginServiceClient) ListPlugins(ctx context.Context, in *ListPluginsRe
 // All implementations must embed UnimplementedPluginServiceServer
 // for forward compatibility
 type PluginServiceServer interface {
-	GetInUsePlugins(context.Context, *GetInUsePluginsRequest) (*GetInUsePluginsResponse, error)
+	GetConfiguredPlugins(context.Context, *GetConfiguredPluginsRequest) (*GetConfiguredPluginsResponse, error)
 	GetPlugin(context.Context, *GetPluginRequest) (*GetPluginResponse, error)
 	CreatePlugin(context.Context, *CreatePluginRequest) (*CreatePluginResponse, error)
 	UpsertPlugin(context.Context, *UpsertPluginRequest) (*UpsertPluginResponse, error)
@@ -109,8 +109,8 @@ type PluginServiceServer interface {
 type UnimplementedPluginServiceServer struct {
 }
 
-func (UnimplementedPluginServiceServer) GetInUsePlugins(context.Context, *GetInUsePluginsRequest) (*GetInUsePluginsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetInUsePlugins not implemented")
+func (UnimplementedPluginServiceServer) GetConfiguredPlugins(context.Context, *GetConfiguredPluginsRequest) (*GetConfiguredPluginsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetConfiguredPlugins not implemented")
 }
 func (UnimplementedPluginServiceServer) GetPlugin(context.Context, *GetPluginRequest) (*GetPluginResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetPlugin not implemented")
@@ -140,20 +140,20 @@ func RegisterPluginServiceServer(s grpc.ServiceRegistrar, srv PluginServiceServe
 	s.RegisterService(&PluginService_ServiceDesc, srv)
 }
 
-func _PluginService_GetInUsePlugins_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetInUsePluginsRequest)
+func _PluginService_GetConfiguredPlugins_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetConfiguredPluginsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(PluginServiceServer).GetInUsePlugins(ctx, in)
+		return srv.(PluginServiceServer).GetConfiguredPlugins(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/kong.admin.service.v1.PluginService/GetInUsePlugins",
+		FullMethod: "/kong.admin.service.v1.PluginService/GetConfiguredPlugins",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PluginServiceServer).GetInUsePlugins(ctx, req.(*GetInUsePluginsRequest))
+		return srv.(PluginServiceServer).GetConfiguredPlugins(ctx, req.(*GetConfiguredPluginsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -256,8 +256,8 @@ var PluginService_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*PluginServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "GetInUsePlugins",
-			Handler:    _PluginService_GetInUsePlugins_Handler,
+			MethodName: "GetConfiguredPlugins",
+			Handler:    _PluginService_GetConfiguredPlugins_Handler,
 		},
 		{
 			MethodName: "GetPlugin",

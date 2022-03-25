@@ -5,14 +5,12 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
-	"strings"
 	"time"
 
 	"github.com/google/uuid"
 	nonPublic "github.com/kong/koko/internal/gen/grpc/kong/nonpublic/v1"
 	"github.com/kong/koko/internal/model"
 	"github.com/kong/koko/internal/persistence"
-	"github.com/kong/koko/internal/persistence/sqlite"
 	"github.com/kong/koko/internal/resource"
 	"github.com/kong/koko/internal/store/event"
 	"go.uber.org/zap"
@@ -346,7 +344,7 @@ func (s *ObjectStore) List(ctx context.Context, list model.ObjectList, opts ...L
 	defer cancel()
 	typ := list.Type()
 	opt := NewListOpts(opts...)
-	if opt != nil && opt.ReferenceType != "" {
+	if opt != nil && opt.ReferenceType != "" && opt.ReferenceID != "" {
 		return s.referencedList(ctx, list, opt)
 	}
 
@@ -385,6 +383,7 @@ func (s *ObjectStore) referencedList(ctx context.Context, list model.ObjectList,
 			return err
 		}
 
+		keyPrefixLen := len(keyPrefix)
 		for _, kv := range listResult.KVList {
 			key := string(kv.Key)
 			value := kv.Value
@@ -396,7 +395,7 @@ func (s *ObjectStore) referencedList(ctx context.Context, list model.ObjectList,
 			if err != nil {
 				return err
 			}
-			err = s.readByTypeID(ctx, tx, typ, key[strings.LastIndex(key, "/")+1:], object)
+			err = s.readByTypeID(ctx, tx, typ, key[keyPrefixLen:], object)
 			if err != nil {
 				return err
 			}
@@ -413,15 +412,8 @@ func (s *ObjectStore) referencedList(ctx context.Context, list model.ObjectList,
 }
 
 func (s *ObjectStore) referencedListKey(typ model.Type, opt *ListOpts) string {
-	if opt.ReferenceID != "" {
-		return s.clusterKey(fmt.Sprintf("ix/f/%s/%s/%s/",
-			opt.ReferenceType, opt.ReferenceID, typ))
-	}
-
-	if _, ok := s.store.(*sqlite.SQLite); ok {
-		return s.clusterKey(fmt.Sprintf("ix/f/%s/*/%s/", opt.ReferenceType, typ))
-	}
-	return s.clusterKey(fmt.Sprintf("ix/f/%s/%%/%s/", opt.ReferenceType, typ))
+	return s.clusterKey(fmt.Sprintf("ix/f/%s/%s/%s/",
+		opt.ReferenceType, opt.ReferenceID, typ))
 }
 
 func (s *ObjectStore) listKey(typ model.Type) string {

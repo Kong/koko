@@ -94,7 +94,7 @@ func (h *HTTP) Run(ctx context.Context) error {
 		defer cleanup()
 		// ctx not inheritted since the parent ctx will already be Done()
 		// at this point
-		err := s.Shutdown(ctx)
+		err := s.Shutdown(ctx) //nolint:contextcheck
 		if err != nil {
 			return err
 		}
