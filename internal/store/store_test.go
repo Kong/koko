@@ -7,6 +7,7 @@ import (
 	"sort"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
@@ -380,6 +381,25 @@ func TestUpsert(t *testing.T) {
 				constraintErr.Index)
 			require.Equal(t, "", constraintErr.Message)
 		})
+	t.Run("upsert on an existing object preserves the creation timestamp", func(t *testing.T) {
+		route := resource.NewRoute()
+		route.Route = &v1.Route{
+			Id:    uuid.NewString(),
+			Name:  "r3",
+			Hosts: []string{"example.com"},
+		}
+		err = s.Upsert(ctx, route)
+		require.Nil(t, err)
+		time.Sleep(1 * time.Second)
+		createTS := route.Route.CreatedAt
+		updateTS := route.Route.UpdatedAt
+
+		route.Route.Hosts = []string{"new.example.com"}
+		require.Nil(t, s.Upsert(ctx, route))
+
+		require.Equal(t, createTS, route.Route.CreatedAt)
+		require.Greater(t, route.Route.UpdatedAt, updateTS)
+	})
 	t.Run("object can be upserted without any side-effect", func(t *testing.T) {
 		svc := resource.NewService()
 		sid1 := uuid.NewString()

@@ -151,6 +151,14 @@ func (s *ObjectStore) Upsert(ctx context.Context, object model.Object,
 		case nil:
 			// TODO(hbagdi): perf: drop and rebuild index only if changed
 			// object exists, delete the indexes
+			oldCreatedAtTS := getCreationTimestamp(oldObject.Resource())
+			if oldCreatedAtTS != 0 {
+				setCreationTimestamp(object.Resource(), oldCreatedAtTS)
+				value, err = wrapObject(object)
+				if err != nil {
+					return err
+				}
+			}
 			if err := s.deleteIndexes(ctx, tx, oldObject); err != nil {
 				return err
 			}
