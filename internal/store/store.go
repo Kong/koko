@@ -12,6 +12,7 @@ import (
 	nonPublic "github.com/kong/koko/internal/gen/grpc/kong/nonpublic/v1"
 	"github.com/kong/koko/internal/model"
 	"github.com/kong/koko/internal/persistence"
+	"github.com/kong/koko/internal/persistence/sqlite"
 	"github.com/kong/koko/internal/resource"
 	"github.com/kong/koko/internal/store/event"
 	"go.uber.org/zap"
@@ -415,6 +416,10 @@ func (s *ObjectStore) referencedListKey(typ model.Type, opt *ListOpts) string {
 	if opt.ReferenceID != "" {
 		return s.clusterKey(fmt.Sprintf("ix/f/%s/%s/%s/",
 			opt.ReferenceType, opt.ReferenceID, typ))
+	}
+	_, ok := s.store.(*sqlite.SQLite)
+	if ok {
+		return s.clusterKey(fmt.Sprintf("ix/f/%s/*/%s/", opt.ReferenceType, typ))
 	}
 	return s.clusterKey(fmt.Sprintf("ix/f/%s/%%/%s/", opt.ReferenceType, typ))
 }

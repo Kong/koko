@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"strings"
 
 	"github.com/kong/koko/internal/persistence"
 	_ "github.com/mattn/go-sqlite3"
@@ -191,7 +190,6 @@ func (t *sqliteTx) Delete(ctx context.Context, key string) error {
 func (t *sqliteTx) List(ctx context.Context, prefix string,
 	opts *persistence.ListOpts,
 ) (persistence.ListResult, error) {
-	prefix = strings.ReplaceAll(prefix, "%", "*")
 	rows, err := t.tx.QueryContext(ctx, listQueryPaging, prefix, opts.Limit, opts.Offset)
 	if err != nil {
 		return persistence.ListResult{}, err
