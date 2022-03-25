@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"sort"
 	"strings"
 
 	"github.com/google/uuid"
@@ -163,8 +164,52 @@ func (s *PluginService) ListPlugins(ctx context.Context,
 	}, nil
 }
 
+func (s *PluginService) GetConfiguredPlugins(ctx context.Context,
+	req *v1.GetConfiguredPluginsRequest,
+) (*v1.GetConfiguredPluginsResponse, error) {
+	db, err := s.CommonOpts.getDB(ctx, req.Cluster)
+	if err != nil {
+		return nil, err
+	}
+
+	pluginNames := map[string]struct{}{}
+	page := 1
+	for page != 0 {
+		plugins := resource.NewList(resource.TypePlugin)
+		if err := db.List(ctx, plugins, store.ListWithPageSize(store.MaxPageSize), store.ListWithPageNum(page)); err != nil {
+			return nil, s.err(err)
+		}
+		for name := range getPluginNames(plugins.GetAll()) {
+			pluginNames[name] = struct{}{}
+		}
+		page = plugins.GetNextPage()
+	}
+
+	names := make([]string, 0, len(pluginNames))
+	for name := range pluginNames {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+	return &v1.GetConfiguredPluginsResponse{
+		Names: names,
+	}, nil
+}
+
 func (s *PluginService) err(err error) error {
 	return util.HandleErr(s.logger, err)
+}
+
+func getPluginNames(objects []model.Object) map[string]struct{} {
+	names := map[string]struct{}{}
+	for _, object := range objects {
+		plugin, ok := object.Resource().(*pbModel.Plugin)
+		if !ok {
+			panic(fmt.Sprintf("expected type '%T' but got '%T'",
+				&pbModel.Plugin{}, object.Resource()))
+		}
+		names[plugin.Name] = struct{}{}
+	}
+	return names
 }
 
 func pluginsFromObjects(objects []model.Object) []*pbModel.Plugin {

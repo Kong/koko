@@ -398,6 +398,88 @@ func TestPluginRead(t *testing.T) {
 	})
 }
 
+func TestConfiguredPluginsList(t *testing.T) {
+	s, cleanup := setup(t)
+	defer cleanup()
+	c := httpexpect.New(t, s.URL)
+
+	svc := &v1.Service{
+		Id:   uuid.NewString(),
+		Name: "foo",
+		Host: "example.com",
+		Path: "/foo",
+	}
+	c.POST("/v1/services").WithJSON(svc).
+		Expect().Status(http.StatusCreated)
+
+	route := &v1.Route{
+		Id:    uuid.NewString(),
+		Name:  "quux",
+		Paths: []string{"/quux"},
+	}
+	c.POST("/v1/routes").WithJSON(route).
+		Expect().Status(http.StatusCreated)
+
+	plugin := &v1.Plugin{
+		Name:      "request-transformer",
+		Enabled:   wrapperspb.Bool(true),
+		Protocols: []string{"http", "https"},
+	}
+	pluginBytes, err := json.Marshal(plugin)
+	require.Nil(t, err)
+	c.POST("/v1/plugins").WithBytes(pluginBytes).
+		Expect().Status(http.StatusCreated)
+
+	plugin = &v1.Plugin{
+		Name:      "basic-auth",
+		Enabled:   wrapperspb.Bool(true),
+		Protocols: []string{"http", "https"},
+		Service: &v1.Service{
+			Id: svc.Id,
+		},
+	}
+	pluginBytes, err = json.Marshal(plugin)
+	require.Nil(t, err)
+	c.POST("/v1/plugins").WithBytes(pluginBytes).
+		Expect().Status(http.StatusCreated)
+
+	plugin = &v1.Plugin{
+		Name:      "basic-auth",
+		Enabled:   wrapperspb.Bool(true),
+		Protocols: []string{"http", "https"},
+		Route: &v1.Route{
+			Id: route.Id,
+		},
+	}
+	pluginBytes, err = json.Marshal(plugin)
+	require.Nil(t, err)
+	c.POST("/v1/plugins").WithBytes(pluginBytes).
+		Expect().Status(http.StatusCreated)
+
+	plugin = &v1.Plugin{
+		Name:      "request-size-limiting",
+		Enabled:   wrapperspb.Bool(true),
+		Protocols: []string{"http", "https"},
+		Route: &v1.Route{
+			Id: route.Id,
+		},
+	}
+	pluginBytes, err = json.Marshal(plugin)
+	require.Nil(t, err)
+	c.POST("/v1/plugins").WithBytes(pluginBytes).
+		Expect().Status(http.StatusCreated)
+
+	t.Run("get configured plugins returns unique plugin names", func(t *testing.T) {
+		body := c.GET("/v1/configured_plugins").Expect().
+			Status(http.StatusOK).JSON()
+		names := body.Path("$.names").Array()
+		names.Contains("basic-auth")
+		names.Contains("request-size-limiting")
+		names.Contains("request-transformer")
+		names.Length().Equal(3)
+	})
+}
+
 func TestPluginList(t *testing.T) {
 	s, cleanup := setup(t)
 	defer cleanup()

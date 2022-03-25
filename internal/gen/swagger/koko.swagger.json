@@ -517,6 +517,36 @@
         ]
       }
     },
+    "/v1/configured_plugins": {
+      "get": {
+        "operationId": "PluginService_GetConfiguredPlugins",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/kong.admin.service.v1.GetConfiguredPluginsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "cluster.id",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "kong.admin.service.v1.PluginService"
+        ]
+      }
+    },
     "/v1/consumers": {
       "get": {
         "operationId": "ConsumerService_ListConsumers",
@@ -3450,6 +3480,17 @@
       "properties": {
         "item": {
           "$ref": "#/definitions/kong.admin.model.v1.Certificate"
+        }
+      }
+    },
+    "kong.admin.service.v1.GetConfiguredPluginsResponse": {
+      "type": "object",
+      "properties": {
+        "names": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         }
       }
     },
