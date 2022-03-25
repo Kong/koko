@@ -224,12 +224,12 @@ func TestServiceCreate(t *testing.T) {
 	t.Run("creates a valid service referencing a CA cert successfully", func(t *testing.T) {
 		// create CA certificate
 		res := c.POST("/v1/ca-certificates").WithJSON(&v1.CACertificate{
-			Cert: goodCertOne,
+			Cert: goodCACertOne,
 		}).Expect()
 		res.Status(http.StatusCreated)
 		res.Header("grpc-metadata-koko-status-code").Empty()
 		body := res.JSON().Path("$.item").Object()
-		body.Value("cert").String().Equal(goodCertOne)
+		body.Value("cert").String().Equal(goodCACertOne)
 		caCertID := body.Value("id").String().Raw()
 
 		// create service
@@ -356,7 +356,7 @@ func TestServiceUpsert(t *testing.T) {
 	t.Run("upsert a service referencing multiple CA certs successfully", func(t *testing.T) {
 		// create CA certificates
 		res := c.POST("/v1/ca-certificates").WithJSON(&v1.CACertificate{
-			Cert: goodCertOne,
+			Cert: goodCACertOne,
 		}).Expect()
 		res.Status(http.StatusCreated)
 		body := res.JSON().Path("$.item").Object()
@@ -378,7 +378,7 @@ func TestServiceUpsert(t *testing.T) {
 
 		// create new CA cert
 		res = c.POST("/v1/ca-certificates").WithJSON(&v1.CACertificate{
-			Cert: goodCertTwo,
+			Cert: goodCACertTwo,
 		}).Expect()
 		res.Status(http.StatusCreated)
 		body = res.JSON().Path("$.item").Object()
@@ -428,7 +428,7 @@ func TestServiceDelete(t *testing.T) {
 	t.Run("deletes a CA certificate referenced in a service", func(t *testing.T) {
 		// create CA certificates
 		res := c.POST("/v1/ca-certificates").WithJSON(&v1.CACertificate{
-			Cert: goodCertOne,
+			Cert: goodCACertOne,
 		}).Expect()
 		res.Status(http.StatusCreated)
 		body := res.JSON().Path("$.item").Object()
