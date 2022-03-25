@@ -417,8 +417,8 @@ func (s *ObjectStore) referencedListKey(typ model.Type, opt *ListOpts) string {
 		return s.clusterKey(fmt.Sprintf("ix/f/%s/%s/%s/",
 			opt.ReferenceType, opt.ReferenceID, typ))
 	}
-	_, ok := s.store.(*sqlite.SQLite)
-	if ok {
+
+	if _, ok := s.store.(*sqlite.SQLite); ok {
 		return s.clusterKey(fmt.Sprintf("ix/f/%s/*/%s/", opt.ReferenceType, typ))
 	}
 	return s.clusterKey(fmt.Sprintf("ix/f/%s/%%/%s/", opt.ReferenceType, typ))
