@@ -294,6 +294,60 @@ func TestValidate(t *testing.T) {
 		}
 		require.Equal(t, expected, validationErr.Errs)
 	})
+	t.Run("ensure all protocols can be assigned", func(t *testing.T) {
+		protocols := []string{
+			// http
+			"http",
+			"https",
+			"grpc",
+			"grpcs",
+
+			// stream
+			"tcp",
+			"tls",
+			"udp",
+		}
+		for _, protocol := range protocols {
+			p := &model.Plugin{
+				Name:      "prometheus",
+				Protocols: []string{protocol},
+				Enabled:   wrapperspb.Bool(true),
+			}
+			err := validator.Validate(p)
+			require.Nil(t, err)
+		}
+	})
+	t.Run("ensure stream protocols fail plugins which only allow for http", func(t *testing.T) {
+		protocols := []string{
+			"tcp",
+			"tls",
+			"udp",
+		}
+		config, err := structpb.NewStruct(map[string]interface{}{
+			"second": 42,
+		})
+		require.Nil(t, err)
+		for _, protocol := range protocols {
+			p := &model.Plugin{
+				Name:      "rate-limiting",
+				Protocols: []string{protocol},
+				Enabled:   wrapperspb.Bool(true),
+				Config:    config,
+			}
+			err := validator.Validate(p)
+			require.NotNil(t, err)
+			validationErr, ok := err.(validation.Error)
+			require.True(t, ok)
+			expected := []*model.ErrorDetail{
+				{
+					Type:     model.ErrorType_ERROR_TYPE_FIELD,
+					Field:    "protocols[0]",
+					Messages: []string{"expected one of: grpc, grpcs, http, https"},
+				},
+			}
+			require.Equal(t, expected, validationErr.Errs)
+		}
+	})
 }
 
 type testPluginSchema struct {
