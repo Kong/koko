@@ -11,7 +11,7 @@ require (
 	github.com/golang/protobuf v1.5.2
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/websocket v1.5.0
-	github.com/grpc-ecosystem/grpc-gateway/v2 v2.9.0
+	github.com/grpc-ecosystem/grpc-gateway/v2 v2.10.0
 	github.com/hbagdi/gang v0.1.0
 	github.com/imdario/mergo v0.3.12
 	github.com/jeremywohl/flatten v1.0.1
@@ -26,7 +26,7 @@ require (
 	github.com/tidwall/gjson v1.14.0
 	github.com/yuin/gopher-lua v0.0.0-20210529063254-f4c35e4016d9
 	go.uber.org/zap v1.21.0
-	google.golang.org/genproto v0.0.0-20220314164441-57ef72a4c106
+	google.golang.org/genproto v0.0.0-20220317150908-0efb43f6373e
 	google.golang.org/grpc v1.45.0
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.2.0
 	google.golang.org/protobuf v1.28.0
