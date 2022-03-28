@@ -17,7 +17,7 @@ require (
 	github.com/jeremywohl/flatten v1.0.1
 	github.com/kong/go-kong v0.29.0
 	github.com/kong/go-wrpc v0.0.0-20210914213024-d4348db6b815
-	github.com/kong/goks v0.4.0
+	github.com/kong/goks v0.4.1
 	github.com/lib/pq v1.10.4
 	github.com/mattn/go-sqlite3 v1.14.12
 	github.com/santhosh-tekuri/jsonschema/v5 v5.0.0
@@ -89,6 +89,6 @@ require (
 
 replace github.com/yuin/gopher-lua => github.com/hbagdi/gopher-lua v0.0.0-20211129210354-3e4a277fb892
 
-replace github.com/layeh/gopher-json => github.com/hbagdi/gopher-json v0.0.0-20211203171840-04cc2cd39713
+replace github.com/layeh/gopher-json => github.com/hbagdi/gopher-json v0.0.0-20220325165250-3030ea88774d
 
 replace github.com/jeremywohl/flatten => github.com/hbagdi/flatten v1.0.2-0.20211207185041-fe643c674d12
