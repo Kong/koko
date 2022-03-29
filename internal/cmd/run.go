@@ -20,6 +20,7 @@ import (
 	"github.com/kong/koko/internal/server/health"
 	"github.com/kong/koko/internal/server/kong/ws"
 	kongConfigWS "github.com/kong/koko/internal/server/kong/ws/config"
+	"github.com/kong/koko/internal/server/kong/ws/config/compat"
 	relayImpl "github.com/kong/koko/internal/server/relay"
 	serverUtil "github.com/kong/koko/internal/server/util"
 	"github.com/kong/koko/internal/store"
@@ -178,12 +179,25 @@ func Run(ctx context.Context, config ServerConfig) error {
 		panic(err.Error())
 	}
 
-	// setup control server
+	// setup version compatibility processor
+	vcLogger := logger.With(zap.String("component", "version-compatibility"))
+	vc, err := kongConfigWS.NewVersionCompatibilityProcessor(kongConfigWS.VersionCompatibilityOpts{
+		Logger:        vcLogger,
+		KongCPVersion: kongConfigWS.KongGatewayCompatibilityVersion,
+	})
+	if err != nil {
+		panic(err.Error())
+	}
+	if err := vc.AddConfigTableUpdates(compat.PluginConfigTableUpdates); err != nil {
+		panic(err.Error())
+	}
 
+	// setup control server
 	controlLogger := logger.With(zap.String("component", "control-server"))
 	m := ws.NewManager(ws.ManagerOpts{
-		Logger:         controlLogger,
-		DPConfigLoader: loader,
+		Logger:                 controlLogger,
+		DPConfigLoader:         loader,
+		DPVersionCompatibility: vc,
 		Client: ws.ConfigClient{
 			Node:   grpcClients.Node,
 			Status: grpcClients.Status,

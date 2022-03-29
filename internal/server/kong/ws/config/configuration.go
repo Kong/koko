@@ -5,6 +5,7 @@ import (
 	"compress/gzip"
 	"context"
 	"fmt"
+	"io/ioutil"
 
 	"github.com/kong/koko/internal/json"
 )
@@ -50,28 +51,28 @@ func (l *KongConfigurationLoader) Load(ctx context.Context,
 		}
 	}
 
-	payload := reconfigurePayload(configTable)
+	return ReconfigurePayload(configTable)
+}
+
+func ReconfigurePayload(c DataPlaneConfig) ([]byte, error) {
+	payload := Map{
+		"type":         "reconfigure",
+		"config_table": c,
+	}
 
 	jsonMessage, err := json.Marshal(payload)
 	if err != nil {
 		return nil, fmt.Errorf("json marshal: %v", err)
 	}
 
-	res, err := compressPayload(jsonMessage)
+	res, err := CompressPayload(jsonMessage)
 	if err != nil {
 		return nil, fmt.Errorf("gzip compression: %v", err)
 	}
 	return res, nil
 }
 
-func reconfigurePayload(c DataPlaneConfig) Map {
-	return Map{
-		"type":         "reconfigure",
-		"config_table": c,
-	}
-}
-
-func compressPayload(payload []byte) ([]byte, error) {
+func CompressPayload(payload []byte) ([]byte, error) {
 	var buf bytes.Buffer
 	w := gzip.NewWriter(&buf)
 	_, err := w.Write(payload)
@@ -83,4 +84,22 @@ func compressPayload(payload []byte) ([]byte, error) {
 		return nil, err
 	}
 	return buf.Bytes(), nil
+}
+
+func UncompressPayload(payload []byte) ([]byte, error) {
+	r, err := gzip.NewReader(bytes.NewBuffer(payload))
+	if err != nil {
+		return nil, err
+	}
+
+	buf, err := ioutil.ReadAll(r)
+	if err != nil {
+		_ = r.Close()
+		return nil, err
+	}
+	err = r.Close()
+	if err != nil {
+		return nil, err
+	}
+	return buf, nil
 }
