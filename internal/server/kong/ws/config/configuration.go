@@ -60,16 +60,19 @@ func ReconfigurePayload(c DataPlaneConfig) ([]byte, error) {
 		"config_table": c,
 	}
 
-	jsonMessage, err := json.Marshal(payload)
+	var buf bytes.Buffer
+	writer := gzip.NewWriter(&buf)
+	enc := json.Marshaller.NewEncoder(writer)
+
+	err := enc.Encode(payload)
 	if err != nil {
 		return nil, fmt.Errorf("json marshal: %v", err)
 	}
-
-	res, err := CompressPayload(jsonMessage)
+	err = writer.Close()
 	if err != nil {
-		return nil, fmt.Errorf("gzip compression: %v", err)
+		return nil, fmt.Errorf("gzip failure: %v", err)
 	}
-	return res, nil
+	return buf.Bytes(), nil
 }
 
 func CompressPayload(payload []byte) ([]byte, error) {
