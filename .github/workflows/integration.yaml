@@ -14,6 +14,7 @@ jobs:
         - 'kong:2.6.0'
         - 'kong:2.7.0'
         - 'kong:2.8.0'
+        - 'kong/kong:lmdb-preview02'
         include:
           - kong_image: 'kong/kong:latest' # tracks mainline branch of kong/kong
             experimental: true
