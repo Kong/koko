@@ -203,12 +203,16 @@ func (m *Manager) AddNode(node Node) {
 				Error("remove node")
 		}
 	}()
-	err = m.reconcileKongPayload(context.Background())
-	if err != nil {
-		m.logger.With(zap.Error(err)).
-			Error("reconcile configuration")
-	}
-	m.broadcast()
+
+	// refresh the payload on DP connect
+	go func() {
+		err = m.reconcileKongPayload(context.Background())
+		if err != nil {
+			m.logger.With(zap.Error(err)).
+				Error("reconcile configuration")
+		}
+		m.broadcast()
+	}()
 }
 
 // broadcast sends the most recent configuration to all connected nodes.
