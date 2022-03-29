@@ -15,5 +15,5 @@ func TestReconfigurePayload(t *testing.T) {
 
 	payload, err := UncompressPayload(res)
 	require.Nil(t, err)
-	require.Equal(t, string(payload), "{\"config_table\":{\"plugins\":[\"test\"]},\"type\":\"reconfigure\"}")
+	require.Equal(t, string(payload), "{\"config_table\":{\"plugins\":[\"test\"]},\"type\":\"reconfigure\"}\n")
 }

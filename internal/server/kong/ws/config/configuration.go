@@ -63,9 +63,8 @@ func ReconfigurePayload(c DataPlaneConfig) ([]byte, error) {
 	var buf bytes.Buffer
 	writer := gzip.NewWriter(&buf)
 	defer writer.Close()
-	enc := json.Marshaller.NewEncoder(writer)
 
-	err := enc.Encode(payload)
+	err := json.Marshaller.NewEncoder(writer).Encode(payload)
 	if err != nil {
 		return nil, fmt.Errorf("json marshal: %v", err)
 	}
