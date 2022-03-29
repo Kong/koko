@@ -32,7 +32,12 @@ func (p *Payload) Payload(versionStr string) ([]byte, error) {
 	payload := p.compressed
 	p.mu.RUnlock()
 
-	return p.vc.ProcessConfigTableUpdates(versionStr, payload)
+	// TODO(fero): perf create cache; version aware
+	updatedPayload, err := p.vc.ProcessConfigTableUpdates(versionStr, payload)
+	if err != nil {
+		return nil, fmt.Errorf("downgrade config: %v", err)
+	}
+	return updatedPayload, nil
 }
 
 func (p *Payload) UpdateBinary(c []byte) error {

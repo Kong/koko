@@ -15,6 +15,7 @@ import (
 const (
 	KongGatewayCompatibilityVersion = "2.8.0"
 
+	buildVersionPattern = `(?P<build_version>^[0-9]+)[a-zA-Z\-]*`
 	invalidVersionOctet = 1000
 	majorVersionBase    = 1000000000
 	minorVersionBase    = majorVersionBase / 1000
@@ -22,6 +23,8 @@ const (
 	base                = 10
 	bitSize             = 64
 )
+
+var buildVersionRegex = regexp.MustCompile(buildVersionPattern)
 
 type VersionCompatibility interface {
 	AddConfigTableUpdates(configTableUpdates map[uint64][]ConfigTableUpdates) error
@@ -43,9 +46,9 @@ const (
 
 //nolint: revive
 type ConfigTableUpdates struct {
-	Name   string
-	Type   UpdateType
-	Fields []string
+	Name         string
+	Type         UpdateType
+	RemoveFields []string
 }
 
 type WSVersionCompatibility struct {
@@ -152,7 +155,7 @@ func (vc *WSVersionCompatibility) processConfigTableUpdates(uncompressedPayload 
 	for _, configTableUpdate := range configTableUpdates {
 		if configTableUpdate.Type == Plugin {
 			processedPayload = processPluginUpdates(processedPayload, configTableUpdate.Name,
-				configTableUpdate.Fields, vc.kongCPVersion, dataPlaneVersion,
+				configTableUpdate.RemoveFields, vc.kongCPVersion, dataPlaneVersion,
 				vc.logger)
 		}
 	}
@@ -181,10 +184,9 @@ func parseSemanticVersion(versionStr string) (uint64, error) {
 
 	if len(semVersion.Build) > 0 {
 		buildVersion := semVersion.Build[0]
-		re := regexp.MustCompile(`(?P<build_version>^[0-9]+)[a-zA-Z\-]*`)
-		if re.MatchString(buildVersion) {
-			tokens := re.FindStringSubmatch(buildVersion)
-			buildVersionStr := tokens[re.SubexpIndex("build_version")]
+		if buildVersionRegex.MatchString(buildVersion) {
+			tokens := buildVersionRegex.FindStringSubmatch(buildVersion)
+			buildVersionStr := tokens[buildVersionRegex.SubexpIndex("build_version")]
 			buildNum, err := strconv.ParseUint(buildVersionStr, base, bitSize)
 			if err != nil {
 				return 0, fmt.Errorf("unable to parse build version from version: %v", err)

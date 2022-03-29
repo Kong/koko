@@ -33,6 +33,8 @@ func TestVersionCompatibility_NewVersionCompatibilityProcessor(t *testing.T) {
 			kongCPVersion string
 			wantsErr      bool
 		}{
+			{kongCPVersion: "0.3.3"},
+			{kongCPVersion: "1.5.0"},
 			{kongCPVersion: "2.3.0"},
 			{kongCPVersion: "2.3.1"},
 			{kongCPVersion: "2.3.111"},
@@ -40,6 +42,9 @@ func TestVersionCompatibility_NewVersionCompatibilityProcessor(t *testing.T) {
 			{kongCPVersion: "2.5.0"},
 			{kongCPVersion: "2.6.0"},
 			{kongCPVersion: "2.7.0"},
+			{kongCPVersion: "2.8.0-rc1"},
+			{kongCPVersion: "2.8.0-beta1"},
+			{kongCPVersion: "2.8.0-alpha1"},
 			{kongCPVersion: "2.8.0"},
 			{kongCPVersion: "2.3.0.2-enterprise-edition"},
 			{kongCPVersion: "2.3.0.0-any-suffix-is-valid"},
@@ -93,13 +98,24 @@ func TestVersionCompatibility_ParseSemanticVersion(t *testing.T) {
 			expectedVersion: 33003000,
 		},
 		{
-			// go-kong won't parse build without suffix containing enterprise
 			versionStr:      "2.3.3.2",
 			expectedVersion: 2003003000,
 		},
 		{
 			versionStr:      "2.3.2",
 			expectedVersion: 2003002000,
+		},
+		{
+			versionStr:      "2.3.2-rc1",
+			expectedVersion: 2003002000,
+		},
+		{
+			versionStr:      "2.3.3-alpha",
+			expectedVersion: 2003003000,
+		},
+		{
+			versionStr:      "2.3.4-beta1",
+			expectedVersion: 2003004000,
 		},
 		{
 			versionStr:      "2.3.3.2-enterprise-edition",
@@ -155,7 +171,7 @@ func TestVersionCompatibility_AddConfigTableUpdates(t *testing.T) {
 						{
 							Name: "plugin_1",
 							Type: Plugin,
-							Fields: []string{
+							RemoveFields: []string{
 								"plugin_1_field_1",
 							},
 						},
@@ -167,7 +183,7 @@ func TestVersionCompatibility_AddConfigTableUpdates(t *testing.T) {
 					{
 						Name: "plugin_1",
 						Type: Plugin,
-						Fields: []string{
+						RemoveFields: []string{
 							"plugin_1_field_1",
 						},
 					},
@@ -183,7 +199,7 @@ func TestVersionCompatibility_AddConfigTableUpdates(t *testing.T) {
 						{
 							Name: "plugin_1",
 							Type: Plugin,
-							Fields: []string{
+							RemoveFields: []string{
 								"plugin_1_field_1",
 							},
 						},
@@ -194,14 +210,14 @@ func TestVersionCompatibility_AddConfigTableUpdates(t *testing.T) {
 						{
 							Name: "plugin_1",
 							Type: Plugin,
-							Fields: []string{
+							RemoveFields: []string{
 								"plugin_1_field_1",
 							},
 						},
 						{
 							Name: "plugin_2",
 							Type: Plugin,
-							Fields: []string{
+							RemoveFields: []string{
 								"plugin_2_field_1",
 								"plugin_2_field_2",
 							},
@@ -214,7 +230,7 @@ func TestVersionCompatibility_AddConfigTableUpdates(t *testing.T) {
 					{
 						Name: "plugin_1",
 						Type: Plugin,
-						Fields: []string{
+						RemoveFields: []string{
 							"plugin_1_field_1",
 						},
 					},
@@ -223,14 +239,14 @@ func TestVersionCompatibility_AddConfigTableUpdates(t *testing.T) {
 					{
 						Name: "plugin_1",
 						Type: Plugin,
-						Fields: []string{
+						RemoveFields: []string{
 							"plugin_1_field_1",
 						},
 					},
 					{
 						Name: "plugin_2",
 						Type: Plugin,
-						Fields: []string{
+						RemoveFields: []string{
 							"plugin_2_field_1",
 							"plugin_2_field_2",
 						},
@@ -264,7 +280,7 @@ var (
 			{
 				Name: "plugin_1",
 				Type: Plugin,
-				Fields: []string{
+				RemoveFields: []string{
 					"plugin_1_field_1",
 					"plugin_1_field_2",
 				},
@@ -272,14 +288,14 @@ var (
 			{
 				Name: "plugin_2",
 				Type: Plugin,
-				Fields: []string{
+				RemoveFields: []string{
 					"plugin_2_field_1",
 				},
 			},
 			{
 				Name: "plugin_3",
 				Type: Plugin,
-				Fields: []string{
+				RemoveFields: []string{
 					"plugin_3_field_1",
 					"plugin_3_field_2",
 					"plugin_3_field_3",
@@ -293,7 +309,7 @@ var (
 			{
 				Name: "plugin_1",
 				Type: Plugin,
-				Fields: []string{
+				RemoveFields: []string{
 					"plugin_1_field_1",
 				},
 			},
@@ -304,7 +320,7 @@ var (
 			{
 				Name: "plugin_1",
 				Type: Plugin,
-				Fields: []string{
+				RemoveFields: []string{
 					"plugin_1_field_1",
 				},
 			},
@@ -313,14 +329,14 @@ var (
 			{
 				Name: "plugin_1",
 				Type: Plugin,
-				Fields: []string{
+				RemoveFields: []string{
 					"plugin_1_field_1",
 				},
 			},
 			{
 				Name: "plugin_2",
 				Type: Plugin,
-				Fields: []string{
+				RemoveFields: []string{
 					"plugin_3_field_1",
 					"plugin_3_field_2",
 				},
@@ -440,7 +456,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 					{
 						Name: "plugin_1",
 						Type: Plugin,
-						Fields: []string{
+						RemoveFields: []string{
 							"plugin_1_field_1",
 						},
 					},
@@ -477,7 +493,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 					{
 						Name: "plugin_1",
 						Type: Plugin,
-						Fields: []string{
+						RemoveFields: []string{
 							"plugin_1_field_1",
 						},
 					},
@@ -517,7 +533,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 					{
 						Name: "plugin_1",
 						Type: Plugin,
-						Fields: []string{
+						RemoveFields: []string{
 							"plugin_1_field_1",
 						},
 					},
@@ -557,7 +573,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 					{
 						Name: "plugin_1",
 						Type: Plugin,
-						Fields: []string{
+						RemoveFields: []string{
 							"plugin_1_field_2",
 						},
 					},
@@ -597,14 +613,14 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 					{
 						Name: "plugin_1",
 						Type: Plugin,
-						Fields: []string{
+						RemoveFields: []string{
 							"plugin_1_field_1",
 						},
 					},
 					{
 						Name: "plugin_3",
 						Type: Plugin,
-						Fields: []string{
+						RemoveFields: []string{
 							"plugin_3_field_1",
 						},
 					},
@@ -654,7 +670,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 					{
 						Name: "plugin_1",
 						Type: Plugin,
-						Fields: []string{
+						RemoveFields: []string{
 							"plugin_1_field_1",
 						},
 					},
@@ -704,7 +720,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 					{
 						Name: "plugin_1",
 						Type: Plugin,
-						Fields: []string{
+						RemoveFields: []string{
 							"plugin_1_field_1.plugin_1_nested_field_1",
 						},
 					},
@@ -739,13 +755,61 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 			}`,
 		},
 		{
+			name: "nested field with additional fields remaining",
+			configTableUpdates: map[uint64][]ConfigTableUpdates{
+				2007999999: {
+					{
+						Name: "plugin_1",
+						Type: Plugin,
+						RemoveFields: []string{
+							"plugin_1_field_1.plugin_1_nested_field_1",
+						},
+					},
+				},
+			},
+			uncompressedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"name": "plugin_1",
+							"config": {
+								"plugin_1_field_1": {
+									"plugin_1_nested_field_1": "element",
+									"plugin_1_nested_field_2": {
+										"plugin_1_nested_field_2_nested": "element_nested_field_2_nested"
+									}
+								}
+							}
+						}
+					]
+				}
+			}`,
+			dataPlaneVersion: 2007000000,
+			expectedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"name": "plugin_1",
+							"config": {
+								"plugin_1_field_1": {
+									"plugin_1_nested_field_2": {
+										"plugin_1_nested_field_2_nested": "element_nested_field_2_nested"
+									}
+								}
+							}
+						}
+					]
+				}
+			}`,
+		},
+		{
 			name: "two minor versions older",
 			configTableUpdates: map[uint64][]ConfigTableUpdates{
 				2007999999: {
 					{
 						Name: "plugin_1",
 						Type: Plugin,
-						Fields: []string{
+						RemoveFields: []string{
 							"plugin_1_field_2",
 						},
 					},
@@ -754,7 +818,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 					{
 						Name: "plugin_1",
 						Type: Plugin,
-						Fields: []string{
+						RemoveFields: []string{
 							"plugin_1_field_1",
 						},
 					},

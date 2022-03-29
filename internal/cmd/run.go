@@ -20,7 +20,7 @@ import (
 	"github.com/kong/koko/internal/server/health"
 	"github.com/kong/koko/internal/server/kong/ws"
 	kongConfigWS "github.com/kong/koko/internal/server/kong/ws/config"
-	compat "github.com/kong/koko/internal/server/kong/ws/config/version_compatibility"
+	"github.com/kong/koko/internal/server/kong/ws/config/compat"
 	relayImpl "github.com/kong/koko/internal/server/relay"
 	serverUtil "github.com/kong/koko/internal/server/util"
 	"github.com/kong/koko/internal/store"

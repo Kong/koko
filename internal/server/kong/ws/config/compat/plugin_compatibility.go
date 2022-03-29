@@ -7,42 +7,42 @@ var PluginConfigTableUpdates = map[uint64][]config.ConfigTableUpdates{
 		{
 			Name: "file-log",
 			Type: config.Plugin,
-			Fields: []string{
+			RemoveFields: []string{
 				"custom_fields_by_lua",
 			},
 		},
 		{
 			Name: "http-log",
 			Type: config.Plugin,
-			Fields: []string{
+			RemoveFields: []string{
 				"custom_fields_by_lua",
 			},
 		},
 		{
 			Name: "loggly",
 			Type: config.Plugin,
-			Fields: []string{
+			RemoveFields: []string{
 				"custom_fields_by_lua",
 			},
 		},
 		{
 			Name: "syslog",
 			Type: config.Plugin,
-			Fields: []string{
+			RemoveFields: []string{
 				"custom_fields_by_lua",
 			},
 		},
 		{
 			Name: "tcp-log",
 			Type: config.Plugin,
-			Fields: []string{
+			RemoveFields: []string{
 				"custom_fields_by_lua",
 			},
 		},
 		{
 			Name: "udp-log",
 			Type: config.Plugin,
-			Fields: []string{
+			RemoveFields: []string{
 				"custom_fields_by_lua",
 			},
 		},
@@ -51,14 +51,14 @@ var PluginConfigTableUpdates = map[uint64][]config.ConfigTableUpdates{
 		{
 			Name: "prometheus",
 			Type: config.Plugin,
-			Fields: []string{
+			RemoveFields: []string{
 				"per_consumer",
 			},
 		},
 		{
 			Name: "zipkin",
 			Type: config.Plugin,
-			Fields: []string{
+			RemoveFields: []string{
 				"tags_header",
 			},
 		},
@@ -67,7 +67,7 @@ var PluginConfigTableUpdates = map[uint64][]config.ConfigTableUpdates{
 		{
 			Name: "syslog",
 			Type: config.Plugin,
-			Fields: []string{
+			RemoveFields: []string{
 				"facility",
 			},
 		},
@@ -76,7 +76,7 @@ var PluginConfigTableUpdates = map[uint64][]config.ConfigTableUpdates{
 		{
 			Name: "acme",
 			Type: config.Plugin,
-			Fields: []string{
+			RemoveFields: []string{
 				"preferred_chain",
 				"storage_config.vault.auth_method",
 				"storage_config.vault.auth_path",
@@ -87,21 +87,21 @@ var PluginConfigTableUpdates = map[uint64][]config.ConfigTableUpdates{
 		{
 			Name: "aws-lambda",
 			Type: config.Plugin,
-			Fields: []string{
+			RemoveFields: []string{
 				"base64_encode_body",
 			},
 		},
 		{
 			Name: "grpc-web",
 			Type: config.Plugin,
-			Fields: []string{
+			RemoveFields: []string{
 				"allow_origin_header",
 			},
 		},
 		{
 			Name: "request-termination",
 			Type: config.Plugin,
-			Fields: []string{
+			RemoveFields: []string{
 				"echo",
 				"trigger",
 			},
@@ -111,7 +111,7 @@ var PluginConfigTableUpdates = map[uint64][]config.ConfigTableUpdates{
 		{
 			Name: "datadog",
 			Type: config.Plugin,
-			Fields: []string{
+			RemoveFields: []string{
 				"service_name_tag",
 				"status_tag",
 				"consumer_tag",
@@ -120,7 +120,7 @@ var PluginConfigTableUpdates = map[uint64][]config.ConfigTableUpdates{
 		{
 			Name: "ip-restriction",
 			Type: config.Plugin,
-			Fields: []string{
+			RemoveFields: []string{
 				"status",
 				"message",
 			},
@@ -128,7 +128,7 @@ var PluginConfigTableUpdates = map[uint64][]config.ConfigTableUpdates{
 		{
 			Name: "rate-limiting",
 			Type: config.Plugin,
-			Fields: []string{
+			RemoveFields: []string{
 				"redis_ssl",
 				"redis_ssl_verify",
 				"redis_server_name",
@@ -137,7 +137,7 @@ var PluginConfigTableUpdates = map[uint64][]config.ConfigTableUpdates{
 		{
 			Name: "zipkin",
 			Type: config.Plugin,
-			Fields: []string{
+			RemoveFields: []string{
 				"local_service_name",
 			},
 		},
@@ -146,21 +146,21 @@ var PluginConfigTableUpdates = map[uint64][]config.ConfigTableUpdates{
 		{
 			Name: "acme",
 			Type: config.Plugin,
-			Fields: []string{
+			RemoveFields: []string{
 				"rsa_key_size",
 			},
 		},
 		{
 			Name: "rate-limiting",
 			Type: config.Plugin,
-			Fields: []string{
+			RemoveFields: []string{
 				"redis_username",
 			},
 		},
 		{
 			Name: "response-ratelimiting",
 			Type: config.Plugin,
-			Fields: []string{
+			RemoveFields: []string{
 				"redis_username",
 			},
 		},

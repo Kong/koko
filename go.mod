@@ -3,7 +3,6 @@ module github.com/kong/koko
 go 1.18
 
 require (
-	github.com/blang/semver/v4 v4.0.0
 	github.com/bufbuild/buf v1.3.0
 	github.com/cenkalti/backoff/v4 v4.1.2
 	github.com/gavv/httpexpect/v2 v2.3.1
@@ -37,6 +36,7 @@ require (
 require (
 	github.com/ajg/form v1.5.1 // indirect
 	github.com/andybalholm/brotli v1.0.4 // indirect
+	github.com/blang/semver/v4 v4.0.0 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.1 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/fatih/structs v1.0.0 // indirect
