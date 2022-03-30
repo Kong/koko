@@ -2,6 +2,7 @@ package admin
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -33,16 +34,18 @@ func (s *ServiceService) GetService(ctx context.Context,
 	result := resource.NewService()
 	s.logger.With(zap.String("id", req.Id)).Debug("reading service by id")
 	err = db.Read(ctx, result, store.GetByID(req.Id))
-	if err != nil && err != store.ErrNotFound {
-		return nil, s.err(err)
-	}
-	if result.ID() == "" {
-		s.logger.With(zap.String("name", idOrName)).Debug("attempting reading service by name")
-		err = db.Read(ctx, result, store.GetByName(idOrName))
-		if err != nil {
+	if err != nil {
+		if errors.Is(err, store.ErrNotFound) {
+			s.logger.With(zap.String("name", idOrName)).Debug("attempting reading service by name")
+			err = db.Read(ctx, result, store.GetByName(idOrName))
+			if err != nil {
+				return nil, s.err(err)
+			}
+		} else {
 			return nil, s.err(err)
 		}
 	}
+
 	return &v1.GetServiceResponse{
 		Item: result.Service,
 	}, nil
