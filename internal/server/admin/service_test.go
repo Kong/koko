@@ -499,6 +499,11 @@ func TestServiceRead(t *testing.T) {
 		body := res.JSON().Path("$.item").Object()
 		validateGoodService(body)
 	})
+	t.Run("reading a service with service name return 200", func(t *testing.T) {
+		res := c.GET("/v1/services/" + svc.Name).Expect().Status(http.StatusOK)
+		body := res.JSON().Path("$.item").Object()
+		validateGoodService(body)
+	})
 	t.Run("read request without an ID returns 400", func(t *testing.T) {
 		res := c.GET("/v1/services/").Expect()
 		res.Status(http.StatusBadRequest)

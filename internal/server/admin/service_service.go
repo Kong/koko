@@ -22,7 +22,8 @@ type ServiceService struct {
 func (s *ServiceService) GetService(ctx context.Context,
 	req *v1.GetServiceRequest,
 ) (*v1.GetServiceResponse, error) {
-	if req.Id == "" {
+	idOrName := req.Id
+	if idOrName == "" {
 		return nil, s.err(util.ErrClient{Message: "required ID is missing"})
 	}
 	db, err := s.CommonOpts.getDB(ctx, req.Cluster)
@@ -32,8 +33,15 @@ func (s *ServiceService) GetService(ctx context.Context,
 	result := resource.NewService()
 	s.logger.With(zap.String("id", req.Id)).Debug("reading service by id")
 	err = db.Read(ctx, result, store.GetByID(req.Id))
-	if err != nil {
+	if err != nil && err != store.ErrNotFound {
 		return nil, s.err(err)
+	}
+	if result.ID() == "" {
+		s.logger.With(zap.String("name", idOrName)).Debug("attempting reading service by name")
+		err = db.Read(ctx, result, store.GetByName(idOrName))
+		if err != nil {
+			return nil, s.err(err)
+		}
 	}
 	return &v1.GetServiceResponse{
 		Item: result.Service,
