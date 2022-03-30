@@ -229,8 +229,20 @@ func TestConsumerRead(t *testing.T) {
 	require.NotEmpty(t, id)
 	body.Value("created_at").Number().Gt(0)
 	body.Value("updated_at").Number().Gt(0)
-	t.Run("looking up a consumer with valid if succeeds", func(t *testing.T) {
+	t.Run("looking up a consumer with valid id succeeds", func(t *testing.T) {
 		res := c.GET("/v1/consumers/" + id).WithJSON(consumer).Expect()
+		res.Status(http.StatusOK)
+		res.Header("grpc-metadata-koko-status-code").Empty()
+		body := res.JSON().Path("$.item").Object()
+		body.Value("username").String().Equal("consumerA")
+		body.Value("custom_id").String().Equal("customIDA")
+		gotID := body.Value("id").String().Raw()
+		require.Equal(t, id, gotID)
+		body.Value("created_at").Number().Gt(0)
+		body.Value("updated_at").Number().Gt(0)
+	})
+	t.Run("looking up a consumer with valid username succeeds", func(t *testing.T) {
+		res := c.GET("/v1/consumers/" + consumer.Username).WithJSON(consumer).Expect()
 		res.Status(http.StatusOK)
 		res.Header("grpc-metadata-koko-status-code").Empty()
 		body := res.JSON().Path("$.item").Object()

@@ -2,6 +2,7 @@ package admin
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -22,7 +23,8 @@ type ConsumerService struct {
 func (s *ConsumerService) GetConsumer(ctx context.Context,
 	req *v1.GetConsumerRequest,
 ) (*v1.GetConsumerResponse, error) {
-	if req.Id == "" {
+	idOrUsername := req.Id
+	if idOrUsername == "" {
 		return nil, s.err(util.ErrClient{Message: "required ID is missing"})
 	}
 	db, err := s.CommonOpts.getDB(ctx, req.Cluster)
@@ -30,10 +32,18 @@ func (s *ConsumerService) GetConsumer(ctx context.Context,
 		return nil, err
 	}
 	result := resource.NewConsumer()
-	s.logger.With(zap.String("id", req.Id)).Debug("reading consumer by id")
+	s.logger.With(zap.String("id", idOrUsername)).Debug("reading consumer by id")
 	err = db.Read(ctx, result, store.GetByID(req.Id))
 	if err != nil {
-		return nil, s.err(err)
+		if errors.Is(err, store.ErrNotFound) {
+			s.logger.With(zap.String("username", idOrUsername)).Debug("attempting reading consumer by username")
+			err = db.Read(ctx, result, store.GetByUsername(idOrUsername))
+			if err != nil {
+				return nil, s.err(err)
+			}
+		} else {
+			return nil, s.err(err)
+		}
 	}
 	return &v1.GetConsumerResponse{
 		Item: result.Consumer,

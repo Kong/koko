@@ -246,6 +246,10 @@ func (s *ObjectStore) Read(ctx context.Context, object model.Object,
 		return s.withTx(ctx, func(tx persistence.Tx) error {
 			return s.readByName(ctx, tx, opt.name, object)
 		})
+	case opt.username != "":
+		return s.withTx(ctx, func(tx persistence.Tx) error {
+			return s.readByUsername(ctx, tx, opt.username, object)
+		})
 	case opt.idxName != "" && opt.idxValue != "":
 		return s.withTx(ctx, func(tx persistence.Tx) error {
 			return s.readByIdx(ctx, tx, opt.idxName, opt.idxValue, object)
@@ -281,6 +285,12 @@ func (s *ObjectStore) readByName(ctx context.Context, tx persistence.Tx,
 	name string, object model.Object,
 ) error {
 	return s.readByIdx(ctx, tx, "name", name, object)
+}
+
+func (s *ObjectStore) readByUsername(ctx context.Context, tx persistence.Tx,
+	username string, object model.Object,
+) error {
+	return s.readByIdx(ctx, tx, "username", username, object)
 }
 
 func (s *ObjectStore) readByTypeID(ctx context.Context, tx persistence.Tx,
