@@ -2,6 +2,7 @@ package admin
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -24,7 +25,8 @@ type RouteService struct {
 func (s *RouteService) GetRoute(ctx context.Context,
 	req *v1.GetRouteRequest,
 ) (*v1.GetRouteResponse, error) {
-	if req.Id == "" {
+	idOrName := req.Id
+	if idOrName == "" {
 		return nil, s.err(util.ErrClient{Message: "required ID is missing"})
 	}
 	db, err := s.CommonOpts.getDB(ctx, req.Cluster)
@@ -32,10 +34,18 @@ func (s *RouteService) GetRoute(ctx context.Context,
 		return nil, err
 	}
 	result := resource.NewRoute()
-	s.logger.With(zap.String("id", req.Id)).Debug("reading route by id")
+	s.logger.With(zap.String("id", idOrName)).Debug("reading route by id")
 	err = db.Read(ctx, result, store.GetByID(req.Id))
 	if err != nil {
-		return nil, s.err(err)
+		if errors.Is(err, store.ErrNotFound) {
+			s.logger.With(zap.String("name", idOrName)).Debug("attempting reading route by name")
+			err = db.Read(ctx, result, store.GetByName(idOrName))
+			if err != nil {
+				return nil, s.err(err)
+			}
+		} else {
+			return nil, s.err(err)
+		}
 	}
 	return &v1.GetRouteResponse{
 		Item: result.Route,

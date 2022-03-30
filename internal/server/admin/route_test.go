@@ -243,6 +243,11 @@ func TestRouteRead(t *testing.T) {
 		body := res.JSON().Path("$.item").Object()
 		validateGoodRoute(body)
 	})
+	t.Run("reading a route by name return 200", func(t *testing.T) {
+		res := c.GET("/v1/routes/" + svc.Name).Expect().Status(http.StatusOK)
+		body := res.JSON().Path("$.item").Object()
+		validateGoodRoute(body)
+	})
 	t.Run("read request without an ID returns 400", func(t *testing.T) {
 		res := c.GET("/v1/routes/").Expect()
 		res.Status(http.StatusBadRequest)
