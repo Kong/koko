@@ -1,18 +1,18 @@
 syntax = "proto3";
 
-option go_package = "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1;v1";
-
 package kong.admin.model.v1;
 
-import "kong/admin/model/v1/service.proto";
-import "kong/admin/model/v1/route.proto";
-import "kong/admin/model/v1/plugin.proto";
-import "kong/admin/model/v1/upstream.proto";
-import "kong/admin/model/v1/target.proto";
-import "kong/admin/model/v1/consumer.proto";
-import "kong/admin/model/v1/certificate.proto";
 import "kong/admin/model/v1/ca_certificate.proto";
+import "kong/admin/model/v1/certificate.proto";
+import "kong/admin/model/v1/consumer.proto";
+import "kong/admin/model/v1/plugin.proto";
+import "kong/admin/model/v1/route.proto";
+import "kong/admin/model/v1/service.proto";
 import "kong/admin/model/v1/sni.proto";
+import "kong/admin/model/v1/target.proto";
+import "kong/admin/model/v1/upstream.proto";
+
+option go_package = "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1;v1";
 
 message TestingConfig {
   repeated Service services = 1;

@@ -37,7 +37,7 @@ service ConfigService {
   // requests for configuration into a single SyncConfig().
   //
   // Configuration is always PUSHed to the DP and so configuration is not sent
-  // as part of the response to this call to simplify implementation. 
+  // as part of the response to this call to simplify implementation.
   //
   // Call direction:
   // - DP to CP
@@ -45,7 +45,7 @@ service ConfigService {
   rpc PingCP(PingCPRequest) returns (PingCPResponse);
 }
 
-enum Capability { 
+enum Capability {
   CAPABILITY_UNSPECIFIED = 0;
   CAPABILITY_BULK_UPDATE = 1;
   // Incremental configuration will be added in future and is considered out
@@ -53,8 +53,7 @@ enum Capability {
   // CAPABILITY_INCREMENTAL = 2;
 }
 
-message GetCapabilitiesRequest {
-}
+message GetCapabilitiesRequest {}
 
 message GetCapabilitiesResponse {
   repeated Capability capabilities = 1;
@@ -100,9 +99,6 @@ message SyncConfigError {
   ErrorType err_type = 3;
 }
 
-message PingCPRequest {
-}
+message PingCPRequest {}
 
-message PingCPResponse {
-}
-
+message PingCPResponse {}

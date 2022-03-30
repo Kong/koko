@@ -2,12 +2,12 @@ syntax = "proto3";
 
 package kong.admin.service.v1;
 
-option go_package = "github.com/kong/koko/internal/gen/kong/admin/service/v1;v1";
-
 import "google/api/annotations.proto";
-import "kong/admin/model/v1/upstream.proto";
 import "kong/admin/model/v1/cluster.proto";
 import "kong/admin/model/v1/pagination.proto";
+import "kong/admin/model/v1/upstream.proto";
+
+option go_package = "github.com/kong/koko/internal/gen/kong/admin/service/v1;v1";
 
 service UpstreamService {
   rpc GetUpstream(GetUpstreamRequest) returns (GetUpstreamResponse) {
@@ -39,48 +39,46 @@ service UpstreamService {
   }
 }
 
-message GetUpstreamRequest{
+message GetUpstreamRequest {
   string id = 1;
   model.v1.RequestCluster cluster = 2;
 }
 
-message GetUpstreamResponse{
+message GetUpstreamResponse {
   model.v1.Upstream item = 1;
 }
 
-message CreateUpstreamRequest{
-  model.v1.Upstream item = 1;
-  model.v1.RequestCluster cluster = 2;
-}
-
-message CreateUpstreamResponse{
-  model.v1.Upstream item = 1;
-}
-
-
-message UpsertUpstreamRequest{
+message CreateUpstreamRequest {
   model.v1.Upstream item = 1;
   model.v1.RequestCluster cluster = 2;
 }
 
-message UpsertUpstreamResponse{
+message CreateUpstreamResponse {
   model.v1.Upstream item = 1;
 }
 
-message DeleteUpstreamRequest{
+message UpsertUpstreamRequest {
+  model.v1.Upstream item = 1;
+  model.v1.RequestCluster cluster = 2;
+}
+
+message UpsertUpstreamResponse {
+  model.v1.Upstream item = 1;
+}
+
+message DeleteUpstreamRequest {
   string id = 1;
   model.v1.RequestCluster cluster = 2;
 }
 
-message DeleteUpstreamResponse{
-}
+message DeleteUpstreamResponse {}
 
-message ListUpstreamsRequest{
+message ListUpstreamsRequest {
   model.v1.RequestCluster cluster = 1;
   model.v1.PaginationRequest page = 2;
 }
 
-message ListUpstreamsResponse{
+message ListUpstreamsResponse {
   repeated model.v1.Upstream items = 1;
   model.v1.PaginationResponse page = 2;
 }

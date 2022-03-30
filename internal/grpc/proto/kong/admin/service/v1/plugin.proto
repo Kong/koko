@@ -2,12 +2,12 @@ syntax = "proto3";
 
 package kong.admin.service.v1;
 
-option go_package = "github.com/kong/koko/internal/gen/kong/admin/service/v1;v1";
-
 import "google/api/annotations.proto";
-import "kong/admin/model/v1/plugin.proto";
 import "kong/admin/model/v1/cluster.proto";
 import "kong/admin/model/v1/pagination.proto";
+import "kong/admin/model/v1/plugin.proto";
+
+option go_package = "github.com/kong/koko/internal/gen/kong/admin/service/v1;v1";
 
 service PluginService {
   rpc GetConfiguredPlugins(GetConfiguredPluginsRequest) returns (GetConfiguredPluginsResponse) {
@@ -44,42 +44,41 @@ service PluginService {
   }
 }
 
-message GetPluginRequest{
+message GetPluginRequest {
   string id = 1;
   model.v1.RequestCluster cluster = 2;
 }
 
-message GetPluginResponse{
+message GetPluginResponse {
   model.v1.Plugin item = 1;
 }
 
-message CreatePluginRequest{
-  model.v1.Plugin item = 1;
-  model.v1.RequestCluster cluster = 2;
-}
-
-message CreatePluginResponse{
-  model.v1.Plugin item = 1;
-}
-
-message UpsertPluginRequest{
+message CreatePluginRequest {
   model.v1.Plugin item = 1;
   model.v1.RequestCluster cluster = 2;
 }
 
-message UpsertPluginResponse{
+message CreatePluginResponse {
   model.v1.Plugin item = 1;
 }
 
-message DeletePluginRequest{
+message UpsertPluginRequest {
+  model.v1.Plugin item = 1;
+  model.v1.RequestCluster cluster = 2;
+}
+
+message UpsertPluginResponse {
+  model.v1.Plugin item = 1;
+}
+
+message DeletePluginRequest {
   string id = 1;
   model.v1.RequestCluster cluster = 2;
 }
 
-message DeletePluginResponse{
-}
+message DeletePluginResponse {}
 
-message ListPluginsRequest{
+message ListPluginsRequest {
   model.v1.RequestCluster cluster = 1;
   string service_id = 2;
   string route_id = 3;
@@ -87,15 +86,15 @@ message ListPluginsRequest{
   string consumer_id = 5;
 }
 
-message ListPluginsResponse{
+message ListPluginsResponse {
   repeated model.v1.Plugin items = 1;
   model.v1.PaginationResponse page = 2;
 }
 
-message GetConfiguredPluginsRequest{
+message GetConfiguredPluginsRequest {
   model.v1.RequestCluster cluster = 1;
 }
 
-message GetConfiguredPluginsResponse{
+message GetConfiguredPluginsResponse {
   repeated string names = 1;
 }

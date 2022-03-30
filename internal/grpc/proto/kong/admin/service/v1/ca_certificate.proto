@@ -2,84 +2,83 @@ syntax = "proto3";
 
 package kong.admin.service.v1;
 
-option go_package = "github.com/kong/koko/internal/gen/kong/admin/service/v1;v1";
-
 import "google/api/annotations.proto";
 import "kong/admin/model/v1/ca_certificate.proto";
 import "kong/admin/model/v1/cluster.proto";
 import "kong/admin/model/v1/pagination.proto";
 
+option go_package = "github.com/kong/koko/internal/gen/kong/admin/service/v1;v1";
+
 service CACertificateService {
-    rpc GetCACertificate(GetCACertificateRequest) returns (GetCACertificateResponse) {
-      option (google.api.http) = {
-        get: "/v1/ca-certificates/{id}"
-      };
-    }
-    rpc CreateCACertificate(CreateCACertificateRequest) returns (CreateCACertificateResponse) {
-      option (google.api.http) = {
-        post: "/v1/ca-certificates"
-        body: "item"
-      };
-    }
-    rpc UpsertCACertificate(UpsertCACertificateRequest) returns (UpsertCACertificateResponse) {
-      option (google.api.http) = {
-        put: "/v1/ca-certificates/{item.id}"
-        body: "item"
-      };
-    }
-    rpc DeleteCACertificate(DeleteCACertificateRequest) returns (DeleteCACertificateResponse) {
-      option (google.api.http) = {
-        delete: "/v1/ca-certificates/{id}"
-      };
-    }
-    rpc ListCACertificates(ListCACertificatesRequest) returns (ListCACertificatesResponse) {
-      option (google.api.http) = {
-        get: "/v1/ca-certificates"
-      };
-    }
+  rpc GetCACertificate(GetCACertificateRequest) returns (GetCACertificateResponse) {
+    option (google.api.http) = {
+      get: "/v1/ca-certificates/{id}"
+    };
   }
+  rpc CreateCACertificate(CreateCACertificateRequest) returns (CreateCACertificateResponse) {
+    option (google.api.http) = {
+      post: "/v1/ca-certificates"
+      body: "item"
+    };
+  }
+  rpc UpsertCACertificate(UpsertCACertificateRequest) returns (UpsertCACertificateResponse) {
+    option (google.api.http) = {
+      put: "/v1/ca-certificates/{item.id}"
+      body: "item"
+    };
+  }
+  rpc DeleteCACertificate(DeleteCACertificateRequest) returns (DeleteCACertificateResponse) {
+    option (google.api.http) = {
+      delete: "/v1/ca-certificates/{id}"
+    };
+  }
+  rpc ListCACertificates(ListCACertificatesRequest) returns (ListCACertificatesResponse) {
+    option (google.api.http) = {
+      get: "/v1/ca-certificates"
+    };
+  }
+}
 
-  message GetCACertificateRequest{
-    string id = 1;
-    model.v1.RequestCluster cluster = 2;
-  }
+message GetCACertificateRequest {
+  string id = 1;
+  model.v1.RequestCluster cluster = 2;
+}
 
-  message GetCACertificateResponse{
-    model.v1.CACertificate item = 1;
-  }
+message GetCACertificateResponse {
+  model.v1.CACertificate item = 1;
+}
 
-  message CreateCACertificateRequest{
-    model.v1.CACertificate item = 1;
-    model.v1.RequestCluster cluster = 2;
-  }
+message CreateCACertificateRequest {
+  model.v1.CACertificate item = 1;
+  model.v1.RequestCluster cluster = 2;
+}
 
-  message CreateCACertificateResponse{
-    model.v1.CACertificate item = 1;
-  }
+message CreateCACertificateResponse {
+  model.v1.CACertificate item = 1;
+}
 
-  message UpsertCACertificateRequest{
-    model.v1.CACertificate item = 1;
-    model.v1.RequestCluster cluster = 2;
-  }
+message UpsertCACertificateRequest {
+  model.v1.CACertificate item = 1;
+  model.v1.RequestCluster cluster = 2;
+}
 
-  message UpsertCACertificateResponse{
-    model.v1.CACertificate item = 1;
-  }
+message UpsertCACertificateResponse {
+  model.v1.CACertificate item = 1;
+}
 
-  message DeleteCACertificateRequest{
-    string id = 1;
-    model.v1.RequestCluster cluster = 2;
-  }
+message DeleteCACertificateRequest {
+  string id = 1;
+  model.v1.RequestCluster cluster = 2;
+}
 
-  message DeleteCACertificateResponse{
-  }
+message DeleteCACertificateResponse {}
 
-  message ListCACertificatesRequest{
-    model.v1.RequestCluster cluster = 1;
-    model.v1.PaginationRequest page = 2;
-  }
+message ListCACertificatesRequest {
+  model.v1.RequestCluster cluster = 1;
+  model.v1.PaginationRequest page = 2;
+}
 
-  message ListCACertificatesResponse{
-    repeated model.v1.CACertificate items = 1;
-    model.v1.PaginationResponse page = 2;
-  }
+message ListCACertificatesResponse {
+  repeated model.v1.CACertificate items = 1;
+  model.v1.PaginationResponse page = 2;
+}
