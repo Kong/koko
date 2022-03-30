@@ -1,10 +1,10 @@
 syntax = "proto3";
 
-option go_package = "github.com/kong/koko/internal/gen/wrpc/kong/model;model";
-
 package kong.model;
 
 import "kong/model/consumer.proto";
+
+option go_package = "github.com/kong/koko/internal/gen/wrpc/kong/model;model";
 
 message PluginData {
   repeated KeyAuth key_auths = 1;
@@ -32,7 +32,6 @@ message KeyAuth {
   int64 created_at = 5;
   repeated string tags = 6;
 }
-
 
 message MTLSAuth {
   string id = 1;
@@ -69,4 +68,3 @@ message JWTAuth {
   int64 created_at = 7;
   repeated string tags = 8;
 }
-

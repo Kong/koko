@@ -2,12 +2,12 @@ syntax = "proto3";
 
 package kong.admin.service.v1;
 
-option go_package = "github.com/kong/koko/internal/gen/kong/admin/service/v1;v1";
-
 import "google/api/annotations.proto";
-import "kong/admin/model/v1/node.proto";
 import "kong/admin/model/v1/cluster.proto";
+import "kong/admin/model/v1/node.proto";
 import "kong/admin/model/v1/pagination.proto";
+
+option go_package = "github.com/kong/koko/internal/gen/kong/admin/service/v1;v1";
 
 service NodeService {
   rpc GetNode(GetNodeRequest) returns (GetNodeResponse) {
@@ -32,48 +32,46 @@ service NodeService {
   }
 }
 
-message GetNodeRequest{
+message GetNodeRequest {
   string id = 1;
   model.v1.RequestCluster cluster = 2;
 }
 
-message GetNodeResponse{
+message GetNodeResponse {
   model.v1.Node item = 1;
 }
 
-message CreateNodeRequest{
-  model.v1.Node item = 1;
-  model.v1.RequestCluster cluster = 2;
-}
-
-message CreateNodeResponse{
-  model.v1.Node item = 1;
-}
-
-
-message UpsertNodeRequest{
+message CreateNodeRequest {
   model.v1.Node item = 1;
   model.v1.RequestCluster cluster = 2;
 }
 
-message UpsertNodeResponse{
+message CreateNodeResponse {
   model.v1.Node item = 1;
 }
 
-message DeleteNodeRequest{
+message UpsertNodeRequest {
+  model.v1.Node item = 1;
+  model.v1.RequestCluster cluster = 2;
+}
+
+message UpsertNodeResponse {
+  model.v1.Node item = 1;
+}
+
+message DeleteNodeRequest {
   string id = 1;
   model.v1.RequestCluster cluster = 2;
 }
 
-message DeleteNodeResponse{
-}
+message DeleteNodeResponse {}
 
-message ListNodesRequest{
+message ListNodesRequest {
   model.v1.RequestCluster cluster = 1;
   model.v1.PaginationRequest page = 2;
 }
 
-message ListNodesResponse{
+message ListNodesResponse {
   repeated model.v1.Node items = 1;
   model.v1.PaginationResponse page = 2;
 }

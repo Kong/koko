@@ -1,20 +1,20 @@
 syntax = "proto3";
 
-option go_package = "github.com/kong/koko/internal/gen/wrpc/kong/model;model";
-
 package kong.model;
 
-import "kong/model/service.proto";
-import "kong/model/route.proto";
+import "kong/model/ca_certificate.proto";
+import "kong/model/certificate.proto";
 import "kong/model/consumer.proto";
 import "kong/model/plugin.proto";
 import "kong/model/plugin_entities.proto";
-import "kong/model/certificate.proto";
+import "kong/model/route.proto";
+import "kong/model/service.proto";
 import "kong/model/sni.proto";
-import "kong/model/ca_certificate.proto";
-import "kong/model/upstream.proto";
 import "kong/model/target.proto";
+import "kong/model/upstream.proto";
 import "kong/model/workspace.proto";
+
+option go_package = "github.com/kong/koko/internal/gen/wrpc/kong/model;model";
 
 message Config {
   string format_version = 1;

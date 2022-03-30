@@ -1,11 +1,11 @@
 syntax = "proto3";
 
-option go_package = "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1;v1";
-
 package kong.admin.model.v1;
 
-import "kong/admin/model/v1/service.proto";
 import "google/protobuf/wrappers.proto";
+import "kong/admin/model/v1/service.proto";
+
+option go_package = "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1;v1";
 
 message Route {
   string id = 1;

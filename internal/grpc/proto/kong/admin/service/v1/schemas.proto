@@ -2,10 +2,10 @@ syntax = "proto3";
 
 package kong.admin.service.v1;
 
-option go_package = "github.com/kong/koko/internal/gen/kong/admin/service/v1;v1";
-
 import "google/api/annotations.proto";
 import "google/protobuf/struct.proto";
+
+option go_package = "github.com/kong/koko/internal/gen/kong/admin/service/v1;v1";
 
 service SchemasService {
   rpc GetSchemas(GetSchemasRequest) returns (GetSchemasResponse) {

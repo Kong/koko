@@ -2,12 +2,12 @@ syntax = "proto3";
 
 package kong.admin.service.v1;
 
-option go_package = "github.com/kong/koko/internal/gen/kong/admin/service/v1;v1";
-
 import "google/api/annotations.proto";
-import "kong/admin/model/v1/sni.proto";
 import "kong/admin/model/v1/cluster.proto";
 import "kong/admin/model/v1/pagination.proto";
+import "kong/admin/model/v1/sni.proto";
+
+option go_package = "github.com/kong/koko/internal/gen/kong/admin/service/v1;v1";
 
 service SNIService {
   rpc GetSNI(GetSNIRequest) returns (GetSNIResponse) {
@@ -39,48 +39,47 @@ service SNIService {
   }
 }
 
-message GetSNIRequest{
+message GetSNIRequest {
   string id = 1;
   model.v1.RequestCluster cluster = 2;
 }
 
-message GetSNIResponse{
+message GetSNIResponse {
   model.v1.SNI item = 1;
 }
 
-message CreateSNIRequest{
-  model.v1.SNI item = 1;
-  model.v1.RequestCluster cluster = 2;
-}
-
-message CreateSNIResponse{
-  model.v1.SNI item = 1;
-}
-
-message UpsertSNIRequest{
+message CreateSNIRequest {
   model.v1.SNI item = 1;
   model.v1.RequestCluster cluster = 2;
 }
 
-message UpsertSNIResponse{
+message CreateSNIResponse {
   model.v1.SNI item = 1;
 }
 
-message DeleteSNIRequest{
+message UpsertSNIRequest {
+  model.v1.SNI item = 1;
+  model.v1.RequestCluster cluster = 2;
+}
+
+message UpsertSNIResponse {
+  model.v1.SNI item = 1;
+}
+
+message DeleteSNIRequest {
   string id = 1;
   model.v1.RequestCluster cluster = 2;
 }
 
-message DeleteSNIResponse{
-}
+message DeleteSNIResponse {}
 
-message ListSNIsRequest{
+message ListSNIsRequest {
   model.v1.RequestCluster cluster = 1;
   model.v1.PaginationRequest page = 2;
   string certificate_id = 3;
 }
 
-message ListSNIsResponse{
+message ListSNIsResponse {
   repeated model.v1.SNI items = 1;
   model.v1.PaginationResponse page = 2;
 }

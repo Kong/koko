@@ -2,12 +2,12 @@ syntax = "proto3";
 
 package kong.admin.service.v1;
 
-option go_package = "github.com/kong/koko/internal/gen/kong/admin/service/v1;v1";
-
 import "google/api/annotations.proto";
-import "kong/admin/model/v1/service.proto";
 import "kong/admin/model/v1/cluster.proto";
 import "kong/admin/model/v1/pagination.proto";
+import "kong/admin/model/v1/service.proto";
+
+option go_package = "github.com/kong/koko/internal/gen/kong/admin/service/v1;v1";
 
 service ServiceService {
   rpc GetService(GetServiceRequest) returns (GetServiceResponse) {
@@ -39,48 +39,46 @@ service ServiceService {
   }
 }
 
-message GetServiceRequest{
+message GetServiceRequest {
   string id = 1;
   model.v1.RequestCluster cluster = 2;
 }
 
-message GetServiceResponse{
+message GetServiceResponse {
   model.v1.Service item = 1;
 }
 
-message CreateServiceRequest{
-  model.v1.Service item = 1;
-  model.v1.RequestCluster cluster = 2;
-}
-
-message CreateServiceResponse{
-  model.v1.Service item = 1;
-}
-
-
-message UpsertServiceRequest{
+message CreateServiceRequest {
   model.v1.Service item = 1;
   model.v1.RequestCluster cluster = 2;
 }
 
-message UpsertServiceResponse{
+message CreateServiceResponse {
   model.v1.Service item = 1;
 }
 
-message DeleteServiceRequest{
+message UpsertServiceRequest {
+  model.v1.Service item = 1;
+  model.v1.RequestCluster cluster = 2;
+}
+
+message UpsertServiceResponse {
+  model.v1.Service item = 1;
+}
+
+message DeleteServiceRequest {
   string id = 1;
   model.v1.RequestCluster cluster = 2;
 }
 
-message DeleteServiceResponse{
-}
+message DeleteServiceResponse {}
 
-message ListServicesRequest{
+message ListServicesRequest {
   model.v1.RequestCluster cluster = 1;
   model.v1.PaginationRequest page = 2;
 }
 
-message ListServicesResponse{
+message ListServicesResponse {
   repeated model.v1.Service items = 1;
   model.v1.PaginationResponse page = 2;
 }

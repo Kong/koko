@@ -1,13 +1,13 @@
 syntax = "proto3";
 
-option go_package = "github.com/kong/koko/internal/gen/wrpc/kong/model;model";
-
 package kong.model;
 
 import "google/protobuf/struct.proto";
 import "kong/model/consumer.proto";
-import "kong/model/service.proto";
 import "kong/model/route.proto";
+import "kong/model/service.proto";
+
+option go_package = "github.com/kong/koko/internal/gen/wrpc/kong/model;model";
 
 message Plugin {
   string id = 1;

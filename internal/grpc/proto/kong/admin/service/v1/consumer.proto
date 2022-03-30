@@ -2,12 +2,12 @@ syntax = "proto3";
 
 package kong.admin.service.v1;
 
-option go_package = "github.com/kong/koko/internal/gen/kong/admin/service/v1;v1";
-
 import "google/api/annotations.proto";
-import "kong/admin/model/v1/consumer.proto";
 import "kong/admin/model/v1/cluster.proto";
+import "kong/admin/model/v1/consumer.proto";
 import "kong/admin/model/v1/pagination.proto";
+
+option go_package = "github.com/kong/koko/internal/gen/kong/admin/service/v1;v1";
 
 service ConsumerService {
   rpc GetConsumer(GetConsumerRequest) returns (GetConsumerResponse) {
@@ -39,47 +39,46 @@ service ConsumerService {
   }
 }
 
-message GetConsumerRequest{
+message GetConsumerRequest {
   string id = 1;
   model.v1.RequestCluster cluster = 2;
 }
 
-message GetConsumerResponse{
+message GetConsumerResponse {
   model.v1.Consumer item = 1;
 }
 
-message CreateConsumerRequest{
-  model.v1.Consumer item = 1;
-  model.v1.RequestCluster cluster = 2;
-}
-
-message CreateConsumerResponse{
-  model.v1.Consumer item = 1;
-}
-
-message UpsertConsumerRequest{
+message CreateConsumerRequest {
   model.v1.Consumer item = 1;
   model.v1.RequestCluster cluster = 2;
 }
 
-message UpsertConsumerResponse{
+message CreateConsumerResponse {
   model.v1.Consumer item = 1;
 }
 
-message DeleteConsumerRequest{
+message UpsertConsumerRequest {
+  model.v1.Consumer item = 1;
+  model.v1.RequestCluster cluster = 2;
+}
+
+message UpsertConsumerResponse {
+  model.v1.Consumer item = 1;
+}
+
+message DeleteConsumerRequest {
   string id = 1;
   model.v1.RequestCluster cluster = 2;
 }
 
-message DeleteConsumerResponse{
-}
+message DeleteConsumerResponse {}
 
-message ListConsumersRequest{
+message ListConsumersRequest {
   model.v1.RequestCluster cluster = 1;
   model.v1.PaginationRequest page = 2;
 }
 
-message ListConsumersResponse{
+message ListConsumersResponse {
   repeated model.v1.Consumer items = 1;
   model.v1.PaginationResponse page = 2;
 }

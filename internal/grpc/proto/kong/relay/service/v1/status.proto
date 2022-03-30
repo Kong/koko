@@ -2,10 +2,10 @@ syntax = "proto3";
 
 package kong.relay.service.v1;
 
-option go_package = "github.com/kong/koko/internal/gen/kong/relay/service/v1;v1";
-
-import "kong/admin/model/v1/status.proto";
 import "kong/admin/model/v1/cluster.proto";
+import "kong/admin/model/v1/status.proto";
+
+option go_package = "github.com/kong/koko/internal/gen/kong/relay/service/v1;v1";
 
 service StatusService {
   // UpdateStatus updates the status of the entity referenced within the status.
@@ -15,12 +15,12 @@ service StatusService {
   rpc ClearStatus(ClearStatusRequest) returns (ClearStatusResponse);
 }
 
-message UpdateStatusRequest{
+message UpdateStatusRequest {
   admin.model.v1.Status item = 1;
   admin.model.v1.RequestCluster cluster = 2;
 }
 
-message UpdateStatusResponse{
+message UpdateStatusResponse {
   admin.model.v1.Status item = 1;
 }
 
@@ -29,6 +29,4 @@ message ClearStatusRequest {
   admin.model.v1.RequestCluster cluster = 2;
 }
 
-message ClearStatusResponse{
-
-}
+message ClearStatusResponse {}

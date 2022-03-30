@@ -1,10 +1,10 @@
 syntax = "proto3";
 
-option go_package = "github.com/kong/koko/internal/gen/wrpc/kong/model;model";
-
 package kong.model;
 
 import "kong/model/service.proto";
+
+option go_package = "github.com/kong/koko/internal/gen/wrpc/kong/model;model";
 
 message Route {
   string id = 1;

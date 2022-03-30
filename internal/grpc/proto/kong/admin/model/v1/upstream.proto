@@ -1,10 +1,10 @@
 syntax = "proto3";
 
-option go_package = "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1;v1";
-
 package kong.admin.model.v1;
 
 import "google/protobuf/wrappers.proto";
+
+option go_package = "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1;v1";
 
 message Upstream {
   string id = 1;
@@ -49,13 +49,13 @@ message PassiveHealthcheck {
 }
 
 message ActiveHealthyCondition {
-  repeated int32  http_statuses = 1;
+  repeated int32 http_statuses = 1;
   google.protobuf.Int32Value interval = 2;
   google.protobuf.Int32Value successes = 3;
 }
 
 message PassiveHealthyCondition {
-  repeated int32  http_statuses = 1;
+  repeated int32 http_statuses = 1;
   google.protobuf.Int32Value successes = 3;
 }
 
