@@ -14,6 +14,7 @@ run:
 
 .PHONY: lint
 lint:
+	buf format -d --exit-code
 	buf lint
 	./bin/golangci-lint run ./...
 
@@ -39,3 +40,6 @@ gen:
 gen-verify:
 	./scripts/verify-codegen.sh
 
+.PHONY: buf-format
+buf-format:
+	buf format -w
