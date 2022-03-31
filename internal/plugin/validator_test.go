@@ -474,19 +474,64 @@ func TestValidate(t *testing.T) {
 			}
 		}
 	})
-	t.Run("ensure proxy-cache advanced validation for shared dict checks", func(t *testing.T) {
-		config, err := structpb.NewStruct(map[string]interface{}{
-			"strategy": "memory",
-		})
-		require.Nil(t, err)
-		p := &model.Plugin{
-			Name:      "proxy-cache",
-			Protocols: []string{"http", "https"},
-			Enabled:   wrapperspb.Bool(true),
-			Config:    config,
+	t.Run("validate different strategies and shared dict names for proxy-cache", func(t *testing.T) {
+		strategies := []struct {
+			config       string
+			wantsErr     bool
+			expectedErrs []*model.ErrorDetail
+		}{
+			{
+				config: `{
+					"strategy": "memory"
+				}`,
+			},
+			{
+				config: `{
+					"strategy": "memory",
+					"memory": {
+						"dictionary_name": "not_the_default_shared_dict"
+					}
+				}`,
+			},
+			{
+				config: `{
+					"strategy": "memory",
+					"memory": {
+						"dictionary_name": ""
+					}
+				}`,
+				wantsErr: true,
+				expectedErrs: []*model.ErrorDetail{
+					{
+						Type:  model.ErrorType_ERROR_TYPE_FIELD,
+						Field: "config.memory.dictionary_name",
+						Messages: []string{
+							"length must be at least 1",
+						},
+					},
+				},
+			},
 		}
-		err = validator.Validate(p)
-		require.Nil(t, err)
+
+		for _, strategy := range strategies {
+			var config structpb.Struct
+			require.Nil(t, json.Unmarshal([]byte(strategy.config), &config))
+			p := &model.Plugin{
+				Name:      "proxy-cache",
+				Protocols: []string{"http", "https"},
+				Enabled:   wrapperspb.Bool(true),
+				Config:    &config,
+			}
+			err := validator.Validate(p)
+			if strategy.wantsErr {
+				require.NotNil(t, err)
+				validationErr, ok := err.(validation.Error)
+				require.True(t, ok)
+				require.Equal(t, strategy.expectedErrs, validationErr.Errs)
+			} else {
+				require.Nil(t, err)
+			}
+		}
 	})
 }
 
