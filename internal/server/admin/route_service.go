@@ -35,7 +35,7 @@ func (s *RouteService) GetRoute(ctx context.Context,
 	}
 	result := resource.NewRoute()
 	s.logger.With(zap.String("id", idOrName)).Debug("reading route by id")
-	err = db.Read(ctx, result, store.GetByID(req.Id))
+	err = db.Read(ctx, result, store.GetByID(idOrName))
 	if err != nil {
 		if errors.Is(err, store.ErrNotFound) {
 			s.logger.With(zap.String("name", idOrName)).Debug("attempting reading route by name")

@@ -217,7 +217,7 @@ func TestSNI_Indexes(t *testing.T) {
 			},
 			want: []model.Index{
 				{
-					Name:      "unique-name",
+					Name:      "name",
 					Type:      model.IndexUnique,
 					Value:     "hostname",
 					FieldName: "name",

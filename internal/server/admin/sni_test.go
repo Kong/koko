@@ -166,7 +166,7 @@ func TestSNICreate(t *testing.T) {
 		resErr := body.Value("details").Array().Element(0)
 		resErr.Object().ValueEqual("type", v1.ErrorType_ERROR_TYPE_REFERENCE.String())
 		resErr.Object().ValueEqual("messages", []string{
-			"unique-name (type: unique) constraint failed for value '*.example.com': ",
+			"name (type: unique) constraint failed for value '*.example.com': ",
 		})
 	})
 }
@@ -243,6 +243,14 @@ func TestSNIRead(t *testing.T) {
 	sniID := res.JSON().Path("$.item.id").String().Raw()
 	t.Run("reading with existing SNI id returns 200", func(t *testing.T) {
 		res := c.GET("/v1/snis/{id}", sniID).
+			Expect().Status(http.StatusOK)
+		body := res.JSON().Path("$.item").Object()
+		body.Value("id").String().Equal(sniID)
+		body.Value("name").String().Equal("example.com")
+		body.Path("$.certificate.id").String().Equal(certID)
+	})
+	t.Run("reading with existing SNI name returns 200", func(t *testing.T) {
+		res := c.GET("/v1/snis/" + "example.com").
 			Expect().Status(http.StatusOK)
 		body := res.JSON().Path("$.item").Object()
 		body.Value("id").String().Equal(sniID)
