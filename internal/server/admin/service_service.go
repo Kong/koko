@@ -2,7 +2,6 @@ package admin
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 
@@ -12,7 +11,6 @@ import (
 	"github.com/kong/koko/internal/resource"
 	"github.com/kong/koko/internal/server/util"
 	"github.com/kong/koko/internal/store"
-	"go.uber.org/zap"
 )
 
 type ServiceService struct {
@@ -23,29 +21,16 @@ type ServiceService struct {
 func (s *ServiceService) GetService(ctx context.Context,
 	req *v1.GetServiceRequest,
 ) (*v1.GetServiceResponse, error) {
-	idOrName := req.Id
-	if idOrName == "" {
-		return nil, s.err(util.ErrClient{Message: "required ID is missing"})
-	}
 	db, err := s.CommonOpts.getDB(ctx, req.Cluster)
 	if err != nil {
 		return nil, err
 	}
 	result := resource.NewService()
-	s.logger.With(zap.String("id", req.Id)).Debug("reading service by id")
-	err = db.Read(ctx, result, store.GetByID(req.Id))
+	result.Type()
+	err = getEntityByIDOrName(ctx, req.Id, result, store.GetByName(req.Id), db, s.logger)
 	if err != nil {
-		if errors.Is(err, store.ErrNotFound) {
-			s.logger.With(zap.String("name", idOrName)).Debug("attempting reading service by name")
-			err = db.Read(ctx, result, store.GetByName(idOrName))
-			if err != nil {
-				return nil, s.err(err)
-			}
-		} else {
-			return nil, s.err(err)
-		}
+		return nil, err
 	}
-
 	return &v1.GetServiceResponse{
 		Item: result.Service,
 	}, nil

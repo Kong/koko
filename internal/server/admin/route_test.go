@@ -235,7 +235,7 @@ func TestRouteRead(t *testing.T) {
 	id := res.JSON().Path("$.item.id").String().Raw()
 	res.Status(201)
 	t.Run("reading a non-existent route returns 404", func(t *testing.T) {
-		randomID := "071f5040-3e4a-46df-9d98-451e79e318fd"
+		randomID := uuid.NewString()
 		c.GET("/v1/routes/" + randomID).Expect().Status(404)
 	})
 	t.Run("reading a route return 200", func(t *testing.T) {

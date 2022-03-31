@@ -2,7 +2,6 @@ package admin
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -14,7 +13,6 @@ import (
 	"github.com/kong/koko/internal/resource"
 	"github.com/kong/koko/internal/server/util"
 	"github.com/kong/koko/internal/store"
-	"go.uber.org/zap"
 )
 
 type SNIService struct {
@@ -23,28 +21,14 @@ type SNIService struct {
 }
 
 func (s *SNIService) GetSNI(ctx context.Context, req *v1.GetSNIRequest) (*v1.GetSNIResponse, error) {
-	idOrName := req.Id
-	if idOrName == "" {
-		return nil, s.err(util.ErrClient{Message: "required ID is missing"})
-	}
-
 	db, err := s.CommonOpts.getDB(ctx, req.Cluster)
 	if err != nil {
 		return nil, err
 	}
 	result := resource.NewSNI()
-	s.logger.With(zap.String("id", idOrName)).Debug("reading sni by id")
-	err = db.Read(ctx, result, store.GetByID(idOrName))
+	err = getEntityByIDOrName(ctx, req.Id, result, store.GetByName(req.Id), db, s.logger)
 	if err != nil {
-		if errors.Is(err, store.ErrNotFound) {
-			s.logger.With(zap.String("name", idOrName)).Debug("attempting reading sni by name")
-			err = db.Read(ctx, result, store.GetByName(idOrName))
-			if err != nil {
-				return nil, s.err(err)
-			}
-		} else {
-			return nil, s.err(err)
-		}
+		return nil, err
 	}
 	return &v1.GetSNIResponse{
 		Item: result.SNI,
