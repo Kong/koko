@@ -115,7 +115,7 @@ func TestProcessAutoFields(t *testing.T) {
 			"redis_host":          nil,
 			"path":                nil,
 			"month":               nil,
-			"policy":              "cluster",
+			"policy":              "local",
 			"redis_port":          float64(6379),
 			"redis_ssl_verify":    false,
 			"redis_database":      float64(0),
@@ -346,6 +346,132 @@ func TestValidate(t *testing.T) {
 				},
 			}
 			require.Equal(t, expected, validationErr.Errs)
+		}
+	})
+	t.Run("validate different policies for rate-limiting plugin", func(t *testing.T) {
+		policies := []struct {
+			config       string
+			wantsErr     bool
+			expectedErrs []*model.ErrorDetail
+		}{
+			{
+				config: `{
+					"second": 42,
+					"policy": "local"
+				}`,
+			},
+			{
+				config: `{
+					"second": 42,
+					"policy": "redis",
+					"redis_host": "localhost"
+				}`,
+			},
+			{
+				config: `{
+					"second": 42,
+					"policy": "cluster"
+				}`,
+				wantsErr: true,
+				expectedErrs: []*model.ErrorDetail{
+					{
+						Type:  model.ErrorType_ERROR_TYPE_FIELD,
+						Field: "config.policy",
+						Messages: []string{
+							"expected one of: local, redis",
+						},
+					},
+				},
+			},
+		}
+
+		for _, policy := range policies {
+			var config structpb.Struct
+			require.Nil(t, json.Unmarshal([]byte(policy.config), &config))
+			p := &model.Plugin{
+				Name:      "rate-limiting",
+				Protocols: []string{"http", "https"},
+				Enabled:   wrapperspb.Bool(true),
+				Config:    &config,
+			}
+			err := validator.Validate(p)
+			if policy.wantsErr {
+				require.NotNil(t, err)
+				validationErr, ok := err.(validation.Error)
+				require.True(t, ok)
+				require.Equal(t, policy.expectedErrs, validationErr.Errs)
+			} else {
+				require.Nil(t, err)
+			}
+		}
+	})
+	t.Run("validate different policies for response-ratelimiting plugin", func(t *testing.T) {
+		policies := []struct {
+			config       string
+			wantsErr     bool
+			expectedErrs []*model.ErrorDetail
+		}{
+			{
+				config: `{
+					"limits": {
+						"sms": {
+							"second": 42
+						}
+					},
+					"policy": "local"
+				}`,
+			},
+			{
+				config: `{
+					"limits": {
+						"sms": {
+							"second": 42
+						}
+					},
+					"policy": "redis",
+					"redis_host": "localhost"
+				}`,
+			},
+			{
+				config: `{
+					"limits": {
+						"sms": {
+							"second": 42
+						}
+					},
+					"policy": "cluster"
+				}`,
+				wantsErr: true,
+				expectedErrs: []*model.ErrorDetail{
+					{
+						Type:  model.ErrorType_ERROR_TYPE_FIELD,
+						Field: "config.policy",
+						Messages: []string{
+							"expected one of: local, redis",
+						},
+					},
+				},
+			},
+		}
+
+		for _, policy := range policies {
+			var config structpb.Struct
+			require.Nil(t, json.Unmarshal([]byte(policy.config), &config))
+			p := &model.Plugin{
+				Name:      "response-ratelimiting",
+				Protocols: []string{"http", "https"},
+				Enabled:   wrapperspb.Bool(true),
+				Config:    &config,
+			}
+			err := validator.Validate(p)
+			if policy.wantsErr {
+				require.NotNil(t, err)
+				validationErr, ok := err.(validation.Error)
+				require.True(t, ok)
+				require.Equal(t, policy.expectedErrs, validationErr.Errs)
+			} else {
+				require.Nil(t, err)
+			}
 		}
 	})
 }

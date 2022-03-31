@@ -24,12 +24,8 @@ end
 
 
 local function is_dbless()
-  local _, database, role = pcall(function()
-    return kong.configuration.database,
-           kong.configuration.role
-  end)
-
-  return database == "off" or role == "control_plane"
+  -- Only hybrid mode is available with Koko
+  return true
 end
 
 
