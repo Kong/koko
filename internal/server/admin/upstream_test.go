@@ -216,8 +216,15 @@ func TestUpstreamRead(t *testing.T) {
 	})
 	t.Run("reading a upstream return 200", func(t *testing.T) {
 		c.GET("/v1/upstreams/" + id).Expect().Status(http.StatusOK)
-		// body := res.JSON().Path("$.item").Object()
-		// validateGoodUpstream(body)
+		body := res.JSON().Path("$.item").Object()
+		body.Value("id").String().Equal(id)
+		body.Value("name").String().Equal(upstream.Name)
+	})
+	t.Run("reading a upstream by name return 200", func(t *testing.T) {
+		c.GET("/v1/upstreams/" + upstream.Name).Expect().Status(http.StatusOK)
+		body := res.JSON().Path("$.item").Object()
+		body.Value("id").String().Equal(id)
+		body.Value("name").String().Equal(upstream.Name)
 	})
 	t.Run("read request without an ID returns 400", func(t *testing.T) {
 		res := c.GET("/v1/upstreams/").Expect()
