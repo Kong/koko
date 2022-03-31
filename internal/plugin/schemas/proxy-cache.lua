@@ -5,10 +5,7 @@ local ngx = ngx
 
 
 local function check_shdict(name)
-  if not ngx.shared[name] then
-    return false, "missing shared dict '" .. name .. "'"
-  end
-
+  -- remove shared dictionary validation
   return true
 end
 
