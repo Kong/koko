@@ -116,6 +116,12 @@ var PluginConfigTableUpdates = map[uint64][]config.ConfigTableUpdates{
 				"status_tag",
 				"consumer_tag",
 			},
+			RemoveElementsFromArray: []config.ConfigTableFieldCondition{
+				{
+					Field:     "metrics",
+					Condition: "stat_type=distribution",
+				},
+			},
 		},
 		{
 			Name: "ip-restriction",

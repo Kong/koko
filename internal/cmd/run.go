@@ -191,6 +191,8 @@ func Run(ctx context.Context, config ServerConfig) error {
 	if err := vc.AddConfigTableUpdates(compat.PluginConfigTableUpdates); err != nil {
 		panic(err.Error())
 	}
+	vcLogger.With(zap.String("control-plane", kongConfigWS.KongGatewayCompatibilityVersion)).
+		Info("Lua control plane compatibility version")
 
 	// setup control server
 	controlLogger := logger.With(zap.String("component", "control-server"))

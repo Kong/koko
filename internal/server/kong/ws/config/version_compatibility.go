@@ -45,10 +45,32 @@ const (
 )
 
 //nolint: revive
+type ConfigTableFieldCondition struct {
+	// Field is a top-level or nested field; use dot notation for nested fields
+	Field string
+	// Condition is an expression for matching criteria
+	// uses gjson path syntax; https://github.com/tidwall/gjson#path-syntax
+	Condition string
+}
+
+//nolint: revive
 type ConfigTableUpdates struct {
-	Name         string
-	Type         UpdateType
+	Name string
+	Type UpdateType
+	// RemoveFields will remove fields from the configuration table.
+	//
+	// Values contained within this array are associated with a field name inside
+	// the configuration table. The value can be a top-level field or a nested
+	// field which is separated using the dot notation.
 	RemoveFields []string
+	// RemoveElementsFromArray will remove an array element from a field in the
+	// configuration table.
+	//
+	// Values contained within this array are associated with a field and a
+	// condition. If the condition matches for the given field, the array in which
+	// the match occurred (e.g. index) will be removed from  the configuration
+	// table.
+	RemoveElementsFromArray []ConfigTableFieldCondition
 }
 
 type WSVersionCompatibility struct {
@@ -155,7 +177,7 @@ func (vc *WSVersionCompatibility) processConfigTableUpdates(uncompressedPayload 
 	for _, configTableUpdate := range configTableUpdates {
 		if configTableUpdate.Type == Plugin {
 			processedPayload = processPluginUpdates(processedPayload, configTableUpdate.Name,
-				configTableUpdate.RemoveFields, vc.kongCPVersion, dataPlaneVersion,
+				configTableUpdate.RemoveElementsFromArray, configTableUpdate.RemoveFields, dataPlaneVersion,
 				vc.logger)
 		}
 	}
@@ -201,7 +223,7 @@ func parseSemanticVersion(versionStr string) (uint64, error) {
 	return version, nil
 }
 
-func processPluginUpdates(payload string, name string, fields []string, controlPlaneVersion uint64,
+func processPluginUpdates(payload string, name string, arrays []ConfigTableFieldCondition, fields []string,
 	dataPlaneVersion uint64, logger *zap.Logger,
 ) string {
 	processedPayload := payload
@@ -209,30 +231,71 @@ func processPluginUpdates(payload string, name string, fields []string, controlP
 	if len(results.Indexes) > 0 {
 		indexUpdate := 0
 		for _, res := range results.Array() {
+			updatedRaw := res.Raw
+			var err error
+
+			// Field removal
 			for _, field := range fields {
 				configField := fmt.Sprintf("config.%s", field)
 				if gjson.Get(res.Raw, configField).Exists() {
-					if updatedRaw, err := sjson.Delete(res.Raw, configField); err != nil {
+					if updatedRaw, err = sjson.Delete(updatedRaw, configField); err != nil {
 						logger.With(zap.String("plugin", name)).
 							With(zap.String("field", configField)).
-							With(zap.Uint64("control-plane", controlPlaneVersion)).
 							With(zap.Uint64("data-plane", dataPlaneVersion)).
 							With(zap.Error(err)).
 							Error("plugin configuration field was not removed from configuration")
 					} else {
 						logger.With(zap.String("plugin", name)).
 							With(zap.String("field", configField)).
-							With(zap.Uint64("control-plane", controlPlaneVersion)).
 							With(zap.Uint64("data-plane", dataPlaneVersion)).
 							Warn("removing plugin configuration field which is incompatible with data plane")
-						resIndex := res.Index - indexUpdate
-						updatedPayload := processedPayload[:resIndex] + updatedRaw +
-							processedPayload[resIndex+len(res.Raw):]
-						indexUpdate = len(processedPayload) - len(updatedPayload)
-						processedPayload = updatedPayload
 					}
 				}
 			}
+
+			// Field element array removal
+			for _, array := range arrays {
+				configField := fmt.Sprintf("config.%s", array.Field)
+				fieldArray := gjson.Get(res.Raw, configField)
+				if len(results.Indexes) > 0 {
+					// Gather indexes to remove from array
+					var arrayRemovalIndexes []int
+					for i, arrayRes := range fieldArray.Array() {
+						conditionField := fmt.Sprintf("..#(%s)", array.Condition)
+						if gjson.Get(arrayRes.Raw, conditionField).Exists() {
+							arrayRemovalIndexes = append(arrayRemovalIndexes, i)
+						}
+					}
+
+					for i, arrayIndex := range arrayRemovalIndexes {
+						fieldArrayWithIndex := fmt.Sprintf("config.%s.%d", array.Field, arrayIndex-i)
+						var err error
+						if updatedRaw, err = sjson.Delete(updatedRaw, fieldArrayWithIndex); err != nil {
+							logger.With(zap.String("plugin", name)).
+								With(zap.String("field", configField)).
+								With(zap.String("condition", array.Condition)).
+								With(zap.Int("index", arrayIndex)).
+								With(zap.Uint64("data-plane", dataPlaneVersion)).
+								With(zap.Error(err)).
+								Error("plugin configuration array item was not removed from configuration")
+						} else {
+							logger.With(zap.String("plugin", name)).
+								With(zap.String("field", configField)).
+								With(zap.String("condition", array.Condition)).
+								With(zap.Int("index", arrayIndex)).
+								With(zap.Uint64("data-plane", dataPlaneVersion)).
+								Warn("removing plugin configuration array item which is incompatible with data plane")
+						}
+					}
+				}
+			}
+
+			// Update the processed payload
+			resIndex := res.Index - indexUpdate
+			updatedPayload := processedPayload[:resIndex] + updatedRaw +
+				processedPayload[resIndex+len(res.Raw):]
+			indexUpdate = len(processedPayload) - len(updatedPayload)
+			processedPayload = updatedPayload
 		}
 	}
 
