@@ -13,7 +13,7 @@ import (
 	"go.uber.org/zap"
 )
 
-const namePattern = `^[0-9a-zA-Z.\-_~]*$`
+const namePattern = `^[0-9a-zA-Z.\-_~]{1,128}$`
 
 var nameRegex = regexp.MustCompile(namePattern)
 
@@ -63,29 +63,28 @@ func getPaginationResponse(totalCount int, nextPage int) *pbModel.PaginationResp
 	}
 }
 
-//nolint:lll // If I split the line manually, gofumpt does not like it and keeps complaining
-func getEntityByIDOrName(ctx context.Context, idOrName string, entity model.Object, nameOpt store.ReadOptsFunc, s store.Store, logger *zap.Logger) error {
+func getEntityByIDOrName(ctx context.Context, idOrName string, entity model.Object, nameOpt store.ReadOptsFunc,
+	s store.Store, logger *zap.Logger,
+) error {
 	if idOrName == "" {
 		return util.HandleErr(logger, util.ErrClient{Message: "required ID is missing"})
 	}
-	err := validUUID(idOrName)
-	if err == nil { // valid UUID, so get by ID
+	if err := validUUID(idOrName); err == nil {
 		logger.With(zap.String("id", idOrName)).Debug(fmt.Sprintf("reading %v by id", entity.Type()))
 		err = s.Read(ctx, entity, store.GetByID(idOrName))
 		if err != nil {
 			return util.HandleErr(logger, err)
 		}
-	} else { // Check name pattern
-		if nameRegex.MatchString(idOrName) {
-			logger.With(zap.String("name", idOrName)).Debug(fmt.Sprintf("attempting reading %v by name",
-				entity.Type()))
-			err = s.Read(ctx, entity, nameOpt)
-			if err != nil {
-				return util.HandleErr(logger, err)
-			}
-		} else {
-			return util.HandleErr(logger, util.ErrClient{Message: fmt.Sprintf("invalid ID:%s", idOrName)})
-		}
+		return nil
 	}
-	return nil
+	if nameRegex.MatchString(idOrName) {
+		logger.With(zap.String("name", idOrName)).Debug(fmt.Sprintf("attempting reading %v by name",
+			entity.Type()))
+		err := s.Read(ctx, entity, nameOpt)
+		if err != nil {
+			return util.HandleErr(logger, err)
+		}
+		return nil
+	}
+	return util.HandleErr(logger, util.ErrClient{Message: fmt.Sprintf("invalid ID:%s", idOrName)})
 }

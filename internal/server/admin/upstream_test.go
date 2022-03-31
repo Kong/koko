@@ -1,6 +1,7 @@
 package admin
 
 import (
+	"fmt"
 	"net/http"
 	"testing"
 
@@ -239,6 +240,13 @@ func TestUpstreamRead(t *testing.T) {
 	t.Run("read upstream with no name match returns 404", func(t *testing.T) {
 		res := c.GET("/v1/upstreams/somename").Expect()
 		res.Status(http.StatusNotFound)
+	})
+	t.Run("read request with invalid name or ID match returns 400", func(t *testing.T) {
+		invalidKey := "234wabc?!@"
+		res = c.GET("/v1/upstreams/" + invalidKey).Expect()
+		res.Status(http.StatusBadRequest)
+		body := res.JSON().Object()
+		body.ValueEqual("message", fmt.Sprintf("invalid ID:%s", invalidKey))
 	})
 }
 

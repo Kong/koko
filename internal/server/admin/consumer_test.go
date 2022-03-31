@@ -271,6 +271,13 @@ func TestConsumerRead(t *testing.T) {
 		res := c.GET("/v1/consumers/somename").Expect()
 		res.Status(http.StatusNotFound)
 	})
+	t.Run("read request with invalid name or ID match returns 400", func(t *testing.T) {
+		invalidKey := "234wabc?!@"
+		res = c.GET("/v1/consumers/" + invalidKey).Expect()
+		res.Status(http.StatusBadRequest)
+		body := res.JSON().Object()
+		body.ValueEqual("message", fmt.Sprintf("invalid ID:%s", invalidKey))
+	})
 }
 
 func TestConsumerList(t *testing.T) {

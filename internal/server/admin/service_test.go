@@ -3,6 +3,7 @@ package admin
 import (
 	"fmt"
 	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/gavv/httpexpect/v2"
@@ -513,6 +514,24 @@ func TestServiceRead(t *testing.T) {
 	t.Run("read request with no name match returns 404", func(t *testing.T) {
 		res := c.GET("/v1/services/somename").Expect()
 		res.Status(http.StatusNotFound)
+	})
+	t.Run("read request with invalid name or ID match returns 400", func(t *testing.T) {
+		invalidKey := "234wabc?!@"
+		res := c.GET("/v1/services/" + invalidKey).Expect()
+		res.Status(http.StatusBadRequest)
+		body := res.JSON().Object()
+		body.ValueEqual("message", fmt.Sprintf("invalid ID:%s", invalidKey))
+	})
+	t.Run("read request with very long name or ID match returns 400", func(t *testing.T) {
+		base := "0123456789"
+		var sb strings.Builder
+		for i := 0; i < 13; i++ {
+			sb.WriteString(base)
+		}
+		res = c.GET("/v1/services/" + sb.String()).Expect()
+		res.Status(http.StatusBadRequest)
+		body := res.JSON().Object()
+		body.ValueEqual("message", fmt.Sprintf("invalid ID:%s", sb.String()))
 	})
 }
 
