@@ -474,6 +474,20 @@ func TestValidate(t *testing.T) {
 			}
 		}
 	})
+	t.Run("ensure proxy-cache advanced validation for shared dict checks", func(t *testing.T) {
+		config, err := structpb.NewStruct(map[string]interface{}{
+			"strategy": "memory",
+		})
+		require.Nil(t, err)
+		p := &model.Plugin{
+			Name:      "proxy-cache",
+			Protocols: []string{"http", "https"},
+			Enabled:   wrapperspb.Bool(true),
+			Config:    config,
+		}
+		err = validator.Validate(p)
+		require.Nil(t, err)
+	})
 }
 
 type testPluginSchema struct {
