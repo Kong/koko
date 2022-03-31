@@ -232,6 +232,14 @@ func TestUpstreamRead(t *testing.T) {
 		body := res.JSON().Object()
 		body.ValueEqual("message", "required ID is missing")
 	})
+	t.Run("read upstream with no id match returns 404", func(t *testing.T) {
+		res := c.GET("/v1/upstreams/" + uuid.NewString()).Expect()
+		res.Status(http.StatusNotFound)
+	})
+	t.Run("read upstream with no name match returns 404", func(t *testing.T) {
+		res := c.GET("/v1/upstreams/somename").Expect()
+		res.Status(http.StatusNotFound)
+	})
 }
 
 func TestUpstreamList(t *testing.T) {

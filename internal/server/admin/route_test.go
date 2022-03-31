@@ -238,6 +238,10 @@ func TestRouteRead(t *testing.T) {
 		randomID := uuid.NewString()
 		c.GET("/v1/routes/" + randomID).Expect().Status(404)
 	})
+	t.Run("read route with no name match returns 404", func(t *testing.T) {
+		res := c.GET("/v1/routes/somename").Expect()
+		res.Status(http.StatusNotFound)
+	})
 	t.Run("reading a route return 200", func(t *testing.T) {
 		res := c.GET("/v1/routes/" + id).Expect().Status(http.StatusOK)
 		body := res.JSON().Path("$.item").Object()

@@ -263,6 +263,14 @@ func TestConsumerRead(t *testing.T) {
 		body := res.JSON().Object()
 		body.ValueEqual("message", "required ID is missing")
 	})
+	t.Run("read consumer with no id match returns 404", func(t *testing.T) {
+		res := c.GET("/v1/consumers/" + uuid.NewString()).Expect()
+		res.Status(http.StatusNotFound)
+	})
+	t.Run("read consumer with no username match returns 404", func(t *testing.T) {
+		res := c.GET("/v1/consumers/somename").Expect()
+		res.Status(http.StatusNotFound)
+	})
 }
 
 func TestConsumerList(t *testing.T) {

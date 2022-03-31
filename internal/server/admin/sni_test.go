@@ -265,6 +265,10 @@ func TestSNIRead(t *testing.T) {
 		c.GET("/v1/snis/{id}", uuid.NewString()).
 			Expect().Status(http.StatusNotFound)
 	})
+	t.Run("read SNI with no name match returns 404", func(t *testing.T) {
+		res := c.GET("/v1/snis/somename").Expect()
+		res.Status(http.StatusNotFound)
+	})
 }
 
 func TestSNIDelete(t *testing.T) {

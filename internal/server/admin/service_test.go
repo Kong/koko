@@ -510,6 +510,10 @@ func TestServiceRead(t *testing.T) {
 		body := res.JSON().Object()
 		body.ValueEqual("message", "required ID is missing")
 	})
+	t.Run("read request with no name match returns 404", func(t *testing.T) {
+		res := c.GET("/v1/services/somename").Expect()
+		res.Status(http.StatusNotFound)
+	})
 }
 
 func TestServiceList(t *testing.T) {
