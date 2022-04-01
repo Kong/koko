@@ -45,17 +45,32 @@ const (
 )
 
 //nolint: revive
+type ConfigTableFieldUpdate struct {
+	// Field to perform update or delete operation on; if Value is nil or
+	// ValueFromField is empty the field will be removed
+	Field string
+	// Value to apply to field
+	Value interface{}
+	// ValueFromField will copy the original value to a new or existing field
+	ValueFromField string
+}
+
+//nolint: revive
 type ConfigTableFieldCondition struct {
 	// Field is a top-level or nested field; use dot notation for nested fields
 	Field string
 	// Condition is an expression for matching criteria
 	// uses gjson path syntax; https://github.com/tidwall/gjson#path-syntax
 	Condition string
+	// Updates is an array of updates to perform based on the matched criteria
+	Updates []ConfigTableFieldUpdate
 }
 
 //nolint: revive
 type ConfigTableUpdates struct {
+	// Name is the name of the configuration or field depending on UpdateType
 	Name string
+	// UpdateType is the type of update being performed; currently plugins only
 	Type UpdateType
 	// RemoveFields will remove fields from the configuration table.
 	//
@@ -71,6 +86,15 @@ type ConfigTableUpdates struct {
 	// the match occurred (e.g. index) will be removed from  the configuration
 	// table.
 	RemoveElementsFromArray []ConfigTableFieldCondition
+	// FieldUpdates will create/update a field to a new value in the configuration
+	// table.
+	//
+	// Values contained within this array are associated with a field, a
+	// condition, and an array of updates to perform. New fields can be created,
+	// original fields can be updated, and specific fields can be removed
+	// depending on the version compatibility requirement of the data plane
+	// version being targeted.
+	FieldUpdates []ConfigTableFieldCondition
 }
 
 type WSVersionCompatibility struct {
@@ -103,6 +127,17 @@ func NewVersionCompatibilityProcessor(opts VersionCompatibilityOpts) (*WSVersion
 
 func (vc *WSVersionCompatibility) AddConfigTableUpdates(pluginPayloadUpdates map[uint64][]ConfigTableUpdates) error {
 	for version, pluginUpdates := range pluginPayloadUpdates {
+		// Handle restriction for FieldUpdates
+		for _, pluginUpdate := range pluginUpdates {
+			for _, fieldUpdates := range pluginUpdate.FieldUpdates {
+				for _, fieldUpdate := range fieldUpdates.Updates {
+					if fieldUpdate.Value != nil && len(fieldUpdate.ValueFromField) > 0 {
+						return fmt.Errorf("'Value' and 'ValueFromField' are mutually exclusive")
+					}
+				}
+			}
+		}
+
 		vc.configTableUpdates[version] = append(vc.configTableUpdates[version], pluginUpdates...)
 	}
 	return nil
@@ -177,8 +212,7 @@ func (vc *WSVersionCompatibility) processConfigTableUpdates(uncompressedPayload 
 	configTableUpdates := vc.getConfigTableUpdates(dataPlaneVersion)
 	for _, configTableUpdate := range configTableUpdates {
 		if configTableUpdate.Type == Plugin {
-			processedPayload = processPluginUpdates(processedPayload, configTableUpdate.Name,
-				configTableUpdate.RemoveElementsFromArray, configTableUpdate.RemoveFields, dataPlaneVersion,
+			processedPayload = processPluginUpdates(processedPayload, configTableUpdate, dataPlaneVersion,
 				vc.logger)
 		}
 	}
@@ -224,11 +258,12 @@ func parseSemanticVersion(versionStr string) (uint64, error) {
 	return version, nil
 }
 
-func processPluginUpdates(payload string, name string, arrays []ConfigTableFieldCondition, fields []string,
-	dataPlaneVersion uint64, logger *zap.Logger,
+func processPluginUpdates(payload string, configTableUpdate ConfigTableUpdates, dataPlaneVersion uint64,
+	logger *zap.Logger,
 ) string {
+	pluginName := configTableUpdate.Name
 	processedPayload := payload
-	results := gjson.Get(processedPayload, fmt.Sprintf("config_table.plugins.#(name=%s)#", name))
+	results := gjson.Get(processedPayload, fmt.Sprintf("config_table.plugins.#(name=%s)#", pluginName))
 	if len(results.Indexes) > 0 {
 		indexUpdate := 0
 		for _, res := range results.Array() {
@@ -236,17 +271,17 @@ func processPluginUpdates(payload string, name string, arrays []ConfigTableField
 			var err error
 
 			// Field removal
-			for _, field := range fields {
+			for _, field := range configTableUpdate.RemoveFields {
 				configField := fmt.Sprintf("config.%s", field)
-				if gjson.Get(res.Raw, configField).Exists() {
+				if gjson.Get(updatedRaw, configField).Exists() {
 					if updatedRaw, err = sjson.Delete(updatedRaw, configField); err != nil {
-						logger.With(zap.String("plugin", name)).
+						logger.With(zap.String("plugin", pluginName)).
 							With(zap.String("field", configField)).
 							With(zap.Uint64("data-plane", dataPlaneVersion)).
 							With(zap.Error(err)).
 							Error("plugin configuration field was not removed from configuration")
 					} else {
-						logger.With(zap.String("plugin", name)).
+						logger.With(zap.String("plugin", pluginName)).
 							With(zap.String("field", configField)).
 							With(zap.Uint64("data-plane", dataPlaneVersion)).
 							Warn("removing plugin configuration field which is incompatible with data plane")
@@ -255,9 +290,9 @@ func processPluginUpdates(payload string, name string, arrays []ConfigTableField
 			}
 
 			// Field element array removal
-			for _, array := range arrays {
+			for _, array := range configTableUpdate.RemoveElementsFromArray {
 				configField := fmt.Sprintf("config.%s", array.Field)
-				fieldArray := gjson.Get(res.Raw, configField)
+				fieldArray := gjson.Get(updatedRaw, configField)
 				if len(results.Indexes) > 0 {
 					// Gather indexes to remove from array
 					var arrayRemovalIndexes []int
@@ -272,7 +307,7 @@ func processPluginUpdates(payload string, name string, arrays []ConfigTableField
 						fieldArrayWithIndex := fmt.Sprintf("config.%s.%d", array.Field, arrayIndex-i)
 						var err error
 						if updatedRaw, err = sjson.Delete(updatedRaw, fieldArrayWithIndex); err != nil {
-							logger.With(zap.String("plugin", name)).
+							logger.With(zap.String("plugin", pluginName)).
 								With(zap.String("field", configField)).
 								With(zap.String("condition", array.Condition)).
 								With(zap.Int("index", arrayIndex)).
@@ -280,12 +315,80 @@ func processPluginUpdates(payload string, name string, arrays []ConfigTableField
 								With(zap.Error(err)).
 								Error("plugin configuration array item was not removed from configuration")
 						} else {
-							logger.With(zap.String("plugin", name)).
+							logger.With(zap.String("plugin", pluginName)).
 								With(zap.String("field", configField)).
 								With(zap.String("condition", array.Condition)).
 								With(zap.Int("index", arrayIndex)).
 								With(zap.Uint64("data-plane", dataPlaneVersion)).
 								Warn("removing plugin configuration array item which is incompatible with data plane")
+						}
+					}
+				}
+			}
+
+			// Field updates
+			for _, update := range configTableUpdate.FieldUpdates {
+				configField := fmt.Sprintf("config.%s", update.Field)
+				if gjson.Get(updatedRaw, configField).Exists() {
+					conditionField := fmt.Sprintf("[@this].#(config.%s)", update.Condition)
+					if gjson.Get(updatedRaw, conditionField).Exists() {
+						for _, fieldUpdate := range update.Updates {
+							conditionUpdate := fmt.Sprintf("config.%s", fieldUpdate.Field)
+							if fieldUpdate.Value == nil && len(fieldUpdate.ValueFromField) == 0 {
+								// Handle field removal
+								if updatedRaw, err = sjson.Delete(updatedRaw, conditionUpdate); err != nil {
+									logger.With(zap.String("plugin", pluginName)).
+										With(zap.String("field", conditionUpdate)).
+										With(zap.Uint64("data-plane", dataPlaneVersion)).
+										With(zap.Error(err)).
+										Error("plugin configuration item was not removed from configuration")
+								} else {
+									logger.With(zap.String("plugin", pluginName)).
+										With(zap.String("field", configField)).
+										With(zap.String("condition", conditionUpdate)).
+										With(zap.Uint64("data-plane", dataPlaneVersion)).
+										Warn("removing plugin configuration item which is incompatible with data plane")
+								}
+							} else {
+								// Get the field value if "Value" is a field
+								var value interface{}
+								if fieldUpdate.Value != nil {
+									value = fieldUpdate.Value
+								} else {
+									valueFromField := fmt.Sprintf("config.%v", fieldUpdate.ValueFromField)
+									res := gjson.Get(updatedRaw, valueFromField)
+									if res.Exists() {
+										value = res.Value()
+									} else {
+										logger.With(zap.String("plugin", pluginName)).
+											With(zap.String("field", configField)).
+											With(zap.String("condition", update.Condition)).
+											With(zap.Any("new-value", fieldUpdate.Value)).
+											With(zap.Uint64("data-plane", dataPlaneVersion)).
+											With(zap.Error(err)).
+											Error("plugin configuration does not contain field value")
+										break
+									}
+								}
+
+								// Handle field update from value of value of field
+								if updatedRaw, err = sjson.Set(updatedRaw, conditionUpdate, value); err != nil {
+									logger.With(zap.String("plugin", pluginName)).
+										With(zap.String("field", configField)).
+										With(zap.String("condition", update.Condition)).
+										With(zap.Any("new-value", fieldUpdate.Value)).
+										With(zap.Uint64("data-plane", dataPlaneVersion)).
+										With(zap.Error(err)).
+										Error("plugin configuration field was not updated int configuration")
+								} else {
+									logger.With(zap.String("plugin", pluginName)).
+										With(zap.String("field", configField)).
+										With(zap.String("condition", update.Condition)).
+										With(zap.Any("new-value", fieldUpdate.Value)).
+										With(zap.Uint64("data-plane", dataPlaneVersion)).
+										Warn("updating plugin configuration field which is incompatible with data plane")
+								}
+							}
 						}
 					}
 				}

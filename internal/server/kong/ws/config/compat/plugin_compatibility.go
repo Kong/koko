@@ -146,6 +146,18 @@ var PluginConfigTableUpdates = map[uint64][]config.ConfigTableUpdates{
 			RemoveFields: []string{
 				"local_service_name",
 			},
+			FieldUpdates: []config.ConfigTableFieldCondition{
+				{
+					Field:     "header_type",
+					Condition: "header_type=ignore",
+					Updates: []config.ConfigTableFieldUpdate{
+						{
+							Field: "header_type",
+							Value: "preserve",
+						},
+					},
+				},
+			},
 		},
 	},
 	2007999999: {
