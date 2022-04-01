@@ -58,6 +58,7 @@ func GetPersister(t *testing.T) (persistence.Persister, error) {
 
 		dbConfig.Dialect = db.DialectSQLite3
 	case "postgres":
+		dbConfig.Postgres.Logger = dbConfig.Logger
 		dbClient, err := postgres.NewSQLClient(dbConfig.Postgres)
 		if err != nil {
 			t.Fatal(err)
