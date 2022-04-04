@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	queryTimeoutMillis = 300
+	queryTimeout = 3 * time.Second
 )
 
 var testConfig = db.Config{
@@ -30,7 +30,7 @@ var testConfig = db.Config{
 		DBName:   "koko",
 	},
 	Logger:       log.Logger,
-	QueryTimeout: time.Duration(queryTimeoutMillis) * time.Millisecond,
+	QueryTimeout: queryTimeout,
 }
 
 func CleanDB(t *testing.T) error {

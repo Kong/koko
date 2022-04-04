@@ -16,7 +16,7 @@ import (
 	"go.uber.org/zap"
 )
 
-const DefaultDBQueryTimeout = 5 * time.Second
+const DefaultOperationTimeout = 15 * time.Second
 
 var (
 	errNoObject = fmt.Errorf("no object")
@@ -39,7 +39,8 @@ type objectStoreOpts struct {
 // ObjectStore stores objects.
 // TODO(hbagdi): better name needed between this and the interface.
 type ObjectStore struct {
-	cluster string
+	cluster          string
+	operationTimeout time.Duration
 	objectStoreOpts
 }
 
@@ -55,6 +56,7 @@ func New(persister persistence.Persister, logger *zap.Logger) *ObjectStore {
 			logger: logger,
 			store:  persister,
 		},
+		operationTimeout: DefaultOperationTimeout,
 	}
 }
 
@@ -66,8 +68,17 @@ func (s *ObjectStore) ForCluster(cluster string) *ObjectStore {
 	}
 
 	return &ObjectStore{
-		objectStoreOpts: s.objectStoreOpts,
-		cluster:         cluster,
+		objectStoreOpts:  s.objectStoreOpts,
+		cluster:          cluster,
+		operationTimeout: s.operationTimeout,
+	}
+}
+
+func (s *ObjectStore) WithOperationTimeout(timeout time.Duration) *ObjectStore {
+	return &ObjectStore{
+		objectStoreOpts:  s.objectStoreOpts,
+		cluster:          s.cluster,
+		operationTimeout: timeout,
 	}
 }
 
@@ -92,7 +103,7 @@ func (s *ObjectStore) withTx(ctx context.Context,
 func (s *ObjectStore) Create(ctx context.Context, object model.Object,
 	_ ...CreateOptsFunc,
 ) error {
-	ctx, cancel := context.WithTimeout(ctx, DefaultDBQueryTimeout)
+	ctx, cancel := context.WithTimeout(ctx, s.operationTimeout)
 	defer cancel()
 	if object == nil {
 		return errNoObject
@@ -124,7 +135,7 @@ func (s *ObjectStore) Create(ctx context.Context, object model.Object,
 func (s *ObjectStore) Upsert(ctx context.Context, object model.Object,
 	_ ...CreateOptsFunc,
 ) error {
-	ctx, cancel := context.WithTimeout(ctx, DefaultDBQueryTimeout)
+	ctx, cancel := context.WithTimeout(ctx, s.operationTimeout)
 	defer cancel()
 	if object == nil {
 		return errNoObject
@@ -234,7 +245,7 @@ func preProcess(object model.Object) error {
 func (s *ObjectStore) Read(ctx context.Context, object model.Object,
 	opts ...ReadOptsFunc,
 ) error {
-	ctx, cancel := context.WithTimeout(ctx, DefaultDBQueryTimeout)
+	ctx, cancel := context.WithTimeout(ctx, s.operationTimeout)
 	defer cancel()
 	opt := NewReadOpts(opts...)
 	switch {
@@ -307,7 +318,7 @@ func (s *ObjectStore) readByTypeID(ctx context.Context, tx persistence.Tx,
 func (s *ObjectStore) Delete(ctx context.Context,
 	opts ...DeleteOptsFunc,
 ) error {
-	ctx, cancel := context.WithTimeout(ctx, DefaultDBQueryTimeout)
+	ctx, cancel := context.WithTimeout(ctx, s.operationTimeout)
 	defer cancel()
 	opt := NewDeleteOpts(opts...)
 	return s.withTx(ctx, func(tx persistence.Tx) error {
@@ -348,7 +359,7 @@ func (s *ObjectStore) delete(ctx context.Context, tx persistence.Tx,
 }
 
 func (s *ObjectStore) List(ctx context.Context, list model.ObjectList, opts ...ListOptsFunc) error {
-	ctx, cancel := context.WithTimeout(ctx, DefaultDBQueryTimeout)
+	ctx, cancel := context.WithTimeout(ctx, s.operationTimeout)
 	defer cancel()
 	typ := list.Type()
 	opt := NewListOpts(opts...)
