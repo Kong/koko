@@ -166,7 +166,7 @@ func TestSNICreate(t *testing.T) {
 		resErr := body.Value("details").Array().Element(0)
 		resErr.Object().ValueEqual("type", v1.ErrorType_ERROR_TYPE_REFERENCE.String())
 		resErr.Object().ValueEqual("messages", []string{
-			"unique-name (type: unique) constraint failed for value '*.example.com': ",
+			"name (type: unique) constraint failed for value '*.example.com': ",
 		})
 	})
 }
@@ -246,6 +246,14 @@ func TestSNIRead(t *testing.T) {
 			Expect().Status(http.StatusOK)
 		body := res.JSON().Path("$.item").Object()
 		body.Value("id").String().Equal(sniID)
+		body.Value("name").String().Equal("example.com")
+		body.Path("$.certificate.id").String().Equal(certID)
+	})
+	t.Run("reading with existing SNI name returns 200", func(t *testing.T) {
+		res := c.GET("/v1/snis/" + "example.com").
+			Expect().Status(http.StatusOK)
+		body := res.JSON().Path("$.item").Object()
+		body.Value("id").String().Equal(sniID)
 		body.Path("$.certificate.id").String().Equal(certID)
 	})
 	t.Run("read with an empty id returns 400", func(t *testing.T) {
@@ -256,6 +264,17 @@ func TestSNIRead(t *testing.T) {
 	t.Run("reading a non-existent SNI returns 404", func(t *testing.T) {
 		c.GET("/v1/snis/{id}", uuid.NewString()).
 			Expect().Status(http.StatusNotFound)
+	})
+	t.Run("read SNI with no name match returns 404", func(t *testing.T) {
+		res := c.GET("/v1/snis/somename").Expect()
+		res.Status(http.StatusNotFound)
+	})
+	t.Run("read request with invalid name or ID match returns 400", func(t *testing.T) {
+		invalidKey := "234wabc?!@"
+		res = c.GET("/v1/snis/" + invalidKey).Expect()
+		res.Status(http.StatusBadRequest)
+		body := res.JSON().Object()
+		body.ValueEqual("message", fmt.Sprintf("invalid ID:'%s'", invalidKey))
 	})
 }
 

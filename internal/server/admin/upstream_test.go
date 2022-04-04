@@ -1,6 +1,7 @@
 package admin
 
 import (
+	"fmt"
 	"net/http"
 	"testing"
 
@@ -216,14 +217,36 @@ func TestUpstreamRead(t *testing.T) {
 	})
 	t.Run("reading a upstream return 200", func(t *testing.T) {
 		c.GET("/v1/upstreams/" + id).Expect().Status(http.StatusOK)
-		// body := res.JSON().Path("$.item").Object()
-		// validateGoodUpstream(body)
+		body := res.JSON().Path("$.item").Object()
+		body.Value("id").String().Equal(id)
+		body.Value("name").String().Equal(upstream.Name)
+	})
+	t.Run("reading a upstream by name return 200", func(t *testing.T) {
+		c.GET("/v1/upstreams/" + upstream.Name).Expect().Status(http.StatusOK)
+		body := res.JSON().Path("$.item").Object()
+		body.Value("id").String().Equal(id)
+		body.Value("name").String().Equal(upstream.Name)
 	})
 	t.Run("read request without an ID returns 400", func(t *testing.T) {
 		res := c.GET("/v1/upstreams/").Expect()
 		res.Status(http.StatusBadRequest)
 		body := res.JSON().Object()
 		body.ValueEqual("message", "required ID is missing")
+	})
+	t.Run("read upstream with no id match returns 404", func(t *testing.T) {
+		res := c.GET("/v1/upstreams/" + uuid.NewString()).Expect()
+		res.Status(http.StatusNotFound)
+	})
+	t.Run("read upstream with no name match returns 404", func(t *testing.T) {
+		res := c.GET("/v1/upstreams/somename").Expect()
+		res.Status(http.StatusNotFound)
+	})
+	t.Run("read request with invalid name or ID match returns 400", func(t *testing.T) {
+		invalidKey := "234wabc?!@"
+		res = c.GET("/v1/upstreams/" + invalidKey).Expect()
+		res.Status(http.StatusBadRequest)
+		body := res.JSON().Object()
+		body.ValueEqual("message", fmt.Sprintf("invalid ID:'%s'", invalidKey))
 	})
 }
 

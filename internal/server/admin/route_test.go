@@ -1,6 +1,7 @@
 package admin
 
 import (
+	"fmt"
 	"net/http"
 	"testing"
 
@@ -235,11 +236,20 @@ func TestRouteRead(t *testing.T) {
 	id := res.JSON().Path("$.item.id").String().Raw()
 	res.Status(201)
 	t.Run("reading a non-existent route returns 404", func(t *testing.T) {
-		randomID := "071f5040-3e4a-46df-9d98-451e79e318fd"
+		randomID := uuid.NewString()
 		c.GET("/v1/routes/" + randomID).Expect().Status(404)
+	})
+	t.Run("read route with no name match returns 404", func(t *testing.T) {
+		res := c.GET("/v1/routes/somename").Expect()
+		res.Status(http.StatusNotFound)
 	})
 	t.Run("reading a route return 200", func(t *testing.T) {
 		res := c.GET("/v1/routes/" + id).Expect().Status(http.StatusOK)
+		body := res.JSON().Path("$.item").Object()
+		validateGoodRoute(body)
+	})
+	t.Run("reading a route by name return 200", func(t *testing.T) {
+		res := c.GET("/v1/routes/" + svc.Name).Expect().Status(http.StatusOK)
 		body := res.JSON().Path("$.item").Object()
 		validateGoodRoute(body)
 	})
@@ -248,6 +258,13 @@ func TestRouteRead(t *testing.T) {
 		res.Status(http.StatusBadRequest)
 		body := res.JSON().Object()
 		body.ValueEqual("message", "required ID is missing")
+	})
+	t.Run("read request with invalid name or ID match returns 400", func(t *testing.T) {
+		invalidKey := "234wabc?!@"
+		res = c.GET("/v1/routes/" + invalidKey).Expect()
+		res.Status(http.StatusBadRequest)
+		body := res.JSON().Object()
+		body.ValueEqual("message", fmt.Sprintf("invalid ID:'%s'", invalidKey))
 	})
 }
 

@@ -11,7 +11,6 @@ import (
 	"github.com/kong/koko/internal/resource"
 	"github.com/kong/koko/internal/server/util"
 	"github.com/kong/koko/internal/store"
-	"go.uber.org/zap"
 )
 
 type UpstreamService struct {
@@ -22,16 +21,12 @@ type UpstreamService struct {
 func (s *UpstreamService) GetUpstream(ctx context.Context,
 	req *v1.GetUpstreamRequest,
 ) (*v1.GetUpstreamResponse, error) {
-	if req.Id == "" {
-		return nil, s.err(util.ErrClient{Message: "required ID is missing"})
-	}
 	db, err := s.CommonOpts.getDB(ctx, req.Cluster)
 	if err != nil {
 		return nil, err
 	}
 	result := resource.NewUpstream()
-	s.logger.With(zap.String("id", req.Id)).Debug("reading upstream by id")
-	err = db.Read(ctx, result, store.GetByID(req.Id))
+	err = getEntityByIDOrName(ctx, req.Id, result, store.GetByName(req.Id), db, s.logger)
 	if err != nil {
 		return nil, s.err(err)
 	}

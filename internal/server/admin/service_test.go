@@ -3,6 +3,7 @@ package admin
 import (
 	"fmt"
 	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/gavv/httpexpect/v2"
@@ -499,11 +500,35 @@ func TestServiceRead(t *testing.T) {
 		body := res.JSON().Path("$.item").Object()
 		validateGoodService(body)
 	})
+	t.Run("reading a service with service name return 200", func(t *testing.T) {
+		res := c.GET("/v1/services/" + svc.Name).Expect().Status(http.StatusOK)
+		body := res.JSON().Path("$.item").Object()
+		validateGoodService(body)
+	})
 	t.Run("read request without an ID returns 400", func(t *testing.T) {
 		res := c.GET("/v1/services/").Expect()
 		res.Status(http.StatusBadRequest)
 		body := res.JSON().Object()
 		body.ValueEqual("message", "required ID is missing")
+	})
+	t.Run("read request with no name match returns 404", func(t *testing.T) {
+		res := c.GET("/v1/services/somename").Expect()
+		res.Status(http.StatusNotFound)
+	})
+	t.Run("read request with invalid name or ID match returns 400", func(t *testing.T) {
+		invalidKey := "234wabc?!@"
+		res := c.GET("/v1/services/" + invalidKey).Expect()
+		res.Status(http.StatusBadRequest)
+		body := res.JSON().Object()
+		body.ValueEqual("message", fmt.Sprintf("invalid ID:'%s'", invalidKey))
+	})
+	t.Run("read request with very long name or ID match returns 400", func(t *testing.T) {
+		longID := strings.Repeat("0123456789", 13)
+
+		res = c.GET("/v1/services/" + longID).Expect()
+		res.Status(http.StatusBadRequest)
+		body := res.JSON().Object()
+		body.ValueEqual("message", fmt.Sprintf("invalid ID:'%s'", longID))
 	})
 }
 

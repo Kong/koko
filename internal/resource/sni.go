@@ -62,7 +62,7 @@ func (r SNI) Indexes() []model.Index {
 	}
 	res := []model.Index{
 		{
-			Name:      "unique-name",
+			Name:      "name",
 			Type:      model.IndexUnique,
 			Value:     r.SNI.Name,
 			FieldName: "name",

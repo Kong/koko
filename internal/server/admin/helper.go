@@ -1,13 +1,21 @@
 package admin
 
 import (
+	"context"
 	"fmt"
+	"regexp"
 
 	"github.com/google/uuid"
 	pbModel "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
+	"github.com/kong/koko/internal/model"
 	"github.com/kong/koko/internal/server/util"
 	"github.com/kong/koko/internal/store"
+	"go.uber.org/zap"
 )
+
+const namePattern = `^[0-9a-zA-Z.\-_~]{1,128}$`
+
+var nameRegex = regexp.MustCompile(namePattern)
 
 func validateListOptions(listOpts *pbModel.PaginationRequest) error {
 	if listOpts.Number < 0 {
@@ -53,4 +61,30 @@ func getPaginationResponse(totalCount int, nextPage int) *pbModel.PaginationResp
 		TotalCount:  int32(totalCount),
 		NextPageNum: int32(nextPage),
 	}
+}
+
+func getEntityByIDOrName(ctx context.Context, idOrName string, entity model.Object, nameOpt store.ReadOptsFunc,
+	s store.Store, logger *zap.Logger,
+) error {
+	if idOrName == "" {
+		return util.ErrClient{Message: "required ID is missing"}
+	}
+	if err := validUUID(idOrName); err == nil {
+		logger.With(zap.String("id", idOrName)).Debug(fmt.Sprintf("reading %v by id", entity.Type()))
+		err = s.Read(ctx, entity, store.GetByID(idOrName))
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+	if nameRegex.MatchString(idOrName) {
+		logger.With(zap.String("name", idOrName)).Debug(fmt.Sprintf("attempting reading %v by name",
+			entity.Type()))
+		err := s.Read(ctx, entity, nameOpt)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+	return util.ErrClient{Message: fmt.Sprintf("invalid ID:'%s'", idOrName)}
 }
