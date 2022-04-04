@@ -9,6 +9,7 @@ import (
 	"github.com/kong/koko/internal/log"
 	"github.com/stretchr/testify/require"
 	"github.com/tidwall/sjson"
+	"go.uber.org/zap"
 )
 
 func TestVersionCompatibility_NewVersionCompatibilityProcessor(t *testing.T) {
@@ -924,8 +925,8 @@ func TestVersionCompatibility_PerformExtraProcessing(t *testing.T) {
 			wsvc, err := NewVersionCompatibilityProcessor(VersionCompatibilityOpts{
 				Logger:        log.Logger,
 				KongCPVersion: "2.8.0",
-				ExtraProcessing: func(uncompressedPayload string,
-					dataPlaneVersion uint64, isEnterprise bool,
+				ExtraProcessing: func(uncompressedPayload string, controlPlaneVersion uint64,
+					dataPlaneVersion uint64, isEnterprise bool, logger *zap.Logger,
 				) (string, error) {
 					if test.wantsErr {
 						return "", fmt.Errorf("extra processing error")
@@ -960,8 +961,8 @@ func TestVersionCompatibility_PerformExtraProcessing(t *testing.T) {
 		wsvc, err := NewVersionCompatibilityProcessor(VersionCompatibilityOpts{
 			Logger:        log.Logger,
 			KongCPVersion: "2.8.0",
-			ExtraProcessing: func(uncompressedPayload string,
-				dataPlaneVersion uint64, isEnterprise bool,
+			ExtraProcessing: func(uncompressedPayload string, controlPlaneVersion uint64, dataPlaneVersion uint64,
+				isEnterprise bool, logger *zap.Logger,
 			) (string, error) {
 				return sjson.Set(uncompressedPayload, "config_table.extra_processing", "processed")
 			},
