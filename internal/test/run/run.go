@@ -7,6 +7,7 @@ import (
 	"os"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/kong/koko/internal/cmd"
 	"github.com/kong/koko/internal/config"
@@ -19,6 +20,8 @@ import (
 	"github.com/kong/koko/internal/test/util"
 	"github.com/stretchr/testify/require"
 )
+
+const queryTimeout = 3 * time.Second
 
 type ServerConfigOpt func(*cmd.ServerConfig) error
 
@@ -77,6 +80,7 @@ func Koko(t *testing.T, options ...ServerConfigOpt) func() {
 			SQLite: config.SQLite{
 				InMemory: true,
 			},
+			QueryTimeout: queryTimeout.String(),
 		}
 	case "postgres":
 		serverConfig.Database = config.Database{
@@ -88,6 +92,7 @@ func Koko(t *testing.T, options ...ServerConfigOpt) func() {
 				Password: "koko",
 				DBName:   "koko",
 			},
+			QueryTimeout: queryTimeout.String(),
 		}
 	default:
 		panic(fmt.Sprintf("unknown dialect: %s", dialect))
