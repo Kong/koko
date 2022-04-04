@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"time"
 
 	"github.com/kong/koko/internal/persistence"
 	_ "github.com/mattn/go-sqlite3"
@@ -19,7 +20,8 @@ var listQueryPaging = `SELECT key, value, COUNT(*) OVER() AS full_count FROM
                         store WHERE key GLOB $1 || '*' ORDER BY key LIMIT $2 OFFSET $3;`
 
 type SQLite struct {
-	db *sql.DB
+	db           *sql.DB
+	queryTimeout time.Duration
 }
 
 type Opts struct {
@@ -54,14 +56,15 @@ func NewSQLClient(opts Opts) (*sql.DB, error) {
 	return db, nil
 }
 
-func New(opts Opts) (persistence.Persister, error) {
+func New(opts Opts, queryTimeout time.Duration) (persistence.Persister, error) {
 	db, err := NewSQLClient(opts)
 	if err != nil {
 		return nil, err
 	}
 
 	res := &SQLite{
-		db: db,
+		db:           db,
+		queryTimeout: queryTimeout,
 	}
 	return res, nil
 }
@@ -69,6 +72,8 @@ func New(opts Opts) (persistence.Persister, error) {
 func (s *SQLite) withinTx(ctx context.Context,
 	fn func(tx persistence.Tx) error,
 ) error {
+	ctx, cancel := context.WithTimeout(ctx, s.queryTimeout)
+	defer cancel()
 	tx, err := s.Tx(ctx)
 	if err != nil {
 		return err

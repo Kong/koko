@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/kong/koko/internal/db"
@@ -11,6 +12,10 @@ import (
 	"github.com/kong/koko/internal/persistence"
 	"github.com/kong/koko/internal/persistence/postgres"
 	"github.com/kong/koko/internal/persistence/sqlite"
+)
+
+const (
+	queryTimeoutMillis = 300
 )
 
 var testConfig = db.Config{
@@ -24,7 +29,8 @@ var testConfig = db.Config{
 		Password: "koko",
 		DBName:   "koko",
 	},
-	Logger: log.Logger,
+	Logger:       log.Logger,
+	QueryTimeout: time.Duration(queryTimeoutMillis) * time.Millisecond,
 }
 
 func CleanDB(t *testing.T) error {

@@ -329,7 +329,11 @@ func setupGRPCClients() (grpcClients, error) {
 }
 
 func setupDB(logger *zap.Logger, configDB config.Database) (persistence.Persister, error) {
-	config := config.ToDBConfig(configDB)
+	config, err := config.ToDBConfig(configDB)
+	if err != nil {
+		logger.Fatal(err.Error())
+	}
+
 	config.Logger = logger
 	m, err := db.NewMigrator(config)
 	if err != nil {

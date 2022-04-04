@@ -2,6 +2,7 @@ log:
   level: debug
 database:
   dialect: sqlite3
+  query_timeout: 300ms
   sqlite:
     #in_memory: true
     filename: test.db

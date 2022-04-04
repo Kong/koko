@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database"
@@ -26,7 +27,8 @@ type Config struct {
 	SQLite   sqlite.Opts
 	Postgres postgres2.Opts
 
-	Logger *zap.Logger
+	Logger       *zap.Logger
+	QueryTimeout time.Duration
 }
 
 const (
