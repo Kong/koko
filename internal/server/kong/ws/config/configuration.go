@@ -20,7 +20,7 @@ type Mutator interface {
 }
 
 type Loader interface {
-	Load(ctx context.Context, clusterID string) ([]byte, error)
+	Load(ctx context.Context, clusterID string) (Content, error)
 }
 
 type DataPlaneConfig Map
@@ -41,23 +41,25 @@ func (l *KongConfigurationLoader) Register(mutator Mutator) error {
 
 func (l *KongConfigurationLoader) Load(ctx context.Context,
 	clusterID string,
-) ([]byte, error) {
+) (Content, error) {
 	var configTable DataPlaneConfig = map[string]interface{}{}
 	for _, m := range l.mutators {
 		err := m.Mutate(ctx, MutatorOpts{ClusterID: clusterID},
 			configTable)
 		if err != nil {
-			return nil, err
+			return Content{}, err
 		}
 	}
 
 	return ReconfigurePayload(configTable)
 }
 
-func ReconfigurePayload(c DataPlaneConfig) ([]byte, error) {
+func ReconfigurePayload(c DataPlaneConfig) (Content, error) {
+	hash := configHash(c)
 	payload := Map{
 		"type":         "reconfigure",
 		"config_table": c,
+		"config_hash":  hash,
 	}
 
 	var buf bytes.Buffer
@@ -66,13 +68,16 @@ func ReconfigurePayload(c DataPlaneConfig) ([]byte, error) {
 
 	err := json.Marshaller.NewEncoder(writer).Encode(payload)
 	if err != nil {
-		return nil, fmt.Errorf("json marshal: %v", err)
+		return Content{}, fmt.Errorf("json marshal: %v", err)
 	}
 	err = writer.Close()
 	if err != nil {
-		return nil, fmt.Errorf("gzip failure: %v", err)
+		return Content{}, fmt.Errorf("gzip failure: %v", err)
 	}
-	return buf.Bytes(), nil
+	return Content{
+		CompressedPayload: buf.Bytes(),
+		Hash:              hash,
+	}, nil
 }
 
 func CompressPayload(payload []byte) ([]byte, error) {

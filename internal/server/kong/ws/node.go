@@ -9,9 +9,12 @@ import (
 	"go.uber.org/zap"
 )
 
-type sum [sha256.Size]byte
+type sum [hashSize]byte
 
-const hashRegexPat = `^[a-zA-Z0-9]+$`
+const (
+	hashRegexPat = `^[a-zA-Z0-9]+$`
+	hashSize     = sha256.Size
+)
 
 var hashRegex = regexp.MustCompile(hashRegexPat)
 
@@ -19,15 +22,15 @@ func (s sum) String() string {
 	return string(s[:])
 }
 
-// If the string has more than 32 bytes, the trailing bytes get truncated.
+// If the string has more than 32 bytes, an error is reported.
 func truncateHash(s32 string) (sum, error) {
 	s := sum{}
 	nodeHash := []byte(s32)
 	matched := hashRegex.Match(nodeHash)
-	if !matched || len(nodeHash) > sha256.Size {
+	if !matched || len(nodeHash) > hashSize {
 		return s, fmt.Errorf("hash input is invalid")
 	}
-	for i := 0; i < sha256.Size; i++ {
+	for i := 0; i < hashSize; i++ {
 		s[i] = nodeHash[i]
 	}
 	return s, nil
@@ -64,11 +67,10 @@ func (n *Node) readThread() error {
 	}
 }
 
-func (n *Node) write(payload []byte) error {
-	sum := hashPayload(payload)
-	if n.hash == sum {
+func (n *Node) write(payload []byte, hash sum) error {
+	if n.hash == hash {
 		n.logger.With(zap.String("config_hash",
-			sum.String())).Info("hash matched, skipping update")
+			hash.String())).Info("hash matched, skipping update")
 		return nil
 	}
 
@@ -79,10 +81,6 @@ func (n *Node) write(payload []byte) error {
 		}
 		return err
 	}
-	n.hash = sum
+	n.hash = hash
 	return nil
-}
-
-func hashPayload(payload []byte) sum {
-	return sha256.Sum256(payload)
 }
