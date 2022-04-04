@@ -240,9 +240,8 @@ func (m *Manager) broadcast() {
 		hash, err := truncateHash(payload.Hash)
 		if err != nil {
 			m.logger.With(zap.Error(err)).Sugar().Errorf("invalid hash [%v]", hash)
-			// TODO(hbagdi: remove the node if connection has been closed?
 		}
-		err = node.write(payload.Payload, hash)
+		err = node.write(payload.CompressedPayload, hash)
 		if err != nil {
 			m.logger.With(zap.Error(err)).Error("broadcast failed")
 			// TODO(hbagdi: remove the node if connection has been closed?

@@ -13,7 +13,7 @@ func TestReconfigurePayload(t *testing.T) {
 	res, err := ReconfigurePayload(configTable)
 	require.Nil(t, err)
 
-	payload, err := UncompressPayload(res.Payload)
+	payload, err := UncompressPayload(res.CompressedPayload)
 	require.Nil(t, err)
 	require.JSONEq(t,
 		`{
