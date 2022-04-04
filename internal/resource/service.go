@@ -100,6 +100,15 @@ func (r Service) Indexes() []model.Index {
 			Value:       certID,
 		})
 	}
+	if r.Service.ClientCertificate != nil {
+		indexes = append(indexes, model.Index{
+			Name:        "client_certificate_id",
+			Type:        model.IndexForeign,
+			ForeignType: TypeCertificate,
+			FieldName:   "client_certificate.id",
+			Value:       r.Service.ClientCertificate.Id,
+		})
+	}
 	return indexes
 }
 
@@ -149,6 +158,7 @@ func init() {
 			"url": {
 				Type: "string",
 			},
+			"client_certificate": typedefs.ReferenceObject,
 		},
 		AdditionalProperties: &falsy,
 		Required: []string{
@@ -161,6 +171,21 @@ func init() {
 			"write_timeout",
 		},
 		AllOf: []*generator.Schema{
+			{
+				Description: "client_certificate can be set only when protocol" +
+					" is `https`",
+				If: &generator.Schema{
+					Required: []string{"client_certificate"},
+				},
+				Then: &generator.Schema{
+					Required: []string{"protocol"},
+					Properties: map[string]*generator.Schema{
+						"protocol": {
+							Const: typedefs.ProtocolHTTPS,
+						},
+					},
+				},
+			},
 			{
 				Description: "tls_verify can be set only when protocol is" +
 					" `https`",

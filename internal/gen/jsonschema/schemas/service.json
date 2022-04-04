@@ -17,6 +17,20 @@
       },
       "type": "array"
     },
+    "client_certificate": {
+      "required": [
+        "id"
+      ],
+      "properties": {
+        "id": {
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+          "type": "string",
+          "description": "must be a valid UUID"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
     "connect_timeout": {
       "maximum": 2147483646,
       "minimum": 1,
@@ -127,6 +141,24 @@
   "additionalProperties": false,
   "type": "object",
   "allOf": [
+    {
+      "description": "client_certificate can be set only when protocol is `https`",
+      "if": {
+        "required": [
+          "client_certificate"
+        ]
+      },
+      "then": {
+        "required": [
+          "protocol"
+        ],
+        "properties": {
+          "protocol": {
+            "const": "https"
+          }
+        }
+      }
+    },
     {
       "description": "tls_verify can be set only when protocol is `https`",
       "if": {
