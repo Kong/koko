@@ -23,12 +23,40 @@ const (
 	StatusCodeKey = "koko-status-code"
 )
 
+type helperKey int
+
+var routeKey helperKey
+
+type RouteStatus struct {
+	success bool
+}
+
 type ErrClient struct {
 	Message string
 }
 
 func (e ErrClient) Error() string {
 	return e.Message
+}
+
+func AddRouteStatus(ctx context.Context) context.Context {
+	return context.WithValue(ctx, routeKey, &RouteStatus{success: true})
+}
+
+func RouteFailed(ctx context.Context) bool {
+	route, ok := ctx.Value(routeKey).(*RouteStatus)
+	if ok {
+		return !route.success
+	}
+	return false
+}
+
+func RouteErrorHandler(ctx context.Context, mux *runtime.ServeMux, m runtime.Marshaler, w http.ResponseWriter, r *http.Request, status int) {
+	route, ok := ctx.Value(routeKey).(*RouteStatus)
+	if ok {
+		route.success = false
+	}
+	runtime.DefaultRoutingErrorHandler(ctx, mux, m, w, r, status)
 }
 
 func SetHeader(ctx context.Context, code int) {

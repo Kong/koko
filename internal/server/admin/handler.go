@@ -163,6 +163,7 @@ func NewHandler(opts HandlerOpts) (http.Handler, error) {
 	mux := runtime.NewServeMux(
 		runtime.WithMarshalerOption(runtime.MIMEWildcard, json.Marshaller),
 		runtime.WithForwardResponseOption(util.SetHTTPStatus),
+		runtime.WithRoutingErrorHandler(util.RouteErrorHandler),
 	)
 
 	err = v1.RegisterMetaServiceHandlerServer(context.Background(),
