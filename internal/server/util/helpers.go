@@ -51,7 +51,9 @@ func RouteFailed(ctx context.Context) bool {
 	return false
 }
 
-func RouteErrorHandler(ctx context.Context, mux *runtime.ServeMux, m runtime.Marshaler, w http.ResponseWriter, r *http.Request, status int) {
+func RouteErrorHandler(ctx context.Context, mux *runtime.ServeMux,
+	m runtime.Marshaler, w http.ResponseWriter, r *http.Request, status int,
+) {
 	route, ok := ctx.Value(routeKey).(*RouteStatus)
 	if ok {
 		route.success = false
