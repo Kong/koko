@@ -29,7 +29,7 @@ func (s *ConsumerService) GetConsumer(ctx context.Context,
 	result := resource.NewConsumer()
 	err = getEntityByIDOrName(ctx, req.Id, result, store.GetByIndex("username", req.Id), db, s.logger)
 	if err != nil {
-		return nil, err
+		return nil, s.err(err)
 	}
 	return &v1.GetConsumerResponse{
 		Item: result.Consumer,

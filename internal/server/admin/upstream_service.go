@@ -28,7 +28,7 @@ func (s *UpstreamService) GetUpstream(ctx context.Context,
 	result := resource.NewUpstream()
 	err = getEntityByIDOrName(ctx, req.Id, result, store.GetByName(req.Id), db, s.logger)
 	if err != nil {
-		return nil, err
+		return nil, s.err(err)
 	}
 	return &v1.GetUpstreamResponse{
 		Item: result.Upstream,

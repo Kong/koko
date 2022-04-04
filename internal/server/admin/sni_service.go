@@ -28,7 +28,7 @@ func (s *SNIService) GetSNI(ctx context.Context, req *v1.GetSNIRequest) (*v1.Get
 	result := resource.NewSNI()
 	err = getEntityByIDOrName(ctx, req.Id, result, store.GetByName(req.Id), db, s.logger)
 	if err != nil {
-		return nil, err
+		return nil, s.err(err)
 	}
 	return &v1.GetSNIResponse{
 		Item: result.SNI,

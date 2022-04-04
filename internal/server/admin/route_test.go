@@ -264,7 +264,7 @@ func TestRouteRead(t *testing.T) {
 		res = c.GET("/v1/routes/" + invalidKey).Expect()
 		res.Status(http.StatusBadRequest)
 		body := res.JSON().Object()
-		body.ValueEqual("message", fmt.Sprintf("invalid ID:%s", invalidKey))
+		body.ValueEqual("message", fmt.Sprintf("invalid ID:'%s'", invalidKey))
 	})
 }
 

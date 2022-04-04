@@ -28,7 +28,7 @@ func (s *ServiceService) GetService(ctx context.Context,
 	result := resource.NewService()
 	err = getEntityByIDOrName(ctx, req.Id, result, store.GetByName(req.Id), db, s.logger)
 	if err != nil {
-		return nil, err
+		return nil, s.err(err)
 	}
 	return &v1.GetServiceResponse{
 		Item: result.Service,

@@ -520,18 +520,15 @@ func TestServiceRead(t *testing.T) {
 		res := c.GET("/v1/services/" + invalidKey).Expect()
 		res.Status(http.StatusBadRequest)
 		body := res.JSON().Object()
-		body.ValueEqual("message", fmt.Sprintf("invalid ID:%s", invalidKey))
+		body.ValueEqual("message", fmt.Sprintf("invalid ID:'%s'", invalidKey))
 	})
 	t.Run("read request with very long name or ID match returns 400", func(t *testing.T) {
-		base := "0123456789"
-		var sb strings.Builder
-		for i := 0; i < 13; i++ {
-			sb.WriteString(base)
-		}
-		res = c.GET("/v1/services/" + sb.String()).Expect()
+		longID := strings.Repeat("0123456789", 13)
+
+		res = c.GET("/v1/services/" + longID).Expect()
 		res.Status(http.StatusBadRequest)
 		body := res.JSON().Object()
-		body.ValueEqual("message", fmt.Sprintf("invalid ID:%s", sb.String()))
+		body.ValueEqual("message", fmt.Sprintf("invalid ID:'%s'", longID))
 	})
 }
 
