@@ -245,6 +245,141 @@ func TestServiceCreate(t *testing.T) {
 		gotCACertID := body.Value("ca_certificates").Array().Element(0).String().Raw()
 		require.True(t, caCertID == gotCACertID)
 	})
+	t.Run("creates a valid service referencing a client cert successfully", func(t *testing.T) {
+		// create certificate
+		res := c.POST("/v1/certificates").WithJSON(&v1.Certificate{
+			Cert: goodCertOne,
+			Key:  goodKeyOne,
+		}).Expect()
+		res.Status(http.StatusCreated)
+		res.Header("grpc-metadata-koko-status-code").Empty()
+		body := res.JSON().Path("$.item").Object()
+		body.Value("cert").String().Equal(goodCertOne)
+		body.Value("key").String().Equal(goodKeyOne)
+		certID := body.Value("id").String().Raw()
+
+		// create service
+		service := goodService()
+		service.Name = "with-good-client-cert"
+		service.Protocol = "https"
+		service.ClientCertificate = &v1.Certificate{
+			Id: certID,
+		}
+		res = c.POST("/v1/services").WithJSON(service).Expect()
+		res.Status(http.StatusCreated)
+		res.Header("grpc-metadata-koko-status-code").Empty()
+		body = res.JSON().Path("$.item").Object()
+		gotCertID := body.Value("client_certificate").Object().Path("$.id").String().Raw()
+		require.True(t, certID == gotCertID)
+	})
+	t.Run("ensure failure creating a service referencing a non-existing client cert",
+		func(t *testing.T) {
+			service := goodService()
+			service.Name = "with-bad-client-cert"
+			service.Protocol = "https"
+			service.ClientCertificate = &v1.Certificate{
+				Id: uuid.NewString(),
+			}
+			res := c.POST("/v1/services").WithJSON(service).Expect()
+			res.Status(http.StatusBadRequest)
+			body := res.JSON().Object()
+			body.ValueEqual("message", "data constraint error")
+			body.Value("details").Array().Length().Equal(1)
+			err := body.Value("details").Array().Element(0)
+			err.Object().ValueEqual("type", v1.ErrorType_ERROR_TYPE_REFERENCE.
+				String())
+			err.Object().ValueEqual("field", "client_certificate.id")
+		})
+	t.Run("ensure failure creating a service referencing a client cert without https",
+		func(t *testing.T) {
+			service := goodService()
+			service.Name = "with-bad-protocol-client-cert"
+			service.Protocol = "http"
+			service.ClientCertificate = &v1.Certificate{
+				Id: uuid.NewString(),
+			}
+			res := c.POST("/v1/services").WithJSON(service).Expect()
+			res.Status(http.StatusBadRequest)
+			body := res.JSON().Object()
+			body.ValueEqual("message", "validation error")
+			body.Value("details").Array().Length().Equal(1)
+			err := body.Value("details").Array().Element(0)
+			err.Object().ValueEqual("type", v1.ErrorType_ERROR_TYPE_ENTITY.
+				String())
+			err.Object().ValueEqual("messages", []string{
+				"client_certificate can be set only when protocol is `https`",
+			})
+		})
+	t.Run("ensure deleting a service referencing a client cert doesn't remove the cert itself",
+		func(t *testing.T) {
+			// create certificate
+			res := c.POST("/v1/certificates").WithJSON(&v1.Certificate{
+				Cert: goodCertTwo,
+				Key:  goodKeyTwo,
+			}).Expect()
+			res.Status(http.StatusCreated)
+			res.Header("grpc-metadata-koko-status-code").Empty()
+			body := res.JSON().Path("$.item").Object()
+			body.Value("cert").String().Equal(goodCertTwo)
+			body.Value("key").String().Equal(goodKeyTwo)
+			certID := body.Value("id").String().Raw()
+
+			// create service
+			service := goodService()
+			service.Name = "delete-svc-with-client-cert"
+			service.Protocol = "https"
+			service.ClientCertificate = &v1.Certificate{
+				Id: certID,
+			}
+			res = c.POST("/v1/services").WithJSON(service).Expect()
+			res.Status(http.StatusCreated)
+			res.Header("grpc-metadata-koko-status-code").Empty()
+			body = res.JSON().Path("$.item").Object()
+			gotCertID := body.Value("client_certificate").Object().Path("$.id").String().Raw()
+			require.True(t, certID == gotCertID)
+			svcID := body.Value("id").String().Raw()
+
+			// delete service
+			c.DELETE("/v1/services/" + svcID).Expect().Status(http.StatusNoContent)
+
+			// check certificate still exists
+			c.GET("/v1/certificates/" + certID).Expect().Status(http.StatusOK)
+		})
+	t.Run("ensure deleting a cert referenced in a service removes the services itself too",
+		func(t *testing.T) {
+			// create certificate
+			res := c.POST("/v1/certificates").WithJSON(&v1.Certificate{
+				Cert: goodCertThree,
+				Key:  goodKeyThree,
+			}).Expect()
+			res.Status(http.StatusCreated)
+			res.Header("grpc-metadata-koko-status-code").Empty()
+			body := res.JSON().Path("$.item").Object()
+			body.Value("cert").String().Equal(goodCertThree)
+			body.Value("key").String().Equal(goodKeyThree)
+			certID := body.Value("id").String().Raw()
+
+			// create service
+			service := goodService()
+			service.Name = "cascade-delete-with-client-cert"
+			service.Protocol = "https"
+			service.ClientCertificate = &v1.Certificate{
+				Id: certID,
+			}
+			res = c.POST("/v1/services").WithJSON(service).Expect()
+			res.Status(http.StatusCreated)
+			res.Header("grpc-metadata-koko-status-code").Empty()
+			body = res.JSON().Path("$.item").Object()
+			gotCertID := body.Value("client_certificate").Object().Path("$.id").String().Raw()
+			require.True(t, certID == gotCertID)
+			svcID := body.Value("id").String().Raw()
+
+			// delete certificate
+			c.DELETE("/v1/certificates/" + certID).Expect().Status(http.StatusNoContent)
+
+			// check certificate doesn't exist anymore
+			c.GET("/v1/services/" + svcID).Expect().Status(http.StatusNotFound)
+		})
 }
 
 func TestServiceUpsert(t *testing.T) {
