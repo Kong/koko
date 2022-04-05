@@ -23,12 +23,39 @@ const (
 	StatusCodeKey = "koko-status-code"
 )
 
+type helperKey int
+
+var SpanKey helperKey
+
+type SpanValue interface {
+	Resource() string
+	TraceID() string
+	SpanID() string
+	SetResource(name string)
+}
+
 type ErrClient struct {
 	Message string
 }
 
 func (e ErrClient) Error() string {
 	return e.Message
+}
+
+func ErrorHandler(ctx context.Context,
+	mux *runtime.ServeMux, m runtime.Marshaler,
+	w http.ResponseWriter, r *http.Request, err error,
+) {
+	SetSpanResource(ctx)
+	runtime.DefaultHTTPErrorHandler(ctx, mux, m,
+		w, r, err)
+}
+
+func FinishTrace(ctx context.Context,
+	_ http.ResponseWriter, _ proto2.Message,
+) error {
+	SetSpanResource(ctx)
+	return nil
 }
 
 func SetHeader(ctx context.Context, code int) {
@@ -56,6 +83,14 @@ func SetHTTPStatus(ctx context.Context, w http.ResponseWriter,
 	}
 	w.Header().Del("grpc-metadata-" + StatusCodeKey)
 	return nil
+}
+
+func SetSpanResource(ctx context.Context) {
+	if span, ok := ctx.Value(SpanKey).(SpanValue); ok {
+		if path, ok := runtime.HTTPPathPattern(ctx); ok {
+			span.SetResource(path)
+		}
+	}
 }
 
 func HandleErr(logger *zap.Logger, err error) error {
