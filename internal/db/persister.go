@@ -15,12 +15,12 @@ func NewPersister(config Config) (persistence.Persister, error) {
 	)
 	switch config.Dialect {
 	case DialectSQLite3:
-		persister, err = sqlite.New(config.SQLite, config.QueryTimeout)
+		persister, err = sqlite.New(config.SQLite, config.QueryTimeout, config.Logger)
 		if err != nil {
 			return nil, err
 		}
 	case DialectPostgres:
-		persister, err = postgres.New(config.Postgres, config.QueryTimeout)
+		persister, err = postgres.New(config.Postgres, config.QueryTimeout, config.Logger)
 		if err != nil {
 			return nil, err
 		}
