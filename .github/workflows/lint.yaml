@@ -24,5 +24,4 @@ jobs:
     - name: make verify
       run: make gen-verify
     - name: make lint
-      run: |
-        make lint
+      run: make lint
