@@ -11,9 +11,7 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v3
       with:
-        ref: main
-    - name: Checkout repository
-      uses: actions/checkout@v3
+        fetch-depth: 2
     - name: Cache Go modules
       uses: actions/cache@v3
       with:
