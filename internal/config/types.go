@@ -32,9 +32,10 @@ type Postgres struct {
 }
 
 type Database struct {
-	Dialect  string   `json:"dialect,omitempty"`
-	SQLite   SQLite   `json:"sqlite,omitempty"`
-	Postgres Postgres `json:"postgres,omitempty"`
+	Dialect      string   `json:"dialect,omitempty"`
+	SQLite       SQLite   `json:"sqlite,omitempty"`
+	Postgres     Postgres `json:"postgres,omitempty"`
+	QueryTimeout string   `json:"query_timeout,omitempty"`
 }
 
 type Config struct {

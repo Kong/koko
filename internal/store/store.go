@@ -16,7 +16,7 @@ import (
 	"go.uber.org/zap"
 )
 
-const DefaultDBQueryTimeout = 5 * time.Second
+const DefaultOperationTimeout = 15 * time.Second
 
 var (
 	errNoObject = fmt.Errorf("no object")
@@ -92,7 +92,7 @@ func (s *ObjectStore) withTx(ctx context.Context,
 func (s *ObjectStore) Create(ctx context.Context, object model.Object,
 	_ ...CreateOptsFunc,
 ) error {
-	ctx, cancel := context.WithTimeout(ctx, DefaultDBQueryTimeout)
+	ctx, cancel := context.WithTimeout(ctx, DefaultOperationTimeout)
 	defer cancel()
 	if object == nil {
 		return errNoObject
@@ -124,7 +124,7 @@ func (s *ObjectStore) Create(ctx context.Context, object model.Object,
 func (s *ObjectStore) Upsert(ctx context.Context, object model.Object,
 	_ ...CreateOptsFunc,
 ) error {
-	ctx, cancel := context.WithTimeout(ctx, DefaultDBQueryTimeout)
+	ctx, cancel := context.WithTimeout(ctx, DefaultOperationTimeout)
 	defer cancel()
 	if object == nil {
 		return errNoObject
@@ -234,7 +234,7 @@ func preProcess(object model.Object) error {
 func (s *ObjectStore) Read(ctx context.Context, object model.Object,
 	opts ...ReadOptsFunc,
 ) error {
-	ctx, cancel := context.WithTimeout(ctx, DefaultDBQueryTimeout)
+	ctx, cancel := context.WithTimeout(ctx, DefaultOperationTimeout)
 	defer cancel()
 	opt := NewReadOpts(opts...)
 	switch {
@@ -307,7 +307,7 @@ func (s *ObjectStore) readByTypeID(ctx context.Context, tx persistence.Tx,
 func (s *ObjectStore) Delete(ctx context.Context,
 	opts ...DeleteOptsFunc,
 ) error {
-	ctx, cancel := context.WithTimeout(ctx, DefaultDBQueryTimeout)
+	ctx, cancel := context.WithTimeout(ctx, DefaultOperationTimeout)
 	defer cancel()
 	opt := NewDeleteOpts(opts...)
 	return s.withTx(ctx, func(tx persistence.Tx) error {
@@ -348,7 +348,7 @@ func (s *ObjectStore) delete(ctx context.Context, tx persistence.Tx,
 }
 
 func (s *ObjectStore) List(ctx context.Context, list model.ObjectList, opts ...ListOptsFunc) error {
-	ctx, cancel := context.WithTimeout(ctx, DefaultDBQueryTimeout)
+	ctx, cancel := context.WithTimeout(ctx, DefaultOperationTimeout)
 	defer cancel()
 	typ := list.Type()
 	opt := NewListOpts(opts...)

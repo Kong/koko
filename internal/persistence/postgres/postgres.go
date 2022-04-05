@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"time"
 
 	"github.com/kong/koko/internal/persistence"
 	_ "github.com/lib/pq"
@@ -22,7 +23,8 @@ var listQueryPaging = `SELECT key, value, COUNT(*) OVER() AS full_count FROM sto
                        LIKE $1 || '%%' ORDER BY key LIMIT $2 OFFSET $3;`
 
 type Postgres struct {
-	db *sql.DB
+	db           *sql.DB
+	queryTimeout time.Duration
 }
 
 type Opts struct {
@@ -64,13 +66,14 @@ func NewSQLClient(opts Opts) (*sql.DB, error) {
 	return db, err
 }
 
-func New(opts Opts) (persistence.Persister, error) {
+func New(opts Opts, queryTimeout time.Duration) (persistence.Persister, error) {
 	db, err := NewSQLClient(opts)
 	if err != nil {
 		return nil, err
 	}
 	res := &Postgres{
-		db: db,
+		db:           db,
+		queryTimeout: queryTimeout,
 	}
 	return res, nil
 }
@@ -78,6 +81,8 @@ func New(opts Opts) (persistence.Persister, error) {
 func (s *Postgres) withinTx(ctx context.Context,
 	fn func(tx persistence.Tx) error,
 ) error {
+	ctx, cancel := context.WithTimeout(ctx, s.queryTimeout)
+	defer cancel()
 	tx, err := s.Tx(ctx)
 	if err != nil {
 		return err
@@ -132,7 +137,7 @@ func (s *Postgres) Tx(ctx context.Context) (persistence.Tx, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &sqliteTx{tx: tx}, nil
+	return &sqliteTx{tx: tx, queryTimeout: s.queryTimeout}, nil
 }
 
 func (s *Postgres) Close() error {
@@ -140,7 +145,8 @@ func (s *Postgres) Close() error {
 }
 
 type sqliteTx struct {
-	tx *sql.Tx
+	tx           *sql.Tx
+	queryTimeout time.Duration
 }
 
 func (t *sqliteTx) Commit() error {
@@ -152,6 +158,8 @@ func (t *sqliteTx) Rollback() error {
 }
 
 func (t *sqliteTx) Get(ctx context.Context, key string) ([]byte, error) {
+	ctx, cancel := context.WithTimeout(ctx, t.queryTimeout)
+	defer cancel()
 	row := t.tx.QueryRowContext(ctx, getQuery, key)
 	var resKey string
 	var value []byte
@@ -166,6 +174,8 @@ func (t *sqliteTx) Get(ctx context.Context, key string) ([]byte, error) {
 }
 
 func (t *sqliteTx) Put(ctx context.Context, key string, value []byte) error {
+	ctx, cancel := context.WithTimeout(ctx, t.queryTimeout)
+	defer cancel()
 	res, err := t.tx.ExecContext(ctx, insertQuery, key, value)
 	if err != nil {
 		return err
@@ -181,6 +191,8 @@ func (t *sqliteTx) Put(ctx context.Context, key string, value []byte) error {
 }
 
 func (t *sqliteTx) Delete(ctx context.Context, key string) error {
+	ctx, cancel := context.WithTimeout(ctx, t.queryTimeout)
+	defer cancel()
 	res, err := t.tx.ExecContext(ctx, deleteQuery, key)
 	if err != nil {
 		return err
@@ -201,6 +213,8 @@ func (t *sqliteTx) Delete(ctx context.Context, key string) error {
 func (t *sqliteTx) List(ctx context.Context, prefix string, opts *persistence.ListOpts) (persistence.ListResult,
 	error,
 ) {
+	ctx, cancel := context.WithTimeout(ctx, t.queryTimeout)
+	defer cancel()
 	kvlist := make([]persistence.KVResult, 0, opts.Limit)
 	rows, err := t.tx.QueryContext(ctx, listQueryPaging, prefix, opts.Limit, opts.Offset)
 	if err != nil {

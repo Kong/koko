@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"path/filepath"
+	"time"
 
 	"github.com/ghodss/yaml"
 	"github.com/imdario/mergo"
@@ -28,6 +29,8 @@ admin:
   listeners:
   - address: ":3000"
     protocol: http
+database:
+  query_timeout: 5s
 `)
 	defaultConfig Config
 )
@@ -72,7 +75,11 @@ func parse(content []byte) (Config, error) {
 	return result, nil
 }
 
-func ToDBConfig(configDB Database) db.Config {
+func ToDBConfig(configDB Database) (db.Config, error) {
+	queryTimeout, err := time.ParseDuration(configDB.QueryTimeout)
+	if err != nil {
+		return db.Config{}, fmt.Errorf("failed to parse query timeout: %v", err)
+	}
 	return db.Config{
 		Dialect: configDB.Dialect,
 		SQLite: sqlite.Opts{
@@ -86,5 +93,6 @@ func ToDBConfig(configDB Database) db.Config {
 			User:     configDB.Postgres.User,
 			Password: configDB.Postgres.Password,
 		},
-	}
+		QueryTimeout: queryTimeout,
+	}, nil
 }
