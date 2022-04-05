@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := all
-DEFAULT_BRANCH:=$(shell git symbolic-ref refs/remotes/origin/HEAD | sed 's@^refs/remotes/origin/@@')
+DEFAULT_BRANCH:=$(shell git remote show origin | sed -n '/HEAD branch/s/.*: //p')
 
 .PHONY: install-tools
 install-tools:
