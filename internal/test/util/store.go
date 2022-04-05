@@ -48,7 +48,7 @@ func GetPersister(t *testing.T) (persistence.Persister, error) {
 	defer cancel()
 	switch dialect {
 	case "sqlite3":
-		dbClient, err := sqlite.NewSQLClient(dbConfig.SQLite)
+		dbClient, err := sqlite.NewSQLClient(dbConfig.SQLite, dbConfig.Logger)
 		if err != nil {
 			t.Fatal(err)
 		}
