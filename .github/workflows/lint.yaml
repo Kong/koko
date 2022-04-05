@@ -10,6 +10,10 @@ jobs:
         go-version: '^1.18'
     - name: Checkout repository
       uses: actions/checkout@v3
+      with:
+        ref: main
+    - name: Checkout repository
+      uses: actions/checkout@v3
     - name: Cache Go modules
       uses: actions/cache@v3
       with:
