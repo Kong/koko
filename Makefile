@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := all
-DEFAULT_BRANCH:=$(shell git rev-parse --abbrev-ref origin/HEAD)
+DEFAULT_BRANCH:=$(shell git symbolic-ref refs/remotes/origin/HEAD | sed 's@^refs/remotes/origin/@@')
 
 .PHONY: install-tools
 install-tools:
@@ -47,4 +47,4 @@ buf-format:
 
 .PHONY: buf-breaking
 buf-breaking:
-	buf breaking --against .git#branch=$(DEFAULT_BRANCH)
+	buf breaking --against .git#branch=origin/$(DEFAULT_BRANCH)
