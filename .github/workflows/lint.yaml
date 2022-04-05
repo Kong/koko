@@ -10,8 +10,6 @@ jobs:
         go-version: '^1.18'
     - name: Checkout repository
       uses: actions/checkout@v3
-      with:
-        fetch-depth: 2
     - name: Cache Go modules
       uses: actions/cache@v3
       with:
@@ -26,4 +24,6 @@ jobs:
     - name: make verify
       run: make gen-verify
     - name: make lint
-      run: make lint
+      run: |
+        git fetch --no-tags --depth=1 origin main
+        make lint
