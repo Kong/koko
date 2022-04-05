@@ -13,7 +13,7 @@ run:
 	go run main.go serve
 
 .PHONY: lint
-lint:
+lint: buf-breaking
 	buf format -d --exit-code
 	buf lint
 	./bin/golangci-lint run ./...
@@ -43,3 +43,7 @@ gen-verify:
 .PHONY: buf-format
 buf-format:
 	buf format -w
+
+.PHONY: buf-breaking
+buf-breaking:
+	buf breaking --against '.git#branch=main'
