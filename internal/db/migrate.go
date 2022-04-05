@@ -65,7 +65,7 @@ func driverForDialect(config Config) (database.Driver, error) {
 		}
 		return dbDriver, nil
 	case DialectPostgres:
-		db, err := postgres2.NewSQLClient(config.Postgres)
+		db, err := postgres2.NewSQLClient(config.Postgres, config.Logger)
 		if err != nil {
 			return nil, err
 		}
