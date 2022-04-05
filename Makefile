@@ -47,4 +47,5 @@ buf-format:
 
 .PHONY: buf-breaking
 buf-breaking:
+	git fetch --no-tags origin $(DEFAULT_BRANCH)
 	buf breaking --against .git#branch=origin/$(DEFAULT_BRANCH)
