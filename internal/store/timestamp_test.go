@@ -69,7 +69,7 @@ func TestAddTS(t *testing.T) {
 		updatedAt := time.Unix(int64(svc.Service.UpdatedAt), 0)
 		now := time.Now()
 		// reasonably be sure that current time was used
-		require.True(t, now.Sub(createdAt) < 1*time.Second)
-		require.True(t, now.Sub(updatedAt) < 1*time.Second)
+		require.True(t, now.Sub(createdAt) < 2*time.Second)
+		require.True(t, now.Sub(updatedAt) < 2*time.Second)
 	})
 }
