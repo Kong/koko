@@ -29,8 +29,8 @@ var SpanKey helperKey
 
 type SpanValue interface {
 	Resource() string
-	TraceID() uint64
-	SpanID() uint64
+	TraceID() string
+	SpanID() string
 	SetResource(name string)
 }
 
