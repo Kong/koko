@@ -1,4 +1,5 @@
 .DEFAULT_GOAL := all
+DEFAULT_BRANCH:=$(shell git rev-parse --abbrev-ref origin/HEAD)
 
 .PHONY: install-tools
 install-tools:
@@ -46,4 +47,4 @@ buf-format:
 
 .PHONY: buf-breaking
 buf-breaking:
-	buf breaking --against .git#branch=origin/main
+	buf breaking --against .git#branch=$(DEFAULT_BRANCH)
