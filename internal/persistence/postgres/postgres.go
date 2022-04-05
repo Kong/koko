@@ -65,7 +65,7 @@ func getDSN(opts Opts, logger *zap.Logger) string {
 	if opts.CABundleFSPath == "" {
 		panic("Postgres connection requires TLS but ca_bundle_fs_path is empty")
 	}
-	res += "sslmode=verify-full&sslrootcert=" + opts.CABundleFSPath
+	res += "sslmode=verify-full sslrootcert=" + opts.CABundleFSPath
 
 	return res
 }
