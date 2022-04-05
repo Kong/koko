@@ -39,8 +39,7 @@ type objectStoreOpts struct {
 // ObjectStore stores objects.
 // TODO(hbagdi): better name needed between this and the interface.
 type ObjectStore struct {
-	cluster          string
-	operationTimeout time.Duration
+	cluster string
 	objectStoreOpts
 }
 
@@ -56,7 +55,6 @@ func New(persister persistence.Persister, logger *zap.Logger) *ObjectStore {
 			logger: logger,
 			store:  persister,
 		},
-		operationTimeout: DefaultOperationTimeout,
 	}
 }
 
@@ -68,17 +66,8 @@ func (s *ObjectStore) ForCluster(cluster string) *ObjectStore {
 	}
 
 	return &ObjectStore{
-		objectStoreOpts:  s.objectStoreOpts,
-		cluster:          cluster,
-		operationTimeout: s.operationTimeout,
-	}
-}
-
-func (s *ObjectStore) WithOperationTimeout(timeout time.Duration) *ObjectStore {
-	return &ObjectStore{
-		objectStoreOpts:  s.objectStoreOpts,
-		cluster:          s.cluster,
-		operationTimeout: timeout,
+		objectStoreOpts: s.objectStoreOpts,
+		cluster:         cluster,
 	}
 }
 
@@ -103,7 +92,7 @@ func (s *ObjectStore) withTx(ctx context.Context,
 func (s *ObjectStore) Create(ctx context.Context, object model.Object,
 	_ ...CreateOptsFunc,
 ) error {
-	ctx, cancel := context.WithTimeout(ctx, s.operationTimeout)
+	ctx, cancel := context.WithTimeout(ctx, DefaultOperationTimeout)
 	defer cancel()
 	if object == nil {
 		return errNoObject
@@ -135,7 +124,7 @@ func (s *ObjectStore) Create(ctx context.Context, object model.Object,
 func (s *ObjectStore) Upsert(ctx context.Context, object model.Object,
 	_ ...CreateOptsFunc,
 ) error {
-	ctx, cancel := context.WithTimeout(ctx, s.operationTimeout)
+	ctx, cancel := context.WithTimeout(ctx, DefaultOperationTimeout)
 	defer cancel()
 	if object == nil {
 		return errNoObject
@@ -245,7 +234,7 @@ func preProcess(object model.Object) error {
 func (s *ObjectStore) Read(ctx context.Context, object model.Object,
 	opts ...ReadOptsFunc,
 ) error {
-	ctx, cancel := context.WithTimeout(ctx, s.operationTimeout)
+	ctx, cancel := context.WithTimeout(ctx, DefaultOperationTimeout)
 	defer cancel()
 	opt := NewReadOpts(opts...)
 	switch {
@@ -318,7 +307,7 @@ func (s *ObjectStore) readByTypeID(ctx context.Context, tx persistence.Tx,
 func (s *ObjectStore) Delete(ctx context.Context,
 	opts ...DeleteOptsFunc,
 ) error {
-	ctx, cancel := context.WithTimeout(ctx, s.operationTimeout)
+	ctx, cancel := context.WithTimeout(ctx, DefaultOperationTimeout)
 	defer cancel()
 	opt := NewDeleteOpts(opts...)
 	return s.withTx(ctx, func(tx persistence.Tx) error {
@@ -359,7 +348,7 @@ func (s *ObjectStore) delete(ctx context.Context, tx persistence.Tx,
 }
 
 func (s *ObjectStore) List(ctx context.Context, list model.ObjectList, opts ...ListOptsFunc) error {
-	ctx, cancel := context.WithTimeout(ctx, s.operationTimeout)
+	ctx, cancel := context.WithTimeout(ctx, DefaultOperationTimeout)
 	defer cancel()
 	typ := list.Type()
 	opt := NewListOpts(opts...)
