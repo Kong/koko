@@ -25,5 +25,6 @@ jobs:
       run: make gen-verify
     - name: make lint
       run: |
+        ls -la
         git fetch --no-tags --depth=1 origin main
         make lint
