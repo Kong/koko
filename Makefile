@@ -46,4 +46,4 @@ buf-format:
 
 .PHONY: buf-breaking
 buf-breaking:
-	buf breaking --against '.git#branch=main'
+	buf breaking --against .git#branch=origin/main
