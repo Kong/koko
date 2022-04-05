@@ -160,10 +160,12 @@ func NewHandler(opts HandlerOpts) (http.Handler, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	mux := runtime.NewServeMux(
 		runtime.WithMarshalerOption(runtime.MIMEWildcard, json.Marshaller),
+		runtime.WithErrorHandler(util.ErrorHandler),
 		runtime.WithForwardResponseOption(util.SetHTTPStatus),
-		runtime.WithRoutingErrorHandler(util.RouteErrorHandler),
+		runtime.WithForwardResponseOption(util.FinishTrace),
 	)
 
 	err = v1.RegisterMetaServiceHandlerServer(context.Background(),
