@@ -29,6 +29,8 @@ admin:
   listeners:
   - address: ":3000"
     protocol: http
+database:
+  query_timeout: 5s
 `)
 	defaultConfig Config
 )
