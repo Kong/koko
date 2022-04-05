@@ -93,7 +93,7 @@ func ToDBConfig(configDB Database) (db.Config, error) {
 			User:           configDB.Postgres.User,
 			Password:       configDB.Postgres.Password,
 			EnableTLS:      configDB.Postgres.EnableTLS,
-			CABundleFSPath: configDB.Postgres.CABundleFSPATH,
+			CABundleFSPath: configDB.Postgres.CABundleFSPath,
 		},
 		QueryTimeout: queryTimeout,
 	}, nil

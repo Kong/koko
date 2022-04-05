@@ -30,7 +30,7 @@ type Postgres struct {
 	User           string `json:"user,omitempty"`
 	Password       string `json:"password,omitempty"`
 	EnableTLS      bool   `json:"enable_tls"`
-	CABundleFSPATH string `json:"ca_bundle_fs_path"`
+	CABundleFSPath string `json:"ca_bundle_fs_path"`
 }
 
 type Database struct {
