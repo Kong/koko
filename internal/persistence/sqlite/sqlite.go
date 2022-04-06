@@ -28,6 +28,7 @@ type SQLite struct {
 type Opts struct {
 	Filename string
 	InMemory bool
+	SQLOpen  func(driver persistence.Driver, dataSourceName string) (*sql.DB, error)
 }
 
 const (
@@ -50,7 +51,15 @@ func NewSQLClient(opts Opts, logger *zap.Logger) (*sql.DB, error) {
 	if err != nil {
 		return nil, err
 	}
-	db, err := sql.Open("sqlite3", dsn)
+
+	open := func(driver persistence.Driver, dsn string) (*sql.DB, error) {
+		return sql.Open(driver.String(), dsn)
+	}
+	if opts.SQLOpen != nil {
+		open = opts.SQLOpen
+	}
+
+	db, err := open(persistence.SQLite3, dsn)
 	if err != nil {
 		return nil, err
 	}
