@@ -8,6 +8,7 @@ import (
 
 	"github.com/kong/koko/internal/persistence"
 	_ "github.com/lib/pq"
+	"go.uber.org/zap"
 )
 
 const (
@@ -28,14 +29,16 @@ type Postgres struct {
 }
 
 type Opts struct {
-	DBName   string
-	Hostname string
-	Port     int
-	User     string
-	Password string
+	DBName         string
+	Hostname       string
+	Port           int
+	User           string
+	Password       string
+	EnableTLS      bool
+	CABundleFSPath string
 }
 
-func getDSN(opts Opts) string {
+func getDSN(opts Opts, logger *zap.Logger) (string, error) {
 	var res string
 	if opts.Hostname != "" {
 		res += fmt.Sprintf("host=%s ", opts.Hostname)
@@ -52,12 +55,26 @@ func getDSN(opts Opts) string {
 	if opts.DBName != "" {
 		res += fmt.Sprintf("dbname=%s ", opts.DBName)
 	}
-	res += "sslmode=disable"
-	return res
+	if !opts.EnableTLS {
+		logger.Info("using non-TLS Postgres connection")
+		res += "sslmode=disable"
+		return res, nil
+	}
+	logger.Info("using TLS Postgres connection")
+	logger.Info("ca_bundle_fs_path:" + opts.CABundleFSPath)
+	if opts.CABundleFSPath == "" {
+		return "", fmt.Errorf("postgres connection requires TLS but ca_bundle_fs_path is empty")
+	}
+	res += "sslmode=verify-full sslrootcert=" + opts.CABundleFSPath
+
+	return res, nil
 }
 
-func NewSQLClient(opts Opts) (*sql.DB, error) {
-	dsn := getDSN(opts)
+func NewSQLClient(opts Opts, logger *zap.Logger) (*sql.DB, error) {
+	dsn, err := getDSN(opts, logger)
+	if err != nil {
+		return nil, err
+	}
 	db, err := sql.Open("postgres", dsn)
 	if err != nil {
 		return nil, err
@@ -66,8 +83,8 @@ func NewSQLClient(opts Opts) (*sql.DB, error) {
 	return db, err
 }
 
-func New(opts Opts, queryTimeout time.Duration) (persistence.Persister, error) {
-	db, err := NewSQLClient(opts)
+func New(opts Opts, queryTimeout time.Duration, logger *zap.Logger) (persistence.Persister, error) {
+	db, err := NewSQLClient(opts, logger)
 	if err != nil {
 		return nil, err
 	}
