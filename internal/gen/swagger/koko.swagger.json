@@ -1741,12 +1741,14 @@
                   "type": "integer",
                   "format": "int32"
                 },
+                "client_certificate": {
+                  "$ref": "#/definitions/kong.admin.model.v1.Certificate"
+                },
                 "ca_certificates": {
                   "type": "array",
                   "items": {
                     "type": "string"
-                  },
-                  "title": "Certificate client_certificate = 17;"
+                  }
                 },
                 "enabled": {
                   "type": "boolean"
@@ -3229,12 +3231,14 @@
           "type": "integer",
           "format": "int32"
         },
+        "client_certificate": {
+          "$ref": "#/definitions/kong.admin.model.v1.Certificate"
+        },
         "ca_certificates": {
           "type": "array",
           "items": {
             "type": "string"
-          },
-          "title": "Certificate client_certificate = 17;"
+          }
         },
         "enabled": {
           "type": "boolean"

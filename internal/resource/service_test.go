@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/google/uuid"
 	model "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
 	"github.com/kong/koko/internal/model/json/validation"
 	"github.com/kong/koko/internal/model/json/validation/typedefs"
@@ -558,6 +559,38 @@ func TestService_Validate(t *testing.T) {
 				s := goodService()
 				s.Service.Path = ""
 				_ = s.ProcessDefaults()
+				return s
+			},
+			wantErr: false,
+		},
+		{
+			name: "client_certificate cannot be set when protocol is not https",
+			Service: func() Service {
+				s := goodService()
+				s.Service.Protocol = "http"
+				s.Service.ClientCertificate = &model.Certificate{
+					Id: uuid.NewString(),
+				}
+				return s
+			},
+			wantErr: true,
+			Errs: []*model.ErrorDetail{
+				{
+					Type: model.ErrorType_ERROR_TYPE_ENTITY,
+					Messages: []string{
+						"client_certificate can be set only when protocol is `https`",
+					},
+				},
+			},
+		},
+		{
+			name: "client_certificate can be set when protocol is https",
+			Service: func() Service {
+				s := goodService()
+				s.Service.Protocol = "https"
+				s.Service.ClientCertificate = &model.Certificate{
+					Id: uuid.NewString(),
+				}
 				return s
 			},
 			wantErr: false,

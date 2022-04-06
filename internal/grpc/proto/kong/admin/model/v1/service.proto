@@ -3,6 +3,7 @@ syntax = "proto3";
 package kong.admin.model.v1;
 
 import "google/protobuf/wrappers.proto";
+import "kong/admin/model/v1/certificate.proto";
 
 option go_package = "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1;v1";
 
@@ -23,7 +24,7 @@ message Service {
   repeated string tags = 14;
   bool tls_verify = 15;
   int32 tls_verify_depth = 16;
-  // Certificate client_certificate = 17;
+  Certificate client_certificate = 17;
   repeated string ca_certificates = 18;
   google.protobuf.BoolValue enabled = 19;
 }
