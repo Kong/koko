@@ -3,7 +3,7 @@ package persistence
 type Driver int
 
 const (
-	SQLite3 Driver = 0
+	SQLite3 Driver = iota
 	Postgres
 )
 
