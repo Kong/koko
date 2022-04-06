@@ -12,14 +12,19 @@ type Content struct {
 	Hash              string
 }
 
-type Cache struct {
+// CachedContent holds the processed payload for a particular data plane
+// version. This content may be different than the actual Conent container as
+// the CompressedPayload could be updated for version compatibility.
+type CachedContent struct {
 	CompressedPayload []byte
-	Error             error
+	// Error is stored to return the original error when accessing the cache
+	Error error
+	Hash  string
 }
 
 type Payload struct {
 	content Content
-	cache   map[string]Cache
+	cache   map[string]CachedContent
 	mu      sync.RWMutex
 	vc      VersionCompatibility
 }
@@ -41,13 +46,13 @@ func NewPayload(opts PayloadOpts) (*Payload, error) {
 func (p *Payload) Payload(versionStr string) (Content, error) {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
-	content := p.content
 
 	if _, found := p.cache[versionStr]; !found {
-		updatedPayload, err := p.vc.ProcessConfigTableUpdates(versionStr, content.CompressedPayload)
-		p.cache[versionStr] = Cache{
+		updatedPayload, err := p.vc.ProcessConfigTableUpdates(versionStr, p.content.CompressedPayload)
+		p.cache[versionStr] = CachedContent{
 			CompressedPayload: updatedPayload,
 			Error:             err,
+			Hash:              p.content.Hash,
 		}
 	}
 
@@ -56,7 +61,7 @@ func (p *Payload) Payload(versionStr string) (Content, error) {
 	}
 	return Content{
 		CompressedPayload: p.cache[versionStr].CompressedPayload,
-		Hash:              content.Hash,
+		Hash:              p.cache[versionStr].Hash,
 	}, nil
 }
 
@@ -64,6 +69,6 @@ func (p *Payload) UpdateBinary(c Content) error {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	p.content = c
-	p.cache = make(map[string]Cache)
+	p.cache = make(map[string]CachedContent)
 	return nil
 }
