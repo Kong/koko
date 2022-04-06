@@ -1,4 +1,5 @@
 .DEFAULT_GOAL := all
+DEFAULT_BRANCH:=$(shell git remote show origin | sed -n '/HEAD branch/s/.*: //p')
 
 .PHONY: install-tools
 install-tools:
@@ -13,7 +14,7 @@ run:
 	go run main.go serve
 
 .PHONY: lint
-lint:
+lint: buf-breaking
 	buf format -d --exit-code
 	buf lint
 	./bin/golangci-lint run ./...
@@ -43,3 +44,8 @@ gen-verify:
 .PHONY: buf-format
 buf-format:
 	buf format -w
+
+.PHONY: buf-breaking
+buf-breaking:
+	git fetch --no-tags origin $(DEFAULT_BRANCH)
+	buf breaking --against .git#branch=origin/$(DEFAULT_BRANCH)
