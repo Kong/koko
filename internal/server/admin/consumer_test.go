@@ -103,6 +103,17 @@ func TestConsumerCreate(t *testing.T) {
 		body := res.JSON().Path("$.item").Object()
 		body.Value("id").Equal(consumer.Id)
 	})
+	t.Run("creates a valid consumer with custom ID containing spaces", func(t *testing.T) {
+		consumer := goodConsumer()
+		consumer.Username = "withSpaces"
+		consumer.CustomId = "custom ID"
+		res := c.POST("/v1/consumers").WithJSON(consumer).Expect()
+		res.Status(201)
+		body := res.JSON().Path("$.item").Object()
+		body.Value("username").String().Equal("withSpaces")
+		body.Value("custom_id").String().Equal("custom ID")
+		body.Value("id").String().NotEmpty()
+	})
 }
 
 func TestConsumerUpsert(t *testing.T) {

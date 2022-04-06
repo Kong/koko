@@ -12,7 +12,16 @@ import (
 
 const (
 	TypeConsumer = model.Type("consumer")
+
+	maxCustomIDLength = 128
 )
+
+var customID = &generator.Schema{
+	Type:      "string",
+	Pattern:   `^[0-9a-zA-Z.\-_~]+(?: [0-9a-zA-Z.\-_~]+)*$`,
+	MinLength: 1,
+	MaxLength: maxCustomIDLength,
+}
 
 func NewConsumer() Consumer {
 	return Consumer{
@@ -90,7 +99,7 @@ func init() {
 			"username":   typedefs.Name,
 			"created_at": typedefs.UnixEpoch,
 			"updated_at": typedefs.UnixEpoch,
-			"custom_id":  typedefs.Name,
+			"custom_id":  customID,
 			"tags":       typedefs.Tags,
 		},
 		AdditionalProperties: &falsy,

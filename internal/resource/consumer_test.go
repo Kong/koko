@@ -90,4 +90,64 @@ func TestConsumer_Validate(t *testing.T) {
 		err := c.Validate()
 		require.NoError(t, err)
 	})
+	t.Run("good consumer with custom_id containing spaces must pass", func(t *testing.T) {
+		c := goodConsumer()
+		c.Consumer.CustomId = "my company ID"
+		err := c.Validate()
+		require.NoError(t, err)
+	})
+	t.Run("custom_id beginning with a space must fail", func(t *testing.T) {
+		c := goodConsumer()
+		c.Consumer.CustomId = " my company ID"
+		err := c.Validate()
+		require.Error(t, err)
+		verr, ok := err.(validation.Error)
+		require.True(t, ok)
+		e := []*model.ErrorDetail{
+			{
+				Type:  model.ErrorType_ERROR_TYPE_FIELD,
+				Field: "custom_id",
+				Messages: []string{
+					`must match pattern '^[0-9a-zA-Z.\-_~]+(?: [0-9a-zA-Z.\-_~]+)*$'`,
+				},
+			},
+		}
+		require.ElementsMatch(t, verr.Errs, e)
+	})
+	t.Run("custom_id ending with a space must fail", func(t *testing.T) {
+		c := goodConsumer()
+		c.Consumer.CustomId = "my company ID "
+		err := c.Validate()
+		require.Error(t, err)
+		verr, ok := err.(validation.Error)
+		require.True(t, ok)
+		e := []*model.ErrorDetail{
+			{
+				Type:  model.ErrorType_ERROR_TYPE_FIELD,
+				Field: "custom_id",
+				Messages: []string{
+					`must match pattern '^[0-9a-zA-Z.\-_~]+(?: [0-9a-zA-Z.\-_~]+)*$'`,
+				},
+			},
+		}
+		require.ElementsMatch(t, verr.Errs, e)
+	})
+	t.Run("invalid custom_id must fail", func(t *testing.T) {
+		c := goodConsumer()
+		c.Consumer.CustomId = "my company ID!"
+		err := c.Validate()
+		require.Error(t, err)
+		verr, ok := err.(validation.Error)
+		require.True(t, ok)
+		e := []*model.ErrorDetail{
+			{
+				Type:  model.ErrorType_ERROR_TYPE_FIELD,
+				Field: "custom_id",
+				Messages: []string{
+					`must match pattern '^[0-9a-zA-Z.\-_~]+(?: [0-9a-zA-Z.\-_~]+)*$'`,
+				},
+			},
+		}
+		require.ElementsMatch(t, verr.Errs, e)
+	})
 }
