@@ -28,12 +28,12 @@ type Postgres struct {
 }
 
 type Opts struct {
-	DBName       string
-	Hostname     string
-	Port         int
-	User         string
-	Password     string
-	SQLTraceOpen func(driverName string, dataSourceName string) (*sql.DB, error)
+	DBName   string
+	Hostname string
+	Port     int
+	User     string
+	Password string
+	SQLOpen  func(driver persistence.Driver, dataSourceName string) (*sql.DB, error)
 }
 
 func getDSN(opts Opts) string {
@@ -60,12 +60,14 @@ func getDSN(opts Opts) string {
 func NewSQLClient(opts Opts) (*sql.DB, error) {
 	dsn := getDSN(opts)
 
-	open := sql.Open
-	if opts.SQLTraceOpen != nil {
-		open = opts.SQLTraceOpen
+	open := func(driver persistence.Driver, dsn string) (*sql.DB, error) {
+		return sql.Open(driver.String(), dsn)
+	}
+	if opts.SQLOpen != nil {
+		open = opts.SQLOpen
 	}
 
-	db, err := open("postgres", dsn)
+	db, err := open(persistence.Postgres, dsn)
 	if err != nil {
 		return nil, err
 	}
