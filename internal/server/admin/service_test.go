@@ -115,7 +115,6 @@ func TestServiceCreate(t *testing.T) {
 			String())
 		gotErr.Object().ValueEqual("messages", []string{
 			"missing properties: 'host'",
-			"path is required when protocol is http or https",
 		})
 	})
 	t.Run("creates a service with invalid protocol fails", func(t *testing.T) {
@@ -154,7 +153,7 @@ func TestServiceCreate(t *testing.T) {
 		body.Value("protocol").Equal("https")
 		body.Value("host").Equal("foo")
 		body.Value("port").Equal(443)
-		body.Value("path").Equal("/")
+		body.NotContainsKey("path")
 	})
 	t.Run("creating invalid service fails with 400", func(t *testing.T) {
 		svc := &v1.Service{

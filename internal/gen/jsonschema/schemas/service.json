@@ -187,31 +187,6 @@
       }
     },
     {
-      "description": "path is required when protocol is http or https",
-      "if": {
-        "required": [
-          "protocol"
-        ],
-        "properties": {
-          "protocol": {
-            "oneOf": [
-              {
-                "const": "https"
-              },
-              {
-                "const": "http"
-              }
-            ]
-          }
-        }
-      },
-      "then": {
-        "required": [
-          "path"
-        ]
-      }
-    },
-    {
       "description": "path can be set only when protocol is 'http' or 'https'",
       "if": {
         "required": [
