@@ -10,6 +10,7 @@ import (
 
 	"github.com/google/uuid"
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
+	"github.com/kong/koko/internal/model/json/validation/typedefs"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
@@ -30,9 +31,9 @@ func parseURL(s *v1.Service) error {
 		return nil
 	}
 	s.Protocol = u.Scheme
-	if s.Protocol == "http" {
+	if s.Protocol == typedefs.ProtocolHTTP {
 		s.Port = 80
-	} else if s.Protocol == "https" {
+	} else if s.Protocol == typedefs.ProtocolHTTPS {
 		s.Port = 443
 	}
 	host := u.Host
@@ -50,13 +51,7 @@ func parseURL(s *v1.Service) error {
 		s.Port = int32(port)
 	}
 	s.Host = host
-
-	// default to '/' if path is not provided
-	path := u.Path
-	if path == "" {
-		path = "/"
-	}
-	s.Path = path
+	s.Path = u.Path
 	return nil
 }
 

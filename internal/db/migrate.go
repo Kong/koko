@@ -53,7 +53,7 @@ func sourceForDialect(dialect string) (source.Driver, error) {
 func driverForDialect(config Config) (database.Driver, error) {
 	switch config.Dialect {
 	case DialectSQLite3:
-		db, err := sqlite.NewSQLClient(config.SQLite)
+		db, err := sqlite.NewSQLClient(config.SQLite, config.Logger)
 		if err != nil {
 			return nil, err
 		}
@@ -65,7 +65,7 @@ func driverForDialect(config Config) (database.Driver, error) {
 		}
 		return dbDriver, nil
 	case DialectPostgres:
-		db, err := postgres2.NewSQLClient(config.Postgres)
+		db, err := postgres2.NewSQLClient(config.Postgres, config.Logger)
 		if err != nil {
 			return nil, err
 		}

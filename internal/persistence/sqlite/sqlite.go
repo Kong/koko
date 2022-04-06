@@ -8,6 +8,7 @@ import (
 
 	"github.com/kong/koko/internal/persistence"
 	_ "github.com/mattn/go-sqlite3"
+	"go.uber.org/zap"
 )
 
 const (
@@ -34,7 +35,8 @@ const (
 	sqliteParams = "?_journal_mode=WAL&_busy_timeout=5000"
 )
 
-func getDSN(opts Opts) (string, error) {
+func getDSN(opts Opts, logger *zap.Logger) (string, error) {
+	logger.Info("using SQLite Database")
 	if opts.InMemory {
 		return "file::memory:?cache=shared", nil
 	}
@@ -44,8 +46,8 @@ func getDSN(opts Opts) (string, error) {
 	return opts.Filename + sqliteParams, nil
 }
 
-func NewSQLClient(opts Opts) (*sql.DB, error) {
-	dsn, err := getDSN(opts)
+func NewSQLClient(opts Opts, logger *zap.Logger) (*sql.DB, error) {
+	dsn, err := getDSN(opts, logger)
 	if err != nil {
 		return nil, err
 	}
@@ -65,8 +67,8 @@ func NewSQLClient(opts Opts) (*sql.DB, error) {
 	return db, nil
 }
 
-func New(opts Opts, queryTimeout time.Duration) (persistence.Persister, error) {
-	db, err := NewSQLClient(opts)
+func New(opts Opts, queryTimeout time.Duration, logger *zap.Logger) (persistence.Persister, error) {
+	db, err := NewSQLClient(opts, logger)
 	if err != nil {
 		return nil, err
 	}

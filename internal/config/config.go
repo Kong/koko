@@ -87,11 +87,13 @@ func ToDBConfig(configDB Database) (db.Config, error) {
 			Filename: configDB.SQLite.Filename,
 		},
 		Postgres: postgres.Opts{
-			DBName:   configDB.Postgres.DBName,
-			Hostname: configDB.Postgres.Hostname,
-			Port:     configDB.Postgres.Port,
-			User:     configDB.Postgres.User,
-			Password: configDB.Postgres.Password,
+			DBName:         configDB.Postgres.DBName,
+			Hostname:       configDB.Postgres.Hostname,
+			Port:           configDB.Postgres.Port,
+			User:           configDB.Postgres.User,
+			Password:       configDB.Postgres.Password,
+			EnableTLS:      configDB.Postgres.EnableTLS,
+			CABundleFSPath: configDB.Postgres.CABundleFSPath,
 		},
 		QueryTimeout: queryTimeout,
 	}, nil

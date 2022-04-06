@@ -103,6 +103,31 @@ func TestConsumerCreate(t *testing.T) {
 		body := res.JSON().Path("$.item").Object()
 		body.Value("id").Equal(consumer.Id)
 	})
+	t.Run("creates a valid consumer with custom ID containing spaces", func(t *testing.T) {
+		consumer := goodConsumer()
+		consumer.Username = "withSpaces"
+		consumer.CustomId = "custom ID"
+		res := c.POST("/v1/consumers").WithJSON(consumer).Expect()
+		res.Status(201)
+		body := res.JSON().Path("$.item").Object()
+		body.Value("username").String().Equal("withSpaces")
+		body.Value("custom_id").String().Equal("custom ID")
+		body.Value("id").String().NotEmpty()
+	})
+	t.Run("creates a consumer with an existing custom ID containing spaces fails", func(t *testing.T) {
+		consumer := goodConsumer()
+		consumer.Username = "withSameCustomID"
+		consumer.CustomId = "custom ID"
+		res := c.POST("/v1/consumers").WithJSON(consumer).Expect()
+		res.Status(http.StatusBadRequest)
+		body := res.JSON().Object()
+		body.ValueEqual("message", "data constraint error")
+		body.Value("details").Array().Length().Equal(1)
+		err := body.Value("details").Array().Element(0).Object()
+		err.ValueEqual("type", v1.ErrorType_ERROR_TYPE_REFERENCE.String())
+		err.Value("messages").Array().Element(0).String().
+			Equal("custom_id (type: unique) constraint failed for value 'custom ID': ")
+	})
 }
 
 func TestConsumerUpsert(t *testing.T) {
