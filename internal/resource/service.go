@@ -212,27 +212,6 @@ func init() {
 				},
 			},
 			{
-				Description: "path is required when protocol is http or https",
-				If: &generator.Schema{
-					Required: []string{"protocol"},
-					Properties: map[string]*generator.Schema{
-						"protocol": {
-							OneOf: []*generator.Schema{
-								{
-									Const: typedefs.ProtocolHTTPS,
-								},
-								{
-									Const: typedefs.ProtocolHTTP,
-								},
-							},
-						},
-					},
-				},
-				Then: &generator.Schema{
-					Required: []string{"path"},
-				},
-			},
-			{
 				Description: "path can be set only when protocol is 'http' or" +
 					" 'https'",
 				If: &generator.Schema{

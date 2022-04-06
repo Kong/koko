@@ -147,11 +147,8 @@ func TestService_Validate(t *testing.T) {
 			wantErr: true,
 			Errs: []*model.ErrorDetail{
 				{
-					Type: model.ErrorType_ERROR_TYPE_ENTITY,
-					Messages: []string{
-						"missing properties: 'host'",
-						"path is required when protocol is http or https",
-					},
+					Type:     model.ErrorType_ERROR_TYPE_ENTITY,
+					Messages: []string{"missing properties: 'host'"},
 				},
 			},
 		},
@@ -521,7 +518,6 @@ func TestService_Validate(t *testing.T) {
 					Type: model.ErrorType_ERROR_TYPE_ENTITY,
 					Messages: []string{
 						"missing properties: 'host'",
-						"path is required when protocol is http or https",
 					},
 				},
 			},
@@ -551,6 +547,16 @@ func TestService_Validate(t *testing.T) {
 			Service: func() Service {
 				s := NewService()
 				s.Service.Url = "https://foo"
+				_ = s.ProcessDefaults()
+				return s
+			},
+			wantErr: false,
+		},
+		{
+			name: "service with no path validates",
+			Service: func() Service {
+				s := goodService()
+				s.Service.Path = ""
 				_ = s.ProcessDefaults()
 				return s
 			},
