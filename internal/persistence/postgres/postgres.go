@@ -38,7 +38,7 @@ type Opts struct {
 	CABundleFSPath string
 }
 
-func getDSN(opts Opts, logger *zap.Logger) string {
+func getDSN(opts Opts, logger *zap.Logger) (string, error) {
 	var res string
 	if opts.Hostname != "" {
 		res += fmt.Sprintf("host=%s ", opts.Hostname)
@@ -56,22 +56,25 @@ func getDSN(opts Opts, logger *zap.Logger) string {
 		res += fmt.Sprintf("dbname=%s ", opts.DBName)
 	}
 	if !opts.EnableTLS {
-		logger.Info("Using non-TLS Postgres connection")
+		logger.Info("using non-TLS Postgres connection")
 		res += "sslmode=disable"
-		return res
+		return res, nil
 	}
-	logger.Info("Using TLS Postgres connection")
+	logger.Info("using TLS Postgres connection")
 	logger.Info("ca_bundle_fs_path:" + opts.CABundleFSPath)
 	if opts.CABundleFSPath == "" {
-		panic("Postgres connection requires TLS but ca_bundle_fs_path is empty")
+		return "", fmt.Errorf("postgres connection requires TLS but ca_bundle_fs_path is empty")
 	}
 	res += "sslmode=verify-full sslrootcert=" + opts.CABundleFSPath
 
-	return res
+	return res, nil
 }
 
 func NewSQLClient(opts Opts, logger *zap.Logger) (*sql.DB, error) {
-	dsn := getDSN(opts, logger)
+	dsn, err := getDSN(opts, logger)
+	if err != nil {
+		return nil, err
+	}
 	db, err := sql.Open("postgres", dsn)
 	if err != nil {
 		return nil, err

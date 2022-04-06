@@ -35,7 +35,7 @@ const (
 )
 
 func getDSN(opts Opts, logger *zap.Logger) (string, error) {
-	logger.Info("Using SQLite Database")
+	logger.Info("using SQLite Database")
 	if opts.InMemory {
 		return "file::memory:?cache=shared", nil
 	}

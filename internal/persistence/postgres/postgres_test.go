@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/kong/koko/internal/log"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -20,7 +19,8 @@ func TestDSN(t *testing.T) {
 		}
 		logger := log.Logger
 		expectedDSN := "host=localhost port=5432 user=koko password=koko dbname=koko sslmode=disable"
-		dsn := getDSN(opt, logger)
+		dsn, err := getDSN(opt, logger)
+		require.NoError(t, err)
 		require.Equal(t, expectedDSN, dsn)
 	})
 	t.Run("TLS DSN", func(t *testing.T) {
@@ -36,7 +36,8 @@ func TestDSN(t *testing.T) {
 		logger := log.Logger
 		expectedDSN := "host=localhost port=5432 user=koko password=koko dbname=koko sslmode=verify-full " +
 			"sslrootcert=/koko-postgres-cabundle/global-bundle.pem"
-		dsn := getDSN(opt, logger)
+		dsn, err := getDSN(opt, logger)
+		require.NoError(t, err)
 		require.Equal(t, expectedDSN, dsn)
 	})
 	t.Run("TLS DSN No CABundlePath", func(t *testing.T) {
@@ -49,6 +50,7 @@ func TestDSN(t *testing.T) {
 			EnableTLS: true,
 		}
 		logger := log.Logger
-		assert.Panics(t, func() { getDSN(opt, logger) }, "getDSN must panic")
+		_, err := getDSN(opt, logger)
+		require.Errorf(t, err, "postgres connection requires TLS but ca_bundle_fs_path is empty")
 	})
 }
