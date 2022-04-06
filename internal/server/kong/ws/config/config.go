@@ -12,9 +12,14 @@ type Content struct {
 	Hash              string
 }
 
+type Cache struct {
+	CompressedPayload []byte
+	Error             error
+}
+
 type Payload struct {
 	content Content
-	cache   map[string][]byte
+	cache   map[string]Cache
 	mu      sync.RWMutex
 	vc      VersionCompatibility
 }
@@ -38,16 +43,19 @@ func (p *Payload) Payload(versionStr string) (Content, error) {
 	defer p.mu.RUnlock()
 	content := p.content
 
-	if len(p.cache[versionStr]) == 0 {
+	if _, found := p.cache[versionStr]; !found {
 		updatedPayload, err := p.vc.ProcessConfigTableUpdates(versionStr, content.CompressedPayload)
-		if err != nil {
-			return Content{}, fmt.Errorf("downgrade config: %v", err)
+		p.cache[versionStr] = Cache{
+			CompressedPayload: updatedPayload,
+			Error:             err,
 		}
-		p.cache[versionStr] = updatedPayload
 	}
 
+	if p.cache[versionStr].Error != nil {
+		return Content{}, fmt.Errorf("downgrade config: %v", p.cache[versionStr].Error)
+	}
 	return Content{
-		CompressedPayload: p.cache[versionStr],
+		CompressedPayload: p.cache[versionStr].CompressedPayload,
 		Hash:              content.Hash,
 	}, nil
 }
@@ -56,6 +64,6 @@ func (p *Payload) UpdateBinary(c Content) error {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	p.content = c
-	p.cache = make(map[string][]byte)
+	p.cache = make(map[string]Cache)
 	return nil
 }

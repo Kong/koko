@@ -83,7 +83,9 @@ func TestConfigPayload_Cache(t *testing.T) {
 		updatedPayload, err := payload.Payload("2.8.0")
 		require.Nil(t, err)
 		require.Equal(t, compressedPayload, updatedPayload.CompressedPayload)
-		require.Greater(t, len(payload.cache["2.8.0"]), 0)
+		_, found := payload.cache["2.8.0"]
+		require.True(t, found)
+		require.Greater(t, len(payload.cache["2.8.0"].CompressedPayload), 0)
 	})
 
 	t.Run("ensure payload can be retrieved using multiple versions", func(t *testing.T) {
@@ -101,12 +103,18 @@ func TestConfigPayload_Cache(t *testing.T) {
 		updatedPayload, err := payload.Payload("2.8.0")
 		require.Nil(t, err)
 		require.Equal(t, compressedPayload, updatedPayload.CompressedPayload)
-		require.Greater(t, len(payload.cache["2.8.0"]), 0)
+		_, found := payload.cache["2.8.0"]
+		require.True(t, found)
+		require.Greater(t, len(payload.cache["2.8.0"].CompressedPayload), 0)
+		require.Nil(t, payload.cache["2.8.0"].Error)
 
 		updatedPayload, err = payload.Payload("2.7.0")
 		require.Nil(t, err)
 		require.Equal(t, expectedPayload270, updatedPayload.CompressedPayload)
-		require.True(t, len(payload.cache["2.7.0"]) > 0)
+		_, found = payload.cache["2.7.0"]
+		require.True(t, found)
+		require.Greater(t, len(payload.cache["2.7.0"].CompressedPayload), 0)
+		require.Nil(t, payload.cache["2.7.0"].Error)
 	})
 
 	t.Run("ensure payload cache is cleared when updated", func(t *testing.T) {
@@ -124,7 +132,10 @@ func TestConfigPayload_Cache(t *testing.T) {
 		updatedPayload, err := payload.Payload("2.8.0")
 		require.Nil(t, err)
 		require.Equal(t, compressedPayload, updatedPayload.CompressedPayload)
-		require.Greater(t, len(payload.cache["2.8.0"]), 0)
+		_, found := payload.cache["2.8.0"]
+		require.True(t, found)
+		require.Greater(t, len(payload.cache["2.8.0"].CompressedPayload), 0)
+		require.Nil(t, payload.cache["2.8.0"].Error)
 
 		err = payload.UpdateBinary(Content{
 			CompressedPayload: compressedPayload,
@@ -132,5 +143,7 @@ func TestConfigPayload_Cache(t *testing.T) {
 		})
 		require.Nil(t, err)
 		require.Equal(t, len(payload.cache), 0)
+		_, found = payload.cache["2.8.0"]
+		require.False(t, found)
 	})
 }
