@@ -39,7 +39,8 @@ func NewPayload(opts PayloadOpts) (*Payload, error) {
 	}
 
 	return &Payload{
-		vc: opts.VersionCompatibilityProcessor,
+		vc:    opts.VersionCompatibilityProcessor,
+		cache: map[string]CachedContent{},
 	}, nil
 }
 
