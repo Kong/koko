@@ -1111,6 +1111,40 @@ func TestRoute_Validate(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "validate destinations and sources",
+			Route: func() Route {
+				r := NewRoute()
+				_ = r.ProcessDefaults()
+				r.Route.Protocols = []string{typedefs.ProtocolTCP}
+				r.Route.Destinations = []*model.CIDRPort{
+					{
+						Ip: "192.0.2.0/24",
+					},
+					{
+						Port: 80,
+					},
+					{
+						Ip:   "192.0.2.0/24",
+						Port: 80,
+					},
+				}
+				r.Route.Sources = []*model.CIDRPort{
+					{
+						Ip: "203.0.113.0/24",
+					},
+					{
+						Port: 80,
+					},
+					{
+						Ip:   "203.0.113.0/24",
+						Port: 80,
+					},
+				}
+				return r
+			},
+			wantErr: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

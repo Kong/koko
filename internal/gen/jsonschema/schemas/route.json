@@ -31,18 +31,18 @@
           }
         },
         "type": "object",
-        "oneOf": [
+        "anyOf": [
           {
             "required": [
               "ip"
             ],
-            "description": "either one of 'ip' or 'port' is required"
+            "description": "at least one of 'ip' or 'port' is required"
           },
           {
             "required": [
               "port"
             ],
-            "description": "either one of 'ip' or 'port' is required"
+            "description": "at least one of 'ip' or 'port' is required"
           }
         ]
       },
@@ -261,18 +261,18 @@
           }
         },
         "type": "object",
-        "oneOf": [
+        "anyOf": [
           {
             "required": [
               "ip"
             ],
-            "description": "either one of 'ip' or 'port' is required"
+            "description": "at least one of 'ip' or 'port' is required"
           },
           {
             "required": [
               "port"
             ],
-            "description": "either one of 'ip' or 'port' is required"
+            "description": "at least one of 'ip' or 'port' is required"
           }
         ]
       },

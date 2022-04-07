@@ -94,6 +94,35 @@ func TestRouteCreate(t *testing.T) {
 		body := res.JSON().Path("$.item").Object()
 		body.Value("id").Equal(route.Id)
 	})
+	t.Run("creates a route with destinations and sources succeeds", func(t *testing.T) {
+		route := &v1.Route{
+			Name:      "quz",
+			Protocols: []string{"tcp"},
+			Destinations: []*v1.CIDRPort{
+				{
+					Ip:   "192.0.2.0/24",
+					Port: int32(80),
+				},
+				{
+					Ip: "198.51.100.0/24",
+				},
+				{
+					Port: 8080,
+				},
+			},
+			Sources: []*v1.CIDRPort{
+				{
+					Ip:   "203.0.113.0/24",
+					Port: int32(80),
+				},
+			},
+		}
+		res := c.POST("/v1/routes").WithJSON(route).Expect()
+		res.Status(http.StatusCreated)
+		body := res.JSON().Path("$.item").Object()
+		body.Value("destinations").Array().Length().Equal(3)
+		body.Value("sources").Array().Length().Equal(1)
+	})
 }
 
 func TestRouteUpsert(t *testing.T) {
