@@ -34,8 +34,8 @@ type VersionCompatibility interface {
 type VersionCompatibilityOpts struct {
 	Logger          *zap.Logger
 	KongCPVersion   string
-	ExtraProcessing func(uncompressedPayload string,
-		dataPlaneVersion uint64, isEnterprise bool) (string, error)
+	ExtraProcessing func(uncompressedPayload string, dataPlaneVersion uint64, isEnterprise bool,
+		logger *zap.Logger) (string, error)
 }
 
 type UpdateType uint8
@@ -77,8 +77,8 @@ type WSVersionCompatibility struct {
 	logger             *zap.Logger
 	kongCPVersion      uint64
 	configTableUpdates map[uint64][]ConfigTableUpdates
-	extraProcessing    func(uncompressedPayload string,
-		dataPlaneVersion uint64, isEnterprise bool) (string, error)
+	extraProcessing    func(uncompressedPayload string, dataPlaneVersion uint64, isEnterprise bool,
+		logger *zap.Logger) (string, error)
 }
 
 func NewVersionCompatibilityProcessor(opts VersionCompatibilityOpts) (*WSVersionCompatibility, error) {
@@ -111,7 +111,6 @@ func (vc *WSVersionCompatibility) AddConfigTableUpdates(pluginPayloadUpdates map
 func (vc *WSVersionCompatibility) ProcessConfigTableUpdates(dataPlaneVersionStr string,
 	compressedPayload []byte,
 ) ([]byte, error) {
-	isEnterprise := strings.Contains(dataPlaneVersionStr, "enterprise")
 	dataPlaneVersion, err := parseSemanticVersion(dataPlaneVersionStr)
 	if err != nil {
 		return nil, fmt.Errorf("unable to parse data plane version: %v", err)
@@ -133,6 +132,7 @@ func (vc *WSVersionCompatibility) ProcessConfigTableUpdates(dataPlaneVersionStr 
 	if err != nil {
 		return nil, err
 	}
+	isEnterprise := strings.Contains(dataPlaneVersionStr, "enterprise")
 	processedPayload, err = vc.performExtraProcessing(processedPayload, dataPlaneVersion, isEnterprise)
 	if err != nil {
 		return nil, err
@@ -145,7 +145,8 @@ func (vc *WSVersionCompatibility) performExtraProcessing(uncompressedPayload str
 	isEnterprise bool,
 ) (string, error) {
 	if vc.extraProcessing != nil {
-		processedPayload, err := vc.extraProcessing(uncompressedPayload, dataPlaneVersion, isEnterprise)
+		processedPayload, err := vc.extraProcessing(uncompressedPayload, dataPlaneVersion, isEnterprise,
+			vc.logger)
 		if err != nil {
 			return "", err
 		}
