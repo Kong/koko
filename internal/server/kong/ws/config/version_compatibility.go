@@ -34,8 +34,8 @@ type VersionCompatibility interface {
 type VersionCompatibilityOpts struct {
 	Logger          *zap.Logger
 	KongCPVersion   string
-	ExtraProcessing func(uncompressedPayload string, controlPlaneVersion uint64, dataPlaneVersion uint64,
-		isEnterprise bool, logger *zap.Logger) (string, error)
+	ExtraProcessing func(uncompressedPayload string, dataPlaneVersion uint64, isEnterprise bool,
+		logger *zap.Logger) (string, error)
 }
 
 type UpdateType uint8
@@ -55,8 +55,8 @@ type WSVersionCompatibility struct {
 	logger             *zap.Logger
 	kongCPVersion      uint64
 	configTableUpdates map[uint64][]ConfigTableUpdates
-	extraProcessing    func(uncompressedPayload string, controlPlaneVersion uint64, dataPlaneVersion uint64,
-		isEnterprise bool, logger *zap.Logger) (string, error)
+	extraProcessing    func(uncompressedPayload string, dataPlaneVersion uint64, isEnterprise bool,
+		logger *zap.Logger) (string, error)
 }
 
 func NewVersionCompatibilityProcessor(opts VersionCompatibilityOpts) (*WSVersionCompatibility, error) {
@@ -123,8 +123,8 @@ func (vc *WSVersionCompatibility) performExtraProcessing(uncompressedPayload str
 	isEnterprise bool,
 ) (string, error) {
 	if vc.extraProcessing != nil {
-		processedPayload, err := vc.extraProcessing(uncompressedPayload, vc.kongCPVersion, dataPlaneVersion,
-			isEnterprise, vc.logger)
+		processedPayload, err := vc.extraProcessing(uncompressedPayload, dataPlaneVersion, isEnterprise,
+			vc.logger)
 		if err != nil {
 			return "", err
 		}

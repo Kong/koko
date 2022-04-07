@@ -925,8 +925,8 @@ func TestVersionCompatibility_PerformExtraProcessing(t *testing.T) {
 			wsvc, err := NewVersionCompatibilityProcessor(VersionCompatibilityOpts{
 				Logger:        log.Logger,
 				KongCPVersion: "2.8.0",
-				ExtraProcessing: func(uncompressedPayload string, controlPlaneVersion uint64,
-					dataPlaneVersion uint64, isEnterprise bool, logger *zap.Logger,
+				ExtraProcessing: func(uncompressedPayload string, dataPlaneVersion uint64, isEnterprise bool,
+					logger *zap.Logger,
 				) (string, error) {
 					if test.wantsErr {
 						return "", fmt.Errorf("extra processing error")
@@ -961,8 +961,8 @@ func TestVersionCompatibility_PerformExtraProcessing(t *testing.T) {
 		wsvc, err := NewVersionCompatibilityProcessor(VersionCompatibilityOpts{
 			Logger:        log.Logger,
 			KongCPVersion: "2.8.0",
-			ExtraProcessing: func(uncompressedPayload string, controlPlaneVersion uint64, dataPlaneVersion uint64,
-				isEnterprise bool, logger *zap.Logger,
+			ExtraProcessing: func(uncompressedPayload string, dataPlaneVersion uint64, isEnterprise bool,
+				logger *zap.Logger,
 			) (string, error) {
 				return sjson.Set(uncompressedPayload, "config_table.extra_processing", "processed")
 			},
