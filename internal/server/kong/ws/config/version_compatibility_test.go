@@ -2,7 +2,6 @@ package config
 
 import (
 	"fmt"
-	"regexp"
 	"strings"
 	"testing"
 
@@ -284,6 +283,12 @@ var (
 					"plugin_1_field_1",
 					"plugin_1_field_2",
 				},
+				RemoveElementsFromArray: []ConfigTableFieldCondition{
+					{
+						Field:     "plugin_1_array_field_1",
+						Condition: "array_element_1=condition",
+					},
+				},
 			},
 			{
 				Name: "plugin_2",
@@ -300,6 +305,16 @@ var (
 					"plugin_3_field_2",
 					"plugin_3_field_3",
 					"plugin_3_field_4",
+				},
+				RemoveElementsFromArray: []ConfigTableFieldCondition{
+					{
+						Field:     "plugin_3_array_field_1",
+						Condition: "array_element_1=condition",
+					},
+					{
+						Field:     "plugin_3_array_field_2",
+						Condition: "array_element_2=condition",
+					},
 				},
 			},
 		},
@@ -339,6 +354,12 @@ var (
 				RemoveFields: []string{
 					"plugin_3_field_1",
 					"plugin_3_field_2",
+				},
+				RemoveElementsFromArray: []ConfigTableFieldCondition{
+					{
+						Field:     "plugin_2_array_field_1",
+						Condition: "array_element_1=condition",
+					},
 				},
 			},
 		},
@@ -852,10 +873,490 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 				}
 			}`,
 		},
+		{
+			name: "single field array removal with single item in array",
+			configTableUpdates: map[uint64][]ConfigTableUpdates{
+				2007999999: {
+					{
+						Name: "plugin_1",
+						Type: Plugin,
+						RemoveElementsFromArray: []ConfigTableFieldCondition{
+							{
+								Field:     "plugin_field_array_1",
+								Condition: "array_element_1=condition",
+							},
+						},
+					},
+				},
+			},
+			uncompressedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"name": "plugin_1",
+							"config": {
+								"plugin_field_array_1": [
+									{
+										"array_element_1": "condition"
+									}
+								]
+							}
+						}
+					]
+				}
+			}`,
+			dataPlaneVersion: 2007000000,
+			expectedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"name": "plugin_1",
+							"config": {
+								"plugin_field_array_1": []
+							}
+						}
+					]
+				}
+			}`,
+		},
+		{
+			name: "single nested field array removal with single item in array",
+			configTableUpdates: map[uint64][]ConfigTableUpdates{
+				2007999999: {
+					{
+						Name: "plugin_1",
+						Type: Plugin,
+						RemoveElementsFromArray: []ConfigTableFieldCondition{
+							{
+								Field:     "plugin_field_1.plugin_field_array_1",
+								Condition: "array_element_1=condition",
+							},
+						},
+					},
+				},
+			},
+			uncompressedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"name": "plugin_1",
+							"config": {
+								"plugin_field_1": {
+									"plugin_field_array_1": [
+										{
+											"array_element_1": "condition"
+										}
+									]
+								}
+							}
+						}
+					]
+				}
+			}`,
+			dataPlaneVersion: 2007000000,
+			expectedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"name": "plugin_1",
+							"config": {
+								"plugin_field_1": {
+									"plugin_field_array_1": []
+								}
+							}
+						}
+					]
+				}
+			}`,
+		},
+		{
+			name: "single field array removal with multiple items in array",
+			configTableUpdates: map[uint64][]ConfigTableUpdates{
+				2007999999: {
+					{
+						Name: "plugin_1",
+						Type: Plugin,
+						RemoveElementsFromArray: []ConfigTableFieldCondition{
+							{
+								Field:     "plugin_field_array_1",
+								Condition: "array_element_1=condition",
+							},
+						},
+					},
+				},
+			},
+			uncompressedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"name": "plugin_1",
+							"config": {
+								"plugin_field_array_1": [
+									{
+										"array_element_1": "value_index_1",
+										"array_element_2": "value_index_1",
+										"array_element_3": "value_index_1"
+									},
+									{
+										"array_element_1": "value_index_2",
+										"array_element_2": "value_index_2",
+										"array_element_3": "value_index_2"
+									},
+									{
+										"array_element_1": "condition",
+										"array_element_2": "value_index_3",
+										"array_element_3": "value_index_3"
+									},
+									{
+										"array_element_1": "value_index_4",
+										"array_element_2": "value_index_4",
+										"array_element_3": "value_index_4"
+									}
+								]
+							}
+						}
+					]
+				}
+			}`,
+			dataPlaneVersion: 2007000000,
+			expectedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"name": "plugin_1",
+							"config": {
+								"plugin_field_array_1": [
+									{
+										"array_element_1": "value_index_1",
+										"array_element_2": "value_index_1",
+										"array_element_3": "value_index_1"
+									},
+									{
+										"array_element_1": "value_index_2",
+										"array_element_2": "value_index_2",
+										"array_element_3": "value_index_2"
+									},
+									{
+										"array_element_1": "value_index_4",
+										"array_element_2": "value_index_4",
+										"array_element_3": "value_index_4"
+									}
+								]
+							}
+						}
+					]
+				}
+			}`,
+		},
+		{
+			name: "field and array removal with multiple array removals",
+			configTableUpdates: map[uint64][]ConfigTableUpdates{
+				2007999999: {
+					{
+						Name: "plugin_1",
+						Type: Plugin,
+						RemoveFields: []string{
+							"plugin_1_field_1",
+						},
+						RemoveElementsFromArray: []ConfigTableFieldCondition{
+							{
+								Field:     "plugin_field_array_2",
+								Condition: "array_element_3=condition",
+							},
+						},
+					},
+				},
+			},
+			uncompressedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"name": "plugin_1",
+							"config": {
+								"plugin_1_field_1": "element"
+								"plugin_field_array_2": [
+									{
+										"array_element_1": "value_index_1",
+										"array_element_2": "value_index_1",
+										"array_element_3": "value_index_1"
+									},
+									{
+										"array_element_1": "value_index_2",
+										"array_element_2": "value_index_2",
+										"array_element_3": "condition"
+									},
+									{
+										"array_element_1": "condition",
+										"array_element_2": "value_index_3",
+										"array_element_3": "value_index_3"
+									},
+									{
+										"array_element_1": "value_index_4",
+										"array_element_2": "value_index_4",
+										"array_element_3": "condition"
+									}
+								],
+								"plugin_1_field_3": "element"
+							}
+						}
+					]
+				}
+			}`,
+			dataPlaneVersion: 2007000000,
+			expectedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"name": "plugin_1",
+							"config": {
+								"plugin_field_array_2": [
+									{
+										"array_element_1": "value_index_1",
+										"array_element_2": "value_index_1",
+										"array_element_3": "value_index_1"
+									},
+									{
+										"array_element_1": "condition",
+										"array_element_2": "value_index_3",
+										"array_element_3": "value_index_3"
+									}
+								],
+								"plugin_1_field_3": "element"
+							}
+						}
+					]
+				}
+			}`,
+		},
+		{
+			name: "no array removal",
+			configTableUpdates: map[uint64][]ConfigTableUpdates{
+				2007999999: {
+					{
+						Name: "plugin_1",
+						Type: Plugin,
+						RemoveFields: []string{
+							"plugin_1_field_1",
+						},
+						RemoveElementsFromArray: []ConfigTableFieldCondition{
+							{
+								Field:     "plugin_field_array_2",
+								Condition: "array_element_3=condition",
+							},
+						},
+					},
+				},
+			},
+			uncompressedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"name": "plugin_1",
+							"config": {
+								"plugin_1_field_1": "element",
+								"plugin_field_array_2": [
+									{
+										"array_element_1": "condition",
+										"array_element_2": "value_index_1",
+										"array_element_3": "value_index_1"
+									},
+									{
+										"array_element_1": "value_index_2",
+										"array_element_2": "condition",
+										"array_element_3": "value_index_2"
+									}
+								],
+								"plugin_1_field_3": "element"
+							}
+						}
+					]
+				}
+			}`,
+			dataPlaneVersion: 2007000000,
+			expectedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"name": "plugin_1",
+							"config": {
+								"plugin_field_array_2": [
+									{
+										"array_element_1": "condition",
+										"array_element_2": "value_index_1",
+										"array_element_3": "value_index_1"
+									},
+									{
+										"array_element_1": "value_index_2",
+										"array_element_2": "condition",
+										"array_element_3": "value_index_2"
+									}
+								],
+								"plugin_1_field_3": "element"
+							}
+						}
+					]
+				}
+			}`,
+		},
+		{
+			name: "no array removal with multiple versions defined",
+			configTableUpdates: map[uint64][]ConfigTableUpdates{
+				2007999999: {
+					{
+						Name: "plugin_1",
+						Type: Plugin,
+						RemoveFields: []string{
+							"plugin_1_field_1",
+						},
+						RemoveElementsFromArray: []ConfigTableFieldCondition{
+							{
+								Field:     "plugin_field_array_2",
+								Condition: "array_element_3=condition",
+							},
+						},
+					},
+				},
+				2006999999: {
+					{
+						Name: "plugin_1",
+						Type: Plugin,
+						RemoveFields: []string{
+							"plugin_1_field_4",
+						},
+						RemoveElementsFromArray: []ConfigTableFieldCondition{
+							{
+								Field:     "plugin_field_array_2",
+								Condition: "array_element_2=condition",
+							},
+							{
+								Field:     "plugin_field_array_5",
+								Condition: "array_element_1=condition",
+							},
+						},
+					},
+				},
+			},
+			uncompressedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"name": "plugin_1",
+							"config": {
+								"plugin_1_field_1": "element",
+								"plugin_field_array_2": [
+									{
+										"array_element_1": "condition",
+										"array_element_2": "value_index_1",
+										"array_element_3": "value_index_1"
+									},
+									{
+										"array_element_1": "condition",
+										"array_element_2": "value_index_2",
+										"array_element_3": "value_index_2",
+										"array_element_4": "condition"
+									}
+								],
+								"plugin_1_field_3": "element",
+								"plugin_1_field_4": "element",
+								"plugin_field_array_5": [
+									{
+										"array_element_1": "value_index_1"
+									}
+								]
+							}
+						}
+					]
+				}
+			}`,
+			dataPlaneVersion: 2006000000,
+			expectedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"name": "plugin_1",
+							"config": {
+								"plugin_field_array_2": [
+									{
+										"array_element_1": "condition",
+										"array_element_2": "value_index_1",
+										"array_element_3": "value_index_1"
+									},
+									{
+										"array_element_1": "condition",
+										"array_element_2": "value_index_2",
+										"array_element_3": "value_index_2",
+										"array_element_4": "condition"
+									}
+								],
+								"plugin_1_field_3": "element",
+								"plugin_field_array_5": [
+									{
+										"array_element_1": "value_index_1"
+									}
+								]
+							}
+						}
+					]
+				}
+			}`,
+		},
+		{
+			name: "single field array removal with single item in array",
+			configTableUpdates: map[uint64][]ConfigTableUpdates{
+				2007999999: {
+					{
+						Name: "plugin_1",
+						Type: Plugin,
+						RemoveElementsFromArray: []ConfigTableFieldCondition{
+							{
+								Field:     "plugin_field_array_1",
+								Condition: "=item_3",
+							},
+						},
+					},
+				},
+			},
+			uncompressedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"name": "plugin_1",
+							"config": {
+								"plugin_field_array_1": [
+									"item_1",
+									"item_2",
+									"item_3",
+									"item_4",
+									"item_5"
+								]
+							}
+						}
+					]
+				}
+			}`,
+			dataPlaneVersion: 2007000000,
+			expectedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"name": "plugin_1",
+							"config": {
+								"plugin_field_array_1": [
+									"item_1",
+									"item_2",
+									"item_4",
+									"item_5"
+								]
+							}
+						}
+					]
+				}
+			}`,
+		},
 	}
 
 	for _, test := range tests {
-		t.Run(fmt.Sprintf("plugin field update for %s", test.name), func(t *testing.T) {
+		t.Run(fmt.Sprintf("plugin update for %s", test.name), func(t *testing.T) {
 			wsvc, err := NewVersionCompatibilityProcessor(VersionCompatibilityOpts{
 				Logger:        log.Logger,
 				KongCPVersion: "2.8.0",
@@ -867,11 +1368,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 			processedPayload, err := wsvc.processConfigTableUpdates(test.uncompressedPayload,
 				test.dataPlaneVersion)
 			require.Nil(t, err)
-
-			reg := regexp.MustCompile("[\n\\s\t]+")
-			processedPayload = reg.ReplaceAllString(processedPayload, "")
-			expectedPayload := reg.ReplaceAllString(test.expectedPayload, "")
-			require.Equal(t, expectedPayload, processedPayload)
+			require.JSONEq(t, test.expectedPayload, processedPayload)
 		})
 	}
 
@@ -951,7 +1448,7 @@ func TestVersionCompatibility_PerformExtraProcessing(t *testing.T) {
 				}
 			} else {
 				require.Nil(t, err)
-				require.Equal(t, processedPayload, test.expectedPayload)
+				require.JSONEq(t, test.expectedPayload, processedPayload)
 			}
 		})
 	}
@@ -976,7 +1473,12 @@ func TestVersionCompatibility_PerformExtraProcessing(t *testing.T) {
 		uncompressedPayload, err := UncompressPayload(processedPayloadCompressed)
 		require.Nil(t, err)
 
-		expectedPayload := `{"config_table": {"extra_processing": "processed"}, "type": "reconfigure"}`
-		require.Equal(t, []byte(expectedPayload), uncompressedPayload)
+		expectedPayload := `{
+			"config_table": {
+				"extra_processing": "processed"
+			},
+			"type": "reconfigure"
+		}`
+		require.JSONEq(t, expectedPayload, string(uncompressedPayload))
 	})
 }
