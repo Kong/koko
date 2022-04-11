@@ -47,30 +47,32 @@ const (
 //nolint: revive
 type ConfigTableFieldUpdate struct {
 	// Field to perform update or delete operation on; if Value is nil or
-	// ValueFromField is empty the field will be removed
+	// ValueFromField is empty the field will be removed.
 	Field string
-	// Value to apply to field
+	// Value when specified is the value applied to the key referenced in the
+	// member Field.
 	Value interface{}
-	// ValueFromField will copy the original value to a new or existing field
+	// ValueFromField when specified represents the name of the key whose value is
+	// retrieved and applied to the key referenced in the member Field.
 	ValueFromField string
 }
 
 //nolint: revive
 type ConfigTableFieldCondition struct {
-	// Field is a top-level or nested field; use dot notation for nested fields
+	// Field is a top-level or nested field; use dot notation for nested fields.
 	Field string
-	// Condition is an expression for matching criteria
+	// Condition is an expression for matching criteria.
 	// uses gjson path syntax; https://github.com/tidwall/gjson#path-syntax
 	Condition string
-	// Updates is an array of updates to perform based on the matched criteria
+	// Updates is an array of updates to perform based on the matched criteria.
 	Updates []ConfigTableFieldUpdate
 }
 
 //nolint: revive
 type ConfigTableUpdates struct {
-	// Name is the name of the configuration or field depending on UpdateType
+	// Name is the name of the configuration or field depending on UpdateType.
 	Name string
-	// UpdateType is the type of update being performed; currently plugins only
+	// UpdateType is the type of update being performed; currently plugins only.
 	Type UpdateType
 	// RemoveFields will remove fields from the configuration table.
 	//
