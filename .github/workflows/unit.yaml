@@ -13,7 +13,7 @@ jobs:
       KOKO_TEST_DB: ${{ matrix.database }}
     steps:
     - name: Setup go
-      uses: actions/setup-go@v2
+      uses: actions/setup-go@v3
       with:
         go-version: '^1.18'
     - name: Checkout repository
