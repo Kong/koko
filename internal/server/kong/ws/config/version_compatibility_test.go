@@ -271,6 +271,81 @@ func TestVersionCompatibility_AddConfigTableUpdates(t *testing.T) {
 			require.Equal(t, test.expectedCount, len(wsvc.configTableUpdates))
 		})
 	}
+
+	t.Run("ensure mutually exclusive attributes for FieldUpdate", func(t *testing.T) {
+		tests := []map[uint64][]ConfigTableUpdates{
+			{
+				2005999999: {
+					{
+						Name: "plugin_1",
+						Type: Plugin,
+						FieldUpdates: []ConfigTableFieldCondition{
+							{
+								Field:     "plugin_1_field_1",
+								Condition: "plugin_1_field_1=condition",
+								Updates: []ConfigTableFieldUpdate{
+									{
+										Field:          "plugin_1_field_1",
+										Value:          "value",
+										ValueFromField: "plugin_1_field_2",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			{
+				2005999999: {
+					{
+						Name: "plugin_1",
+						Type: Plugin,
+						FieldUpdates: []ConfigTableFieldCondition{
+							{
+								Field:     "plugin_1_field_2",
+								Condition: "plugin_1_field_2=condition",
+								Updates: []ConfigTableFieldUpdate{
+									{
+										Field:          "plugin_1_field_1",
+										ValueFromField: "plugin_1_field_2",
+									},
+								},
+							},
+						},
+					},
+				},
+				2004999999: {
+					{
+						Name: "plugin_1",
+						Type: Plugin,
+						FieldUpdates: []ConfigTableFieldCondition{
+							{
+								Field:     "plugin_1_field_1",
+								Condition: "plugin_1_field_1=condition",
+								Updates: []ConfigTableFieldUpdate{
+									{
+										Field:          "plugin_1_field_2",
+										Value:          "value",
+										ValueFromField: "plugin_1_field_1",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		}
+		for _, test := range tests {
+			wsvc, err := NewVersionCompatibilityProcessor(VersionCompatibilityOpts{
+				Logger:        log.Logger,
+				KongCPVersion: "2.8.0",
+			})
+			require.Nil(t, err)
+			err = wsvc.AddConfigTableUpdates(test)
+			require.NotNil(t, err)
+			require.EqualError(t, err, "'Value' and 'ValueFromField' are mutually exclusive")
+		}
+	})
 }
 
 // Used for TestVersionCompatibility_GetConfigTableUpdates.
@@ -327,6 +402,21 @@ var (
 				Type: Plugin,
 				RemoveFields: []string{
 					"plugin_1_field_1",
+				},
+				FieldUpdates: []ConfigTableFieldCondition{
+					{
+						Field:     "plugin_1_field_1",
+						Condition: "plugin_1_field_1=condition",
+						Updates: []ConfigTableFieldUpdate{
+							{
+								Field: "plugin_1_field_2",
+								Value: "value",
+							},
+							{
+								Field: "plugin_1_field_1",
+							},
+						},
+					},
 				},
 			},
 		},
@@ -1302,16 +1392,22 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 			}`,
 		},
 		{
-			name: "single field array removal with single item in array",
+			name: "single field update with single item",
 			configTableUpdates: map[uint64][]ConfigTableUpdates{
 				2007999999: {
 					{
 						Name: "plugin_1",
 						Type: Plugin,
-						RemoveElementsFromArray: []ConfigTableFieldCondition{
+						FieldUpdates: []ConfigTableFieldCondition{
 							{
-								Field:     "plugin_field_array_1",
-								Condition: "=item_3",
+								Field:     "plugin_field_1",
+								Condition: "plugin_field_1=condition",
+								Updates: []ConfigTableFieldUpdate{
+									{
+										Field: "plugin_field_1",
+										Value: "value_updated",
+									},
+								},
 							},
 						},
 					},
@@ -1323,13 +1419,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 						{
 							"name": "plugin_1",
 							"config": {
-								"plugin_field_array_1": [
-									"item_1",
-									"item_2",
-									"item_3",
-									"item_4",
-									"item_5"
-								]
+								"plugin_field_1": "condition"
 							}
 						}
 					]
@@ -1342,12 +1432,550 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 						{
 							"name": "plugin_1",
 							"config": {
-								"plugin_field_array_1": [
-									"item_1",
-									"item_2",
-									"item_4",
-									"item_5"
-								]
+								"plugin_field_1": "value_updated"
+							}
+						}
+					]
+				}
+			}`,
+		},
+		{
+			name: "field updates with multiple data types",
+			configTableUpdates: map[uint64][]ConfigTableUpdates{
+				2007999999: {
+					{
+						Name: "plugin_1",
+						Type: Plugin,
+						FieldUpdates: []ConfigTableFieldCondition{
+							{
+								Field:     "plugin_field_string",
+								Condition: "plugin_field_string=old",
+								Updates: []ConfigTableFieldUpdate{
+									{
+										Field: "plugin_field_string",
+										Value: "new",
+									},
+								},
+							},
+							{
+								Field:     "plugin_field_number",
+								Condition: "plugin_field_number=9",
+								Updates: []ConfigTableFieldUpdate{
+									{
+										Field: "plugin_field_number",
+										Value: 28,
+									},
+								},
+							},
+							{
+								Field:     "plugin_field_bool",
+								Condition: "plugin_field_bool=true",
+								Updates: []ConfigTableFieldUpdate{
+									{
+										Field: "plugin_field_bool",
+										Value: false,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			uncompressedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"name": "plugin_1",
+							"config": {
+								"plugin_field_string": "old",
+								"plugin_field_number": 9,
+								"plugin_field_bool": true
+							}
+						}
+					]
+				}
+			}`,
+			dataPlaneVersion: 2007000000,
+			expectedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"name": "plugin_1",
+							"config": {
+								"plugin_field_string": "new",
+								"plugin_field_number": 28,
+								"plugin_field_bool": false
+							}
+						}
+					]
+				}
+			}`,
+		},
+		{
+			name: "field update with multiple value updates",
+			configTableUpdates: map[uint64][]ConfigTableUpdates{
+				2007999999: {
+					{
+						Name: "plugin_1",
+						Type: Plugin,
+						FieldUpdates: []ConfigTableFieldCondition{
+							{
+								Field:     "plugin_field_1",
+								Condition: "plugin_field_1=condition",
+								Updates: []ConfigTableFieldUpdate{
+									{
+										Field: "plugin_field_1",
+										Value: "value_updated",
+									},
+									{
+										Field: "plugin_field_3",
+										Value: "value_updated",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			uncompressedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"name": "plugin_1",
+							"config": {
+								"plugin_field_1": "condition",
+								"plugin_field_2": "value",
+								"plugin_field_3": "value",
+								"plugin_field_4": "value"
+							}
+						}
+					]
+				}
+			}`,
+			dataPlaneVersion: 2007000000,
+			expectedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"name": "plugin_1",
+							"config": {
+								"plugin_field_1": "value_updated",
+								"plugin_field_2": "value",
+								"plugin_field_3": "value_updated",
+								"plugin_field_4": "value"
+							}
+						}
+					]
+				}
+			}`,
+		},
+		{
+			name: "nested field update",
+			configTableUpdates: map[uint64][]ConfigTableUpdates{
+				2007999999: {
+					{
+						Name: "plugin_1",
+						Type: Plugin,
+						FieldUpdates: []ConfigTableFieldCondition{
+							{
+								Field:     "plugin_field_1.nested_field_1",
+								Condition: "plugin_field_1.nested_field_1=condition",
+								Updates: []ConfigTableFieldUpdate{
+									{
+										Field: "plugin_field_1.nested_field_1",
+										Value: "value_updated",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			uncompressedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"name": "plugin_1",
+							"config": {
+								"plugin_field_1": {
+									"nested_field_1": "condition"
+								}
+							}
+						}
+					]
+				}
+			}`,
+			dataPlaneVersion: 2007000000,
+			expectedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"name": "plugin_1",
+							"config": {
+								"plugin_field_1": {
+									"nested_field_1": "value_updated"
+								}
+							}
+						}
+					]
+				}
+			}`,
+		},
+		{
+			name: "field update with additional nested field update",
+			configTableUpdates: map[uint64][]ConfigTableUpdates{
+				2007999999: {
+					{
+						Name: "plugin_1",
+						Type: Plugin,
+						FieldUpdates: []ConfigTableFieldCondition{
+							{
+								Field:     "plugin_field_1",
+								Condition: "plugin_field_1=condition",
+								Updates: []ConfigTableFieldUpdate{
+									{
+										Field: "plugin_field_1",
+										Value: "value_updated",
+									},
+									{
+										Field: "plugin_field_2.nested_field_1",
+										Value: "value_updated",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			uncompressedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"name": "plugin_1",
+							"config": {
+								"plugin_field_1": "condition",
+								"plugin_field_2": {
+									"nested_field_1": "value"
+								}
+							}
+						}
+					]
+				}
+			}`,
+			dataPlaneVersion: 2007000000,
+			expectedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"name": "plugin_1",
+							"config": {
+								"plugin_field_1": "value_updated",
+								"plugin_field_2": {
+									"nested_field_1": "value_updated"
+								}
+							}
+						}
+					]
+				}
+			}`,
+		},
+		{
+			name: "no field updates",
+			configTableUpdates: map[uint64][]ConfigTableUpdates{
+				2007999999: {
+					{
+						Name: "plugin_1",
+						Type: Plugin,
+						FieldUpdates: []ConfigTableFieldCondition{
+							{
+								Field:     "plugin_field_1",
+								Condition: "plugin_field_1=condition",
+								Updates: []ConfigTableFieldUpdate{
+									{
+										Field: "plugin_field_1",
+										Value: "value_updated",
+									},
+									{
+										Field: "plugin_field_2",
+										Value: "value_updated",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			uncompressedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"name": "plugin_1",
+							"config": {
+								"plugin_field_1": "value",
+								"plugin_field_2": "condition",
+								"plugin_field_3": "condition",
+								"plugin_field_4": "value"
+							}
+						}
+					]
+				}
+			}`,
+			dataPlaneVersion: 2007000000,
+			expectedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"name": "plugin_1",
+							"config": {
+								"plugin_field_1": "value",
+								"plugin_field_2": "condition",
+								"plugin_field_3": "condition",
+								"plugin_field_4": "value"
+							}
+						}
+					]
+				}
+			}`,
+		},
+		{
+			name: "field, array removal, and field update",
+			configTableUpdates: map[uint64][]ConfigTableUpdates{
+				2007999999: {
+					{
+						Name: "plugin_1",
+						Type: Plugin,
+						RemoveFields: []string{
+							"plugin_1_field_1",
+						},
+						RemoveElementsFromArray: []ConfigTableFieldCondition{
+							{
+								Field:     "plugin_field_array_2",
+								Condition: "array_element_3=condition",
+							},
+						},
+						FieldUpdates: []ConfigTableFieldCondition{
+							{
+								Field:     "plugin_1_field_3",
+								Condition: "plugin_1_field_3=condition",
+								Updates: []ConfigTableFieldUpdate{
+									{
+										Field: "plugin_1_field_3",
+										Value: "value_updated",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			uncompressedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"name": "plugin_1",
+							"config": {
+								"plugin_1_field_1": "element"
+								"plugin_field_array_2": [
+									{
+										"array_element_1": "value_index_1",
+										"array_element_2": "value_index_1",
+										"array_element_3": "value_index_1"
+									},
+									{
+										"array_element_1": "value_index_2",
+										"array_element_2": "value_index_2",
+										"array_element_3": "condition"
+									},
+									{
+										"array_element_1": "condition",
+										"array_element_2": "value_index_3",
+										"array_element_3": "value_index_3"
+									},
+									{
+										"array_element_1": "value_index_4",
+										"array_element_2": "value_index_4",
+										"array_element_3": "condition"
+									}
+								],
+								"plugin_1_field_3": "condition",
+								"plugin_1_field_4": "value"
+							}
+						}
+					]
+				}
+			}`,
+			dataPlaneVersion: 2007000000,
+			expectedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"name": "plugin_1",
+							"config": {
+								"plugin_field_array_2": [
+									{
+										"array_element_1": "value_index_1",
+										"array_element_2": "value_index_1",
+										"array_element_3": "value_index_1"
+									},
+									{
+										"array_element_1": "condition",
+										"array_element_2": "value_index_3",
+										"array_element_3": "value_index_3"
+									}
+								],
+								"plugin_1_field_3": "value_updated",
+								"plugin_1_field_4": "value"
+							}
+						}
+					]
+				}
+			}`,
+		},
+		{
+			name: "field value create based on other field and delete",
+			configTableUpdates: map[uint64][]ConfigTableUpdates{
+				2007999999: {
+					{
+						Name: "plugin_1",
+						Type: Plugin,
+						FieldUpdates: []ConfigTableFieldCondition{
+							{
+								Field:     "plugin_field_1",
+								Condition: "plugin_field_1",
+								Updates: []ConfigTableFieldUpdate{
+									{
+										Field:          "plugin_field_2",
+										ValueFromField: "plugin_field_1",
+									},
+									{
+										Field: "plugin_field_1",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			uncompressedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"name": "plugin_1",
+							"config": {
+								"plugin_field_1": "value"
+							}
+						}
+					]
+				}
+			}`,
+			dataPlaneVersion: 2007000000,
+			expectedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"name": "plugin_1",
+							"config": {
+								"plugin_field_2": "value"
+							}
+						}
+					]
+				}
+			}`,
+		},
+		{
+			name: "field value update based on other field and delete",
+			configTableUpdates: map[uint64][]ConfigTableUpdates{
+				2007999999: {
+					{
+						Name: "plugin_1",
+						Type: Plugin,
+						FieldUpdates: []ConfigTableFieldCondition{
+							{
+								Field:     "plugin_field_1",
+								Condition: "plugin_field_1",
+								Updates: []ConfigTableFieldUpdate{
+									{
+										Field:          "plugin_field_2",
+										ValueFromField: "plugin_field_1",
+									},
+									{
+										Field: "plugin_field_1",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			uncompressedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"name": "plugin_1",
+							"config": {
+								"plugin_field_1": "plugin_field_1_value"
+								"plugin_field_2": "value"
+							}
+						}
+					]
+				}
+			}`,
+			dataPlaneVersion: 2007000000,
+			expectedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"name": "plugin_1",
+							"config": {
+								"plugin_field_2": "plugin_field_1_value"
+							}
+						}
+					]
+				}
+			}`,
+		},
+		{
+			name: "field value based on non-existing field; ensure no change",
+			configTableUpdates: map[uint64][]ConfigTableUpdates{
+				2007999999: {
+					{
+						Name: "plugin_1",
+						Type: Plugin,
+						FieldUpdates: []ConfigTableFieldCondition{
+							{
+								Field:     "plugin_field_1",
+								Condition: "plugin_field_1",
+								Updates: []ConfigTableFieldUpdate{
+									{
+										Field:          "plugin_field_2",
+										ValueFromField: "plugin_field_2",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			uncompressedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"name": "plugin_1",
+							"config": {
+								"plugin_field_1": "value"
+							}
+						}
+					]
+				}
+			}`,
+			dataPlaneVersion: 2007000000,
+			expectedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"name": "plugin_1",
+							"config": {
+								"plugin_field_1": "value"
 							}
 						}
 					]
