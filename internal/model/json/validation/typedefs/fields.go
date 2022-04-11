@@ -153,13 +153,13 @@ var CIDRPort = &generator.Schema{
 		},
 		"port": Port,
 	},
-	OneOf: []*generator.Schema{
+	AnyOf: []*generator.Schema{
 		{
-			Description: "either one of 'ip' or 'port' is required",
+			Description: "at least one of 'ip' or 'port' is required",
 			Required:    []string{"ip"},
 		},
 		{
-			Description: "either one of 'ip' or 'port' is required",
+			Description: "at least one of 'ip' or 'port' is required",
 			Required:    []string{"port"},
 		},
 	},
