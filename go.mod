@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	github.com/bufbuild/buf v1.3.1
-	github.com/cenkalti/backoff/v4 v4.1.2
+	github.com/cenkalti/backoff/v4 v4.1.3
 	github.com/gavv/httpexpect/v2 v2.3.1
 	github.com/ghodss/yaml v1.0.0
 	github.com/golang-migrate/migrate/v4 v4.15.1
