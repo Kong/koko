@@ -284,7 +284,7 @@ func TestVersionCompatibility(t *testing.T) {
 				"header_type": "ignore"
 			}`,
 			fieldUpdateChecks: map[string][]update{
-				"2.7.0": {
+				"< 2.7.0": {
 					{
 						field: "header_type",
 						value: "preserve",
@@ -359,7 +359,8 @@ func ensurePlugins(plugins []vcPlugins) error {
 					configStr := string(config)
 
 					for version, updates := range plugin.fieldUpdateChecks {
-						if dataPlaneVersion.LT(semver.MustParse(version)) {
+						version := semver.MustParseRange(version)
+						if version(dataPlaneVersion) {
 							for _, update := range updates {
 								res := gjson.Get(configStr, update.field)
 								if !res.Exists() || res.Value() != update.value {
