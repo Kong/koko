@@ -48,11 +48,18 @@ func serveMain(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+
+	metricsClient, err := config.ParseMetricsClient(opts.Config.MetricsClient)
+	if err != nil {
+		return err
+	}
+
 	return Run(ctx, ServerConfig{
-		DPAuthCert: cert,
-		KongCPCert: cert,
-		Logger:     logger,
-		Database:   opts.Config.Database,
+		DPAuthCert:    cert,
+		KongCPCert:    cert,
+		Logger:        logger,
+		Database:      opts.Config.Database,
+		MetricsClient: metricsClient,
 	})
 }
 

@@ -54,6 +54,10 @@ const (
 	DPAuthPKIMTLS
 )
 
+const (
+	metricPrefix = "koko."
+)
+
 func Run(ctx context.Context, config ServerConfig) error {
 	logger := config.Logger
 	var g gang.Gang
@@ -394,14 +398,13 @@ func runMigrations(m *db.Migrator) error {
 }
 
 func initStatsClient(logger *zap.Logger, metricClient config.MetricsClient) http.Handler {
-	metricClient = config.Datadog
 	switch metricClient {
 	case config.StatsD:
 		host := os.Getenv("STATSD_HOST")
 		if host == "" {
 			panic("StatsD environment variable 'STATSD_HOST' must be set")
 		}
-		stats.Register(datadog.NewClient(host))
+		stats.DefaultEngine = stats.NewEngine(metricPrefix, datadog.NewClient(host))
 		fallthrough
 	case config.Datadog:
 		ddEnvTagsMapping := []struct{ envVar, tagName string }{
@@ -410,7 +413,7 @@ func initStatsClient(logger *zap.Logger, metricClient config.MetricsClient) http
 			{"DD_SERVICE", "service"},
 			{"DD_VERSION", "version"},
 		}
-		tags := make([]stats.Tag, 0, 4)
+		tags := make([]stats.Tag, 0, len(ddEnvTagsMapping))
 		for _, ddenv := range ddEnvTagsMapping {
 			if v := os.Getenv(ddenv.envVar); v != "" {
 				tags = append(tags, stats.Tag{Name: ddenv.tagName, Value: v})
@@ -422,9 +425,9 @@ func initStatsClient(logger *zap.Logger, metricClient config.MetricsClient) http
 			panic("Datadog client environment variable 'DD_AGENT_HOST' must be set")
 		}
 
-		stats.DefaultEngine = stats.NewEngine("koko", datadog.NewClient(agent), tags...)
+		stats.DefaultEngine = stats.NewEngine(metricPrefix, datadog.NewClient(agent), tags...)
 	case config.Prometheus:
-		stats.Register(prometheus.DefaultHandler)
+		stats.DefaultEngine = stats.NewEngine(metricPrefix, prometheus.DefaultHandler)
 		return prometheus.DefaultHandler
 	case config.NoOpClient:
 		fallthrough

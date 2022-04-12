@@ -41,8 +41,9 @@ type Database struct {
 }
 
 type Config struct {
-	Log      Log           `json:"log,omitempty"`
-	Admin    Admin         `json:"admin,omitempty"`
-	Control  ControlServer `json:"control_server,omitempty"`
-	Database Database      `json:"database,omitempty"`
+	Log           Log           `json:"log,omitempty"`
+	Admin         Admin         `json:"admin,omitempty"`
+	Control       ControlServer `json:"control_server,omitempty"`
+	Database      Database      `json:"database,omitempty"`
+	MetricsClient string        `json:"metrics_client,omitempty"`
 }
