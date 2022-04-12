@@ -28,7 +28,7 @@ func (s *UpstreamService) GetUpstream(ctx context.Context,
 	result := resource.NewUpstream()
 	err = getEntityByIDOrName(ctx, req.Id, result, store.GetByName(req.Id), db, s.logger)
 	if err != nil {
-		return nil, s.err(err)
+		return nil, s.err(ctx, err)
 	}
 	return &v1.GetUpstreamResponse{
 		Item: result.Upstream,
@@ -45,7 +45,7 @@ func (s *UpstreamService) CreateUpstream(ctx context.Context,
 	res := resource.NewUpstream()
 	res.Upstream = req.Item
 	if err := db.Create(ctx, res); err != nil {
-		return nil, s.err(err)
+		return nil, s.err(ctx, err)
 	}
 	util.SetHeader(ctx, http.StatusCreated)
 	return &v1.CreateUpstreamResponse{
@@ -57,7 +57,7 @@ func (s *UpstreamService) UpsertUpstream(ctx context.Context,
 	req *v1.UpsertUpstreamRequest,
 ) (*v1.UpsertUpstreamResponse, error) {
 	if err := validUUID(req.Item.Id); err != nil {
-		return nil, s.err(err)
+		return nil, s.err(ctx, err)
 	}
 	db, err := s.CommonOpts.getDB(ctx, req.Cluster)
 	if err != nil {
@@ -66,7 +66,7 @@ func (s *UpstreamService) UpsertUpstream(ctx context.Context,
 	res := resource.NewUpstream()
 	res.Upstream = req.Item
 	if err := db.Upsert(ctx, res); err != nil {
-		return nil, s.err(err)
+		return nil, s.err(ctx, err)
 	}
 	return &v1.UpsertUpstreamResponse{
 		Item: res.Upstream,
@@ -77,7 +77,7 @@ func (s *UpstreamService) DeleteUpstream(ctx context.Context,
 	req *v1.DeleteUpstreamRequest,
 ) (*v1.DeleteUpstreamResponse, error) {
 	if err := validUUID(req.Id); err != nil {
-		return nil, s.err(err)
+		return nil, s.err(ctx, err)
 	}
 	db, err := s.CommonOpts.getDB(ctx, req.Cluster)
 	if err != nil {
@@ -86,7 +86,7 @@ func (s *UpstreamService) DeleteUpstream(ctx context.Context,
 	err = db.Delete(ctx, store.DeleteByID(req.Id),
 		store.DeleteByType(resource.TypeUpstream))
 	if err != nil {
-		return nil, s.err(err)
+		return nil, s.err(ctx, err)
 	}
 	util.SetHeader(ctx, http.StatusNoContent)
 	return &v1.DeleteUpstreamResponse{}, nil
@@ -102,11 +102,11 @@ func (s *UpstreamService) ListUpstreams(ctx context.Context,
 	list := resource.NewList(resource.TypeUpstream)
 	listOptFns, err := listOptsFromReq(req.Page)
 	if err != nil {
-		return nil, s.err(util.ErrClient{Message: err.Error()})
+		return nil, s.err(ctx, util.ErrClient{Message: err.Error()})
 	}
 
 	if err := db.List(ctx, list, listOptFns...); err != nil {
-		return nil, s.err(err)
+		return nil, s.err(ctx, err)
 	}
 
 	return &v1.ListUpstreamsResponse{
@@ -115,8 +115,8 @@ func (s *UpstreamService) ListUpstreams(ctx context.Context,
 	}, nil
 }
 
-func (s *UpstreamService) err(err error) error {
-	return util.HandleErr(s.logger, err)
+func (s *UpstreamService) err(ctx context.Context, err error) error {
+	return util.HandleErr(ctx, s.logger, err)
 }
 
 func upstreamsFromObjects(objects []model.Object) []*pbModel.Upstream {
