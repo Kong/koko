@@ -33,7 +33,7 @@ func (s *StatusService) GetHash(ctx context.Context,
 	result := resource.NewHash()
 	err = db.Read(ctx, result, store.GetByID(result.ID()))
 	if err != nil {
-		return nil, s.err(err)
+		return nil, s.err(ctx, err)
 	}
 	return &v1.GetHashResponse{
 		ExpectedHash: result.Hash.ExpectedHash,
