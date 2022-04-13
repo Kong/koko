@@ -66,6 +66,7 @@ func getPaginationResponse(totalCount int, nextPage int) *pbModel.PaginationResp
 func getEntityByIDOrName(ctx context.Context, idOrName string, entity model.Object, nameOpt store.ReadOptsFunc,
 	s store.Store, logger *zap.Logger,
 ) error {
+	logger = util.LoggerWithSpan(ctx, logger)
 	if idOrName == "" {
 		return util.ErrClient{Message: "required ID is missing"}
 	}

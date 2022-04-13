@@ -23,7 +23,7 @@ func (s *SchemasService) GetSchemas(ctx context.Context,
 	req *v1.GetSchemasRequest,
 ) (*v1.GetSchemasResponse, error) {
 	if req.Name == "" {
-		return nil, s.err(util.ErrClient{Message: "required name is missing"})
+		return nil, s.err(ctx, util.ErrClient{Message: "required name is missing"})
 	}
 
 	// Retrieve the raw JSON based on entity name
@@ -37,7 +37,7 @@ func (s *SchemasService) GetSchemas(ctx context.Context,
 	jsonSchema := &structpb.Struct{}
 	err = json.Unmarshal(rawJSONSchema, jsonSchema)
 	if err != nil {
-		return nil, s.err(err)
+		return nil, s.err(ctx, err)
 	}
 	return &v1.GetSchemasResponse{
 		Schema: jsonSchema,
@@ -48,7 +48,7 @@ func (s *SchemasService) GetLuaSchemasPlugin(ctx context.Context,
 	req *v1.GetLuaSchemasPluginRequest,
 ) (*v1.GetLuaSchemasPluginResponse, error) {
 	if req.Name == "" {
-		return nil, s.err(util.ErrClient{Message: "required name is missing"})
+		return nil, s.err(ctx, util.ErrClient{Message: "required name is missing"})
 	}
 
 	// Retrieve the raw JSON based on plugin name
@@ -62,13 +62,13 @@ func (s *SchemasService) GetLuaSchemasPlugin(ctx context.Context,
 	luaSchema := &structpb.Struct{}
 	err = json.Unmarshal(rawLuaSchema, luaSchema)
 	if err != nil {
-		return nil, s.err(err)
+		return nil, s.err(ctx, err)
 	}
 	return &v1.GetLuaSchemasPluginResponse{
 		Schema: luaSchema,
 	}, nil
 }
 
-func (s *SchemasService) err(err error) error {
-	return util.HandleErr(s.logger, err)
+func (s *SchemasService) err(ctx context.Context, err error) error {
+	return util.HandleErr(ctx, s.logger, err)
 }

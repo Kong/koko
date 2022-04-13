@@ -28,7 +28,7 @@ func (s *ServiceService) GetService(ctx context.Context,
 	result := resource.NewService()
 	err = getEntityByIDOrName(ctx, req.Id, result, store.GetByName(req.Id), db, s.logger)
 	if err != nil {
-		return nil, s.err(err)
+		return nil, s.err(ctx, err)
 	}
 	return &v1.GetServiceResponse{
 		Item: result.Service,
@@ -45,7 +45,7 @@ func (s *ServiceService) CreateService(ctx context.Context,
 	res := resource.NewService()
 	res.Service = req.Item
 	if err := db.Create(ctx, res); err != nil {
-		return nil, s.err(err)
+		return nil, s.err(ctx, err)
 	}
 	util.SetHeader(ctx, http.StatusCreated)
 	return &v1.CreateServiceResponse{
@@ -57,7 +57,7 @@ func (s *ServiceService) UpsertService(ctx context.Context,
 	req *v1.UpsertServiceRequest,
 ) (*v1.UpsertServiceResponse, error) {
 	if err := validUUID(req.Item.Id); err != nil {
-		return nil, s.err(err)
+		return nil, s.err(ctx, err)
 	}
 	db, err := s.CommonOpts.getDB(ctx, req.Cluster)
 	if err != nil {
@@ -66,7 +66,7 @@ func (s *ServiceService) UpsertService(ctx context.Context,
 	res := resource.NewService()
 	res.Service = req.Item
 	if err := db.Upsert(ctx, res); err != nil {
-		return nil, s.err(err)
+		return nil, s.err(ctx, err)
 	}
 	return &v1.UpsertServiceResponse{
 		Item: res.Service,
@@ -77,7 +77,7 @@ func (s *ServiceService) DeleteService(ctx context.Context,
 	req *v1.DeleteServiceRequest,
 ) (*v1.DeleteServiceResponse, error) {
 	if err := validUUID(req.Id); err != nil {
-		return nil, s.err(err)
+		return nil, s.err(ctx, err)
 	}
 	db, err := s.CommonOpts.getDB(ctx, req.Cluster)
 	if err != nil {
@@ -86,7 +86,7 @@ func (s *ServiceService) DeleteService(ctx context.Context,
 	err = db.Delete(ctx, store.DeleteByID(req.Id),
 		store.DeleteByType(resource.TypeService))
 	if err != nil {
-		return nil, s.err(err)
+		return nil, s.err(ctx, err)
 	}
 	util.SetHeader(ctx, http.StatusNoContent)
 	return &v1.DeleteServiceResponse{}, nil
@@ -102,11 +102,11 @@ func (s *ServiceService) ListServices(ctx context.Context,
 	list := resource.NewList(resource.TypeService)
 	listOptFns, err := listOptsFromReq(req.Page)
 	if err != nil {
-		return nil, s.err(util.ErrClient{Message: err.Error()})
+		return nil, s.err(ctx, util.ErrClient{Message: err.Error()})
 	}
 
 	if err := db.List(ctx, list, listOptFns...); err != nil {
-		return nil, s.err(err)
+		return nil, s.err(ctx, err)
 	}
 
 	return &v1.ListServicesResponse{
@@ -115,8 +115,8 @@ func (s *ServiceService) ListServices(ctx context.Context,
 	}, nil
 }
 
-func (s *ServiceService) err(err error) error {
-	return util.HandleErr(s.logger, err)
+func (s *ServiceService) err(ctx context.Context, err error) error {
+	return util.HandleErr(ctx, s.logger, err)
 }
 
 func servicesFromObjects(objects []model.Object) []*pbModel.Service {

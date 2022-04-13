@@ -86,7 +86,7 @@ func Run(ctx context.Context, config ServerConfig) error {
 	s, err := server.NewHTTP(server.HTTPOpts{
 		Address: ":3000",
 		Logger:  adminLogger,
-		Handler: h,
+		Handler: serverUtil.HandlerWithLogger(h, adminLogger),
 	})
 	if err != nil {
 		return err
@@ -251,7 +251,7 @@ func Run(ctx context.Context, config ServerConfig) error {
 	s, err = server.NewHTTP(server.HTTPOpts{
 		Address: ":3100",
 		Logger:  controlLogger,
-		Handler: handler,
+		Handler: serverUtil.HandlerWithLogger(handler, controlLogger),
 		TLS: &tls.Config{
 			MinVersion:   tls.VersionTLS12,
 			Certificates: []tls.Certificate{config.KongCPCert},

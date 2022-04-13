@@ -30,7 +30,7 @@ func (s *RouteService) GetRoute(ctx context.Context,
 	result := resource.NewRoute()
 	err = getEntityByIDOrName(ctx, req.Id, result, store.GetByName(req.Id), db, s.logger)
 	if err != nil {
-		return nil, s.err(err)
+		return nil, s.err(ctx, err)
 	}
 	return &v1.GetRouteResponse{
 		Item: result.Route,
@@ -47,7 +47,7 @@ func (s *RouteService) CreateRoute(ctx context.Context,
 	res := resource.NewRoute()
 	res.Route = req.Item
 	if err := db.Create(ctx, res); err != nil {
-		return nil, s.err(err)
+		return nil, s.err(ctx, err)
 	}
 	util.SetHeader(ctx, http.StatusCreated)
 	return &v1.CreateRouteResponse{
@@ -59,7 +59,7 @@ func (s *RouteService) UpsertRoute(ctx context.Context,
 	req *v1.UpsertRouteRequest,
 ) (*v1.UpsertRouteResponse, error) {
 	if err := validUUID(req.Item.Id); err != nil {
-		return nil, s.err(err)
+		return nil, s.err(ctx, err)
 	}
 	db, err := s.CommonOpts.getDB(ctx, req.Cluster)
 	if err != nil {
@@ -68,7 +68,7 @@ func (s *RouteService) UpsertRoute(ctx context.Context,
 	res := resource.NewRoute()
 	res.Route = req.Item
 	if err := db.Upsert(ctx, res); err != nil {
-		return nil, s.err(err)
+		return nil, s.err(ctx, err)
 	}
 	return &v1.UpsertRouteResponse{
 		Item: res.Route,
@@ -79,7 +79,7 @@ func (s *RouteService) DeleteRoute(ctx context.Context,
 	req *v1.DeleteRouteRequest,
 ) (*v1.DeleteRouteResponse, error) {
 	if err := validUUID(req.Id); err != nil {
-		return nil, s.err(err)
+		return nil, s.err(ctx, err)
 	}
 	db, err := s.CommonOpts.getDB(ctx, req.Cluster)
 	if err != nil {
@@ -88,7 +88,7 @@ func (s *RouteService) DeleteRoute(ctx context.Context,
 	err = db.Delete(ctx, store.DeleteByID(req.Id),
 		store.DeleteByType(resource.TypeRoute))
 	if err != nil {
-		return nil, s.err(err)
+		return nil, s.err(ctx, err)
 	}
 	util.SetHeader(ctx, http.StatusNoContent)
 	return &v1.DeleteRouteResponse{}, nil
@@ -106,7 +106,7 @@ func (s *RouteService) ListRoutes(ctx context.Context,
 	listFn := []store.ListOptsFunc{}
 	if len(serviceID) > 0 {
 		if _, err := uuid.Parse(serviceID); err != nil {
-			return nil, s.err(util.ErrClient{
+			return nil, s.err(ctx, util.ErrClient{
 				Message: fmt.Sprintf("service_id '%s' is not a UUID", req.ServiceId),
 			})
 		}
@@ -116,13 +116,13 @@ func (s *RouteService) ListRoutes(ctx context.Context,
 	list := resource.NewList(resource.TypeRoute)
 	listOptFns, err := listOptsFromReq(req.Page)
 	if err != nil {
-		return nil, s.err(util.ErrClient{Message: err.Error()})
+		return nil, s.err(ctx, util.ErrClient{Message: err.Error()})
 	}
 
 	listFn = append(listFn, listOptFns...)
 
 	if err := db.List(ctx, list, listFn...); err != nil {
-		return nil, s.err(err)
+		return nil, s.err(ctx, err)
 	}
 
 	return &v1.ListRoutesResponse{
@@ -131,8 +131,8 @@ func (s *RouteService) ListRoutes(ctx context.Context,
 	}, nil
 }
 
-func (s *RouteService) err(err error) error {
-	return util.HandleErr(s.logger, err)
+func (s *RouteService) err(ctx context.Context, err error) error {
+	return util.HandleErr(ctx, s.logger, err)
 }
 
 func routesFromObjects(objects []model.Object) []*pbModel.Route {

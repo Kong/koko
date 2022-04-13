@@ -23,7 +23,7 @@ func (s *CertificateService) GetCertificate(ctx context.Context,
 	req *v1.GetCertificateRequest,
 ) (*v1.GetCertificateResponse, error) {
 	if req.Id == "" {
-		return nil, s.err(util.ErrClient{Message: "required ID is missing"})
+		return nil, s.err(ctx, util.ErrClient{Message: "required ID is missing"})
 	}
 	db, err := s.CommonOpts.getDB(ctx, req.Cluster)
 	if err != nil {
@@ -33,7 +33,7 @@ func (s *CertificateService) GetCertificate(ctx context.Context,
 	s.logger.With(zap.String("id", req.Id)).Debug("reading certificate by id")
 	err = db.Read(ctx, result, store.GetByID(req.Id))
 	if err != nil {
-		return nil, s.err(err)
+		return nil, s.err(ctx, err)
 	}
 	return &v1.GetCertificateResponse{
 		Item: result.Certificate,
@@ -50,7 +50,7 @@ func (s *CertificateService) CreateCertificate(ctx context.Context,
 	res := resource.NewCertificate()
 	res.Certificate = req.Item
 	if err := db.Create(ctx, res); err != nil {
-		return nil, s.err(err)
+		return nil, s.err(ctx, err)
 	}
 	util.SetHeader(ctx, http.StatusCreated)
 	return &v1.CreateCertificateResponse{
@@ -62,7 +62,7 @@ func (s *CertificateService) UpsertCertificate(ctx context.Context,
 	req *v1.UpsertCertificateRequest,
 ) (*v1.UpsertCertificateResponse, error) {
 	if err := validUUID(req.Item.Id); err != nil {
-		return nil, s.err(err)
+		return nil, s.err(ctx, err)
 	}
 	db, err := s.CommonOpts.getDB(ctx, req.Cluster)
 	if err != nil {
@@ -71,7 +71,7 @@ func (s *CertificateService) UpsertCertificate(ctx context.Context,
 	res := resource.NewCertificate()
 	res.Certificate = req.Item
 	if err := db.Upsert(ctx, res); err != nil {
-		return nil, s.err(err)
+		return nil, s.err(ctx, err)
 	}
 	return &v1.UpsertCertificateResponse{
 		Item: res.Certificate,
@@ -82,7 +82,7 @@ func (s *CertificateService) DeleteCertificate(ctx context.Context,
 	req *v1.DeleteCertificateRequest,
 ) (*v1.DeleteCertificateResponse, error) {
 	if err := validUUID(req.Id); err != nil {
-		return nil, s.err(err)
+		return nil, s.err(ctx, err)
 	}
 	db, err := s.CommonOpts.getDB(ctx, req.Cluster)
 	if err != nil {
@@ -91,7 +91,7 @@ func (s *CertificateService) DeleteCertificate(ctx context.Context,
 	err = db.Delete(ctx, store.DeleteByID(req.Id),
 		store.DeleteByType(resource.TypeCertificate))
 	if err != nil {
-		return nil, s.err(err)
+		return nil, s.err(ctx, err)
 	}
 	util.SetHeader(ctx, http.StatusNoContent)
 	return &v1.DeleteCertificateResponse{}, nil
@@ -107,10 +107,10 @@ func (s *CertificateService) ListCertificates(ctx context.Context,
 	list := resource.NewList(resource.TypeCertificate)
 	listOptFns, err := listOptsFromReq(req.Page)
 	if err != nil {
-		return nil, s.err(util.ErrClient{Message: err.Error()})
+		return nil, s.err(ctx, util.ErrClient{Message: err.Error()})
 	}
 	if err := db.List(ctx, list, listOptFns...); err != nil {
-		return nil, s.err(err)
+		return nil, s.err(ctx, err)
 	}
 	return &v1.ListCertificatesResponse{
 		Items: certificatesFromObjects(list.GetAll()),
@@ -118,8 +118,8 @@ func (s *CertificateService) ListCertificates(ctx context.Context,
 	}, nil
 }
 
-func (s *CertificateService) err(err error) error {
-	return util.HandleErr(s.logger, err)
+func (s *CertificateService) err(ctx context.Context, err error) error {
+	return util.HandleErr(ctx, s.logger, err)
 }
 
 func certificatesFromObjects(objects []model.Object) []*pb.Certificate {
