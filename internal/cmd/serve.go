@@ -7,6 +7,7 @@ import (
 
 	"github.com/kong/koko/internal/config"
 	"github.com/kong/koko/internal/log"
+	"github.com/kong/koko/internal/metrics"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 )
@@ -49,7 +50,7 @@ func serveMain(ctx context.Context) error {
 		return err
 	}
 
-	metricsClient, err := config.ParseMetricsClient(opts.Config.MetricsClient)
+	metricsClient, err := metrics.ParseClient(opts.Config.MetricsClient)
 	if err != nil {
 		return err
 	}

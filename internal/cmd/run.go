@@ -5,8 +5,6 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
-	"net/http"
-	"os"
 
 	"github.com/hbagdi/gang"
 	"github.com/kong/koko/internal/config"
@@ -14,6 +12,7 @@ import (
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/service/v1"
 	relay "github.com/kong/koko/internal/gen/grpc/kong/relay/service/v1"
 	grpcKongUtil "github.com/kong/koko/internal/gen/grpc/kong/util/v1"
+	"github.com/kong/koko/internal/metrics"
 	"github.com/kong/koko/internal/persistence"
 	"github.com/kong/koko/internal/plugin"
 	"github.com/kong/koko/internal/resource"
@@ -27,9 +26,6 @@ import (
 	serverUtil "github.com/kong/koko/internal/server/util"
 	"github.com/kong/koko/internal/store"
 	"github.com/kong/koko/internal/util"
-	"github.com/segmentio/stats/v4"
-	"github.com/segmentio/stats/v4/datadog"
-	"github.com/segmentio/stats/v4/prometheus"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -43,7 +39,7 @@ type ServerConfig struct {
 	KongCPCert tls.Certificate
 
 	Logger        *zap.Logger
-	MetricsClient config.MetricsClient
+	MetricsClient metrics.Client
 	Database      config.Database
 }
 
@@ -54,15 +50,11 @@ const (
 	DPAuthPKIMTLS
 )
 
-const (
-	metricPrefix = "koko."
-)
-
 func Run(ctx context.Context, config ServerConfig) error {
 	logger := config.Logger
 	var g gang.Gang
 
-	metricsHandler := initStatsClient(logger, config.MetricsClient)
+	metricsHandler := metrics.InitStatsClient(logger, config.MetricsClient)
 	if metricsHandler != nil {
 		s, err := server.NewHTTP(server.HTTPOpts{
 			Address: ":9090",
@@ -393,46 +385,6 @@ func setupDB(logger *zap.Logger, configDB config.Database) (persistence.Persiste
 func runMigrations(m *db.Migrator) error {
 	if err := m.Up(); err != nil {
 		return fmt.Errorf("migrating database: %v", err)
-	}
-	return nil
-}
-
-func initStatsClient(logger *zap.Logger, metricClient config.MetricsClient) http.Handler {
-	switch metricClient {
-	case config.StatsD:
-		host := os.Getenv("STATSD_HOST")
-		if host == "" {
-			panic("StatsD environment variable 'STATSD_HOST' must be set")
-		}
-		stats.DefaultEngine = stats.NewEngine(metricPrefix, datadog.NewClient(host))
-		fallthrough
-	case config.Datadog:
-		ddEnvTagsMapping := []struct{ envVar, tagName string }{
-			{"DD_ENTITY_ID", "dd.internal.entity_id"},
-			{"DD_ENV", "env"},
-			{"DD_SERVICE", "service"},
-			{"DD_VERSION", "version"},
-		}
-		tags := make([]stats.Tag, 0, len(ddEnvTagsMapping))
-		for _, ddenv := range ddEnvTagsMapping {
-			if v := os.Getenv(ddenv.envVar); v != "" {
-				tags = append(tags, stats.Tag{Name: ddenv.tagName, Value: v})
-			}
-		}
-
-		agent := os.Getenv("DD_AGENT_HOST")
-		if agent == "" {
-			panic("Datadog client environment variable 'DD_AGENT_HOST' must be set")
-		}
-
-		stats.DefaultEngine = stats.NewEngine(metricPrefix, datadog.NewClient(agent), tags...)
-	case config.Prometheus:
-		stats.DefaultEngine = stats.NewEngine(metricPrefix, prometheus.DefaultHandler)
-		return prometheus.DefaultHandler
-	case config.NoOpClient:
-		fallthrough
-	default:
-		logger.Info("metrics client config not set")
 	}
 	return nil
 }
