@@ -13,6 +13,8 @@ service StatusService {
   rpc UpdateStatus(UpdateStatusRequest) returns (UpdateStatusResponse);
   // ClearStatus deletes any status associated with the entity in the request.
   rpc ClearStatus(ClearStatusRequest) returns (ClearStatusResponse);
+
+  rpc UpdateExpectedHash(UpdateExpectedHashRequest) returns (UpdateExpectedHashResponse);
 }
 
 message UpdateStatusRequest {
@@ -30,3 +32,10 @@ message ClearStatusRequest {
 }
 
 message ClearStatusResponse {}
+
+message UpdateExpectedHashRequest {
+  string hash = 1;
+  admin.model.v1.RequestCluster cluster = 2;
+}
+
+message UpdateExpectedHashResponse {}
