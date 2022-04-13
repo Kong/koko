@@ -1,7 +1,7 @@
 name: "PR label check"
 on:
   pull_request:
-    types: [opened, labeled, unlabeled, synchronize]
+    types: [synchronize, opened, reopened, labeled, unlabeled]
 jobs:
   check-labels:
     name: prevent merge labels
