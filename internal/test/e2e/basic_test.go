@@ -670,3 +670,126 @@ func TestDataPlanePluginCheck(t *testing.T) {
 		return nil
 	})
 }
+
+func TestExpectedConfigHash(t *testing.T) {
+	// ensure that expected config hash is generated and stored by manager
+	// ensure that the generated configuration matches up with the one reported
+	// by the data-plane
+	cleanup := run.Koko(t)
+	defer cleanup()
+
+	fooService := &v1.Service{
+		Id:   uuid.NewString(),
+		Name: "foo",
+		Host: "httpbin.org",
+		Path: "/",
+	}
+	c := httpexpect.New(t, "http://localhost:3000")
+	res := c.POST("/v1/services").WithJSON(fooService).Expect()
+	res.Status(201)
+	fooRoute := &v1.Route{
+		Name:  "bar",
+		Paths: []string{"/"},
+		Service: &v1.Service{
+			Id: fooService.Id,
+		},
+	}
+	res = c.POST("/v1/routes").WithJSON(fooRoute).Expect()
+	res.Status(201)
+
+	dpCleanup := run.KongDP(kong.GetKongConfForShared())
+	defer dpCleanup()
+
+	require.Nil(t, util.WaitForKong(t))
+	kongClient.RunWhenKong(t, ">= 2.5.0")
+
+	// ensure kong node is up
+	require.Nil(t, util.WaitForKongPort(t, 8001))
+
+	expectedConfig := &v1.TestingConfig{
+		Services: []*v1.Service{fooService},
+		Routes:   []*v1.Route{fooRoute},
+	}
+	util.WaitFunc(t, func() error {
+		return util.EnsureConfig(expectedConfig)
+	})
+
+	hashFromDPAfterFoo := ""
+	util.WaitFunc(t, func() error {
+		// once node is up, check the status endpoint
+		res = c.GET("/v1/nodes").Expect()
+		res.Status(http.StatusOK)
+		body := gjson.Parse(res.Body().Raw())
+		hash := body.Get("items.0.config_hash").String()
+		if len(hash) != 32 {
+			return fmt.Errorf(
+				"expected config hash to be 32 character long")
+		}
+		if hash == strings.Repeat("0", 32) {
+			return fmt.Errorf("expected hash to not be a string of 0s")
+		}
+		hashFromDPAfterFoo = hash
+		return nil
+	})
+
+	res = c.GET("/v1/expected-config-hash").Expect()
+	res.Status(200)
+	expectedHash := res.JSON().Object().Value("expected_hash").String().Raw()
+	require.Equal(t, expectedHash, hashFromDPAfterFoo)
+
+	// ensure that a hash is updated on the node and in the database after a
+	// configuration change
+	barService := &v1.Service{
+		Id:   uuid.NewString(),
+		Name: "bar",
+		Host: "httpbin.org",
+		Path: "/",
+	}
+	res = c.POST("/v1/services").WithJSON(barService).Expect()
+	res.Status(201)
+
+	hashFromDPAfterBar := ""
+	util.WaitFunc(t, func() error {
+		// once node is up, check the status endpoint
+		res = c.GET("/v1/nodes").Expect()
+		res.Status(http.StatusOK)
+		body := gjson.Parse(res.Body().Raw())
+		hash := body.Get("items.0.config_hash").String()
+		if hashFromDPAfterFoo == hash {
+			return fmt.Errorf("node on hash not changed")
+		}
+		hashFromDPAfterBar = hash
+		return nil
+	})
+
+	res = c.GET("/v1/expected-config-hash").Expect()
+	res.Status(200)
+	newExpectedHash := res.JSON().Object().Value("expected_hash").String().Raw()
+	require.Equal(t, newExpectedHash, hashFromDPAfterBar)
+
+	// ensure that deleting the 'bar' service reverts the hash back to the
+	// previous one
+
+	res = c.DELETE("/v1/services/" + barService.Id).Expect()
+	res.Status(204)
+
+	hashAfterDelete := ""
+	util.WaitFunc(t, func() error {
+		// once node is up, check the status endpoint
+		res = c.GET("/v1/nodes").Expect()
+		res.Status(http.StatusOK)
+		body := gjson.Parse(res.Body().Raw())
+		hash := body.Get("items.0.config_hash").String()
+		if hashFromDPAfterBar == hash {
+			return fmt.Errorf("node on hash not changed")
+		}
+		hashAfterDelete = hash
+		return nil
+	})
+
+	res = c.GET("/v1/expected-config-hash").Expect()
+	res.Status(200)
+	expectedHash = res.JSON().Object().Value("expected_hash").String().Raw()
+	require.Equal(t, expectedHash, hashAfterDelete)
+	require.Equal(t, hashFromDPAfterFoo, hashAfterDelete)
+}

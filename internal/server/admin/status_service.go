@@ -22,6 +22,24 @@ type StatusService struct {
 	CommonOpts
 }
 
+func (s *StatusService) GetHash(ctx context.Context,
+	req *v1.GetHashRequest,
+) (*v1.GetHashResponse, error) {
+	db, err := s.CommonOpts.getDB(ctx, req.Cluster)
+	if err != nil {
+		return nil, err
+	}
+
+	result := resource.NewHash()
+	err = db.Read(ctx, result, store.GetByID(result.ID()))
+	if err != nil {
+		return nil, s.err(err)
+	}
+	return &v1.GetHashResponse{
+		ExpectedHash: result.Hash.ExpectedHash,
+	}, nil
+}
+
 func (s *StatusService) GetStatus(ctx context.Context,
 	req *v1.GetStatusRequest,
 ) (*v1.GetStatusResponse, error) {

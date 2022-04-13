@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package kong.admin.model.v1;
+
+option go_package = "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1;v1";
+
+message ConfigHash {
+  string expected_hash = 1;
+  int32 created_at = 2;
+  int32 updated_at = 3;
+}

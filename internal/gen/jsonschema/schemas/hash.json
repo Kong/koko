@@ -1,0 +1,21 @@
+{
+  "required": [
+    "expected_hash"
+  ],
+  "properties": {
+    "created_at": {
+      "minimum": 1,
+      "type": "integer"
+    },
+    "expected_hash": {
+      "pattern": "^[0-9a-f]{32}$",
+      "type": "string"
+    },
+    "updated_at": {
+      "minimum": 1,
+      "type": "integer"
+    }
+  },
+  "additionalProperties": false,
+  "type": "object"
+}

@@ -25,6 +25,7 @@ type StatusServiceClient interface {
 	GetStatus(ctx context.Context, in *GetStatusRequest, opts ...grpc.CallOption) (*GetStatusResponse, error)
 	DeleteStatus(ctx context.Context, in *DeleteStatusRequest, opts ...grpc.CallOption) (*DeleteStatusResponse, error)
 	ListStatuses(ctx context.Context, in *ListStatusesRequest, opts ...grpc.CallOption) (*ListStatusesResponse, error)
+	GetHash(ctx context.Context, in *GetHashRequest, opts ...grpc.CallOption) (*GetHashResponse, error)
 }
 
 type statusServiceClient struct {
@@ -62,6 +63,15 @@ func (c *statusServiceClient) ListStatuses(ctx context.Context, in *ListStatuses
 	return out, nil
 }
 
+func (c *statusServiceClient) GetHash(ctx context.Context, in *GetHashRequest, opts ...grpc.CallOption) (*GetHashResponse, error) {
+	out := new(GetHashResponse)
+	err := c.cc.Invoke(ctx, "/kong.admin.service.v1.StatusService/GetHash", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // StatusServiceServer is the server API for StatusService service.
 // All implementations must embed UnimplementedStatusServiceServer
 // for forward compatibility
@@ -69,6 +79,7 @@ type StatusServiceServer interface {
 	GetStatus(context.Context, *GetStatusRequest) (*GetStatusResponse, error)
 	DeleteStatus(context.Context, *DeleteStatusRequest) (*DeleteStatusResponse, error)
 	ListStatuses(context.Context, *ListStatusesRequest) (*ListStatusesResponse, error)
+	GetHash(context.Context, *GetHashRequest) (*GetHashResponse, error)
 	mustEmbedUnimplementedStatusServiceServer()
 }
 
@@ -84,6 +95,9 @@ func (UnimplementedStatusServiceServer) DeleteStatus(context.Context, *DeleteSta
 }
 func (UnimplementedStatusServiceServer) ListStatuses(context.Context, *ListStatusesRequest) (*ListStatusesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListStatuses not implemented")
+}
+func (UnimplementedStatusServiceServer) GetHash(context.Context, *GetHashRequest) (*GetHashResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetHash not implemented")
 }
 func (UnimplementedStatusServiceServer) mustEmbedUnimplementedStatusServiceServer() {}
 
@@ -152,6 +166,24 @@ func _StatusService_ListStatuses_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
+func _StatusService_GetHash_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetHashRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(StatusServiceServer).GetHash(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/kong.admin.service.v1.StatusService/GetHash",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(StatusServiceServer).GetHash(ctx, req.(*GetHashRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // StatusService_ServiceDesc is the grpc.ServiceDesc for StatusService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -170,6 +202,10 @@ var StatusService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListStatuses",
 			Handler:    _StatusService_ListStatuses_Handler,
+		},
+		{
+			MethodName: "GetHash",
+			Handler:    _StatusService_GetHash_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
