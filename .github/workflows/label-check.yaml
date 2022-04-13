@@ -7,8 +7,6 @@ jobs:
     name: prevent merge labels
     runs-on: ubuntu-latest
     steps:
-    - name: Check for label
-      run: |
-        echo "Pull request is labeled as 'hold/do-not-merge'"
-        exit 1
+    - name: hold/do-not-merge label found
+      run: exit 1
       if: ${{ contains(github.event.*.labels.*.name, 'hold/do-not-merge') }}
