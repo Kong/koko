@@ -700,11 +700,9 @@ func TestExpectedConfigHash(t *testing.T) {
 	dpCleanup := run.KongDP(kong.GetKongConfForShared())
 	defer dpCleanup()
 
-	require.Nil(t, util.WaitForKong(t))
-	kongClient.RunWhenKong(t, ">= 2.5.0")
-
 	// ensure kong node is up
 	require.Nil(t, util.WaitForKongPort(t, 8001))
+	kongClient.RunWhenKong(t, ">= 2.5.0")
 
 	expectedConfig := &v1.TestingConfig{
 		Services: []*v1.Service{fooService},
