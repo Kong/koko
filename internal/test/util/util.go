@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
+	"github.com/kong/koko/internal/test/kong"
 )
 
 var (
@@ -113,4 +114,8 @@ func WaitForAdminAPI(t *testing.T) error {
 		fmt.Sprintf("admin-%d", defaultAdminPort),
 		http.StatusOK,
 	)
+}
+
+func IsNightlyKongImage(input kong.DockerInput) bool {
+	return strings.Contains(input.Image, "kong/kong:latest")
 }

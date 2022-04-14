@@ -697,12 +697,15 @@ func TestExpectedConfigHash(t *testing.T) {
 	res = c.POST("/v1/routes").WithJSON(fooRoute).Expect()
 	res.Status(201)
 
-	dpCleanup := run.KongDP(kong.GetKongConfForShared())
+	dockerInput := kong.GetKongConfForShared()
+	dpCleanup := run.KongDP(dockerInput)
 	defer dpCleanup()
 
 	// ensure kong node is up
 	require.Nil(t, util.WaitForKongPort(t, 8001))
-	kongClient.RunWhenKong(t, ">= 2.5.0")
+	if !util.IsNightlyKongImage(dockerInput) {
+		kongClient.RunWhenKong(t, ">= 2.5.0")
+	}
 
 	expectedConfig := &v1.TestingConfig{
 		Services: []*v1.Service{fooService},

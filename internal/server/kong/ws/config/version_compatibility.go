@@ -22,9 +22,16 @@ const (
 	patchVersionBase    = minorVersionBase / 1000
 	base                = 10
 	bitSize             = 64
+
+	// TODO(fero): remove special case for nightly once images have been updated.
+	shaVersionPattern            = `[0-9a-f]{9}`
+	kongGatewayNightlyVersionNum = 999999999999 // v999.999.999.999
 )
 
-var buildVersionRegex = regexp.MustCompile(buildVersionPattern)
+var (
+	buildVersionRegex = regexp.MustCompile(buildVersionPattern)
+	shaVersionRegex   = regexp.MustCompile(shaVersionPattern)
+)
 
 type VersionCompatibility interface {
 	AddConfigTableUpdates(configTableUpdates map[uint64][]ConfigTableUpdates) error
@@ -229,6 +236,10 @@ func (vc *WSVersionCompatibility) processConfigTableUpdates(uncompressedPayload 
 func parseSemanticVersion(versionStr string) (uint64, error) {
 	semVersion, err := kong.ParseSemanticVersion(versionStr)
 	if err != nil {
+		// Handle special case for kong/kong:latest image use (e.g. nightly)
+		if shaVersionRegex.MatchString(versionStr) {
+			return kongGatewayNightlyVersionNum, nil
+		}
 		return 0, err
 	}
 	if semVersion.Minor >= invalidVersionOctet {

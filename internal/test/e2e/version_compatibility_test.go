@@ -39,7 +39,8 @@ func TestVersionCompatibility(t *testing.T) {
 	cleanup := run.Koko(t)
 	defer cleanup()
 
-	dpCleanup := run.KongDP(kong.GetKongConfForShared())
+	dockerInput := kong.GetKongConfForShared()
+	dpCleanup := run.KongDP(dockerInput)
 	defer dpCleanup()
 	util.WaitForKong(t)
 	util.WaitForKongAdminAPI(t)
@@ -313,13 +314,13 @@ func TestVersionCompatibility(t *testing.T) {
 	}
 
 	util.WaitFunc(t, func() error {
-		err := ensurePlugins(tests)
+		err := ensurePlugins(tests, dockerInput)
 		t.Log("plugin validation failed", err)
 		return err
 	})
 }
 
-func ensurePlugins(plugins []vcPlugins) error {
+func ensurePlugins(plugins []vcPlugins, dockerInput kong.DockerInput) error {
 	kongAdmin, err := kongClient.NewClient(util.BasedKongAdminAPIAddr, nil)
 	if err != nil {
 		return fmt.Errorf("create go client for kong: %v", err)
@@ -329,7 +330,10 @@ func ensurePlugins(plugins []vcPlugins) error {
 	if err != nil {
 		return fmt.Errorf("fetching Kong Gateway info: %v", err)
 	}
-	dataPlaneVersion, err := kongClient.ParseSemanticVersion(kongClient.VersionFromInfo(info))
+	dataPlaneVersion := semver.MustParse("999.999.999")
+	if !util.IsNightlyKongImage(dockerInput) {
+		dataPlaneVersion, err = kongClient.ParseSemanticVersion(kongClient.VersionFromInfo(info))
+	}
 	if err != nil {
 		return fmt.Errorf("parsing Kong Gateway version: %v", err)
 	}
