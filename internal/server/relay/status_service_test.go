@@ -9,6 +9,7 @@ import (
 	relay "github.com/kong/koko/internal/gen/grpc/kong/relay/service/v1"
 	"github.com/kong/koko/internal/log"
 	"github.com/kong/koko/internal/resource"
+	"github.com/kong/koko/internal/server/admin"
 	serverUtil "github.com/kong/koko/internal/server/util"
 	"github.com/kong/koko/internal/status"
 	"github.com/kong/koko/internal/store"
@@ -29,7 +30,7 @@ func TestRelayStatusServiceUpdate(t *testing.T) {
 	server := NewStatusService(opts)
 	require.NotNil(t, server)
 	l := setup()
-	s := grpc.NewServer()
+	s := grpc.NewServer(grpc.ChainUnaryInterceptor(admin.LoggerInterceptor(opts.Logger)))
 	relay.RegisterStatusServiceServer(s, server)
 	cc := clientConn(t, l)
 	client := relay.NewStatusServiceClient(cc)
@@ -217,7 +218,7 @@ func TestRelayStatusServiceClear(t *testing.T) {
 	server := NewStatusService(opts)
 	require.NotNil(t, server)
 	l := setup()
-	s := grpc.NewServer()
+	s := grpc.NewServer(grpc.ChainUnaryInterceptor(admin.LoggerInterceptor(opts.Logger)))
 	relay.RegisterStatusServiceServer(s, server)
 	cc := clientConn(t, l)
 	client := relay.NewStatusServiceClient(cc)

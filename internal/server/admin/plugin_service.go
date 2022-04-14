@@ -33,7 +33,7 @@ func (s *PluginService) GetPlugin(ctx context.Context,
 		return nil, err
 	}
 	result := resource.NewPlugin()
-	s.logger.With(zap.String("id", req.Id)).Debug("reading plugin by id")
+	s.logger(ctx).With(zap.String("id", req.Id)).Debug("reading plugin by id")
 	err = db.Read(ctx, result, store.GetByID(req.Id))
 	if err != nil {
 		return nil, s.err(ctx, err)
@@ -196,7 +196,11 @@ func (s *PluginService) GetConfiguredPlugins(ctx context.Context,
 }
 
 func (s *PluginService) err(ctx context.Context, err error) error {
-	return util.HandleErr(ctx, s.logger, err)
+	return util.HandleErr(ctx, s.logger(ctx), err)
+}
+
+func (s *PluginService) logger(ctx context.Context) *zap.Logger {
+	return util.LoggerFromContext(ctx).With(s.loggerFields...)
 }
 
 func getPluginNames(objects []model.Object) map[string]struct{} {

@@ -11,6 +11,7 @@ import (
 	"github.com/kong/koko/internal/resource"
 	"github.com/kong/koko/internal/server/util"
 	"github.com/kong/koko/internal/store"
+	"go.uber.org/zap"
 )
 
 type UpstreamService struct {
@@ -26,7 +27,7 @@ func (s *UpstreamService) GetUpstream(ctx context.Context,
 		return nil, err
 	}
 	result := resource.NewUpstream()
-	err = getEntityByIDOrName(ctx, req.Id, result, store.GetByName(req.Id), db, s.logger)
+	err = getEntityByIDOrName(ctx, req.Id, result, store.GetByName(req.Id), db, s.logger(ctx))
 	if err != nil {
 		return nil, s.err(ctx, err)
 	}
@@ -116,7 +117,11 @@ func (s *UpstreamService) ListUpstreams(ctx context.Context,
 }
 
 func (s *UpstreamService) err(ctx context.Context, err error) error {
-	return util.HandleErr(ctx, s.logger, err)
+	return util.HandleErr(ctx, s.logger(ctx), err)
+}
+
+func (s *UpstreamService) logger(ctx context.Context) *zap.Logger {
+	return util.LoggerFromContext(ctx).With(s.loggerFields...)
 }
 
 func upstreamsFromObjects(objects []model.Object) []*pbModel.Upstream {

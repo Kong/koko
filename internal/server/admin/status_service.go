@@ -51,7 +51,7 @@ func (s *StatusService) GetStatus(ctx context.Context,
 		return nil, err
 	}
 	result := resource.NewStatus()
-	s.logger.With(zap.String("id", req.Id)).Debug("reading route by id")
+	s.logger(ctx).With(zap.String("id", req.Id)).Debug("reading route by id")
 	err = db.Read(ctx, result, store.GetByID(req.Id))
 	if err != nil {
 		return nil, s.err(ctx, err)
@@ -109,7 +109,11 @@ func (s *StatusService) ListStatuses(ctx context.Context,
 }
 
 func (s *StatusService) err(ctx context.Context, err error) error {
-	return util.HandleErr(ctx, s.logger, err)
+	return util.HandleErr(ctx, s.logger(ctx), err)
+}
+
+func (s *StatusService) logger(ctx context.Context) *zap.Logger {
+	return util.LoggerFromContext(ctx).With(s.loggerFields...)
 }
 
 // TODO(hbagdi): change this regex to either include '-' or '_'.

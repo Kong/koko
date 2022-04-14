@@ -32,7 +32,7 @@ func (s *TargetService) GetTarget(ctx context.Context,
 		return nil, err
 	}
 	result := resource.NewTarget()
-	s.logger.With(zap.String("id", req.Id)).Debug("reading target by id")
+	s.logger(ctx).With(zap.String("id", req.Id)).Debug("reading target by id")
 	err = db.Read(ctx, result, store.GetByID(req.Id))
 	if err != nil {
 		return nil, s.err(ctx, err)
@@ -138,7 +138,11 @@ func (s *TargetService) ListTargets(ctx context.Context,
 }
 
 func (s *TargetService) err(ctx context.Context, err error) error {
-	return util.HandleErr(ctx, s.logger, err)
+	return util.HandleErr(ctx, s.logger(ctx), err)
+}
+
+func (s *TargetService) logger(ctx context.Context) *zap.Logger {
+	return util.LoggerFromContext(ctx).With(s.loggerFields...)
 }
 
 func targetsFromObjects(objects []model.Object) []*pbModel.Target {

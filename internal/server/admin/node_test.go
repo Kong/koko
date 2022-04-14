@@ -17,6 +17,8 @@ import (
 	"github.com/kong/koko/internal/store"
 	"github.com/kong/koko/internal/test/util"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/test/bufconn"
@@ -42,13 +44,13 @@ func TestNodeCreateUpsert(t *testing.T) {
 	}
 	nodeService := &NodeService{
 		CommonOpts: CommonOpts{
-			logger:      log.Logger,
-			storeLoader: storeLoader,
+			loggerFields: []zapcore.Field{zap.String("admin-service", "node")},
+			storeLoader:  storeLoader,
 		},
 	}
 
 	l := setupBufConn()
-	grpcServer := grpc.NewServer()
+	grpcServer := grpc.NewServer(grpc.ChainUnaryInterceptor(LoggerInterceptor(log.Logger)))
 	service.RegisterNodeServiceServer(grpcServer, nodeService)
 	cc := clientConn(t, l)
 
@@ -129,13 +131,13 @@ func TestNodeDelete(t *testing.T) {
 	}
 	nodeService := &NodeService{
 		CommonOpts: CommonOpts{
-			logger:      log.Logger,
-			storeLoader: storeLoader,
+			loggerFields: []zapcore.Field{zap.String("admin-service", "node")},
+			storeLoader:  storeLoader,
 		},
 	}
 
 	l := setupBufConn()
-	grpcServer := grpc.NewServer()
+	grpcServer := grpc.NewServer(grpc.ChainUnaryInterceptor(LoggerInterceptor(log.Logger)))
 	service.RegisterNodeServiceServer(grpcServer, nodeService)
 	cc := clientConn(t, l)
 
@@ -160,6 +162,7 @@ func TestNodeDelete(t *testing.T) {
 		},
 	})
 	require.Nil(t, err)
+	handler = serverUtil.HandlerWithLogger(handler, log.Logger)
 
 	s := httptest.NewServer(handler)
 	defer s.Close()
@@ -186,13 +189,13 @@ func TestNodeRead(t *testing.T) {
 	}
 	nodeService := &NodeService{
 		CommonOpts: CommonOpts{
-			logger:      log.Logger,
-			storeLoader: storeLoader,
+			loggerFields: []zapcore.Field{zap.String("admin-service", "node")},
+			storeLoader:  storeLoader,
 		},
 	}
 
 	l := setupBufConn()
-	grpcServer := grpc.NewServer()
+	grpcServer := grpc.NewServer(grpc.ChainUnaryInterceptor(LoggerInterceptor(log.Logger)))
 	service.RegisterNodeServiceServer(grpcServer, nodeService)
 	cc := clientConn(t, l)
 
@@ -217,6 +220,7 @@ func TestNodeRead(t *testing.T) {
 		},
 	})
 	require.Nil(t, err)
+	handler = serverUtil.HandlerWithLogger(handler, log.Logger)
 
 	s := httptest.NewServer(handler)
 	defer s.Close()
@@ -249,13 +253,13 @@ func TestNodeList(t *testing.T) {
 	}
 	nodeService := &NodeService{
 		CommonOpts: CommonOpts{
-			logger:      log.Logger,
-			storeLoader: storeLoader,
+			loggerFields: []zapcore.Field{zap.String("admin-service", "node")},
+			storeLoader:  storeLoader,
 		},
 	}
 
 	l := setupBufConn()
-	grpcServer := grpc.NewServer()
+	grpcServer := grpc.NewServer(grpc.ChainUnaryInterceptor(LoggerInterceptor(log.Logger)))
 	service.RegisterNodeServiceServer(grpcServer, nodeService)
 	cc := clientConn(t, l)
 
@@ -291,6 +295,7 @@ func TestNodeList(t *testing.T) {
 		},
 	})
 	require.Nil(t, err)
+	handler = serverUtil.HandlerWithLogger(handler, log.Logger)
 
 	s := httptest.NewServer(handler)
 	defer s.Close()

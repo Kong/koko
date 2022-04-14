@@ -51,6 +51,13 @@ func RequestContextWithLogger(req *http.Request, logger *zap.Logger) *http.Reque
 		LoggerWithSpan(req.Context(), logger)))
 }
 
+func LoggerFromContext(ctx context.Context) *zap.Logger {
+	if logger, ok := ctx.Value(LoggerKey).(*zap.Logger); ok {
+		return logger
+	}
+	panic(errors.New("logger not set in context"))
+}
+
 func LoggerWithSpan(ctx context.Context, l *zap.Logger) *zap.Logger {
 	if span, ok := ctx.Value(SpanKey).(SpanValue); ok {
 		return l.With(zap.String(span.TraceIDLogKey(), span.TraceID()),

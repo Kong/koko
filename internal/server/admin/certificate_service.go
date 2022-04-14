@@ -30,7 +30,7 @@ func (s *CertificateService) GetCertificate(ctx context.Context,
 		return nil, err
 	}
 	result := resource.NewCertificate()
-	s.logger.With(zap.String("id", req.Id)).Debug("reading certificate by id")
+	s.logger(ctx).With(zap.String("id", req.Id)).Debug("reading certificate by id")
 	err = db.Read(ctx, result, store.GetByID(req.Id))
 	if err != nil {
 		return nil, s.err(ctx, err)
@@ -119,7 +119,11 @@ func (s *CertificateService) ListCertificates(ctx context.Context,
 }
 
 func (s *CertificateService) err(ctx context.Context, err error) error {
-	return util.HandleErr(ctx, s.logger, err)
+	return util.HandleErr(ctx, s.logger(ctx), err)
+}
+
+func (s *CertificateService) logger(ctx context.Context) *zap.Logger {
+	return util.LoggerFromContext(ctx).With(s.loggerFields...)
 }
 
 func certificatesFromObjects(objects []model.Object) []*pb.Certificate {
