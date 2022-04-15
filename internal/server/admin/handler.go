@@ -75,8 +75,7 @@ func buildServices(opts HandlerOpts) services {
 			CommonOpts: CommonOpts{
 				storeLoader: opts.StoreLoader,
 				loggerFields: []zapcore.Field{
-					zap.String("admin-service",
-						"service"),
+					zap.String("admin-service", "service"),
 				},
 			},
 		},
@@ -84,8 +83,7 @@ func buildServices(opts HandlerOpts) services {
 			CommonOpts: CommonOpts{
 				storeLoader: opts.StoreLoader,
 				loggerFields: []zapcore.Field{
-					zap.String("admin-service",
-						"route"),
+					zap.String("admin-service", "route"),
 				},
 			},
 		},
@@ -93,8 +91,7 @@ func buildServices(opts HandlerOpts) services {
 			CommonOpts: CommonOpts{
 				storeLoader: opts.StoreLoader,
 				loggerFields: []zapcore.Field{
-					zap.String("admin-service",
-						"plugin"),
+					zap.String("admin-service", "plugin"),
 				},
 			},
 		},
@@ -102,8 +99,7 @@ func buildServices(opts HandlerOpts) services {
 			CommonOpts: CommonOpts{
 				storeLoader: opts.StoreLoader,
 				loggerFields: []zapcore.Field{
-					zap.String("admin-service",
-						"upstream"),
+					zap.String("admin-service", "upstream"),
 				},
 			},
 		},
@@ -111,15 +107,13 @@ func buildServices(opts HandlerOpts) services {
 			CommonOpts: CommonOpts{
 				storeLoader: opts.StoreLoader,
 				loggerFields: []zapcore.Field{
-					zap.String("admin-service",
-						"target"),
+					zap.String("admin-service", "target"),
 				},
 			},
 		},
 		schemas: &SchemasService{
 			loggerFields: []zapcore.Field{
-				zap.String("admin-service",
-					"schemas"),
+				zap.String("admin-service", "schemas"),
 			},
 			getRawLuaSchema: opts.GetRawLuaSchema,
 		},
@@ -127,8 +121,7 @@ func buildServices(opts HandlerOpts) services {
 			CommonOpts: CommonOpts{
 				storeLoader: opts.StoreLoader,
 				loggerFields: []zapcore.Field{
-					zap.String("admin-service",
-						"node"),
+					zap.String("admin-service", "node"),
 				},
 			},
 		},
@@ -136,8 +129,7 @@ func buildServices(opts HandlerOpts) services {
 			CommonOpts: CommonOpts{
 				storeLoader: opts.StoreLoader,
 				loggerFields: []zapcore.Field{
-					zap.String("admin-service",
-						"node"),
+					zap.String("admin-service", "status"),
 				},
 			},
 		},
@@ -145,8 +137,7 @@ func buildServices(opts HandlerOpts) services {
 			CommonOpts: CommonOpts{
 				storeLoader: opts.StoreLoader,
 				loggerFields: []zapcore.Field{
-					zap.String("admin-service",
-						"certificate"),
+					zap.String("admin-service", "certificate"),
 				},
 			},
 		},
@@ -154,8 +145,7 @@ func buildServices(opts HandlerOpts) services {
 			CommonOpts: CommonOpts{
 				storeLoader: opts.StoreLoader,
 				loggerFields: []zapcore.Field{
-					zap.String("admin-service",
-						"ca-certificate"),
+					zap.String("admin-service", "ca-certificate"),
 				},
 			},
 		},
@@ -163,8 +153,7 @@ func buildServices(opts HandlerOpts) services {
 			CommonOpts: CommonOpts{
 				storeLoader: opts.StoreLoader,
 				loggerFields: []zapcore.Field{
-					zap.String("admin-service",
-						"consumer"),
+					zap.String("admin-service", "consumer"),
 				},
 			},
 		},
@@ -172,8 +161,7 @@ func buildServices(opts HandlerOpts) services {
 			CommonOpts: CommonOpts{
 				storeLoader: opts.StoreLoader,
 				loggerFields: []zapcore.Field{
-					zap.String("admin-service",
-						"sni"),
+					zap.String("admin-service", "sni"),
 				},
 			},
 		},
