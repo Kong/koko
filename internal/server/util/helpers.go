@@ -169,3 +169,15 @@ func HandleErr(ctx context.Context, logger *zap.Logger, err error) error {
 		return status.Error(codes.Internal, "")
 	}
 }
+
+func LoggerInterceptor(logger *zap.Logger) grpc.UnaryServerInterceptor {
+	return func(ctx context.Context, req interface{},
+		_ *grpc.UnaryServerInfo, handler grpc.UnaryHandler,
+	) (interface{}, error) {
+		if _, ok := ctx.Value(LoggerKey).(*zap.Logger); !ok {
+			ctx = context.WithValue(ctx, LoggerKey, LoggerWithSpan(ctx, logger))
+			return handler(ctx, req)
+		}
+		return handler(ctx, req)
+	}
+}

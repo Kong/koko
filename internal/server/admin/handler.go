@@ -262,7 +262,7 @@ func validateOpts(opts HandlerOpts) error {
 
 func NewGRPC(opts HandlerOpts) *grpc.Server {
 	server := grpc.NewServer(grpc.ChainUnaryInterceptor(
-		LoggerInterceptor(opts.Logger)),
+		util.LoggerInterceptor(opts.Logger)),
 	)
 	services := buildServices(opts)
 	v1.RegisterMetaServiceServer(server, &MetaService{})
@@ -279,16 +279,4 @@ func NewGRPC(opts HandlerOpts) *grpc.Server {
 	v1.RegisterConsumerServiceServer(server, services.consumer)
 	v1.RegisterSNIServiceServer(server, services.sni)
 	return server
-}
-
-func LoggerInterceptor(logger *zap.Logger) grpc.UnaryServerInterceptor {
-	return func(ctx context.Context, req interface{},
-		_ *grpc.UnaryServerInfo, handler grpc.UnaryHandler,
-	) (interface{}, error) {
-		if _, ok := ctx.Value(util.LoggerKey).(*zap.Logger); !ok {
-			ctx = context.WithValue(ctx, util.LoggerKey, util.LoggerWithSpan(ctx, logger))
-			return handler(ctx, req)
-		}
-		return handler(ctx, req)
-	}
 }

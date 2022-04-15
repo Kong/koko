@@ -9,7 +9,7 @@ import (
 	relay "github.com/kong/koko/internal/gen/grpc/kong/relay/service/v1"
 	"github.com/kong/koko/internal/log"
 	"github.com/kong/koko/internal/resource"
-	"github.com/kong/koko/internal/server/admin"
+	serverUtil "github.com/kong/koko/internal/server/util"
 	"github.com/kong/koko/internal/store"
 	"github.com/kong/koko/internal/test/util"
 	"github.com/stretchr/testify/require"
@@ -32,7 +32,7 @@ func TestEventService(t *testing.T) {
 	server := NewEventService(ctx, opts)
 	require.NotNil(t, server)
 	l := setup()
-	s := grpc.NewServer(grpc.ChainUnaryInterceptor(admin.LoggerInterceptor(log.Logger)))
+	s := grpc.NewServer(grpc.ChainUnaryInterceptor(serverUtil.LoggerInterceptor(log.Logger)))
 	relay.RegisterEventServiceServer(s, server)
 	cc := clientConn(t, l)
 	client := relay.NewEventServiceClient(cc)

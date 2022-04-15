@@ -50,7 +50,7 @@ func TestNodeCreateUpsert(t *testing.T) {
 	}
 
 	l := setupBufConn()
-	grpcServer := grpc.NewServer(grpc.ChainUnaryInterceptor(LoggerInterceptor(log.Logger)))
+	grpcServer := grpc.NewServer(grpc.ChainUnaryInterceptor(serverUtil.LoggerInterceptor(log.Logger)))
 	service.RegisterNodeServiceServer(grpcServer, nodeService)
 	cc := clientConn(t, l)
 
@@ -137,7 +137,7 @@ func TestNodeDelete(t *testing.T) {
 	}
 
 	l := setupBufConn()
-	grpcServer := grpc.NewServer(grpc.ChainUnaryInterceptor(LoggerInterceptor(log.Logger)))
+	grpcServer := grpc.NewServer(grpc.ChainUnaryInterceptor(serverUtil.LoggerInterceptor(log.Logger)))
 	service.RegisterNodeServiceServer(grpcServer, nodeService)
 	cc := clientConn(t, l)
 
@@ -195,7 +195,7 @@ func TestNodeRead(t *testing.T) {
 	}
 
 	l := setupBufConn()
-	grpcServer := grpc.NewServer(grpc.ChainUnaryInterceptor(LoggerInterceptor(log.Logger)))
+	grpcServer := grpc.NewServer(grpc.ChainUnaryInterceptor(serverUtil.LoggerInterceptor(log.Logger)))
 	service.RegisterNodeServiceServer(grpcServer, nodeService)
 	cc := clientConn(t, l)
 
@@ -259,7 +259,7 @@ func TestNodeList(t *testing.T) {
 	}
 
 	l := setupBufConn()
-	grpcServer := grpc.NewServer(grpc.ChainUnaryInterceptor(LoggerInterceptor(log.Logger)))
+	grpcServer := grpc.NewServer(grpc.ChainUnaryInterceptor(serverUtil.LoggerInterceptor(log.Logger)))
 	service.RegisterNodeServiceServer(grpcServer, nodeService)
 	cc := clientConn(t, l)
 
