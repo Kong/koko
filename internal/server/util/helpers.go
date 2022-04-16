@@ -51,6 +51,13 @@ func RequestContextWithLogger(req *http.Request, logger *zap.Logger) *http.Reque
 		LoggerWithSpan(req.Context(), logger)))
 }
 
+func LoggerFromContext(ctx context.Context) *zap.Logger {
+	if logger, ok := ctx.Value(LoggerKey).(*zap.Logger); ok {
+		return logger
+	}
+	panic(errors.New("logger not set in context"))
+}
+
 func LoggerWithSpan(ctx context.Context, l *zap.Logger) *zap.Logger {
 	if span, ok := ctx.Value(SpanKey).(SpanValue); ok {
 		return l.With(zap.String(span.TraceIDLogKey(), span.TraceID()),
@@ -160,5 +167,17 @@ func HandleErr(ctx context.Context, logger *zap.Logger, err error) error {
 	default:
 		logger.With(zap.Error(err)).Error("error in service")
 		return status.Error(codes.Internal, "")
+	}
+}
+
+func LoggerInterceptor(logger *zap.Logger) grpc.UnaryServerInterceptor {
+	return func(ctx context.Context, req interface{},
+		_ *grpc.UnaryServerInfo, handler grpc.UnaryHandler,
+	) (interface{}, error) {
+		if _, ok := ctx.Value(LoggerKey).(*zap.Logger); !ok {
+			ctx = context.WithValue(ctx, LoggerKey, LoggerWithSpan(ctx, logger))
+			return handler(ctx, req)
+		}
+		return handler(ctx, req)
 	}
 }

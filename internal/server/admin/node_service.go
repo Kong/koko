@@ -30,7 +30,7 @@ func (s *NodeService) GetNode(ctx context.Context,
 		return nil, err
 	}
 	result := resource.NewNode()
-	s.logger.With(zap.String("id", req.Id)).Debug("reading node by id")
+	s.logger(ctx).With(zap.String("id", req.Id)).Debug("reading node by id")
 	err = db.Read(ctx, result, store.GetByID(req.Id))
 	if err != nil {
 		return nil, s.err(ctx, err)
@@ -117,7 +117,11 @@ func (s *NodeService) ListNodes(ctx context.Context,
 }
 
 func (s *NodeService) err(ctx context.Context, err error) error {
-	return util.HandleErr(ctx, s.logger, err)
+	return util.HandleErr(ctx, s.logger(ctx), err)
+}
+
+func (s *NodeService) logger(ctx context.Context) *zap.Logger {
+	return util.LoggerFromContext(ctx).With(s.loggerFields...)
 }
 
 func nodesFromObjects(objects []model.Object) []*pbModel.Node {

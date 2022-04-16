@@ -11,6 +11,7 @@ import (
 	"github.com/kong/koko/internal/resource"
 	"github.com/kong/koko/internal/server/util"
 	"github.com/kong/koko/internal/store"
+	"go.uber.org/zap"
 )
 
 type ServiceService struct {
@@ -26,7 +27,7 @@ func (s *ServiceService) GetService(ctx context.Context,
 		return nil, err
 	}
 	result := resource.NewService()
-	err = getEntityByIDOrName(ctx, req.Id, result, store.GetByName(req.Id), db, s.logger)
+	err = getEntityByIDOrName(ctx, req.Id, result, store.GetByName(req.Id), db, s.logger(ctx))
 	if err != nil {
 		return nil, s.err(ctx, err)
 	}
@@ -116,7 +117,11 @@ func (s *ServiceService) ListServices(ctx context.Context,
 }
 
 func (s *ServiceService) err(ctx context.Context, err error) error {
-	return util.HandleErr(ctx, s.logger, err)
+	return util.HandleErr(ctx, s.logger(ctx), err)
+}
+
+func (s *ServiceService) logger(ctx context.Context) *zap.Logger {
+	return util.LoggerFromContext(ctx).With(s.loggerFields...)
 }
 
 func servicesFromObjects(objects []model.Object) []*pbModel.Service {

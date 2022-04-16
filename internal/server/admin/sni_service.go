@@ -13,6 +13,7 @@ import (
 	"github.com/kong/koko/internal/resource"
 	"github.com/kong/koko/internal/server/util"
 	"github.com/kong/koko/internal/store"
+	"go.uber.org/zap"
 )
 
 type SNIService struct {
@@ -26,7 +27,7 @@ func (s *SNIService) GetSNI(ctx context.Context, req *v1.GetSNIRequest) (*v1.Get
 		return nil, err
 	}
 	result := resource.NewSNI()
-	err = getEntityByIDOrName(ctx, req.Id, result, store.GetByName(req.Id), db, s.logger)
+	err = getEntityByIDOrName(ctx, req.Id, result, store.GetByName(req.Id), db, s.logger(ctx))
 	if err != nil {
 		return nil, s.err(ctx, err)
 	}
@@ -121,7 +122,11 @@ func (s *SNIService) ListSNIs(ctx context.Context, req *v1.ListSNIsRequest) (*v1
 }
 
 func (s *SNIService) err(ctx context.Context, err error) error {
-	return util.HandleErr(ctx, s.logger, err)
+	return util.HandleErr(ctx, s.logger(ctx), err)
+}
+
+func (s *SNIService) logger(ctx context.Context) *zap.Logger {
+	return util.LoggerFromContext(ctx).With(s.loggerFields...)
 }
 
 func snisFromObjects(objects []model.Object) []*pb.SNI {

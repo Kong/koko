@@ -27,7 +27,7 @@ func (s *ConsumerService) GetConsumer(ctx context.Context,
 		return nil, err
 	}
 	result := resource.NewConsumer()
-	err = getEntityByIDOrName(ctx, req.Id, result, store.GetByIndex("username", req.Id), db, s.logger)
+	err = getEntityByIDOrName(ctx, req.Id, result, store.GetByIndex("username", req.Id), db, s.logger(ctx))
 	if err != nil {
 		return nil, s.err(ctx, err)
 	}
@@ -84,7 +84,7 @@ func (s *ConsumerService) DeleteConsumer(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-	s.logger.With(zap.String("id", req.Id)).Debug("deleting consumer by id")
+	s.logger(ctx).With(zap.String("id", req.Id)).Debug("deleting consumer by id")
 	err = db.Delete(ctx, store.DeleteByID(req.Id), store.DeleteByType(resource.TypeConsumer))
 	if err != nil {
 		return nil, s.err(ctx, err)
@@ -128,5 +128,9 @@ func consumersFromObjects(objects []model.Object) []*pbModel.Consumer {
 }
 
 func (s *ConsumerService) err(ctx context.Context, err error) error {
-	return util.HandleErr(ctx, s.logger, err)
+	return util.HandleErr(ctx, s.logger(ctx), err)
+}
+
+func (s *ConsumerService) logger(ctx context.Context) *zap.Logger {
+	return util.LoggerFromContext(ctx).With(s.loggerFields...)
 }

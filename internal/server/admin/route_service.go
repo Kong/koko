@@ -13,6 +13,7 @@ import (
 	"github.com/kong/koko/internal/resource"
 	"github.com/kong/koko/internal/server/util"
 	"github.com/kong/koko/internal/store"
+	"go.uber.org/zap"
 )
 
 type RouteService struct {
@@ -28,7 +29,7 @@ func (s *RouteService) GetRoute(ctx context.Context,
 		return nil, err
 	}
 	result := resource.NewRoute()
-	err = getEntityByIDOrName(ctx, req.Id, result, store.GetByName(req.Id), db, s.logger)
+	err = getEntityByIDOrName(ctx, req.Id, result, store.GetByName(req.Id), db, s.logger(ctx))
 	if err != nil {
 		return nil, s.err(ctx, err)
 	}
@@ -132,7 +133,11 @@ func (s *RouteService) ListRoutes(ctx context.Context,
 }
 
 func (s *RouteService) err(ctx context.Context, err error) error {
-	return util.HandleErr(ctx, s.logger, err)
+	return util.HandleErr(ctx, s.logger(ctx), err)
+}
+
+func (s *RouteService) logger(ctx context.Context) *zap.Logger {
+	return util.LoggerFromContext(ctx).With(s.loggerFields...)
 }
 
 func routesFromObjects(objects []model.Object) []*pbModel.Route {
