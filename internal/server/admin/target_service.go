@@ -32,8 +32,7 @@ func (s *TargetService) GetTarget(ctx context.Context,
 		return nil, err
 	}
 	result := resource.NewTarget()
-	s.logger(ctx).With(zap.String("id", req.Id)).Debug("reading target by id")
-	err = db.Read(ctx, result, store.GetByID(req.Id))
+	err = getTargetEntityByIDOrTarget(ctx, req.Id, result, db, s.logger(ctx))
 	if err != nil {
 		return nil, s.err(ctx, err)
 	}

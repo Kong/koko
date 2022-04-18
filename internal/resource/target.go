@@ -95,7 +95,7 @@ func (t Target) Validate() error {
 	if err != nil {
 		return err
 	}
-	_, err = validateAndFormatTarget(t.Target.Target)
+	_, err = ValidateAndFormatTarget(t.Target.Target)
 	if err != nil {
 		errWrap := validation.Error{}
 		errWrap.Errs = append(errWrap.Errs, &v1.ErrorDetail{
@@ -119,7 +119,7 @@ func (t Target) ProcessDefaults() error {
 		t.Target.Weight = wrapperspb.Int32(defaultWeight)
 	}
 	var err error
-	target, err := validateAndFormatTarget(t.Target.Target)
+	target, err := ValidateAndFormatTarget(t.Target.Target)
 	if err != nil {
 		errWrap := validation.Error{}
 		errWrap.Errs = append(errWrap.Errs, &v1.ErrorDetail{
@@ -298,7 +298,7 @@ func normalizeIPv6(target string) (string, error) {
 	return fmt.Sprintf("[%s]:%d", expandIPv6(ip), port), nil
 }
 
-func validateAndFormatTarget(target string) (string, error) {
+func ValidateAndFormatTarget(target string) (string, error) {
 	if target == "" {
 		return target, nil
 	}

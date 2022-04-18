@@ -8,12 +8,16 @@ import (
 	"github.com/google/uuid"
 	pbModel "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
 	"github.com/kong/koko/internal/model"
+	"github.com/kong/koko/internal/resource"
 	"github.com/kong/koko/internal/server/util"
 	"github.com/kong/koko/internal/store"
 	"go.uber.org/zap"
 )
 
-const namePattern = `^[0-9a-zA-Z.\-_~]{1,128}$`
+const (
+	namePattern       = `^[0-9a-zA-Z.\-_~]{1,128}$`
+	maxHostnameLength = 1024
+)
 
 var nameRegex = regexp.MustCompile(namePattern)
 
@@ -87,4 +91,35 @@ func getEntityByIDOrName(ctx context.Context, idOrName string, entity model.Obje
 		return nil
 	}
 	return util.ErrClient{Message: fmt.Sprintf("invalid ID:'%s'", idOrName)}
+}
+
+func getTargetEntityByIDOrTarget(ctx context.Context, idOrTarget string, entity model.Object, s store.Store,
+	logger *zap.Logger,
+) error {
+	if idOrTarget == "" {
+		return util.ErrClient{Message: "required ID is missing"}
+	}
+	if err := validUUID(idOrTarget); err == nil {
+		logger.With(zap.String("id", idOrTarget)).Debug(fmt.Sprintf("reading %v by id", entity.Type()))
+		err = s.Read(ctx, entity, store.GetByID(idOrTarget))
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+	if len(idOrTarget) > maxHostnameLength || len(idOrTarget) < 1 {
+		return util.ErrClient{Message: "invalid target length"}
+	}
+	target, err := resource.ValidateAndFormatTarget(idOrTarget)
+	if err != nil {
+		return util.ErrClient{Message: "invalid target format"}
+	}
+	targetOpt := store.GetByIndex("target", target)
+	logger.With(zap.String("target", idOrTarget)).Debug(fmt.Sprintf("attempting reading %v by target",
+		entity.Type()))
+	err = s.Read(ctx, entity, targetOpt)
+	if err != nil {
+		return err
+	}
+	return nil
 }

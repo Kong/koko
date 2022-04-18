@@ -350,7 +350,7 @@ func TestTarget_fortmatTarget(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := validateAndFormatTarget(tt.target)
+			got, err := ValidateAndFormatTarget(tt.target)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("validateTarget() error = %v, wantErr %v", err, tt.wantErr)
 			}
