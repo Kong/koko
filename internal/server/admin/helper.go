@@ -100,7 +100,7 @@ func getTargetEntityByIDOrTarget(ctx context.Context, idOrTarget string, entity 
 		return util.ErrClient{Message: "required ID is missing"}
 	}
 	if err := validUUID(idOrTarget); err == nil {
-		logger.With(zap.String("id", idOrTarget)).Debug(fmt.Sprintf("reading %v by id", entity.Type()))
+		logger.Sugar().Debugf("reading by id, id:%s and type%s", idOrTarget, entity.Type())
 		err = s.Read(ctx, entity, store.GetByID(idOrTarget))
 		if err != nil {
 			return err
@@ -115,8 +115,7 @@ func getTargetEntityByIDOrTarget(ctx context.Context, idOrTarget string, entity 
 		return util.ErrClient{Message: "invalid target format"}
 	}
 	targetOpt := store.GetByIndex("target", target)
-	logger.With(zap.String("target", idOrTarget)).Debug(fmt.Sprintf("attempting reading %v by target",
-		entity.Type()))
+	logger.Sugar().Debugf("attempting reading by target, target:%s and type%s", idOrTarget, entity.Type())
 	err = s.Read(ctx, entity, targetOpt)
 	if err != nil {
 		return err
