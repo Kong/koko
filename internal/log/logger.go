@@ -25,7 +25,7 @@ func SetupLogging(logLevel string) (*zap.Logger, error) {
 	zapConfig.Level.SetLevel(level)
 	logger, err := zapConfig.Build()
 	if err != nil {
-		return nil, fmt.Errorf("create logger: %v", err)
+		return nil, fmt.Errorf("create logger: %w", err)
 	}
 	Logger = logger
 	return logger, nil
