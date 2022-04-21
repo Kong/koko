@@ -10,6 +10,7 @@ import (
 	relay "github.com/kong/koko/internal/gen/grpc/kong/relay/service/v1"
 	"github.com/kong/koko/internal/store"
 	storeEvent "github.com/kong/koko/internal/store/event"
+	"github.com/segmentio/stats/v4"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/peer"
 )
@@ -125,6 +126,7 @@ func (e *EventService) updateClients(eventID string) {
 			clientLogger.Debug("skipping re-configure as seenID is up-to-date")
 			return true
 		}
+		stats.Add("reconfigure_events", 1, stats.Tag{Name: "service", Value: "event"})
 		clientLogger.Debug("reconfigure event sent")
 		// TODO(hbagdi): can this block indefinitely?
 		err := node.stream.Send(&relay.FetchReconfigureEventsResponse{})
