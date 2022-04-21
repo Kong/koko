@@ -24,13 +24,16 @@ const (
 )
 
 var validClients = map[string]Client{
-	"":           NoOpClient,
 	"noop":       NoOpClient,
 	"datadog":    Datadog,
 	"prometheus": Prometheus,
 }
 
 func ParseClient(client string) (Client, error) {
+	if client == "" {
+		return NoOpClient, nil
+	}
+
 	if c, ok := validClients[client]; ok {
 		return c, nil
 	}
