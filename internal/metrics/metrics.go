@@ -15,7 +15,6 @@ type Client int
 
 const (
 	NoOpClient Client = iota
-	StatsD
 	Datadog
 	Prometheus
 )
@@ -24,36 +23,31 @@ const (
 	metricPrefix = "koko."
 )
 
-var validClients = []string{"noop", "statsd", "datadog", "prometheus"}
+var validClients = map[string]Client{
+	"":           NoOpClient,
+	"noop":       NoOpClient,
+	"datadog":    Datadog,
+	"prometheus": Prometheus,
+}
 
 func ParseClient(client string) (Client, error) {
-	switch client {
-	case validClients[0], "":
-		return NoOpClient, nil
-	case validClients[1]:
-		return StatsD, nil
-	case validClients[2]:
-		return Datadog, nil
-	case validClients[3]:
-		return Prometheus, nil
-	default:
-		return NoOpClient, fmt.Errorf("invalid metrics_client '%s'", client)
+	if c, ok := validClients[client]; ok {
+		return c, nil
 	}
+	return NoOpClient, fmt.Errorf("invalid metrics_client '%s'", client)
 }
 
 func (c Client) String() string {
-	return validClients[c]
+	for k, client := range validClients {
+		if client == c {
+			return k
+		}
+	}
+	panic("invalid client")
 }
 
 func InitStatsClient(logger *zap.Logger, client Client) http.Handler {
 	switch client {
-	case StatsD:
-		host := os.Getenv("STATSD_HOST")
-		if host == "" {
-			panic("StatsD environment variable 'STATSD_HOST' must be set")
-		}
-		stats.DefaultEngine = stats.NewEngine(metricPrefix, datadog.NewClient(host))
-		fallthrough
 	case Datadog:
 		ddEnvTagsMapping := []struct{ envVar, tagName string }{
 			{"DD_ENTITY_ID", "dd.internal.entity_id"},
