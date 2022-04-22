@@ -22,21 +22,39 @@ type StatusService struct {
 	CommonOpts
 }
 
+func (s *StatusService) GetHash(ctx context.Context,
+	req *v1.GetHashRequest,
+) (*v1.GetHashResponse, error) {
+	db, err := s.CommonOpts.getDB(ctx, req.Cluster)
+	if err != nil {
+		return nil, err
+	}
+
+	result := resource.NewHash()
+	err = db.Read(ctx, result, store.GetByID(result.ID()))
+	if err != nil {
+		return nil, s.err(ctx, err)
+	}
+	return &v1.GetHashResponse{
+		ExpectedHash: result.Hash.ExpectedHash,
+	}, nil
+}
+
 func (s *StatusService) GetStatus(ctx context.Context,
 	req *v1.GetStatusRequest,
 ) (*v1.GetStatusResponse, error) {
 	if req.Id == "" {
-		return nil, s.err(util.ErrClient{Message: "required ID is missing"})
+		return nil, s.err(ctx, util.ErrClient{Message: "required ID is missing"})
 	}
 	db, err := s.CommonOpts.getDB(ctx, req.Cluster)
 	if err != nil {
 		return nil, err
 	}
 	result := resource.NewStatus()
-	s.logger.With(zap.String("id", req.Id)).Debug("reading route by id")
+	s.logger(ctx).With(zap.String("id", req.Id)).Debug("reading route by id")
 	err = db.Read(ctx, result, store.GetByID(req.Id))
 	if err != nil {
-		return nil, s.err(err)
+		return nil, s.err(ctx, err)
 	}
 	return &v1.GetStatusResponse{
 		Item: result.Status,
@@ -47,7 +65,7 @@ func (s *StatusService) DeleteStatus(ctx context.Context,
 	req *v1.DeleteStatusRequest,
 ) (*v1.DeleteStatusResponse, error) {
 	if req.Id == "" {
-		return nil, s.err(util.ErrClient{Message: "required ID is missing"})
+		return nil, s.err(ctx, util.ErrClient{Message: "required ID is missing"})
 	}
 	db, err := s.CommonOpts.getDB(ctx, req.Cluster)
 	if err != nil {
@@ -56,7 +74,7 @@ func (s *StatusService) DeleteStatus(ctx context.Context,
 	err = db.Delete(ctx, store.DeleteByID(req.Id),
 		store.DeleteByType(resource.TypeStatus))
 	if err != nil {
-		return nil, s.err(err)
+		return nil, s.err(ctx, err)
 	}
 	util.SetHeader(ctx, http.StatusNoContent)
 	return &v1.DeleteStatusResponse{}, nil
@@ -77,11 +95,11 @@ func (s *StatusService) ListStatuses(ctx context.Context,
 	list := resource.NewList(resource.TypeStatus)
 	listOptFns, err := listOptsFromReq(req.Page)
 	if err != nil {
-		return nil, s.err(util.ErrClient{Message: err.Error()})
+		return nil, s.err(ctx, util.ErrClient{Message: err.Error()})
 	}
 
 	if err := db.List(ctx, list, listOptFns...); err != nil {
-		return nil, s.err(err)
+		return nil, s.err(ctx, err)
 	}
 
 	return &v1.ListStatusesResponse{
@@ -90,8 +108,12 @@ func (s *StatusService) ListStatuses(ctx context.Context,
 	}, nil
 }
 
-func (s *StatusService) err(err error) error {
-	return util.HandleErr(s.logger, err)
+func (s *StatusService) err(ctx context.Context, err error) error {
+	return util.HandleErr(ctx, s.logger(ctx), err)
+}
+
+func (s *StatusService) logger(ctx context.Context) *zap.Logger {
+	return util.LoggerFromContext(ctx).With(s.loggerFields...)
 }
 
 // TODO(hbagdi): change this regex to either include '-' or '_'.
@@ -126,7 +148,7 @@ func (s *StatusService) listStatusForEntity(ctx context.Context,
 			Items: []*pbModel.Status{},
 		}, nil
 	}
-	return nil, s.err(err)
+	return nil, s.err(ctx, err)
 }
 
 func statusesFromObjects(objects []model.Object) []*pbModel.Status {

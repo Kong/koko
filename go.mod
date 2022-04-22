@@ -3,6 +3,7 @@ module github.com/kong/koko
 go 1.18
 
 require (
+	github.com/blang/semver/v4 v4.0.0
 	github.com/bufbuild/buf v1.3.1
 	github.com/cenkalti/backoff/v4 v4.1.3
 	github.com/gavv/httpexpect/v2 v2.3.1
@@ -17,7 +18,7 @@ require (
 	github.com/jeremywohl/flatten v1.0.1
 	github.com/kong/go-kong v0.29.0
 	github.com/kong/go-wrpc v0.0.0-20210914213024-d4348db6b815
-	github.com/kong/goks v0.4.1
+	github.com/kong/goks v0.4.2
 	github.com/lib/pq v1.10.5
 	github.com/mattn/go-sqlite3 v1.14.12
 	github.com/santhosh-tekuri/jsonschema/v5 v5.0.0
@@ -37,7 +38,6 @@ require (
 require (
 	github.com/ajg/form v1.5.1 // indirect
 	github.com/andybalholm/brotli v1.0.4 // indirect
-	github.com/blang/semver/v4 v4.0.0 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.1 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/fatih/structs v1.0.0 // indirect

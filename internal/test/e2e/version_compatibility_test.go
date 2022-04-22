@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/blang/semver/v4"
 	"github.com/gavv/httpexpect/v2"
 	"github.com/google/uuid"
 	kongClient "github.com/kong/go-kong/kong"
@@ -17,14 +18,21 @@ import (
 	"github.com/kong/koko/internal/test/run"
 	"github.com/kong/koko/internal/test/util"
 	"github.com/stretchr/testify/require"
+	"github.com/tidwall/gjson"
 	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
+type update struct {
+	field string
+	value interface{}
+}
+
 type vcPlugins struct {
-	name   string
-	id     string
-	config string
+	name              string
+	id                string
+	config            string
+	fieldUpdateChecks map[string][]update
 }
 
 func TestVersionCompatibility(t *testing.T) {
@@ -268,6 +276,22 @@ func TestVersionCompatibility(t *testing.T) {
 				"port": 1234
 			}`,
 		},
+		{
+			name: "zipkin",
+			id:   uuid.NewString(),
+			config: `{
+				"local_service_name": "LOCAL_SERVICE_NAME",
+				"header_type": "ignore"
+			}`,
+			fieldUpdateChecks: map[string][]update{
+				"< 2.7.0": {
+					{
+						field: "header_type",
+						value: "preserve",
+					},
+				},
+			},
+		},
 	}
 	for _, test := range tests {
 		var config structpb.Struct
@@ -301,31 +325,68 @@ func ensurePlugins(plugins []vcPlugins) error {
 		return fmt.Errorf("create go client for kong: %v", err)
 	}
 	ctx := context.Background()
+	info, err := kongAdmin.Root(ctx)
+	if err != nil {
+		return fmt.Errorf("fetching Kong Gateway info: %v", err)
+	}
+	dataPlaneVersion, err := kongClient.ParseSemanticVersion(kongClient.VersionFromInfo(info))
+	if err != nil {
+		return fmt.Errorf("parsing Kong Gateway version: %v", err)
+	}
 	dataPlanePlugins, err := kongAdmin.Plugins.ListAll(ctx)
 	if err != nil {
 		return fmt.Errorf("fetching plugins: %v", err)
 	}
 
-	// Because configurations may vary validation occurs via the name and ID
+	// Because configurations may vary validation occurs via the name and ID for
+	// removal items and a special test for updates will be performed which
+	// verifies update occurred properly based on versions
 	if len(plugins) != len(dataPlanePlugins) {
 		return fmt.Errorf("plugins configured count does not match [%d != %d]", len(plugins), len(dataPlanePlugins))
 	}
 	var failedPlugins []string
+	var missingPlugins []string
 	for _, plugin := range plugins {
 		found := false
 		for _, dataPlanePlugin := range dataPlanePlugins {
 			if plugin.name == *dataPlanePlugin.Name && plugin.id == *dataPlanePlugin.ID {
+				// Ensure field updates occurred and validate
+				if len(plugin.fieldUpdateChecks) > 0 {
+					config, err := json.Marshal(dataPlanePlugin.Config)
+					if err != nil {
+						return fmt.Errorf("marshal %s plugin config: %v", plugin.name, err)
+					}
+					configStr := string(config)
+
+					for version, updates := range plugin.fieldUpdateChecks {
+						version := semver.MustParseRange(version)
+						if version(dataPlaneVersion) {
+							for _, update := range updates {
+								res := gjson.Get(configStr, update.field)
+								if !res.Exists() || res.Value() != update.value {
+									failedPlugins = append(failedPlugins, plugin.name)
+									break
+								}
+							}
+						}
+					}
+				}
+
 				found = true
 				break
 			}
 		}
 		if !found {
-			failedPlugins = append(failedPlugins, plugin.name)
+			missingPlugins = append(missingPlugins, plugin.name)
 		}
 	}
 
-	if len(failedPlugins) > 0 {
-		return fmt.Errorf("failed to match plugins %s", strings.Join(failedPlugins, ","))
+	if len(missingPlugins) > 0 {
+		return fmt.Errorf("failed to discover plugins %s", strings.Join(missingPlugins, ","))
 	}
+	if len(failedPlugins) > 0 {
+		return fmt.Errorf("failed to validate plugin updates %s", strings.Join(failedPlugins, ","))
+	}
+
 	return nil
 }

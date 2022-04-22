@@ -78,6 +78,9 @@ type Manager struct {
 
 	config   ManagerConfig
 	configMu sync.RWMutex
+
+	latestExpectedHash string
+	hashMu             sync.RWMutex
 }
 
 func (m *Manager) reqCluster() *model.RequestCluster {
@@ -98,10 +101,6 @@ func (m *Manager) ReadConfig() ManagerConfig {
 
 func (m *Manager) updateNodeStatus(node Node) {
 	m.writeNode(node)
-	// TODO(hbagdi): Make this robust
-	// assuming happy state once a valid ping is received
-	// instead compare received hash with expected hash and update status
-	// accordingly
 	ctx, cancel := context.WithTimeout(context.Background(), defaultRequestTimeout)
 	defer cancel()
 	_, err := m.configClient.Status.ClearStatus(ctx, &relay.ClearStatusRequest{
@@ -261,7 +260,27 @@ func (m *Manager) reconcileKongPayload(ctx context.Context) error {
 		return err
 	}
 
+	m.updateExpectedHash(ctx, config.Hash)
 	return m.payload.UpdateBinary(config)
+}
+
+func (m *Manager) updateExpectedHash(ctx context.Context, hash string) {
+	m.hashMu.Lock()
+	defer m.hashMu.Unlock()
+	if m.latestExpectedHash == hash {
+		return
+	}
+	// TODO(hbagdi): add retry with backoff, take a new hash during retry into account
+	ctx, cancel := context.WithTimeout(ctx, defaultRequestTimeout)
+	defer cancel()
+	_, err := m.configClient.Status.UpdateExpectedHash(ctx, &relay.UpdateExpectedHashRequest{
+		Cluster: m.reqCluster(),
+		Hash:    hash,
+	})
+	if err != nil {
+		m.logger.Error("failed to update expected hash", zap.Error(err))
+	}
+	m.latestExpectedHash = hash
 }
 
 var defaultRequestTimeout = 5 * time.Second

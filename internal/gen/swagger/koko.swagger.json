@@ -763,6 +763,36 @@
         ]
       }
     },
+    "/v1/expected-config-hash": {
+      "get": {
+        "operationId": "StatusService_GetHash",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/kong.admin.service.v1.GetHashResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "cluster.id",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "kong.admin.service.v1.StatusService"
+        ]
+      }
+    },
     "/v1/meta/version": {
       "get": {
         "operationId": "MetaService_GetVersion",
@@ -3506,6 +3536,14 @@
         }
       }
     },
+    "kong.admin.service.v1.GetHashResponse": {
+      "type": "object",
+      "properties": {
+        "expected_hash": {
+          "type": "string"
+        }
+      }
+    },
     "kong.admin.service.v1.GetLuaSchemasPluginResponse": {
       "type": "object",
       "properties": {
@@ -3832,6 +3870,9 @@
       "type": "object"
     },
     "kong.relay.service.v1.FetchReconfigureEventsResponse": {
+      "type": "object"
+    },
+    "kong.relay.service.v1.UpdateExpectedHashResponse": {
       "type": "object"
     },
     "kong.relay.service.v1.UpdateStatusResponse": {

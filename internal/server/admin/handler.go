@@ -13,6 +13,7 @@ import (
 	"github.com/kong/koko/internal/server/util"
 	"github.com/kong/koko/internal/store"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/status"
 )
@@ -35,9 +36,8 @@ type HandlerOpts struct {
 }
 
 type CommonOpts struct {
-	logger *zap.Logger
-
-	storeLoader util.StoreLoader
+	storeLoader  util.StoreLoader
+	loggerFields []zapcore.Field
 }
 
 func (c CommonOpts) getDB(ctx context.Context,
@@ -74,82 +74,95 @@ func buildServices(opts HandlerOpts) services {
 		service: &ServiceService{
 			CommonOpts: CommonOpts{
 				storeLoader: opts.StoreLoader,
-				logger: opts.Logger.With(zap.String("admin-service",
-					"service")),
+				loggerFields: []zapcore.Field{
+					zap.String("admin-service", "service"),
+				},
 			},
 		},
 		route: &RouteService{
 			CommonOpts: CommonOpts{
 				storeLoader: opts.StoreLoader,
-				logger: opts.Logger.With(zap.String("admin-service",
-					"route")),
+				loggerFields: []zapcore.Field{
+					zap.String("admin-service", "route"),
+				},
 			},
 		},
 		plugin: &PluginService{
 			CommonOpts: CommonOpts{
 				storeLoader: opts.StoreLoader,
-				logger: opts.Logger.With(zap.String("admin-service",
-					"plugin")),
+				loggerFields: []zapcore.Field{
+					zap.String("admin-service", "plugin"),
+				},
 			},
 		},
 		upstream: &UpstreamService{
 			CommonOpts: CommonOpts{
 				storeLoader: opts.StoreLoader,
-				logger: opts.Logger.With(zap.String("admin-service",
-					"upstream")),
+				loggerFields: []zapcore.Field{
+					zap.String("admin-service", "upstream"),
+				},
 			},
 		},
 		target: &TargetService{
 			CommonOpts: CommonOpts{
 				storeLoader: opts.StoreLoader,
-				logger: opts.Logger.With(zap.String("admin-service",
-					"target")),
+				loggerFields: []zapcore.Field{
+					zap.String("admin-service", "target"),
+				},
 			},
 		},
 		schemas: &SchemasService{
-			logger:          opts.Logger.With(zap.String("admin-service", "schemas")),
+			loggerFields: []zapcore.Field{
+				zap.String("admin-service", "schemas"),
+			},
 			getRawLuaSchema: opts.GetRawLuaSchema,
 		},
 		node: &NodeService{
 			CommonOpts: CommonOpts{
 				storeLoader: opts.StoreLoader,
-				logger: opts.Logger.With(zap.String("admin-service",
-					"node")),
+				loggerFields: []zapcore.Field{
+					zap.String("admin-service", "node"),
+				},
 			},
 		},
 		status: &StatusService{
 			CommonOpts: CommonOpts{
 				storeLoader: opts.StoreLoader,
-				logger: opts.Logger.With(zap.String("admin-service",
-					"node")),
+				loggerFields: []zapcore.Field{
+					zap.String("admin-service", "status"),
+				},
 			},
 		},
 		certificate: &CertificateService{
 			CommonOpts: CommonOpts{
 				storeLoader: opts.StoreLoader,
-				logger: opts.Logger.With(zap.String("admin-service",
-					"certificate")),
+				loggerFields: []zapcore.Field{
+					zap.String("admin-service", "certificate"),
+				},
 			},
 		},
 		caCertificate: &CACertificateService{
 			CommonOpts: CommonOpts{
 				storeLoader: opts.StoreLoader,
-				logger: opts.Logger.With(zap.String("admin-service",
-					"ca-certificate")),
+				loggerFields: []zapcore.Field{
+					zap.String("admin-service", "ca-certificate"),
+				},
 			},
 		},
 		consumer: &ConsumerService{
 			CommonOpts: CommonOpts{
 				storeLoader: opts.StoreLoader,
-				logger: opts.Logger.With(zap.String("admin-service",
-					"consumer")),
+				loggerFields: []zapcore.Field{
+					zap.String("admin-service", "consumer"),
+				},
 			},
 		},
 		sni: &SNIService{
 			CommonOpts: CommonOpts{
 				storeLoader: opts.StoreLoader,
-				logger: opts.Logger.With(zap.String("admin-service",
-					"sni")),
+				loggerFields: []zapcore.Field{
+					zap.String("admin-service", "sni"),
+				},
 			},
 		},
 	}
@@ -261,7 +274,9 @@ func validateOpts(opts HandlerOpts) error {
 }
 
 func NewGRPC(opts HandlerOpts) *grpc.Server {
-	server := grpc.NewServer()
+	server := grpc.NewServer(grpc.ChainUnaryInterceptor(
+		util.LoggerInterceptor(opts.Logger)),
+	)
 	services := buildServices(opts)
 	v1.RegisterMetaServiceServer(server, &MetaService{})
 	v1.RegisterServiceServiceServer(server, services.service)

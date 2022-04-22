@@ -124,6 +124,27 @@ func (s StatusService) ClearStatus(ctx context.Context,
 	return &relay.ClearStatusResponse{}, nil
 }
 
+func (s StatusService) UpdateExpectedHash(ctx context.Context,
+	req *relay.UpdateExpectedHashRequest,
+) (*relay.UpdateExpectedHashResponse, error) {
+	db, err := s.getDB(ctx, req.Cluster)
+	if err != nil {
+		return nil, err
+	}
+
+	res := resource.NewHash()
+	if req.Hash == "" {
+		return nil, fmt.Errorf("invalid hash: '%v'", req.Hash)
+	}
+	res.Hash.ExpectedHash = req.Hash
+
+	err = db.Upsert(ctx, res)
+	if err != nil {
+		return nil, err
+	}
+	return &relay.UpdateExpectedHashResponse{}, nil
+}
+
 func (s StatusService) getDB(ctx context.Context,
 	cluster *adminModel.RequestCluster,
 ) (store.Store, error) {

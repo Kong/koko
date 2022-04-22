@@ -51,7 +51,7 @@ func setupWithDB(t *testing.T, store store.Store) (*httptest.Server, func()) {
 		t.Fatalf("creating httptest.Server: %v", err)
 	}
 
-	s := httptest.NewServer(handler)
+	s := httptest.NewServer(serverUtil.HandlerWithLogger(handler, log.Logger))
 	return s, func() {
 		s.Close()
 	}

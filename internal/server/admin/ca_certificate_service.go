@@ -23,17 +23,17 @@ func (s *CACertificateService) GetCACertificate(ctx context.Context,
 	req *v1.GetCACertificateRequest,
 ) (*v1.GetCACertificateResponse, error) {
 	if req.Id == "" {
-		return nil, s.err(util.ErrClient{Message: "required ID is missing"})
+		return nil, s.err(ctx, util.ErrClient{Message: "required ID is missing"})
 	}
 	db, err := s.CommonOpts.getDB(ctx, req.Cluster)
 	if err != nil {
 		return nil, err
 	}
 	result := resource.NewCACertificate()
-	s.logger.With(zap.String("id", req.Id)).Debug("reading CA certificate by id")
+	s.logger(ctx).With(zap.String("id", req.Id)).Debug("reading CA certificate by id")
 	err = db.Read(ctx, result, store.GetByID(req.Id))
 	if err != nil {
-		return nil, s.err(err)
+		return nil, s.err(ctx, err)
 	}
 	return &v1.GetCACertificateResponse{
 		Item: result.CACertificate,
@@ -50,7 +50,7 @@ func (s *CACertificateService) CreateCACertificate(ctx context.Context,
 	res := resource.NewCACertificate()
 	res.CACertificate = req.Item
 	if err := db.Create(ctx, res); err != nil {
-		return nil, s.err(err)
+		return nil, s.err(ctx, err)
 	}
 	util.SetHeader(ctx, http.StatusCreated)
 	return &v1.CreateCACertificateResponse{
@@ -62,7 +62,7 @@ func (s *CACertificateService) UpsertCACertificate(ctx context.Context,
 	req *v1.UpsertCACertificateRequest,
 ) (*v1.UpsertCACertificateResponse, error) {
 	if err := validUUID(req.Item.Id); err != nil {
-		return nil, s.err(err)
+		return nil, s.err(ctx, err)
 	}
 	db, err := s.CommonOpts.getDB(ctx, req.Cluster)
 	if err != nil {
@@ -71,7 +71,7 @@ func (s *CACertificateService) UpsertCACertificate(ctx context.Context,
 	res := resource.NewCACertificate()
 	res.CACertificate = req.Item
 	if err := db.Upsert(ctx, res); err != nil {
-		return nil, s.err(err)
+		return nil, s.err(ctx, err)
 	}
 	return &v1.UpsertCACertificateResponse{
 		Item: res.CACertificate,
@@ -82,7 +82,7 @@ func (s *CACertificateService) DeleteCACertificate(ctx context.Context,
 	req *v1.DeleteCACertificateRequest,
 ) (*v1.DeleteCACertificateResponse, error) {
 	if err := validUUID(req.Id); err != nil {
-		return nil, s.err(err)
+		return nil, s.err(ctx, err)
 	}
 	db, err := s.CommonOpts.getDB(ctx, req.Cluster)
 	if err != nil {
@@ -91,7 +91,7 @@ func (s *CACertificateService) DeleteCACertificate(ctx context.Context,
 	err = db.Delete(ctx, store.DeleteByID(req.Id),
 		store.DeleteByType(resource.TypeCACertificate))
 	if err != nil {
-		return nil, s.err(err)
+		return nil, s.err(ctx, err)
 	}
 	util.SetHeader(ctx, http.StatusNoContent)
 	return &v1.DeleteCACertificateResponse{}, nil
@@ -107,10 +107,10 @@ func (s *CACertificateService) ListCACertificates(ctx context.Context,
 	list := resource.NewList(resource.TypeCACertificate)
 	listOptFns, err := listOptsFromReq(req.Page)
 	if err != nil {
-		return nil, s.err(util.ErrClient{Message: err.Error()})
+		return nil, s.err(ctx, util.ErrClient{Message: err.Error()})
 	}
 	if err := db.List(ctx, list, listOptFns...); err != nil {
-		return nil, s.err(err)
+		return nil, s.err(ctx, err)
 	}
 	return &v1.ListCACertificatesResponse{
 		Items: caCertificatesFromObjects(list.GetAll()),
@@ -118,8 +118,12 @@ func (s *CACertificateService) ListCACertificates(ctx context.Context,
 	}, nil
 }
 
-func (s *CACertificateService) err(err error) error {
-	return util.HandleErr(s.logger, err)
+func (s *CACertificateService) err(ctx context.Context, err error) error {
+	return util.HandleErr(ctx, s.logger(ctx), err)
+}
+
+func (s *CACertificateService) logger(ctx context.Context) *zap.Logger {
+	return util.LoggerFromContext(ctx).With(s.loggerFields...)
 }
 
 func caCertificatesFromObjects(objects []model.Object) []*pb.CACertificate {

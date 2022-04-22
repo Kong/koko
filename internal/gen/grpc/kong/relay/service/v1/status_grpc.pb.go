@@ -27,6 +27,7 @@ type StatusServiceClient interface {
 	UpdateStatus(ctx context.Context, in *UpdateStatusRequest, opts ...grpc.CallOption) (*UpdateStatusResponse, error)
 	// ClearStatus deletes any status associated with the entity in the request.
 	ClearStatus(ctx context.Context, in *ClearStatusRequest, opts ...grpc.CallOption) (*ClearStatusResponse, error)
+	UpdateExpectedHash(ctx context.Context, in *UpdateExpectedHashRequest, opts ...grpc.CallOption) (*UpdateExpectedHashResponse, error)
 }
 
 type statusServiceClient struct {
@@ -55,6 +56,15 @@ func (c *statusServiceClient) ClearStatus(ctx context.Context, in *ClearStatusRe
 	return out, nil
 }
 
+func (c *statusServiceClient) UpdateExpectedHash(ctx context.Context, in *UpdateExpectedHashRequest, opts ...grpc.CallOption) (*UpdateExpectedHashResponse, error) {
+	out := new(UpdateExpectedHashResponse)
+	err := c.cc.Invoke(ctx, "/kong.relay.service.v1.StatusService/UpdateExpectedHash", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // StatusServiceServer is the server API for StatusService service.
 // All implementations must embed UnimplementedStatusServiceServer
 // for forward compatibility
@@ -64,6 +74,7 @@ type StatusServiceServer interface {
 	UpdateStatus(context.Context, *UpdateStatusRequest) (*UpdateStatusResponse, error)
 	// ClearStatus deletes any status associated with the entity in the request.
 	ClearStatus(context.Context, *ClearStatusRequest) (*ClearStatusResponse, error)
+	UpdateExpectedHash(context.Context, *UpdateExpectedHashRequest) (*UpdateExpectedHashResponse, error)
 	mustEmbedUnimplementedStatusServiceServer()
 }
 
@@ -76,6 +87,9 @@ func (UnimplementedStatusServiceServer) UpdateStatus(context.Context, *UpdateSta
 }
 func (UnimplementedStatusServiceServer) ClearStatus(context.Context, *ClearStatusRequest) (*ClearStatusResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ClearStatus not implemented")
+}
+func (UnimplementedStatusServiceServer) UpdateExpectedHash(context.Context, *UpdateExpectedHashRequest) (*UpdateExpectedHashResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateExpectedHash not implemented")
 }
 func (UnimplementedStatusServiceServer) mustEmbedUnimplementedStatusServiceServer() {}
 
@@ -126,6 +140,24 @@ func _StatusService_ClearStatus_Handler(srv interface{}, ctx context.Context, de
 	return interceptor(ctx, in, info, handler)
 }
 
+func _StatusService_UpdateExpectedHash_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateExpectedHashRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(StatusServiceServer).UpdateExpectedHash(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/kong.relay.service.v1.StatusService/UpdateExpectedHash",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(StatusServiceServer).UpdateExpectedHash(ctx, req.(*UpdateExpectedHashRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // StatusService_ServiceDesc is the grpc.ServiceDesc for StatusService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -140,6 +172,10 @@ var StatusService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ClearStatus",
 			Handler:    _StatusService_ClearStatus_Handler,
+		},
+		{
+			MethodName: "UpdateExpectedHash",
+			Handler:    _StatusService_UpdateExpectedHash_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -27,9 +27,9 @@ func (s *ConsumerService) GetConsumer(ctx context.Context,
 		return nil, err
 	}
 	result := resource.NewConsumer()
-	err = getEntityByIDOrName(ctx, req.Id, result, store.GetByIndex("username", req.Id), db, s.logger)
+	err = getEntityByIDOrName(ctx, req.Id, result, store.GetByIndex("username", req.Id), db, s.logger(ctx))
 	if err != nil {
-		return nil, s.err(err)
+		return nil, s.err(ctx, err)
 	}
 	return &v1.GetConsumerResponse{
 		Item: result.Consumer,
@@ -46,7 +46,7 @@ func (s *ConsumerService) CreateConsumer(ctx context.Context,
 	result := resource.NewConsumer()
 	result.Consumer = req.Item
 	if err := db.Create(ctx, result); err != nil {
-		return nil, s.err(err)
+		return nil, s.err(ctx, err)
 	}
 	util.SetHeader(ctx, http.StatusCreated)
 	return &v1.CreateConsumerResponse{
@@ -58,7 +58,7 @@ func (s *ConsumerService) UpsertConsumer(ctx context.Context,
 	req *v1.UpsertConsumerRequest,
 ) (*v1.UpsertConsumerResponse, error) {
 	if err := validUUID(req.Item.Id); err != nil {
-		return nil, s.err(err)
+		return nil, s.err(ctx, err)
 	}
 	db, err := s.CommonOpts.getDB(ctx, req.Cluster)
 	if err != nil {
@@ -67,7 +67,7 @@ func (s *ConsumerService) UpsertConsumer(ctx context.Context,
 	result := resource.NewConsumer()
 	result.Consumer = req.Item
 	if err := db.Upsert(ctx, result); err != nil {
-		return nil, s.err(err)
+		return nil, s.err(ctx, err)
 	}
 	return &v1.UpsertConsumerResponse{
 		Item: result.Consumer,
@@ -78,16 +78,16 @@ func (s *ConsumerService) DeleteConsumer(ctx context.Context,
 	req *v1.DeleteConsumerRequest,
 ) (*v1.DeleteConsumerResponse, error) {
 	if req.Id == "" {
-		return nil, s.err(util.ErrClient{Message: "required ID is missing"})
+		return nil, s.err(ctx, util.ErrClient{Message: "required ID is missing"})
 	}
 	db, err := s.CommonOpts.getDB(ctx, req.Cluster)
 	if err != nil {
 		return nil, err
 	}
-	s.logger.With(zap.String("id", req.Id)).Debug("deleting consumer by id")
+	s.logger(ctx).With(zap.String("id", req.Id)).Debug("deleting consumer by id")
 	err = db.Delete(ctx, store.DeleteByID(req.Id), store.DeleteByType(resource.TypeConsumer))
 	if err != nil {
-		return nil, s.err(err)
+		return nil, s.err(ctx, err)
 	}
 	util.SetHeader(ctx, http.StatusNoContent)
 	return &v1.DeleteConsumerResponse{}, nil
@@ -103,10 +103,10 @@ func (s *ConsumerService) ListConsumers(ctx context.Context,
 	list := resource.NewList(resource.TypeConsumer)
 	listOptFns, err := listOptsFromReq(req.Page)
 	if err != nil {
-		return nil, s.err(util.ErrClient{Message: err.Error()})
+		return nil, s.err(ctx, util.ErrClient{Message: err.Error()})
 	}
 	if err := db.List(ctx, list, listOptFns...); err != nil {
-		return nil, s.err(err)
+		return nil, s.err(ctx, err)
 	}
 	return &v1.ListConsumersResponse{
 		Items: consumersFromObjects(list.GetAll()),
@@ -127,6 +127,10 @@ func consumersFromObjects(objects []model.Object) []*pbModel.Consumer {
 	return res
 }
 
-func (s *ConsumerService) err(err error) error {
-	return util.HandleErr(s.logger, err)
+func (s *ConsumerService) err(ctx context.Context, err error) error {
+	return util.HandleErr(ctx, s.logger(ctx), err)
+}
+
+func (s *ConsumerService) logger(ctx context.Context) *zap.Logger {
+	return util.LoggerFromContext(ctx).With(s.loggerFields...)
 }

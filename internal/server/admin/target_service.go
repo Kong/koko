@@ -25,17 +25,17 @@ func (s *TargetService) GetTarget(ctx context.Context,
 	req *v1.GetTargetRequest,
 ) (*v1.GetTargetResponse, error) {
 	if req.Id == "" {
-		return nil, s.err(util.ErrClient{Message: "required ID is missing"})
+		return nil, s.err(ctx, util.ErrClient{Message: "required ID is missing"})
 	}
 	db, err := s.CommonOpts.getDB(ctx, req.Cluster)
 	if err != nil {
 		return nil, err
 	}
 	result := resource.NewTarget()
-	s.logger.With(zap.String("id", req.Id)).Debug("reading target by id")
+	s.logger(ctx).With(zap.String("id", req.Id)).Debug("reading target by id")
 	err = db.Read(ctx, result, store.GetByID(req.Id))
 	if err != nil {
-		return nil, s.err(err)
+		return nil, s.err(ctx, err)
 	}
 	return &v1.GetTargetResponse{
 		Item: result.Target,
@@ -52,7 +52,7 @@ func (s *TargetService) CreateTarget(ctx context.Context,
 	res := resource.NewTarget()
 	res.Target = req.Item
 	if err := db.Create(ctx, res); err != nil {
-		return nil, s.err(err)
+		return nil, s.err(ctx, err)
 	}
 	util.SetHeader(ctx, http.StatusCreated)
 	return &v1.CreateTargetResponse{
@@ -64,7 +64,7 @@ func (s *TargetService) UpsertTarget(ctx context.Context,
 	req *v1.UpsertTargetRequest,
 ) (*v1.UpsertTargetResponse, error) {
 	if err := validUUID(req.Item.Id); err != nil {
-		return nil, s.err(err)
+		return nil, s.err(ctx, err)
 	}
 	db, err := s.CommonOpts.getDB(ctx, req.Cluster)
 	if err != nil {
@@ -73,7 +73,7 @@ func (s *TargetService) UpsertTarget(ctx context.Context,
 	res := resource.NewTarget()
 	res.Target = req.Item
 	if err := db.Upsert(ctx, res); err != nil {
-		return nil, s.err(err)
+		return nil, s.err(ctx, err)
 	}
 	return &v1.UpsertTargetResponse{
 		Item: res.Target,
@@ -84,7 +84,7 @@ func (s *TargetService) DeleteTarget(ctx context.Context,
 	req *v1.DeleteTargetRequest,
 ) (*v1.DeleteTargetResponse, error) {
 	if err := validUUID(req.Id); err != nil {
-		return nil, s.err(err)
+		return nil, s.err(ctx, err)
 	}
 	db, err := s.CommonOpts.getDB(ctx, req.Cluster)
 	if err != nil {
@@ -93,7 +93,7 @@ func (s *TargetService) DeleteTarget(ctx context.Context,
 	err = db.Delete(ctx, store.DeleteByID(req.Id),
 		store.DeleteByType(resource.TypeTarget))
 	if err != nil {
-		return nil, s.err(err)
+		return nil, s.err(ctx, err)
 	}
 	util.SetHeader(ctx, http.StatusNoContent)
 	return &v1.DeleteTargetResponse{}, nil
@@ -111,7 +111,7 @@ func (s *TargetService) ListTargets(ctx context.Context,
 	var listFn []store.ListOptsFunc
 	if len(upstreamID) > 0 {
 		if _, err := uuid.Parse(upstreamID); err != nil {
-			return nil, s.err(util.ErrClient{
+			return nil, s.err(ctx, util.ErrClient{
 				Message: fmt.Sprintf("upstream_id '%s' is not a UUID",
 					req.UpstreamId),
 			})
@@ -123,13 +123,13 @@ func (s *TargetService) ListTargets(ctx context.Context,
 
 	listOptFns, err := listOptsFromReq(req.Page)
 	if err != nil {
-		return nil, s.err(util.ErrClient{Message: err.Error()})
+		return nil, s.err(ctx, util.ErrClient{Message: err.Error()})
 	}
 
 	listFn = append(listFn, listOptFns...)
 
 	if err := db.List(ctx, list, listFn...); err != nil {
-		return nil, s.err(err)
+		return nil, s.err(ctx, err)
 	}
 	return &v1.ListTargetsResponse{
 		Items: targetsFromObjects(list.GetAll()),
@@ -137,8 +137,12 @@ func (s *TargetService) ListTargets(ctx context.Context,
 	}, nil
 }
 
-func (s *TargetService) err(err error) error {
-	return util.HandleErr(s.logger, err)
+func (s *TargetService) err(ctx context.Context, err error) error {
+	return util.HandleErr(ctx, s.logger(ctx), err)
+}
+
+func (s *TargetService) logger(ctx context.Context) *zap.Logger {
+	return util.LoggerFromContext(ctx).With(s.loggerFields...)
 }
 
 func targetsFromObjects(objects []model.Object) []*pbModel.Target {

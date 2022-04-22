@@ -25,6 +25,11 @@ service StatusService {
       get: "/v1/statuses"
     };
   }
+  rpc GetHash(GetHashRequest) returns (GetHashResponse) {
+    option (google.api.http) = {
+      get: "/v1/expected-config-hash"
+    };
+  }
 }
 
 message GetStatusRequest {
@@ -53,4 +58,12 @@ message ListStatusesRequest {
 message ListStatusesResponse {
   repeated model.v1.Status items = 1;
   model.v1.PaginationResponse page = 2;
+}
+
+message GetHashRequest {
+  model.v1.RequestCluster cluster = 1;
+}
+
+message GetHashResponse {
+  string expected_hash = 1;
 }

@@ -23,17 +23,17 @@ func (s *NodeService) GetNode(ctx context.Context,
 	req *v1.GetNodeRequest,
 ) (*v1.GetNodeResponse, error) {
 	if req.Id == "" {
-		return nil, s.err(util.ErrClient{Message: "required ID is missing"})
+		return nil, s.err(ctx, util.ErrClient{Message: "required ID is missing"})
 	}
 	db, err := s.CommonOpts.getDB(ctx, req.Cluster)
 	if err != nil {
 		return nil, err
 	}
 	result := resource.NewNode()
-	s.logger.With(zap.String("id", req.Id)).Debug("reading node by id")
+	s.logger(ctx).With(zap.String("id", req.Id)).Debug("reading node by id")
 	err = db.Read(ctx, result, store.GetByID(req.Id))
 	if err != nil {
-		return nil, s.err(err)
+		return nil, s.err(ctx, err)
 	}
 	return &v1.GetNodeResponse{
 		Item: result.Node,
@@ -50,7 +50,7 @@ func (s *NodeService) CreateNode(ctx context.Context,
 	res := resource.NewNode()
 	res.Node = req.Item
 	if err := db.Create(ctx, res); err != nil {
-		return nil, s.err(err)
+		return nil, s.err(ctx, err)
 	}
 	util.SetHeader(ctx, http.StatusCreated)
 	return &v1.CreateNodeResponse{
@@ -68,7 +68,7 @@ func (s *NodeService) UpsertNode(ctx context.Context,
 	res := resource.NewNode()
 	res.Node = req.Item
 	if err := db.Upsert(ctx, res); err != nil {
-		return nil, s.err(err)
+		return nil, s.err(ctx, err)
 	}
 	return &v1.UpsertNodeResponse{
 		Item: res.Node,
@@ -79,7 +79,7 @@ func (s *NodeService) DeleteNode(ctx context.Context,
 	req *v1.DeleteNodeRequest,
 ) (*v1.DeleteNodeResponse, error) {
 	if req.Id == "" {
-		return nil, s.err(util.ErrClient{Message: "required ID is missing"})
+		return nil, s.err(ctx, util.ErrClient{Message: "required ID is missing"})
 	}
 	db, err := s.CommonOpts.getDB(ctx, req.Cluster)
 	if err != nil {
@@ -88,7 +88,7 @@ func (s *NodeService) DeleteNode(ctx context.Context,
 	err = db.Delete(ctx, store.DeleteByID(req.Id),
 		store.DeleteByType(resource.TypeNode))
 	if err != nil {
-		return nil, s.err(err)
+		return nil, s.err(ctx, err)
 	}
 	util.SetHeader(ctx, http.StatusNoContent)
 	return &v1.DeleteNodeResponse{}, nil
@@ -104,10 +104,10 @@ func (s *NodeService) ListNodes(ctx context.Context,
 	list := resource.NewList(resource.TypeNode)
 	listOptFns, err := listOptsFromReq(req.Page)
 	if err != nil {
-		return nil, s.err(util.ErrClient{Message: err.Error()})
+		return nil, s.err(ctx, util.ErrClient{Message: err.Error()})
 	}
 	if err := db.List(ctx, list, listOptFns...); err != nil {
-		return nil, s.err(err)
+		return nil, s.err(ctx, err)
 	}
 
 	return &v1.ListNodesResponse{
@@ -116,8 +116,12 @@ func (s *NodeService) ListNodes(ctx context.Context,
 	}, nil
 }
 
-func (s *NodeService) err(err error) error {
-	return util.HandleErr(s.logger, err)
+func (s *NodeService) err(ctx context.Context, err error) error {
+	return util.HandleErr(ctx, s.logger(ctx), err)
+}
+
+func (s *NodeService) logger(ctx context.Context) *zap.Logger {
+	return util.LoggerFromContext(ctx).With(s.loggerFields...)
 }
 
 func nodesFromObjects(objects []model.Object) []*pbModel.Node {
