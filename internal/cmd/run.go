@@ -38,9 +38,9 @@ type ServerConfig struct {
 
 	KongCPCert tls.Certificate
 
-	Logger        *zap.Logger
-	MetricsClient metrics.Client
-	Database      config.Database
+	Logger   *zap.Logger
+	Metrics  config.Metrics
+	Database config.Database
 }
 
 type DPAuthMode int
@@ -54,11 +54,16 @@ func Run(ctx context.Context, config ServerConfig) error {
 	logger := config.Logger
 	var g gang.Gang
 
-	metricsHandler := metrics.InitStatsClient(logger, config.MetricsClient)
-	if metricsHandler != nil {
+	err := metrics.InitMetricsClient(logger, config.Metrics.ClientType)
+	if err != nil {
+		return fmt.Errorf("metrics init: %v", err)
+	}
+
+	defer metrics.Close()
+	if metricsHandler := metrics.CreateHandler(logger); metricsHandler != nil {
 		s, err := server.NewHTTP(server.HTTPOpts{
 			Address: ":9090",
-			Logger:  logger.With(zap.String("component", "prometheus")),
+			Logger:  logger.With(zap.String("component", "metrics")),
 			Handler: metricsHandler,
 		})
 		if err != nil {

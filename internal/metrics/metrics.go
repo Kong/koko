@@ -5,43 +5,55 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/segmentio/stats/v4"
-	"github.com/segmentio/stats/v4/datadog"
-	"github.com/segmentio/stats/v4/prometheus"
 	"go.uber.org/zap"
 )
 
-type Client int
+var activeClient metricsClient = noopClient{}
+
+type Tag struct {
+	Name  string
+	Value string
+}
+
+type metricsClient interface {
+	Gauge(name string, value float64, tags ...Tag) error
+	Count(name string, value int64, tags ...Tag) error
+	Histogram(name string, value float64, tags ...Tag) error
+	CreateHandler(log *zap.Logger) http.Handler
+	Close()
+}
+
+type ClientType int
 
 const (
-	NoOpClient Client = iota
+	NoOp ClientType = iota
 	Datadog
 	Prometheus
 )
 
 const (
-	metricPrefix = "koko."
+	metricNamespace = "koko"
 )
 
-var validClients = map[string]Client{
-	"noop":       NoOpClient,
+var validClientTypes = map[string]ClientType{
+	"noop":       NoOp,
 	"datadog":    Datadog,
 	"prometheus": Prometheus,
 }
 
-func ParseClient(client string) (Client, error) {
-	if client == "" {
-		return NoOpClient, nil
+func ParseClientType(clientType string) (ClientType, error) {
+	if clientType == "" {
+		return NoOp, nil
 	}
 
-	if c, ok := validClients[client]; ok {
+	if c, ok := validClientTypes[clientType]; ok {
 		return c, nil
 	}
-	return NoOpClient, fmt.Errorf("invalid metrics_client '%s'", client)
+	return NoOp, fmt.Errorf("invalid metrics_client '%s'", clientType)
 }
 
-func (c Client) String() string {
-	for k, client := range validClients {
+func (c ClientType) String() string {
+	for k, client := range validClientTypes {
 		if client == c {
 			return k
 		}
@@ -49,35 +61,50 @@ func (c Client) String() string {
 	panic("invalid client")
 }
 
-func InitStatsClient(logger *zap.Logger, client Client) http.Handler {
-	switch client {
-	case Datadog:
-		ddEnvTagsMapping := []struct{ envVar, tagName string }{
-			{"DD_ENTITY_ID", "dd.internal.entity_id"},
-			{"DD_ENV", "env"},
-			{"DD_SERVICE", "service"},
-			{"DD_VERSION", "version"},
-		}
-		tags := make([]stats.Tag, 0, len(ddEnvTagsMapping))
-		for _, ddenv := range ddEnvTagsMapping {
-			if v := os.Getenv(ddenv.envVar); v != "" {
-				tags = append(tags, stats.Tag{Name: ddenv.tagName, Value: v})
-			}
-		}
+func InitMetricsClient(logger *zap.Logger, clientType string) error {
+	ct, err := ParseClientType(clientType)
+	if err != nil {
+		return err
+	}
 
+	switch ct {
+	case Datadog:
 		agent := os.Getenv("DD_AGENT_HOST")
 		if agent == "" {
 			panic("Datadog client environment variable 'DD_AGENT_HOST' must be set")
 		}
 
-		stats.DefaultEngine = stats.NewEngine(metricPrefix, datadog.NewClient(agent), tags...)
+		var err error
+		activeClient, err = newDatadogClient(agent)
+		if err != nil {
+			return err
+		}
 	case Prometheus:
-		stats.DefaultEngine = stats.NewEngine(metricPrefix, prometheus.DefaultHandler)
-		return prometheus.DefaultHandler
-	case NoOpClient:
+		activeClient = newPrometheusClient()
+	case NoOp:
 		fallthrough
 	default:
 		logger.Info("metrics client config not set")
 	}
 	return nil
+}
+
+func Gauge(name string, value float64, tags ...Tag) error {
+	return activeClient.Gauge(name, value, tags...)
+}
+
+func Count(name string, value int64, tags ...Tag) error {
+	return activeClient.Count(name, value, tags...)
+}
+
+func Histogram(name string, value float64, tags ...Tag) error {
+	return activeClient.Histogram(name, value, tags...)
+}
+
+func CreateHandler(log *zap.Logger) http.Handler {
+	return activeClient.CreateHandler(log)
+}
+
+func Close() {
+	activeClient.Close()
 }

@@ -40,10 +40,14 @@ type Database struct {
 	QueryTimeout string   `json:"query_timeout,omitempty"`
 }
 
+type Metrics struct {
+	ClientType string `json:"client_type,omitempty"`
+}
+
 type Config struct {
-	Log           Log           `json:"log,omitempty"`
-	Admin         Admin         `json:"admin,omitempty"`
-	Control       ControlServer `json:"control_server,omitempty"`
-	Database      Database      `json:"database,omitempty"`
-	MetricsClient string        `json:"metrics_client,omitempty"`
+	Log      Log           `json:"log,omitempty"`
+	Admin    Admin         `json:"admin,omitempty"`
+	Control  ControlServer `json:"control_server,omitempty"`
+	Database Database      `json:"database,omitempty"`
+	Metrics  Metrics       `json:"metrics,omitempty"`
 }
