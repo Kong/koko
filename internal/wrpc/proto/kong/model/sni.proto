@@ -9,7 +9,7 @@ option go_package = "github.com/kong/koko/internal/gen/wrpc/kong/model;model";
 message SNI {
   string id = 1;
   string name = 2;
-  int64 created_at = 3;
+  int32 created_at = 3;
   Certificate certificate = 4;
   repeated string tags = 5;
 }

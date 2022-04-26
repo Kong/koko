@@ -16,7 +16,7 @@ message Plugin {
   bool enabled = 4;
   repeated string protocols = 5;
   repeated string tags = 6;
-  int64 created_at = 7;
+  int32 created_at = 7;
   Route route = 8;
   Service service = 9;
   Consumer consumer = 10;
