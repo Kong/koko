@@ -8,6 +8,6 @@ message CACertificate {
   string id = 1;
   string cert = 2;
   string cert_digest = 3;
-  int64 created_at = 4;
+  int32 created_at = 4;
   repeated string tags = 5;
 }

@@ -20,16 +20,16 @@ message BasicAuth {
   string username = 2;
   string password = 3;
   Consumer consumer = 4;
-  int64 created_at = 5;
+  int32 created_at = 5;
   repeated string tags = 6;
 }
 
 message KeyAuth {
   string id = 1;
   string key = 2;
-  int64 ttl = 3;
+  int32 ttl = 3;
   Consumer consumer = 4;
-  int64 created_at = 5;
+  int32 created_at = 5;
   repeated string tags = 6;
 }
 
@@ -37,7 +37,7 @@ message MTLSAuth {
   string id = 1;
   string subject_name = 2;
   string ca_certificate_id = 3;
-  int64 created_at = 4;
+  int32 created_at = 4;
   Consumer consumer = 5;
   repeated string tags = 6;
 }
@@ -45,7 +45,7 @@ message ACLGroup {
   string id = 1;
   string group = 2;
   Consumer consumer = 3;
-  int64 created_at = 4;
+  int32 created_at = 4;
   repeated string tags = 5;
 }
 
@@ -54,7 +54,7 @@ message HMACAuth {
   string username = 2;
   string secret = 3;
   string consumer_id = 4;
-  int64 created_at = 5;
+  int32 created_at = 5;
   repeated string tags = 6;
 }
 
@@ -65,6 +65,6 @@ message JWTAuth {
   string rsa_public_key = 4;
   string secret = 5;
   Consumer consumer = 6;
-  int64 created_at = 7;
+  int32 created_at = 7;
   repeated string tags = 8;
 }
