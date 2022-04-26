@@ -1,6 +1,13 @@
 .DEFAULT_GOAL := all
 DEFAULT_BRANCH:=$(shell git remote show origin | sed -n '/HEAD branch/s/.*: //p')
 
+# list of DP definitions to not import in koko
+EXCLUDE_DP_SPEC_DEFINITIONS := model/analytics \
+	model/events \
+	services/analytics \
+	services/event_hooks \
+	services/legal
+
 .PHONY: install-tools
 install-tools:
 	./scripts/install-tools.sh
@@ -49,3 +56,7 @@ buf-format:
 buf-breaking:
 	git fetch --no-tags origin $(DEFAULT_BRANCH)
 	buf breaking --against .git#branch=origin/$(DEFAULT_BRANCH)
+
+.PHONY: sync-dp-spec
+sync-dp-spec:
+	./scripts/sync-dp-spec.sh $(EXCLUDE_DP_SPEC_DEFINITIONS)
