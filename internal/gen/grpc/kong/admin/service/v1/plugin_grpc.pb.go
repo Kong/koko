@@ -29,6 +29,7 @@ type PluginServiceClient interface {
 	UpsertPlugin(ctx context.Context, in *UpsertPluginRequest, opts ...grpc.CallOption) (*UpsertPluginResponse, error)
 	DeletePlugin(ctx context.Context, in *DeletePluginRequest, opts ...grpc.CallOption) (*DeletePluginResponse, error)
 	ListPlugins(ctx context.Context, in *ListPluginsRequest, opts ...grpc.CallOption) (*ListPluginsResponse, error)
+	ValidatePlugin(ctx context.Context, in *ValidatePluginRequest, opts ...grpc.CallOption) (*ValidatePluginResponse, error)
 }
 
 type pluginServiceClient struct {
@@ -102,6 +103,15 @@ func (c *pluginServiceClient) ListPlugins(ctx context.Context, in *ListPluginsRe
 	return out, nil
 }
 
+func (c *pluginServiceClient) ValidatePlugin(ctx context.Context, in *ValidatePluginRequest, opts ...grpc.CallOption) (*ValidatePluginResponse, error) {
+	out := new(ValidatePluginResponse)
+	err := c.cc.Invoke(ctx, "/kong.admin.service.v1.PluginService/ValidatePlugin", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // PluginServiceServer is the server API for PluginService service.
 // All implementations must embed UnimplementedPluginServiceServer
 // for forward compatibility
@@ -113,6 +123,7 @@ type PluginServiceServer interface {
 	UpsertPlugin(context.Context, *UpsertPluginRequest) (*UpsertPluginResponse, error)
 	DeletePlugin(context.Context, *DeletePluginRequest) (*DeletePluginResponse, error)
 	ListPlugins(context.Context, *ListPluginsRequest) (*ListPluginsResponse, error)
+	ValidatePlugin(context.Context, *ValidatePluginRequest) (*ValidatePluginResponse, error)
 	mustEmbedUnimplementedPluginServiceServer()
 }
 
@@ -140,6 +151,9 @@ func (UnimplementedPluginServiceServer) DeletePlugin(context.Context, *DeletePlu
 }
 func (UnimplementedPluginServiceServer) ListPlugins(context.Context, *ListPluginsRequest) (*ListPluginsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListPlugins not implemented")
+}
+func (UnimplementedPluginServiceServer) ValidatePlugin(context.Context, *ValidatePluginRequest) (*ValidatePluginResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ValidatePlugin not implemented")
 }
 func (UnimplementedPluginServiceServer) mustEmbedUnimplementedPluginServiceServer() {}
 
@@ -280,6 +294,24 @@ func _PluginService_ListPlugins_Handler(srv interface{}, ctx context.Context, de
 	return interceptor(ctx, in, info, handler)
 }
 
+func _PluginService_ValidatePlugin_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ValidatePluginRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PluginServiceServer).ValidatePlugin(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/kong.admin.service.v1.PluginService/ValidatePlugin",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PluginServiceServer).ValidatePlugin(ctx, req.(*ValidatePluginRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // PluginService_ServiceDesc is the grpc.ServiceDesc for PluginService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -314,6 +346,10 @@ var PluginService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListPlugins",
 			Handler:    _PluginService_ListPlugins_Handler,
+		},
+		{
+			MethodName: "ValidatePlugin",
+			Handler:    _PluginService_ValidatePlugin_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

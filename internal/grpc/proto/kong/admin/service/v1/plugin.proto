@@ -47,6 +47,12 @@ service PluginService {
       get: "/v1/plugins"
     };
   }
+  rpc ValidatePlugin(ValidatePluginRequest) returns (ValidatePluginResponse) {
+    option (google.api.http) = {
+      post: "/v1/validate-plugins"
+      body: "item"
+    };
+  }
 }
 
 message GetPluginRequest {
@@ -95,6 +101,12 @@ message ListPluginsResponse {
   repeated model.v1.Plugin items = 1;
   model.v1.PaginationResponse page = 2;
 }
+
+message ValidatePluginRequest {
+  model.v1.Plugin item = 1;
+}
+
+message ValidatePluginResponse {}
 
 message GetConfiguredPluginsRequest {
   model.v1.RequestCluster cluster = 1;
