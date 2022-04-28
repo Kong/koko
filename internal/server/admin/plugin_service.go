@@ -195,6 +195,13 @@ func (s *PluginService) GetConfiguredPlugins(ctx context.Context,
 	}, nil
 }
 
+func (s *PluginService) GetAvailablePlugins(
+	_ context.Context,
+	_ *v1.GetAvailablePluginsRequest,
+) (*v1.GetAvailablePluginsResponse, error) {
+	return &v1.GetAvailablePluginsResponse{}, nil
+}
+
 func (s *PluginService) err(ctx context.Context, err error) error {
 	return util.HandleErr(ctx, s.logger(ctx), err)
 }

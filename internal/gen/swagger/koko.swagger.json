@@ -58,6 +58,28 @@
     "application/json"
   ],
   "paths": {
+    "/v1/available-plugins": {
+      "get": {
+        "operationId": "PluginService_GetAvailablePlugins",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/kong.admin.service.v1.GetAvailablePluginsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "tags": [
+          "kong.admin.service.v1.PluginService"
+        ]
+      }
+    },
     "/v1/ca-certificates": {
       "get": {
         "operationId": "CACertificateService_ListCACertificates",
@@ -3500,6 +3522,17 @@
     },
     "kong.admin.service.v1.DeleteUpstreamResponse": {
       "type": "object"
+    },
+    "kong.admin.service.v1.GetAvailablePluginsResponse": {
+      "type": "object",
+      "properties": {
+        "names": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
     },
     "kong.admin.service.v1.GetCACertificateResponse": {
       "type": "object",
