@@ -701,7 +701,7 @@ func TestExpectedConfigHash(t *testing.T) {
 	defer dpCleanup()
 
 	// ensure kong node is up
-	require.Nil(t, util.WaitForKongPort(t, 8001))
+	require.Nil(t, util.WaitForKongAdminAPI(t))
 	kongClient.RunWhenKong(t, ">= 2.5.0")
 
 	expectedConfig := &v1.TestingConfig{
