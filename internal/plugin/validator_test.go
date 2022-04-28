@@ -13,6 +13,7 @@ import (
 	"github.com/kong/koko/internal/log"
 	"github.com/kong/koko/internal/model/json/validation"
 	"github.com/kong/koko/internal/plugin/testdata"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	lua "github.com/yuin/gopher-lua"
 	"google.golang.org/protobuf/types/known/structpb"
@@ -24,15 +25,29 @@ var badSchemaFS embed.FS
 
 // goodValidator is loaded at init.
 // This is an optimization to speed up tests.
-var goodValidator *LuaValidator
+var goodValidator testValidator
+
+type testValidator struct{ *LuaValidator }
+
+func (v *testValidator) clone() *LuaValidator {
+	schemas := make(map[string][]byte, len(v.rawLuaSchemas))
+	for key, val := range v.rawLuaSchemas {
+		schemas[key] = val
+	}
+	return &LuaValidator{
+		goksV:         v.goksV,
+		logger:        v.logger,
+		rawLuaSchemas: schemas,
+	}
+}
 
 func init() {
 	var err error
-	goodValidator, err = NewLuaValidator(Opts{Logger: log.Logger})
+	goodValidator.LuaValidator, err = NewLuaValidator(Opts{Logger: log.Logger})
 	if err != nil {
 		panic(err)
 	}
-	err = goodValidator.LoadSchemasFromEmbed(Schemas, "schemas")
+	err = goodValidator.LuaValidator.LoadSchemasFromEmbed(Schemas, "schemas")
 	if err != nil {
 		panic(err)
 	}
@@ -81,7 +96,7 @@ func TestLoadSchemasFromEmbed(t *testing.T) {
 }
 
 func TestProcessAutoFields(t *testing.T) {
-	validator := goodValidator
+	validator := goodValidator.clone()
 	t.Run("injects default fields for a plugin", func(t *testing.T) {
 		config, err := structpb.NewStruct(map[string]interface{}{
 			"second": 42,
@@ -130,7 +145,7 @@ func TestProcessAutoFields(t *testing.T) {
 }
 
 func TestValidate(t *testing.T) {
-	validator := goodValidator
+	validator := goodValidator.clone()
 	t.Run("test with entity errors", func(t *testing.T) {
 		config, err := structpb.NewStruct(map[string]interface{}{
 			"policy": "redis",
@@ -872,7 +887,7 @@ type testPluginSchema struct {
 }
 
 func TestPluginLuaSchema(t *testing.T) {
-	validator := goodValidator
+	validator := goodValidator.clone()
 	pluginNames := []string{
 		"one",
 		"two",
@@ -911,4 +926,45 @@ func TestPluginLuaSchema(t *testing.T) {
 		require.Empty(t, rawJSONSchema)
 		require.Errorf(t, err, "raw JSON schema not found for plugin: 'invalid-plugin'")
 	})
+}
+
+func TestLuaValidator_GetAvailablePluginNames(t *testing.T) {
+	validator := goodValidator.clone()
+	assert.Equal(t, []string{
+		"acl",
+		"acme",
+		"aws-lambda",
+		"azure-functions",
+		"basic-auth",
+		"bot-detection",
+		"correlation-id",
+		"cors",
+		"datadog",
+		"file-log",
+		"grpc-gateway",
+		"grpc-web",
+		"hmac-auth",
+		"http-log",
+		"ip-restriction",
+		"jwt",
+		"key-auth",
+		"ldap-auth",
+		"loggly",
+		"post-function",
+		"pre-function",
+		"prometheus",
+		"proxy-cache",
+		"rate-limiting",
+		"request-size-limiting",
+		"request-termination",
+		"request-transformer",
+		"response-ratelimiting",
+		"response-transformer",
+		"session",
+		"statsd",
+		"syslog",
+		"tcp-log",
+		"udp-log",
+		"zipkin",
+	}, validator.GetAvailablePluginNames())
 }

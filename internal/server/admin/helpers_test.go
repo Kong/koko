@@ -45,7 +45,8 @@ func setupWithDB(t *testing.T, store store.Store) (*httptest.Server, func()) {
 		StoreLoader: serverUtil.DefaultStoreLoader{
 			Store: store,
 		},
-		GetRawLuaSchema: validator.GetRawLuaSchema,
+		GetAvailablePluginNames: validator.GetAvailablePluginNames,
+		GetRawLuaSchema:         validator.GetRawLuaSchema,
 	})
 	if err != nil {
 		t.Fatalf("creating httptest.Server: %v", err)

@@ -15,6 +15,11 @@ service PluginService {
       get: "/v1/configured_plugins"
     };
   }
+  rpc GetAvailablePlugins(GetAvailablePluginsRequest) returns (GetAvailablePluginsResponse) {
+    option (google.api.http) = {
+      get: "/v1/available-plugins"
+    };
+  }
   rpc GetPlugin(GetPluginRequest) returns (GetPluginResponse) {
     option (google.api.http) = {
       get: "/v1/plugins/{id}"
@@ -96,5 +101,11 @@ message GetConfiguredPluginsRequest {
 }
 
 message GetConfiguredPluginsResponse {
+  repeated string names = 1;
+}
+
+message GetAvailablePluginsRequest {}
+
+message GetAvailablePluginsResponse {
   repeated string names = 1;
 }

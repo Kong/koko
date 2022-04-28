@@ -3,6 +3,7 @@ package plugin
 import (
 	"embed"
 	"fmt"
+	"sort"
 	"strings"
 	"time"
 
@@ -14,9 +15,20 @@ import (
 	"go.uber.org/zap"
 )
 
+// Validator handles various needs for plugin validation.
 type Validator interface {
+	// Validate executes the validate() Lua function for the given plugin.
 	Validate(*model.Plugin) error
+
+	// ProcessDefaults executes the process_auto_fields() Lua function for the given plugin.
 	ProcessDefaults(*model.Plugin) error
+
+	// GetAvailablePluginNames returns all available plugins (defined
+	// in the `schemas` folder for this package), in ascending order.
+	GetAvailablePluginNames() []string
+
+	// GetRawLuaSchema returns the raw Lua schema for the given plugin.
+	// In the event the plugin does not exist, an error is returned.
 	GetRawLuaSchema(name string) ([]byte, error)
 }
 
@@ -48,6 +60,7 @@ func NewLuaValidator(opts Opts) (*LuaValidator, error) {
 	}, nil
 }
 
+// Validate implements the Validator.Validate interface.
 func (v *LuaValidator) Validate(plugin *model.Plugin) error {
 	start := time.Now()
 	defer func() {
@@ -158,6 +171,7 @@ func f(m map[string]interface{}) ([]*model.ErrorDetail, error) {
 	return res, nil
 }
 
+// ProcessDefaults implements the Validator.ProcessDefaults interface.
 func (v *LuaValidator) ProcessDefaults(plugin *model.Plugin) error {
 	pluginJSON, err := json.Marshal(plugin)
 	if err != nil {
@@ -210,12 +224,24 @@ func (v *LuaValidator) LoadSchemasFromEmbed(fs embed.FS, dirName string) error {
 	return nil
 }
 
+// GetRawLuaSchema implements the Validator.GetRawLuaSchema interface.
 func (v *LuaValidator) GetRawLuaSchema(name string) ([]byte, error) {
 	rawLuaSchema, ok := v.rawLuaSchemas[name]
 	if !ok {
 		return []byte{}, fmt.Errorf("raw Lua schema not found for plugin: '%s'", name)
 	}
 	return rawLuaSchema, nil
+}
+
+// GetAvailablePluginNames implements the Validator.GetAvailablePluginNames interface.
+func (v *LuaValidator) GetAvailablePluginNames() []string {
+	names := make([]string, 0, len(v.rawLuaSchemas))
+	for name := range v.rawLuaSchemas {
+		names = append(names, name)
+	}
+	// Sorting for predictability.
+	sort.Strings(names)
+	return names
 }
 
 func addLuaSchema(name string, schema string, rawLuaSchemas map[string][]byte) error {
