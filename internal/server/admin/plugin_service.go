@@ -206,6 +206,20 @@ func (s *PluginService) GetAvailablePlugins(
 	}, nil
 }
 
+func (s *PluginService) ValidatePlugin(
+	ctx context.Context,
+	req *v1.ValidatePluginRequest,
+) (*v1.ValidatePluginResponse, error) {
+	res := resource.NewPlugin()
+	res.Plugin = req.Item
+	if err := res.ProcessDefaults(); err != nil {
+		return nil, s.err(ctx, err)
+	} else if err := res.Validate(); err != nil {
+		return nil, s.err(ctx, err)
+	}
+	return &v1.ValidatePluginResponse{}, nil
+}
+
 func (s *PluginService) err(ctx context.Context, err error) error {
 	return util.HandleErr(ctx, s.logger(ctx), err)
 }
