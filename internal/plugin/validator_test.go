@@ -25,29 +25,15 @@ var badSchemaFS embed.FS
 
 // goodValidator is loaded at init.
 // This is an optimization to speed up tests.
-var goodValidator testValidator
-
-type testValidator struct{ *LuaValidator }
-
-func (v *testValidator) clone() *LuaValidator {
-	schemas := make(map[string][]byte, len(v.rawLuaSchemas))
-	for key, val := range v.rawLuaSchemas {
-		schemas[key] = val
-	}
-	return &LuaValidator{
-		goksV:         v.goksV,
-		logger:        v.logger,
-		rawLuaSchemas: schemas,
-	}
-}
+var goodValidator *LuaValidator
 
 func init() {
 	var err error
-	goodValidator.LuaValidator, err = NewLuaValidator(Opts{Logger: log.Logger})
+	goodValidator, err = NewLuaValidator(Opts{Logger: log.Logger})
 	if err != nil {
 		panic(err)
 	}
-	err = goodValidator.LuaValidator.LoadSchemasFromEmbed(Schemas, "schemas")
+	err = goodValidator.LoadSchemasFromEmbed(Schemas, "schemas")
 	if err != nil {
 		panic(err)
 	}
@@ -96,7 +82,7 @@ func TestLoadSchemasFromEmbed(t *testing.T) {
 }
 
 func TestProcessAutoFields(t *testing.T) {
-	validator := goodValidator.clone()
+	validator := goodValidator
 	t.Run("injects default fields for a plugin", func(t *testing.T) {
 		config, err := structpb.NewStruct(map[string]interface{}{
 			"second": 42,
@@ -145,7 +131,7 @@ func TestProcessAutoFields(t *testing.T) {
 }
 
 func TestValidate(t *testing.T) {
-	validator := goodValidator.clone()
+	validator := goodValidator
 	t.Run("test with entity errors", func(t *testing.T) {
 		config, err := structpb.NewStruct(map[string]interface{}{
 			"policy": "redis",
@@ -887,7 +873,7 @@ type testPluginSchema struct {
 }
 
 func TestPluginLuaSchema(t *testing.T) {
-	validator := goodValidator.clone()
+	validator := goodValidator
 	pluginNames := []string{
 		"one",
 		"two",
@@ -929,42 +915,6 @@ func TestPluginLuaSchema(t *testing.T) {
 }
 
 func TestLuaValidator_GetAvailablePluginNames(t *testing.T) {
-	validator := goodValidator.clone()
-	assert.Equal(t, []string{
-		"acl",
-		"acme",
-		"aws-lambda",
-		"azure-functions",
-		"basic-auth",
-		"bot-detection",
-		"correlation-id",
-		"cors",
-		"datadog",
-		"file-log",
-		"grpc-gateway",
-		"grpc-web",
-		"hmac-auth",
-		"http-log",
-		"ip-restriction",
-		"jwt",
-		"key-auth",
-		"ldap-auth",
-		"loggly",
-		"post-function",
-		"pre-function",
-		"prometheus",
-		"proxy-cache",
-		"rate-limiting",
-		"request-size-limiting",
-		"request-termination",
-		"request-transformer",
-		"response-ratelimiting",
-		"response-transformer",
-		"session",
-		"statsd",
-		"syslog",
-		"tcp-log",
-		"udp-log",
-		"zipkin",
-	}, validator.GetAvailablePluginNames())
+	validator := &LuaValidator{luaSchemaNames: []string{"a", "b", "c"}}
+	assert.Equal(t, validator.luaSchemaNames, validator.GetAvailablePluginNames())
 }
