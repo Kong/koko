@@ -405,6 +405,140 @@ func TestValidate(t *testing.T) {
 			}
 		}
 	})
+	t.Run("validate different 'path' for rate-limiting plugin", func(t *testing.T) {
+		policies := []struct {
+			config       string
+			wantsErr     bool
+			expectedErrs []*model.ErrorDetail
+		}{
+			{
+				config: `{
+					"second": 42,
+					"policy": "local",
+					"path": "/"
+				}`,
+			},
+			{
+				config: `{
+					"second": 42,
+					"policy": "local",
+					"path": "/path"
+				}`,
+			},
+			{
+				config: `{
+					"second": 42,
+					"policy": "local",
+					"path": "/path/test"
+				}`,
+			},
+			{
+				config: `{
+					"second": 42,
+					"policy": "local",
+					"path": ""
+				}`,
+				wantsErr: true,
+				expectedErrs: []*model.ErrorDetail{
+					{
+						Type:  model.ErrorType_ERROR_TYPE_FIELD,
+						Field: "config.path",
+						Messages: []string{
+							"length must be at least 1",
+						},
+					},
+				},
+			},
+			{
+				config: `{
+					"second": 42,
+					"policy": "local",
+					"path": "path"
+				}`,
+				wantsErr: true,
+				expectedErrs: []*model.ErrorDetail{
+					{
+						Type:  model.ErrorType_ERROR_TYPE_FIELD,
+						Field: "config.path",
+						Messages: []string{
+							"should start with: /",
+						},
+					},
+				},
+			},
+			{
+				config: `{
+					"second": 42,
+					"policy": "local",
+					"path": "/path/200?"
+				}`,
+				wantsErr: true,
+				expectedErrs: []*model.ErrorDetail{
+					{
+						Type:  model.ErrorType_ERROR_TYPE_FIELD,
+						Field: "config.path",
+						Messages: []string{
+							"invalid path: '/path/200?' (characters outside of the reserved list of RFC 3986 found)",
+						},
+					},
+				},
+			},
+			{
+				config: `{
+					"second": 42,
+					"policy": "local",
+					"path": "/some%20words%"
+				}`,
+				wantsErr: true,
+				expectedErrs: []*model.ErrorDetail{
+					{
+						Type:  model.ErrorType_ERROR_TYPE_FIELD,
+						Field: "config.path",
+						Messages: []string{
+							"invalid url-encoded value: '%'",
+						},
+					},
+				},
+			},
+			{
+				config: `{
+					"second": 42,
+					"policy": "local",
+					"path": "/foo/bar//"
+				}`,
+				wantsErr: true,
+				expectedErrs: []*model.ErrorDetail{
+					{
+						Type:  model.ErrorType_ERROR_TYPE_FIELD,
+						Field: "config.path",
+						Messages: []string{
+							"must not have empty segments",
+						},
+					},
+				},
+			},
+		}
+
+		for _, policy := range policies {
+			var config structpb.Struct
+			require.Nil(t, json.Unmarshal([]byte(policy.config), &config))
+			p := &model.Plugin{
+				Name:      "rate-limiting",
+				Protocols: []string{"http", "https"},
+				Enabled:   wrapperspb.Bool(true),
+				Config:    &config,
+			}
+			err := validator.Validate(p)
+			if policy.wantsErr {
+				require.NotNil(t, err)
+				validationErr, ok := err.(validation.Error)
+				require.True(t, ok)
+				require.Equal(t, policy.expectedErrs, validationErr.Errs)
+			} else {
+				require.Nil(t, err)
+			}
+		}
+	})
 	t.Run("validate different policies for response-ratelimiting plugin", func(t *testing.T) {
 		policies := []struct {
 			config       string
@@ -528,6 +662,204 @@ func TestValidate(t *testing.T) {
 				validationErr, ok := err.(validation.Error)
 				require.True(t, ok)
 				require.Equal(t, strategy.expectedErrs, validationErr.Errs)
+			} else {
+				require.Nil(t, err)
+			}
+		}
+	})
+	t.Run("test plugins' typedefs validators", func(t *testing.T) {
+		tt := []struct {
+			name         string
+			config       string
+			wantsErr     bool
+			expectedErrs []*model.ErrorDetail
+		}{
+			{
+				// test typedefs.sni
+				name: "rate-limiting",
+				config: `{
+					"second": 42,
+					"policy": "redis",
+					"redis_host": "localhost",
+					"redis_server_name": "192.0.2.1"
+				}`,
+				wantsErr: true,
+				expectedErrs: []*model.ErrorDetail{
+					{
+						Type:  model.ErrorType_ERROR_TYPE_FIELD,
+						Field: "config.redis_server_name",
+						Messages: []string{
+							"must not be an IP",
+						},
+					},
+				},
+			},
+			{
+				// test typedefs.port
+				name: "response-ratelimiting",
+				config: `{
+					"limits": {
+						"sms": {
+							"second": 42
+						}
+					},
+					"policy": "redis",
+					"redis_host": "localhost",
+					"redis_port": 99999999
+				}`,
+				wantsErr: true,
+				expectedErrs: []*model.ErrorDetail{
+					{
+						Type: model.ErrorType_ERROR_TYPE_ENTITY,
+						Messages: []string{
+							"failed conditional validation given value of field 'config.policy'",
+						},
+					},
+					{
+						Type:  model.ErrorType_ERROR_TYPE_FIELD,
+						Field: "config.redis_port",
+						Messages: []string{
+							"value should be between 0 and 65535",
+						},
+					},
+				},
+			},
+			{
+				// test typedefs.ip_or_cidr
+				name: "ip-restriction",
+				config: `{
+					"allow": [
+						"1.2.3.4",
+						"192.168.129.23/17"
+					]
+				}`,
+				wantsErr: false,
+			},
+			{
+				// test typedefs.ip_or_cidr
+				name: "ip-restriction",
+				config: `{
+					"allow": [
+						"1.2.3.4.4",
+						"1.2.3.4",
+						"192.168.129.23/40",
+						"asd",
+						"::1"
+					]
+				}`,
+				wantsErr: true,
+				expectedErrs: []*model.ErrorDetail{
+					{
+						Type:  model.ErrorType_ERROR_TYPE_FIELD,
+						Field: "config.allow[0]",
+						Messages: []string{
+							"invalid ip or cidr range: '1.2.3.4.4'",
+						},
+					},
+					{
+						Type:  model.ErrorType_ERROR_TYPE_FIELD,
+						Field: "config.allow[1]",
+						Messages: []string{
+							"[3] = invalid ip or cidr range: '192.168.129.23/40'",
+						},
+					},
+					{
+						Type:  model.ErrorType_ERROR_TYPE_FIELD,
+						Field: "config.allow[2]",
+						Messages: []string{
+							"[4] = invalid ip or cidr range: 'asd'",
+						},
+					},
+				},
+			},
+			{
+				name: "acme",
+				config: `{
+					"account_email": "example@example.com"
+				}`,
+				wantsErr: false,
+			},
+			{
+				// test typedefs.url
+				name: "acme",
+				config: `{
+					"account_email": "example-example",
+					"api_uri": "acme"
+				}`,
+				wantsErr: true,
+				expectedErrs: []*model.ErrorDetail{
+					{
+						Type:  model.ErrorType_ERROR_TYPE_FIELD,
+						Field: "config.account_email",
+						Messages: []string{
+							"invalid value: example-example",
+						},
+					},
+					{
+						Type:  model.ErrorType_ERROR_TYPE_FIELD,
+						Field: "config.api_uri",
+						Messages: []string{
+							"missing host in url",
+						},
+					},
+				},
+			},
+			{
+				// test typedefs.header_name
+				name: "key-auth",
+				config: `{
+					"key_names": [
+						"header!"
+					]
+				}`,
+				wantsErr: true,
+				expectedErrs: []*model.ErrorDetail{
+					{
+						Type:  model.ErrorType_ERROR_TYPE_FIELD,
+						Field: "config.key_names[0]",
+						Messages: []string{
+							"bad header name 'header!', allowed characters are A-Z, a-z, 0-9, '_', and '-'",
+						},
+					},
+				},
+			},
+			{
+				// test typedefs.lua_code
+				name: "loggly",
+				config: `{
+					"key": "KEY",
+					"custom_fields_by_lua": {
+						"header": "return nil"
+					}
+				}`,
+				wantsErr: true,
+				expectedErrs: []*model.ErrorDetail{
+					{
+						Type:  model.ErrorType_ERROR_TYPE_FIELD,
+						Field: "config.custom_fields_by_lua",
+						Messages: []string{
+							`Error parsing function: lua-tree/share/lua/5.1/kong/tools/sandbox.lua:119:` +
+								` loading of untrusted Lua code disabled because 'untrusted_lua' config option is set to 'off'`,
+						},
+					},
+				},
+			},
+		}
+		for _, policy := range tt {
+			var config structpb.Struct
+			require.Nil(t, json.Unmarshal([]byte(policy.config), &config))
+			p := &model.Plugin{
+				Name:      policy.name,
+				Protocols: []string{"http", "https"},
+				Enabled:   wrapperspb.Bool(true),
+				Config:    &config,
+			}
+			err := validator.Validate(p)
+			if policy.wantsErr {
+				require.NotNil(t, err)
+				validationErr, ok := err.(validation.Error)
+				require.True(t, ok)
+				require.ElementsMatch(t, policy.expectedErrs, validationErr.Errs)
 			} else {
 				require.Nil(t, err)
 			}
