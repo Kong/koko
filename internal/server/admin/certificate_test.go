@@ -284,7 +284,7 @@ func TestCertificateUpsert(t *testing.T) {
 			Key:  goodKeyTwo,
 		}
 		res := c.POST("/v1/certificates").WithJSON(certificate).Expect()
-		res.Status(201)
+		res.Status(http.StatusCreated)
 		body := res.JSON().Path("$.item").Object()
 		id := body.Value("id").String().Raw()
 
@@ -317,7 +317,7 @@ func TestCertificateUpsert(t *testing.T) {
 			Cert: "a",
 			Key:  "b",
 		}).Expect()
-		res.Status(400)
+		res.Status(http.StatusBadRequest)
 		body := res.JSON().Object()
 		body.ValueEqual("message", "validation error")
 		body.Value("details").Array().Length().Equal(2)

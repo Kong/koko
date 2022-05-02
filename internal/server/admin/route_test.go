@@ -37,7 +37,7 @@ func TestRouteCreate(t *testing.T) {
 	c := httpexpect.New(t, s.URL)
 	t.Run("creates a valid route", func(t *testing.T) {
 		res := c.POST("/v1/routes").WithJSON(goodRoute()).Expect()
-		res.Status(201)
+		res.Status(http.StatusCreated)
 		res.Header("grpc-metadata-koko-status-code").Empty()
 		body := res.JSON().Path("$.item").Object()
 		validateGoodRoute(body)
@@ -45,7 +45,7 @@ func TestRouteCreate(t *testing.T) {
 	t.Run("recreating the same route fails", func(t *testing.T) {
 		route := goodRoute()
 		res := c.POST("/v1/routes").WithJSON(route).Expect()
-		res.Status(400)
+		res.Status(http.StatusBadRequest)
 		body := res.JSON().Object()
 		body.ValueEqual("message", "data constraint error")
 		body.Value("details").Array().Length().Equal(1)
@@ -62,7 +62,7 @@ func TestRouteCreate(t *testing.T) {
 			},
 		}
 		res := c.POST("/v1/routes").WithJSON(route).Expect()
-		res.Status(400)
+		res.Status(http.StatusBadRequest)
 		body := res.JSON().Object()
 		body.ValueEqual("message", "data constraint error")
 		body.Value("details").Array().Length().Equal(1)
@@ -74,7 +74,7 @@ func TestRouteCreate(t *testing.T) {
 		service := goodService()
 		service.Id = uuid.NewString()
 		res := c.POST("/v1/services").WithJSON(service).Expect()
-		res.Status(201)
+		res.Status(http.StatusCreated)
 		route := &v1.Route{
 			Name:  "bar",
 			Paths: []string{"/"},
@@ -83,14 +83,14 @@ func TestRouteCreate(t *testing.T) {
 			},
 		}
 		res = c.POST("/v1/routes").WithJSON(route).Expect()
-		res.Status(201)
+		res.Status(http.StatusCreated)
 	})
 	t.Run("creates a valid route specifying the ID using POST", func(t *testing.T) {
 		route := goodRoute()
 		route.Name = "with-id"
 		route.Id = uuid.NewString()
 		res := c.POST("/v1/routes").WithJSON(route).Expect()
-		res.Status(201)
+		res.Status(http.StatusCreated)
 		body := res.JSON().Path("$.item").Object()
 		body.Value("id").Equal(route.Id)
 	})
@@ -162,7 +162,7 @@ func TestRouteUpsert(t *testing.T) {
 		res := c.PUT("/v1/routes/" + uuid.NewString()).
 			WithJSON(route).
 			Expect()
-		res.Status(400)
+		res.Status(http.StatusBadRequest)
 		body := res.JSON().Object()
 		body.ValueEqual("message", "data constraint error")
 		body.Value("details").Array().Length().Equal(1)
@@ -234,13 +234,13 @@ func TestRouteDelete(t *testing.T) {
 	svc := goodRoute()
 	res := c.POST("/v1/routes").WithJSON(svc).Expect()
 	id := res.JSON().Path("$.item.id").String().Raw()
-	res.Status(201)
+	res.Status(http.StatusCreated)
 	t.Run("deleting a non-existent route returns 404", func(t *testing.T) {
 		randomID := "071f5040-3e4a-46df-9d98-451e79e318fd"
-		c.DELETE("/v1/routes/" + randomID).Expect().Status(404)
+		c.DELETE("/v1/routes/" + randomID).Expect().Status(http.StatusNotFound)
 	})
 	t.Run("deleting a route return 204", func(t *testing.T) {
-		c.DELETE("/v1/routes/" + id).Expect().Status(204)
+		c.DELETE("/v1/routes/" + id).Expect().Status(http.StatusNoContent)
 	})
 	t.Run("delete request without an ID returns 400", func(t *testing.T) {
 		res := c.DELETE("/v1/routes/").Expect()
@@ -263,10 +263,10 @@ func TestRouteRead(t *testing.T) {
 	svc := goodRoute()
 	res := c.POST("/v1/routes").WithJSON(svc).Expect()
 	id := res.JSON().Path("$.item.id").String().Raw()
-	res.Status(201)
+	res.Status(http.StatusCreated)
 	t.Run("reading a non-existent route returns 404", func(t *testing.T) {
 		randomID := uuid.NewString()
-		c.GET("/v1/routes/" + randomID).Expect().Status(404)
+		c.GET("/v1/routes/" + randomID).Expect().Status(http.StatusNotFound)
 	})
 	t.Run("read route with no name match returns 404", func(t *testing.T) {
 		res := c.GET("/v1/routes/somename").Expect()
@@ -308,7 +308,7 @@ func TestRouteList(t *testing.T) {
 		Path: "/foo",
 	}
 	res := c.POST("/v1/services").WithJSON(svc).Expect()
-	res.Status(201)
+	res.Status(http.StatusCreated)
 	serviceID1 := res.JSON().Path("$.item.id").String().Raw()
 	svc = &v1.Service{
 		Name: "bar",
@@ -316,7 +316,7 @@ func TestRouteList(t *testing.T) {
 		Path: "/bar",
 	}
 	res = c.POST("/v1/services").WithJSON(svc).Expect()
-	res.Status(201)
+	res.Status(http.StatusCreated)
 	serviceID2 := res.JSON().Path("$.item.id").String().Raw()
 	svc = &v1.Service{
 		Name: "baz",
@@ -324,19 +324,19 @@ func TestRouteList(t *testing.T) {
 		Path: "/baz",
 	}
 	res = c.POST("/v1/services").WithJSON(svc).Expect()
-	res.Status(201)
+	res.Status(http.StatusCreated)
 	serviceID3 := res.JSON().Path("$.item.id").String().Raw()
 
 	rte := goodRoute()
 	res = c.POST("/v1/routes").WithJSON(rte).Expect()
-	res.Status(201)
+	res.Status(http.StatusCreated)
 	routeID1 := res.JSON().Path("$.item.id").String().Raw()
 	rte = &v1.Route{
 		Name:  "bar",
 		Paths: []string{"/foo"},
 	}
 	res = c.POST("/v1/routes").WithJSON(rte).Expect()
-	res.Status(201)
+	res.Status(http.StatusCreated)
 	routeID2 := res.JSON().Path("$.item.id").String().Raw()
 	rte = &v1.Route{
 		Name:  "qux",
@@ -346,7 +346,7 @@ func TestRouteList(t *testing.T) {
 		},
 	}
 	res = c.POST("/v1/routes").WithJSON(rte).Expect()
-	res.Status(201)
+	res.Status(http.StatusCreated)
 	routeID3 := res.JSON().Path("$.item.id").String().Raw()
 	rte = &v1.Route{
 		Name:  "quux",
@@ -356,7 +356,7 @@ func TestRouteList(t *testing.T) {
 		},
 	}
 	res = c.POST("/v1/routes").WithJSON(rte).Expect()
-	res.Status(201)
+	res.Status(http.StatusCreated)
 	routeID4 := res.JSON().Path("$.item.id").String().Raw()
 	rte = &v1.Route{
 		Name:  "quuz",
@@ -366,7 +366,7 @@ func TestRouteList(t *testing.T) {
 		},
 	}
 	res = c.POST("/v1/routes").WithJSON(rte).Expect()
-	res.Status(201)
+	res.Status(http.StatusCreated)
 	routeID5 := res.JSON().Path("$.item.id").String().Raw()
 
 	t.Run("list all routes", func(t *testing.T) {

@@ -327,7 +327,7 @@ func TestCACertificateUpsert(t *testing.T) {
 			Cert: goodCACertThree,
 		}
 		res := c.POST("/v1/ca-certificates").WithJSON(cert).Expect()
-		res.Status(201)
+		res.Status(http.StatusCreated)
 		body := res.JSON().Path("$.item").Object()
 		id := body.Value("id").String().Raw()
 
@@ -353,7 +353,7 @@ func TestCACertificateUpsert(t *testing.T) {
 		res := c.PUT("/v1/ca-certificates/{id}", uuid.NewString()).WithJSON(&v1.CACertificate{
 			Cert: "a",
 		}).Expect()
-		res.Status(400)
+		res.Status(http.StatusBadRequest)
 		body := res.JSON().Object()
 		body.ValueEqual("message", "validation error")
 		body.Value("details").Array().Length().Equal(1)

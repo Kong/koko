@@ -46,7 +46,7 @@ func TestRoute_ProcessDefaults(t *testing.T) {
 	})
 	t.Run("defaults do not override explicit values", func(t *testing.T) {
 		r := NewRoute()
-		r.Route.HttpsRedirectStatusCode = 302
+		r.Route.HttpsRedirectStatusCode = http.StatusFound
 		r.Route.Protocols = []string{"grpc"}
 		r.Route.PathHandling = "v1"
 		r.Route.RegexPriority = wrapperspb.Int32(1)
@@ -67,7 +67,7 @@ func TestRoute_ProcessDefaults(t *testing.T) {
 			RequestBuffering:        wrapperspb.Bool(false),
 			ResponseBuffering:       wrapperspb.Bool(false),
 			PathHandling:            "v1",
-			HttpsRedirectStatusCode: 302,
+			HttpsRedirectStatusCode: http.StatusFound,
 		}, r.Resource())
 	})
 }

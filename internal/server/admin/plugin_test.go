@@ -65,7 +65,7 @@ func TestPluginCreate(t *testing.T) {
 		pluginBytes, err := json.Marshal(goodKeyAuthPlugin())
 		require.Nil(t, err)
 		res := c.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
-		res.Status(201)
+		res.Status(http.StatusCreated)
 		res.Header("grpc-metadata-koko-status-code").Empty()
 		body := res.JSON().Path("$.item").Object()
 		validateKeyAuthPlugin(body)
@@ -74,7 +74,7 @@ func TestPluginCreate(t *testing.T) {
 		pluginBytes, err := json.Marshal(goodKeyAuthPlugin())
 		require.Nil(t, err)
 		res := c.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
-		res.Status(400)
+		res.Status(http.StatusBadRequest)
 		body := res.JSON().Object()
 		body.ValueEqual("message", "data constraint error")
 		body.Value("details").Array().Length().Equal(1)
@@ -97,7 +97,7 @@ func TestPluginCreate(t *testing.T) {
 		pluginBytes, err := json.Marshal(plugin)
 		require.Nil(t, err)
 		res := c.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
-		res.Status(400)
+		res.Status(http.StatusBadRequest)
 		body := res.JSON().Object()
 		body.ValueEqual("message", "data constraint error")
 		body.Value("details").Array().Length().Equal(1)
@@ -110,7 +110,7 @@ func TestPluginCreate(t *testing.T) {
 		service := goodService()
 		service.Id = uuid.NewString()
 		res := c.POST("/v1/services").WithJSON(service).Expect()
-		res.Status(201)
+		res.Status(http.StatusCreated)
 		plugin := &v1.Plugin{
 			Name: "key-auth",
 			Service: &v1.Service{
@@ -120,7 +120,7 @@ func TestPluginCreate(t *testing.T) {
 		pluginBytes, err := json.Marshal(plugin)
 		require.Nil(t, err)
 		res = c.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
-		res.Status(201)
+		res.Status(http.StatusCreated)
 	})
 	t.Run("creating a plugin with a non-existent route fails", func(t *testing.T) {
 		plugin := &v1.Plugin{
@@ -134,7 +134,7 @@ func TestPluginCreate(t *testing.T) {
 		pluginBytes, err := json.Marshal(plugin)
 		require.Nil(t, err)
 		res := c.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
-		res.Status(400)
+		res.Status(http.StatusBadRequest)
 		body := res.JSON().Object()
 		body.ValueEqual("message", "data constraint error")
 		body.Value("details").Array().Length().Equal(1)
@@ -147,7 +147,7 @@ func TestPluginCreate(t *testing.T) {
 		route := goodRoute()
 		route.Id = uuid.NewString()
 		res := c.POST("/v1/routes").WithJSON(route).Expect()
-		res.Status(201)
+		res.Status(http.StatusCreated)
 		plugin := &v1.Plugin{
 			Name: "key-auth",
 			Route: &v1.Route{
@@ -157,7 +157,7 @@ func TestPluginCreate(t *testing.T) {
 		pluginBytes, err := json.Marshal(plugin)
 		require.Nil(t, err)
 		res = c.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
-		res.Status(201)
+		res.Status(http.StatusCreated)
 	})
 
 	t.Run("creating a plugin with a valid consumer.id succeeds", func(t *testing.T) {
@@ -191,13 +191,13 @@ func TestPluginCreate(t *testing.T) {
 			service.Id = uuid.NewString()
 			service.Name = "foo-plugin-service"
 			res := c.POST("/v1/services").WithJSON(service).Expect()
-			res.Status(201)
+			res.Status(http.StatusCreated)
 
 			route := goodRoute()
 			route.Id = uuid.NewString()
 			route.Name = "foo-plugin-route"
 			res = c.POST("/v1/routes").WithJSON(route).Expect()
-			res.Status(201)
+			res.Status(http.StatusCreated)
 
 			plugin := &v1.Plugin{
 				Name: "key-auth",
@@ -211,7 +211,7 @@ func TestPluginCreate(t *testing.T) {
 			pluginBytes, err := json.Marshal(plugin)
 			require.Nil(t, err)
 			res = c.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
-			res.Status(201)
+			res.Status(http.StatusCreated)
 		})
 	t.Run("creating a unknown plugin error",
 		func(t *testing.T) {
@@ -221,7 +221,7 @@ func TestPluginCreate(t *testing.T) {
 			pluginBytes, err := json.Marshal(plugin)
 			require.Nil(t, err)
 			res := c.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
-			res.Status(400)
+			res.Status(http.StatusBadRequest)
 			body := res.JSON().Object()
 			body.ValueEqual("message", "validation error")
 			body.Value("details").Array().Length().Equal(1)
@@ -239,7 +239,7 @@ func TestPluginCreate(t *testing.T) {
 			Id:   uuid.NewString(),
 		}
 		res := c.POST("/v1/plugins").WithJSON(plugin).Expect()
-		res.Status(201)
+		res.Status(http.StatusCreated)
 		body := res.JSON().Path("$.item").Object()
 		body.Value("id").Equal(plugin.Id)
 	})
@@ -290,7 +290,7 @@ func TestPluginUpsert(t *testing.T) {
 		res := c.PUT("/v1/plugins/" + uuid.NewString()).
 			WithBytes(pluginBytes).
 			Expect()
-		res.Status(400)
+		res.Status(http.StatusBadRequest)
 		body := res.JSON().Object()
 		body.ValueEqual("message", "data constraint error")
 		body.Value("details").Array().Length().Equal(1)
@@ -351,13 +351,13 @@ func TestPluginDelete(t *testing.T) {
 	require.Nil(t, err)
 	res := c.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
 	id := res.JSON().Path("$.item.id").String().Raw()
-	res.Status(201)
+	res.Status(http.StatusCreated)
 	t.Run("deleting a non-existent plugin returns 404", func(t *testing.T) {
 		randomID := "071f5040-3e4a-46df-9d98-451e79e318fd"
-		c.DELETE("/v1/plugins/" + randomID).Expect().Status(404)
+		c.DELETE("/v1/plugins/" + randomID).Expect().Status(http.StatusNotFound)
 	})
 	t.Run("deleting a plugin return 204", func(t *testing.T) {
-		c.DELETE("/v1/plugins/" + id).Expect().Status(204)
+		c.DELETE("/v1/plugins/" + id).Expect().Status(http.StatusNoContent)
 	})
 	t.Run("delete request without an ID returns 400", func(t *testing.T) {
 		res := c.DELETE("/v1/plugins/").Expect()
@@ -380,11 +380,11 @@ func TestPluginRead(t *testing.T) {
 	pluginBytes, err := json.Marshal(goodKeyAuthPlugin())
 	require.Nil(t, err)
 	res := c.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
-	res.Status(201)
+	res.Status(http.StatusCreated)
 	id := res.JSON().Path("$.item.id").String().Raw()
 	t.Run("reading a non-existent plugin returns 404", func(t *testing.T) {
 		randomID := "071f5040-3e4a-46df-9d98-451e79e318fd"
-		c.GET("/v1/plugins/" + randomID).Expect().Status(404)
+		c.GET("/v1/plugins/" + randomID).Expect().Status(http.StatusNotFound)
 	})
 	t.Run("reading a plugin return 200", func(t *testing.T) {
 		res := c.GET("/v1/plugins/" + id).Expect().Status(http.StatusOK)
@@ -492,7 +492,7 @@ func TestPluginList(t *testing.T) {
 		Path: "/foo",
 	}
 	res := c.POST("/v1/services").WithJSON(svc).Expect()
-	res.Status(201)
+	res.Status(http.StatusCreated)
 	serviceID1 := res.JSON().Path("$.item.id").String().Raw()
 	svc = &v1.Service{
 		Name: "bar",
@@ -500,7 +500,7 @@ func TestPluginList(t *testing.T) {
 		Path: "/bar",
 	}
 	res = c.POST("/v1/services").WithJSON(svc).Expect()
-	res.Status(201)
+	res.Status(http.StatusCreated)
 	serviceID2 := res.JSON().Path("$.item.id").String().Raw()
 	svc = &v1.Service{
 		Name: "baz",
@@ -508,7 +508,7 @@ func TestPluginList(t *testing.T) {
 		Path: "/baz",
 	}
 	res = c.POST("/v1/services").WithJSON(svc).Expect()
-	res.Status(201)
+	res.Status(http.StatusCreated)
 	serviceID3 := res.JSON().Path("$.item.id").String().Raw()
 
 	rte := &v1.Route{
@@ -516,27 +516,27 @@ func TestPluginList(t *testing.T) {
 		Paths: []string{"/qux"},
 	}
 	res = c.POST("/v1/routes").WithJSON(rte).Expect()
-	res.Status(201)
+	res.Status(http.StatusCreated)
 	routeID1 := res.JSON().Path("$.item.id").String().Raw()
 	rte = &v1.Route{
 		Name:  "quux",
 		Paths: []string{"/quux"},
 	}
 	res = c.POST("/v1/routes").WithJSON(rte).Expect()
-	res.Status(201)
+	res.Status(http.StatusCreated)
 	routeID2 := res.JSON().Path("$.item.id").String().Raw()
 	rte = &v1.Route{
 		Name:  "quuz",
 		Paths: []string{"/quuz"},
 	}
 	res = c.POST("/v1/routes").WithJSON(rte).Expect()
-	res.Status(201)
+	res.Status(http.StatusCreated)
 	routeID3 := res.JSON().Path("$.item.id").String().Raw()
 
 	pluginBytes, err := json.Marshal(goodKeyAuthPlugin())
 	require.Nil(t, err)
 	res = c.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
-	res.Status(201)
+	res.Status(http.StatusCreated)
 	pluginID1 := res.JSON().Path("$.item.id").String().Raw()
 	plg := &v1.Plugin{
 		Name:      "request-transformer",
@@ -546,7 +546,7 @@ func TestPluginList(t *testing.T) {
 	pluginBytes, err = json.Marshal(plg)
 	require.Nil(t, err)
 	res = c.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
-	res.Status(201)
+	res.Status(http.StatusCreated)
 	pluginID2 := res.JSON().Path("$.item.id").String().Raw()
 	plg = &v1.Plugin{
 		Name:      "basic-auth",
@@ -559,7 +559,7 @@ func TestPluginList(t *testing.T) {
 	pluginBytes, err = json.Marshal(plg)
 	require.Nil(t, err)
 	res = c.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
-	res.Status(201)
+	res.Status(http.StatusCreated)
 	pluginID3 := res.JSON().Path("$.item.id").String().Raw()
 	plg = &v1.Plugin{
 		Name:      "bot-detection",
@@ -572,7 +572,7 @@ func TestPluginList(t *testing.T) {
 	pluginBytes, err = json.Marshal(plg)
 	require.Nil(t, err)
 	res = c.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
-	res.Status(201)
+	res.Status(http.StatusCreated)
 	pluginID4 := res.JSON().Path("$.item.id").String().Raw()
 	plg = &v1.Plugin{
 		Name:      "cors",
@@ -585,7 +585,7 @@ func TestPluginList(t *testing.T) {
 	pluginBytes, err = json.Marshal(plg)
 	require.Nil(t, err)
 	res = c.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
-	res.Status(201)
+	res.Status(http.StatusCreated)
 	pluginID5 := res.JSON().Path("$.item.id").String().Raw()
 	plg = &v1.Plugin{
 		Name:      "hmac-auth",
@@ -598,7 +598,7 @@ func TestPluginList(t *testing.T) {
 	pluginBytes, err = json.Marshal(plg)
 	require.Nil(t, err)
 	res = c.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
-	res.Status(201)
+	res.Status(http.StatusCreated)
 	pluginID6 := res.JSON().Path("$.item.id").String().Raw()
 	plg = &v1.Plugin{
 		Name:      "jwt",
@@ -611,7 +611,7 @@ func TestPluginList(t *testing.T) {
 	pluginBytes, err = json.Marshal(plg)
 	require.Nil(t, err)
 	res = c.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
-	res.Status(201)
+	res.Status(http.StatusCreated)
 	pluginID7 := res.JSON().Path("$.item.id").String().Raw()
 	plg = &v1.Plugin{
 		Name:      "request-size-limiting",
@@ -624,7 +624,7 @@ func TestPluginList(t *testing.T) {
 	pluginBytes, err = json.Marshal(plg)
 	require.Nil(t, err)
 	res = c.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
-	res.Status(201)
+	res.Status(http.StatusCreated)
 	pluginID8 := res.JSON().Path("$.item.id").String().Raw()
 
 	t.Run("list all plugins", func(t *testing.T) {
@@ -846,7 +846,7 @@ func TestPluginListByConsumer(t *testing.T) {
 	pluginBytes, err = json.Marshal(plugin)
 	require.Nil(t, err)
 	res = c.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
-	res.Status(201)
+	res.Status(http.StatusCreated)
 
 	body = c.GET("/v1/plugins").WithQuery("consumer_id", consumerID).
 		Expect().Status(http.StatusOK).JSON().Object()
