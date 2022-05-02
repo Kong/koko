@@ -6,6 +6,7 @@ import (
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/service/v1"
 	"github.com/kong/koko/internal/json"
 	"github.com/kong/koko/internal/model/json/schema"
+	"github.com/kong/koko/internal/plugin"
 	"github.com/kong/koko/internal/server/util"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -16,8 +17,8 @@ import (
 
 type SchemasService struct {
 	v1.UnimplementedSchemasServiceServer
-	loggerFields    []zapcore.Field
-	getRawLuaSchema func(name string) ([]byte, error)
+	loggerFields []zapcore.Field
+	validator    plugin.Validator
 }
 
 func (s *SchemasService) GetSchemas(ctx context.Context,
@@ -54,7 +55,7 @@ func (s *SchemasService) GetLuaSchemasPlugin(ctx context.Context,
 
 	// Retrieve the raw JSON based on plugin name
 	s.logger(ctx).With(zap.String("name", req.Name)).Debug("reading Lua plugin schema by name")
-	rawLuaSchema, err := s.getRawLuaSchema(req.Name)
+	rawLuaSchema, err := s.validator.GetRawLuaSchema(req.Name)
 	if err != nil {
 		return nil, status.Errorf(codes.NotFound, "no plugin named '%s'", req.Name)
 	}
