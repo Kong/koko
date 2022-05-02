@@ -9,6 +9,7 @@ import (
 	model "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/service/v1"
 	"github.com/kong/koko/internal/json"
+	"github.com/kong/koko/internal/plugin"
 	"github.com/kong/koko/internal/server"
 	"github.com/kong/koko/internal/server/util"
 	"github.com/kong/koko/internal/store"
@@ -32,8 +33,7 @@ type HandlerOpts struct {
 
 	StoreLoader util.StoreLoader
 
-	GetAvailablePluginNames func() []string
-	GetRawLuaSchema         func(name string) ([]byte, error)
+	Validator plugin.Validator
 }
 
 type CommonOpts struct {
@@ -95,7 +95,7 @@ func buildServices(opts HandlerOpts) services {
 					zap.String("admin-service", "plugin"),
 				},
 			},
-			getAvailablePluginNames: opts.GetAvailablePluginNames,
+			validator: opts.Validator,
 		},
 		upstream: &UpstreamService{
 			CommonOpts: CommonOpts{
@@ -117,7 +117,7 @@ func buildServices(opts HandlerOpts) services {
 			loggerFields: []zapcore.Field{
 				zap.String("admin-service", "schemas"),
 			},
-			getRawLuaSchema: opts.GetRawLuaSchema,
+			validator: opts.Validator,
 		},
 		node: &NodeService{
 			CommonOpts: CommonOpts{
@@ -272,11 +272,8 @@ func validateOpts(opts HandlerOpts) error {
 	if opts.Logger == nil {
 		return errors.New("opts.Logger is required")
 	}
-	if opts.GetRawLuaSchema == nil {
-		return errors.New("opts.GetRawLuaSchema function is required")
-	}
-	if opts.GetAvailablePluginNames == nil {
-		return errors.New("opts.GetAvailablePluginNames function is required")
+	if opts.Validator == nil {
+		return errors.New("opts.Validator is required")
 	}
 	return nil
 }

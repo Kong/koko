@@ -73,10 +73,9 @@ func Run(ctx context.Context, config ServerConfig) error {
 
 	storeLoader := serverUtil.DefaultStoreLoader{Store: store}
 	adminOpts := admin.HandlerOpts{
-		Logger:                  logger.With(zap.String("component", "admin-server")),
-		StoreLoader:             storeLoader,
-		GetAvailablePluginNames: validator.GetAvailablePluginNames,
-		GetRawLuaSchema:         validator.GetRawLuaSchema,
+		Logger:      logger.With(zap.String("component", "admin-server")),
+		StoreLoader: storeLoader,
+		Validator:   validator,
 	}
 
 	// Validate the handler options & set up the admin API handler.
