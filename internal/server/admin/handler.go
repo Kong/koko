@@ -34,7 +34,8 @@ type HandlerOpts struct {
 
 	GetRawLuaSchema func(name string) ([]byte, error)
 
-	GRPCInterceptors []grpc.UnaryServerInterceptor
+	GRPCInterceptors      []grpc.UnaryServerInterceptor
+	GRPCStreamInterceptor grpc.StreamServerInterceptor
 }
 
 type CommonOpts struct {
@@ -279,7 +280,18 @@ func NewGRPC(opts HandlerOpts) *grpc.Server {
 	interceptors := []grpc.UnaryServerInterceptor{}
 	interceptors = append(interceptors, opts.GRPCInterceptors...)
 	interceptors = append(interceptors, util.LoggerInterceptor(opts.Logger))
-	server := grpc.NewServer(grpc.ChainUnaryInterceptor(interceptors...))
+	var server *grpc.Server
+	if opts.GRPCStreamInterceptor != nil {
+		server = grpc.NewServer(
+			grpc.ChainUnaryInterceptor(interceptors...),
+			grpc.StreamInterceptor(opts.GRPCStreamInterceptor),
+		)
+	} else {
+		server = grpc.NewServer(
+			grpc.ChainUnaryInterceptor(interceptors...),
+		)
+	}
+
 	services := buildServices(opts)
 	v1.RegisterMetaServiceServer(server, &MetaService{})
 	v1.RegisterServiceServiceServer(server, services.service)
