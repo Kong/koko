@@ -280,18 +280,15 @@ func NewGRPC(opts HandlerOpts) *grpc.Server {
 	interceptors := []grpc.UnaryServerInterceptor{}
 	interceptors = append(interceptors, opts.GRPCInterceptors...)
 	interceptors = append(interceptors, util.LoggerInterceptor(opts.Logger))
-	var server *grpc.Server
+
+	serverOpts := []grpc.ServerOption{
+		grpc.ChainUnaryInterceptor(interceptors...),
+	}
 	if opts.GRPCStreamInterceptor != nil {
-		server = grpc.NewServer(
-			grpc.ChainUnaryInterceptor(interceptors...),
-			grpc.StreamInterceptor(opts.GRPCStreamInterceptor),
-		)
-	} else {
-		server = grpc.NewServer(
-			grpc.ChainUnaryInterceptor(interceptors...),
-		)
+		serverOpts = append(serverOpts, grpc.StreamInterceptor(opts.GRPCStreamInterceptor))
 	}
 
+	server := grpc.NewServer(opts)
 	services := buildServices(opts)
 	v1.RegisterMetaServiceServer(server, &MetaService{})
 	v1.RegisterServiceServiceServer(server, services.service)
