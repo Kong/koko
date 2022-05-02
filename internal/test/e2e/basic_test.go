@@ -82,7 +82,7 @@ func TestSharedMTLS(t *testing.T) {
 	}
 	c := httpexpect.New(t, "http://localhost:3000")
 	res := c.POST("/v1/services").WithJSON(service).Expect()
-	res.Status(201)
+	res.Status(http.StatusCreated)
 	route := &v1.Route{
 		Name:  "bar",
 		Paths: []string{"/"},
@@ -91,7 +91,7 @@ func TestSharedMTLS(t *testing.T) {
 		},
 	}
 	res = c.POST("/v1/routes").WithJSON(route).Expect()
-	res.Status(201)
+	res.Status(http.StatusCreated)
 
 	dpCleanup := run.KongDP(kong.GetKongConfForShared())
 	defer dpCleanup()
@@ -121,7 +121,7 @@ func TestPKIMTLS(t *testing.T) {
 	}
 	c := httpexpect.New(t, "http://localhost:3000")
 	res := c.POST("/v1/services").WithJSON(service).Expect()
-	res.Status(201)
+	res.Status(http.StatusCreated)
 	route := &v1.Route{
 		Name:  "bar",
 		Paths: []string{"/"},
@@ -130,7 +130,7 @@ func TestPKIMTLS(t *testing.T) {
 		},
 	}
 	res = c.POST("/v1/routes").WithJSON(route).Expect()
-	res.Status(201)
+	res.Status(http.StatusCreated)
 
 	dpCleanup := run.KongDP(kong.GetKongConf())
 	defer dpCleanup()
@@ -188,7 +188,7 @@ func TestNodesEndpoint(t *testing.T) {
 	}
 	c := httpexpect.New(t, "http://localhost:3000")
 	res := c.POST("/v1/services").WithJSON(service).Expect()
-	res.Status(201)
+	res.Status(http.StatusCreated)
 	route := &v1.Route{
 		Name:  "bar",
 		Paths: []string{"/"},
@@ -197,7 +197,7 @@ func TestNodesEndpoint(t *testing.T) {
 		},
 	}
 	res = c.POST("/v1/routes").WithJSON(route).Expect()
-	res.Status(201)
+	res.Status(http.StatusCreated)
 
 	dpCleanup := run.KongDP(kong.GetKongConfForShared())
 	defer dpCleanup()
@@ -245,7 +245,7 @@ func TestPluginSync(t *testing.T) {
 	}
 	c := httpexpect.New(t, "http://localhost:3000")
 	res := c.POST("/v1/services").WithJSON(service).Expect()
-	res.Status(201)
+	res.Status(http.StatusCreated)
 
 	route := &v1.Route{
 		Id:    uuid.NewString(),
@@ -256,7 +256,7 @@ func TestPluginSync(t *testing.T) {
 		},
 	}
 	res = c.POST("/v1/routes").WithJSON(route).Expect()
-	res.Status(201)
+	res.Status(http.StatusCreated)
 
 	consumer := &v1.Consumer{
 		Id:       uuid.NewString(),
@@ -265,7 +265,7 @@ func TestPluginSync(t *testing.T) {
 	// create the consumer in CP
 	c = httpexpect.New(t, "http://localhost:3000")
 	res = c.POST("/v1/consumers").WithJSON(consumer).Expect()
-	res.Status(201)
+	res.Status(http.StatusCreated)
 
 	var expectedPlugins []*v1.Plugin
 	plugin := &v1.Plugin{
@@ -277,7 +277,7 @@ func TestPluginSync(t *testing.T) {
 	pluginBytes, err := json.Marshal(plugin)
 	require.Nil(t, err)
 	res = c.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
-	res.Status(201)
+	res.Status(http.StatusCreated)
 	expectedPlugins = append(expectedPlugins, plugin)
 
 	plugin = &v1.Plugin{
@@ -289,7 +289,7 @@ func TestPluginSync(t *testing.T) {
 	pluginBytes, err = json.Marshal(plugin)
 	require.Nil(t, err)
 	res = c.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
-	res.Status(201)
+	res.Status(http.StatusCreated)
 	expectedPlugins = append(expectedPlugins, plugin)
 
 	var config structpb.Struct
@@ -307,7 +307,7 @@ func TestPluginSync(t *testing.T) {
 	pluginBytes, err = json.Marshal(plugin)
 	require.Nil(t, err)
 	res = c.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
-	res.Status(201)
+	res.Status(http.StatusCreated)
 	expectedPlugins = append(expectedPlugins, plugin)
 
 	plugin = &v1.Plugin{
@@ -318,7 +318,7 @@ func TestPluginSync(t *testing.T) {
 	pluginBytes, err = json.Marshal(plugin)
 	require.Nil(t, err)
 	res = c.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
-	res.Status(201)
+	res.Status(http.StatusCreated)
 	expectedPlugins = append(expectedPlugins, plugin)
 
 	dpCleanup := run.KongDP(kong.GetKongConfForShared())
@@ -350,7 +350,7 @@ func TestUpstreamSync(t *testing.T) {
 	}
 	c := httpexpect.New(t, "http://localhost:3000")
 	res := c.POST("/v1/upstreams").WithJSON(upstream).Expect()
-	res.Status(201)
+	res.Status(http.StatusCreated)
 
 	dpCleanup := run.KongDP(kong.GetKongConfForShared())
 	defer dpCleanup()
@@ -379,7 +379,7 @@ func TestConsumerSync(t *testing.T) {
 	// create the consumer in CP
 	c := httpexpect.New(t, "http://localhost:3000")
 	res := c.POST("/v1/consumers").WithJSON(consumer).Expect()
-	res.Status(201)
+	res.Status(http.StatusCreated)
 
 	// launch the DP
 	dpCleanup := run.KongDP(kong.GetKongConfForShared())
@@ -410,7 +410,7 @@ func TestCertificateSync(t *testing.T) {
 	}
 	c := httpexpect.New(t, "http://localhost:3000")
 	res := c.POST("/v1/certificates").WithJSON(certificate).Expect()
-	res.Status(201)
+	res.Status(http.StatusCreated)
 
 	dpCleanup := run.KongDP(kong.GetKongConfForShared())
 	defer dpCleanup()
@@ -438,7 +438,7 @@ func TestCACertificateSync(t *testing.T) {
 	}
 	c := httpexpect.New(t, "http://localhost:3000")
 	res := c.POST("/v1/ca-certificates").WithJSON(certificate).Expect()
-	res.Status(201)
+	res.Status(http.StatusCreated)
 
 	dpCleanup := run.KongDP(kong.GetKongConfForShared())
 	defer dpCleanup()
@@ -466,7 +466,7 @@ func TestSNISync(t *testing.T) {
 		Key:  string(certs.DefaultSharedKey),
 	}
 	c := httpexpect.New(t, "http://localhost:3000")
-	c.POST("/v1/certificates").WithJSON(certificate).Expect().Status(201)
+	c.POST("/v1/certificates").WithJSON(certificate).Expect().Status(http.StatusCreated)
 
 	sni := &v1.SNI{
 		Id:   uuid.NewString(),
@@ -475,7 +475,7 @@ func TestSNISync(t *testing.T) {
 			Id: certificate.Id,
 		},
 	}
-	c.POST("/v1/snis").WithJSON(sni).Expect().Status(201)
+	c.POST("/v1/snis").WithJSON(sni).Expect().Status(http.StatusCreated)
 
 	dpCleanup := run.KongDP(kong.GetKongConfForShared())
 	defer dpCleanup()
@@ -505,14 +505,14 @@ func TestTargetSync(t *testing.T) {
 	}
 	c := httpexpect.New(t, "http://localhost:3000")
 	res := c.POST("/v1/upstreams").WithJSON(upstream).Expect()
-	res.Status(201)
+	res.Status(http.StatusCreated)
 
 	target := &v1.Target{
 		Target:   "10.0.42.42:8000",
 		Upstream: &v1.Upstream{Id: uid},
 	}
 	res = c.POST("/v1/targets").WithJSON(target).Expect()
-	res.Status(201)
+	res.Status(http.StatusCreated)
 
 	dpCleanup := run.KongDP(kong.GetKongConfForShared())
 	defer dpCleanup()
@@ -539,12 +539,12 @@ func TestServiceSync(t *testing.T) {
 	enabledService := goodService()
 	c := httpexpect.New(t, "http://localhost:3000")
 	res := c.POST("/v1/services").WithJSON(enabledService).Expect()
-	res.Status(201)
+	res.Status(http.StatusCreated)
 
 	disabled, err := json.Marshal(disabledService())
 	require.Nil(t, err)
 	res = c.POST("/v1/services").WithBytes(disabled).Expect()
-	res.Status(201)
+	res.Status(http.StatusCreated)
 
 	dpCleanup := run.KongDP(kong.GetKongConfForShared())
 	defer dpCleanup()
@@ -576,7 +576,7 @@ func TestRouteHeader(t *testing.T) {
 	}
 	c := httpexpect.New(t, "http://localhost:3000")
 	res := c.POST("/v1/services").WithJSON(service).Expect()
-	res.Status(201)
+	res.Status(http.StatusCreated)
 	route := &v1.Route{
 		Name:  "bar",
 		Paths: []string{"/"},
@@ -590,7 +590,7 @@ func TestRouteHeader(t *testing.T) {
 		},
 	}
 	res = c.POST("/v1/routes").WithJSON(route).Expect()
-	res.Status(201)
+	res.Status(http.StatusCreated)
 
 	dpCleanup := run.KongDP(kong.GetKongConfForShared())
 	defer dpCleanup()
@@ -686,7 +686,7 @@ func TestExpectedConfigHash(t *testing.T) {
 	}
 	c := httpexpect.New(t, "http://localhost:3000")
 	res := c.POST("/v1/services").WithJSON(fooService).Expect()
-	res.Status(201)
+	res.Status(http.StatusCreated)
 	fooRoute := &v1.Route{
 		Name:  "bar",
 		Paths: []string{"/"},
@@ -695,7 +695,7 @@ func TestExpectedConfigHash(t *testing.T) {
 		},
 	}
 	res = c.POST("/v1/routes").WithJSON(fooRoute).Expect()
-	res.Status(201)
+	res.Status(http.StatusCreated)
 
 	dpCleanup := run.KongDP(kong.GetKongConfForShared())
 	defer dpCleanup()
@@ -731,7 +731,7 @@ func TestExpectedConfigHash(t *testing.T) {
 	})
 
 	res = c.GET("/v1/expected-config-hash").Expect()
-	res.Status(200)
+	res.Status(http.StatusOK)
 	expectedHash := res.JSON().Object().Value("expected_hash").String().Raw()
 	require.Equal(t, expectedHash, hashFromDPAfterFoo)
 
@@ -744,7 +744,7 @@ func TestExpectedConfigHash(t *testing.T) {
 		Path: "/",
 	}
 	res = c.POST("/v1/services").WithJSON(barService).Expect()
-	res.Status(201)
+	res.Status(http.StatusCreated)
 
 	hashFromDPAfterBar := ""
 	util.WaitFunc(t, func() error {
@@ -761,7 +761,7 @@ func TestExpectedConfigHash(t *testing.T) {
 	})
 
 	res = c.GET("/v1/expected-config-hash").Expect()
-	res.Status(200)
+	res.Status(http.StatusOK)
 	newExpectedHash := res.JSON().Object().Value("expected_hash").String().Raw()
 	require.Equal(t, newExpectedHash, hashFromDPAfterBar)
 
@@ -769,7 +769,7 @@ func TestExpectedConfigHash(t *testing.T) {
 	// previous one
 
 	res = c.DELETE("/v1/services/" + barService.Id).Expect()
-	res.Status(204)
+	res.Status(http.StatusNoContent)
 
 	hashAfterDelete := ""
 	util.WaitFunc(t, func() error {
@@ -786,7 +786,7 @@ func TestExpectedConfigHash(t *testing.T) {
 	})
 
 	res = c.GET("/v1/expected-config-hash").Expect()
-	res.Status(200)
+	res.Status(http.StatusOK)
 	expectedHash = res.JSON().Object().Value("expected_hash").String().Raw()
 	require.Equal(t, expectedHash, hashAfterDelete)
 	require.Equal(t, hashFromDPAfterFoo, hashAfterDelete)

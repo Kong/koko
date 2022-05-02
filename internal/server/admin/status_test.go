@@ -46,7 +46,7 @@ func TestStatusRead(t *testing.T) {
 
 	t.Run("reading a non-existent status returns 404", func(t *testing.T) {
 		randomID := "071f5040-3e4a-46df-9d98-451e79e318fd"
-		c.GET("/v1/statuses/" + randomID).Expect().Status(404)
+		c.GET("/v1/statuses/" + randomID).Expect().Status(http.StatusNotFound)
 	})
 	t.Run("reading a status return 200", func(t *testing.T) {
 		res := c.GET("/v1/statuses/" + statusID).Expect().Status(http.StatusOK)
@@ -59,7 +59,7 @@ func TestStatusRead(t *testing.T) {
 		body.Path("$.conditions[0].severity").String().Equal("error")
 	})
 	t.Run("read request without an ID returns 400", func(t *testing.T) {
-		c.GET("/v1/statuses/").Expect().Status(400)
+		c.GET("/v1/statuses/").Expect().Status(http.StatusBadRequest)
 	})
 }
 
@@ -94,13 +94,13 @@ func TestStatusDelete(t *testing.T) {
 
 	t.Run("deleting a non-existent status returns 404", func(t *testing.T) {
 		randomID := "071f5040-3e4a-46df-9d98-451e79e318fd"
-		c.DELETE("/v1/statuses/" + randomID).Expect().Status(404)
+		c.DELETE("/v1/statuses/" + randomID).Expect().Status(http.StatusNotFound)
 	})
 	t.Run("deleting a status return 204", func(t *testing.T) {
-		c.DELETE("/v1/statuses/" + statusID).Expect().Status(204)
+		c.DELETE("/v1/statuses/" + statusID).Expect().Status(http.StatusNoContent)
 	})
 	t.Run("delete request without an ID returns 400", func(t *testing.T) {
-		c.DELETE("/v1/statuses/").Expect().Status(400)
+		c.DELETE("/v1/statuses/").Expect().Status(http.StatusBadRequest)
 	})
 }
 

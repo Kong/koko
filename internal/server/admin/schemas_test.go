@@ -2,6 +2,7 @@ package admin
 
 import (
 	"fmt"
+	"net/http"
 	"testing"
 
 	"github.com/gavv/httpexpect/v2"
@@ -23,7 +24,7 @@ func TestSchemasGetEntity(t *testing.T) {
 
 		for _, path := range paths {
 			res := c.GET(fmt.Sprintf("/v1/schemas/json/%s", path)).Expect()
-			res.Status(200)
+			res.Status(http.StatusOK)
 			value := res.JSON().Path("$.type").String()
 			value.Equal("object") // all JSON schemas indicate type object
 		}
@@ -39,7 +40,7 @@ func TestSchemasGetEntity(t *testing.T) {
 
 		for _, path := range paths {
 			res := c.GET(fmt.Sprintf("/v1/schemas/json/%s", path)).Expect()
-			res.Status(404)
+			res.Status(http.StatusNotFound)
 			message := res.JSON().Path("$.message").String()
 			message.Equal(fmt.Sprintf("no entity named '%s'", path))
 		}
@@ -47,7 +48,7 @@ func TestSchemasGetEntity(t *testing.T) {
 
 	t.Run("ensure the path/name is present", func(t *testing.T) {
 		res := c.GET("/v1/schemas/json/").Expect()
-		res.Status(400)
+		res.Status(http.StatusBadRequest)
 		message := res.JSON().Path("$.message").String()
 		message.Equal("required name is missing")
 	})
@@ -69,7 +70,7 @@ func TestSchemasGetPlugin(t *testing.T) {
 
 		for _, path := range paths {
 			res := c.GET(fmt.Sprintf("/v1/schemas/lua/plugins/%s", path)).Expect()
-			res.Status(200)
+			res.Status(http.StatusOK)
 			value := res.JSON().Path("$..protocols").Array()
 			value.NotEmpty()
 			value = res.JSON().Path("$..config.required").Array()
@@ -88,7 +89,7 @@ func TestSchemasGetPlugin(t *testing.T) {
 
 		for _, path := range paths {
 			res := c.GET(fmt.Sprintf("/v1/schemas/lua/plugins/%s", path)).Expect()
-			res.Status(404)
+			res.Status(http.StatusNotFound)
 			message := res.JSON().Path("$.message").String()
 			message.Equal(fmt.Sprintf("no plugin named '%s'", path))
 		}
@@ -96,7 +97,7 @@ func TestSchemasGetPlugin(t *testing.T) {
 
 	t.Run("ensure the path/name is present", func(t *testing.T) {
 		res := c.GET("/v1/schemas/lua/plugins/").Expect()
-		res.Status(400)
+		res.Status(http.StatusBadRequest)
 		message := res.JSON().Path("$.message").String()
 		message.Equal("required name is missing")
 	})

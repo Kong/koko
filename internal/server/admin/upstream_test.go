@@ -28,7 +28,7 @@ func TestUpstreamCreate(t *testing.T) {
 	c := httpexpect.New(t, s.URL)
 	t.Run("creates a valid upstream", func(t *testing.T) {
 		res := c.POST("/v1/upstreams").WithJSON(goodUpstream()).Expect()
-		res.Status(201)
+		res.Status(http.StatusCreated)
 		res.Header("grpc-metadata-koko-status-code").Empty()
 		body := res.JSON().Path("$.item").Object()
 		body.Value("name").String().Equal("foo")
@@ -37,7 +37,7 @@ func TestUpstreamCreate(t *testing.T) {
 	t.Run("creating an invalid upstream fails with 400", func(t *testing.T) {
 		upstream := &v1.Upstream{}
 		res := c.POST("/v1/upstreams").WithJSON(upstream).Expect()
-		res.Status(400)
+		res.Status(http.StatusBadRequest)
 		body := res.JSON().Object()
 		body.ValueEqual("message", "validation error")
 		body.Value("details").Array().Length().Equal(1)
@@ -49,7 +49,7 @@ func TestUpstreamCreate(t *testing.T) {
 	t.Run("recreating an upstream with the same name fails", func(t *testing.T) {
 		upstream := goodUpstream()
 		res := c.POST("/v1/upstreams").WithJSON(upstream).Expect()
-		res.Status(400)
+		res.Status(http.StatusBadRequest)
 		body := res.JSON().Object()
 		body.ValueEqual("message", "data constraint error")
 		body.Value("details").Array().Length().Equal(1)
@@ -62,14 +62,14 @@ func TestUpstreamCreate(t *testing.T) {
 		upstream := goodUpstream()
 		upstream.Name = "foo-with-dash"
 		res := c.POST("/v1/upstreams").WithJSON(upstream).Expect()
-		res.Status(201)
+		res.Status(http.StatusCreated)
 	})
 	t.Run("creates a valid upstream specifying the ID using POST", func(t *testing.T) {
 		upstream := goodUpstream()
 		upstream.Name = "with-id"
 		upstream.Id = uuid.NewString()
 		res := c.POST("/v1/upstreams").WithJSON(upstream).Expect()
-		res.Status(201)
+		res.Status(http.StatusCreated)
 		body := res.JSON().Path("$.item").Object()
 		body.Value("id").Equal(upstream.Id)
 	})
@@ -181,13 +181,13 @@ func TestUpstreamDelete(t *testing.T) {
 	upstream := goodUpstream()
 	res := c.POST("/v1/upstreams").WithJSON(upstream).Expect()
 	id := res.JSON().Path("$.item.id").String().Raw()
-	res.Status(201)
+	res.Status(http.StatusCreated)
 	t.Run("deleting a non-existent upstream returns 404", func(t *testing.T) {
 		randomID := "071f5040-3e4a-46df-9d98-451e79e318fd"
-		c.DELETE("/v1/upstreams/" + randomID).Expect().Status(404)
+		c.DELETE("/v1/upstreams/" + randomID).Expect().Status(http.StatusNotFound)
 	})
 	t.Run("deleting a upstream return 204", func(t *testing.T) {
-		c.DELETE("/v1/upstreams/" + id).Expect().Status(204)
+		c.DELETE("/v1/upstreams/" + id).Expect().Status(http.StatusNoContent)
 	})
 	t.Run("delete request without an ID returns 400", func(t *testing.T) {
 		res := c.DELETE("/v1/upstreams/").Expect()
@@ -210,10 +210,10 @@ func TestUpstreamRead(t *testing.T) {
 	upstream := goodUpstream()
 	res := c.POST("/v1/upstreams").WithJSON(upstream).Expect()
 	id := res.JSON().Path("$.item.id").String().Raw()
-	res.Status(201)
+	res.Status(http.StatusCreated)
 	t.Run("reading a non-existent upstream returns 404", func(t *testing.T) {
 		randomID := "071f5040-3e4a-46df-9d98-451e79e318fd"
-		c.GET("/v1/upstreams/" + randomID).Expect().Status(404)
+		c.GET("/v1/upstreams/" + randomID).Expect().Status(http.StatusNotFound)
 	})
 	t.Run("reading a upstream return 200", func(t *testing.T) {
 		c.GET("/v1/upstreams/" + id).Expect().Status(http.StatusOK)
@@ -257,25 +257,25 @@ func TestUpstreamList(t *testing.T) {
 	upstream := goodUpstream()
 	res := c.POST("/v1/upstreams").WithJSON(upstream).Expect()
 	id1 := res.JSON().Path("$.item.id").String().Raw()
-	res.Status(201)
+	res.Status(http.StatusCreated)
 	upstream = &v1.Upstream{
 		Name: "bar",
 	}
 	res = c.POST("/v1/upstreams").WithJSON(upstream).Expect()
 	id2 := res.JSON().Path("$.item.id").String().Raw()
-	res.Status(201)
+	res.Status(http.StatusCreated)
 	upstream = &v1.Upstream{
 		Name: "baz",
 	}
 	res = c.POST("/v1/upstreams").WithJSON(upstream).Expect()
 	id3 := res.JSON().Path("$.item.id").String().Raw()
-	res.Status(201)
+	res.Status(http.StatusCreated)
 	upstream = &v1.Upstream{
 		Name: "qux",
 	}
 	res = c.POST("/v1/upstreams").WithJSON(upstream).Expect()
 	id4 := res.JSON().Path("$.item.id").String().Raw()
-	res.Status(201)
+	res.Status(http.StatusCreated)
 
 	t.Run("list returns multiple upstreams", func(t *testing.T) {
 		body := c.GET("/v1/upstreams").Expect().Status(http.StatusOK).JSON().Object()
