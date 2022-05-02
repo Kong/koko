@@ -26,7 +26,23 @@ func (s *ConsumerService) GetConsumer(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
+
+	if req.Id != "" && req.CustomId != "" {
+		return nil, s.err(ctx, util.ErrClient{Message: "custom_id cannot be used when name or id is present"})
+	}
+
 	result := resource.NewConsumer()
+	if req.CustomId != "" {
+		s.logger(ctx).With(zap.String("custom_id", req.CustomId)).Debug("getting consumer by custom_id")
+		err = db.Read(ctx, result, store.GetByIndex("custom_id", req.CustomId))
+		if err != nil {
+			return nil, s.err(ctx, err)
+		}
+		return &v1.GetConsumerResponse{
+			Item: result.Consumer,
+		}, nil
+	}
+
 	err = getEntityByIDOrName(ctx, req.Id, result, store.GetByIndex("username", req.Id), db, s.logger(ctx))
 	if err != nil {
 		return nil, s.err(ctx, err)

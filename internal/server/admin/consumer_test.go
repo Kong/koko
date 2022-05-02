@@ -303,6 +303,30 @@ func TestConsumerRead(t *testing.T) {
 		body := res.JSON().Object()
 		body.ValueEqual("message", fmt.Sprintf("invalid ID:'%s'", invalidKey))
 	})
+	t.Run("read request with custom_id returns a single matching result", func(t *testing.T) {
+		res := c.GET("/v1/consumers/").WithQuery("custom_id", "customIDA").Expect()
+		res.Status(http.StatusOK)
+		body := res.JSON().Path("$.item").Object()
+		body.Value("username").String().Equal("consumerA")
+		body.Value("custom_id").String().Equal("customIDA")
+		body.ValueEqual("custom_id", "customIDA")
+	})
+	t.Run("read request with non-existent custom_id returns not found", func(t *testing.T) {
+		res := c.GET("/v1/consumers/").WithQuery("custom_id", "does-not-exist").Expect()
+		res.Status(http.StatusNotFound)
+	})
+	t.Run("read request with empty custom_id, name, id returns 400", func(t *testing.T) {
+		res := c.GET("/v1/consumers/").WithQuery("custom_id", "").Expect()
+		res.Status(http.StatusBadRequest)
+		body := res.JSON().Object()
+		body.ValueEqual("message", "required ID is missing")
+	})
+	t.Run("read request with both custom_id id/name returns 400", func(t *testing.T) {
+		res := c.GET("/v1/consumers/somename").WithQuery("custom_id", "somecustomid").Expect()
+		res.Status(http.StatusBadRequest)
+		body := res.JSON().Object()
+		body.ValueEqual("message", "custom_id cannot be used when name or id is present")
+	})
 }
 
 func TestConsumerList(t *testing.T) {
@@ -422,5 +446,12 @@ func TestConsumerList(t *testing.T) {
 		res.Status(http.StatusBadRequest)
 		body := res.JSON().Object()
 		body.ValueEqual("message", "required ID is missing")
+	})
+	t.Run("list request ignores custom_id and returns all results", func(t *testing.T) {
+		res := c.GET("/v1/consumers").WithQuery("custom_id", "CustomId=0").Expect()
+		res.Status(http.StatusOK)
+		body := res.JSON().Object()
+		items := body.Value("items").Array()
+		items.Length().Equal(3)
 	})
 }

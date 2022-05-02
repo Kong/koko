@@ -678,6 +678,12 @@
             "in": "query",
             "required": false,
             "type": "string"
+          },
+          {
+            "name": "custom_id",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [
