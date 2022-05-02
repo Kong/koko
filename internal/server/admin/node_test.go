@@ -160,6 +160,8 @@ func TestNodeDelete(t *testing.T) {
 		StoreLoader: serverUtil.DefaultStoreLoader{
 			Store: objectStore.ForCluster("default"),
 		},
+		GetAvailablePluginNames: func() []string { return nil },
+		GetRawLuaSchema:         func(name string) ([]byte, error) { return nil, nil },
 	})
 	require.Nil(t, err)
 	handler = serverUtil.HandlerWithLogger(handler, log.Logger)
@@ -218,6 +220,8 @@ func TestNodeRead(t *testing.T) {
 		StoreLoader: serverUtil.DefaultStoreLoader{
 			Store: objectStore.ForCluster("default"),
 		},
+		GetAvailablePluginNames: func() []string { return nil },
+		GetRawLuaSchema:         func(name string) ([]byte, error) { return nil, nil },
 	})
 	require.Nil(t, err)
 	handler = serverUtil.HandlerWithLogger(handler, log.Logger)
@@ -293,6 +297,8 @@ func TestNodeList(t *testing.T) {
 		StoreLoader: serverUtil.DefaultStoreLoader{
 			Store: objectStore.ForCluster("default"),
 		},
+		GetAvailablePluginNames: func() []string { return nil },
+		GetRawLuaSchema:         func(name string) ([]byte, error) { return nil, nil },
 	})
 	require.Nil(t, err)
 	handler = serverUtil.HandlerWithLogger(handler, log.Logger)

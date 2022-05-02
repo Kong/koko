@@ -72,12 +72,15 @@ func Run(ctx context.Context, config ServerConfig) error {
 	resource.SetValidator(validator)
 
 	storeLoader := serverUtil.DefaultStoreLoader{Store: store}
-	adminLogger := logger.With(zap.String("component", "admin-server"))
-	h, err := admin.NewHandler(admin.HandlerOpts{
-		Logger:          adminLogger,
-		StoreLoader:     storeLoader,
-		GetRawLuaSchema: validator.GetRawLuaSchema,
-	})
+	adminOpts := admin.HandlerOpts{
+		Logger:                  logger.With(zap.String("component", "admin-server")),
+		StoreLoader:             storeLoader,
+		GetAvailablePluginNames: validator.GetAvailablePluginNames,
+		GetRawLuaSchema:         validator.GetRawLuaSchema,
+	}
+
+	// Validate the handler options & set up the admin API handler.
+	h, err := admin.NewHandler(adminOpts)
 	if err != nil {
 		return err
 	}
@@ -85,19 +88,16 @@ func Run(ctx context.Context, config ServerConfig) error {
 	// setup Admin API server
 	s, err := server.NewHTTP(server.HTTPOpts{
 		Address: ":3000",
-		Logger:  adminLogger,
-		Handler: serverUtil.HandlerWithLogger(h, adminLogger),
+		Logger:  adminOpts.Logger,
+		Handler: serverUtil.HandlerWithLogger(h, adminOpts.Logger),
 	})
 	if err != nil {
 		return err
 	}
 	g.AddWithCtxE(s.Run)
 
-	// setup relay server
-	rawGRPCServer := admin.NewGRPC(admin.HandlerOpts{
-		Logger:      logger.With(zap.String("component", "admin-server")),
-		StoreLoader: storeLoader,
-	})
+	// Set up relay server using the same opts as the admin API server.
+	rawGRPCServer := admin.NewGRPC(adminOpts)
 	if err != nil {
 		return err
 	}

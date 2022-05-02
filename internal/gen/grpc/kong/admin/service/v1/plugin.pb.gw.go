@@ -67,6 +67,24 @@ func local_request_PluginService_GetConfiguredPlugins_0(ctx context.Context, mar
 
 }
 
+func request_PluginService_GetAvailablePlugins_0(ctx context.Context, marshaler runtime.Marshaler, client PluginServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq GetAvailablePluginsRequest
+	var metadata runtime.ServerMetadata
+
+	msg, err := client.GetAvailablePlugins(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	return msg, metadata, err
+
+}
+
+func local_request_PluginService_GetAvailablePlugins_0(ctx context.Context, marshaler runtime.Marshaler, server PluginServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq GetAvailablePluginsRequest
+	var metadata runtime.ServerMetadata
+
+	msg, err := server.GetAvailablePlugins(ctx, &protoReq)
+	return msg, metadata, err
+
+}
+
 var (
 	filter_PluginService_GetPlugin_0 = &utilities.DoubleArray{Encoding: map[string]int{"id": 0}, Base: []int{1, 1, 0}, Check: []int{0, 1, 2}}
 )
@@ -411,6 +429,30 @@ func RegisterPluginServiceHandlerServer(ctx context.Context, mux *runtime.ServeM
 
 	})
 
+	mux.Handle("GET", pattern_PluginService_GetAvailablePlugins_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		var stream runtime.ServerTransportStream
+		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		var err error
+		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/kong.admin.service.v1.PluginService/GetAvailablePlugins", runtime.WithHTTPPathPattern("/v1/available-plugins"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := local_request_PluginService_GetAvailablePlugins_0(ctx, inboundMarshaler, server, req, pathParams)
+		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
+		ctx = runtime.NewServerMetadataContext(ctx, md)
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+
+		forward_PluginService_GetAvailablePlugins_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+
+	})
+
 	mux.Handle("GET", pattern_PluginService_GetPlugin_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
@@ -593,6 +635,27 @@ func RegisterPluginServiceHandlerClient(ctx context.Context, mux *runtime.ServeM
 
 	})
 
+	mux.Handle("GET", pattern_PluginService_GetAvailablePlugins_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		var err error
+		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/kong.admin.service.v1.PluginService/GetAvailablePlugins", runtime.WithHTTPPathPattern("/v1/available-plugins"))
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := request_PluginService_GetAvailablePlugins_0(ctx, inboundMarshaler, client, req, pathParams)
+		ctx = runtime.NewServerMetadataContext(ctx, md)
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+
+		forward_PluginService_GetAvailablePlugins_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+
+	})
+
 	mux.Handle("GET", pattern_PluginService_GetPlugin_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
@@ -704,6 +767,8 @@ func RegisterPluginServiceHandlerClient(ctx context.Context, mux *runtime.ServeM
 var (
 	pattern_PluginService_GetConfiguredPlugins_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "configured_plugins"}, ""))
 
+	pattern_PluginService_GetAvailablePlugins_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "available-plugins"}, ""))
+
 	pattern_PluginService_GetPlugin_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2}, []string{"v1", "plugins", "id"}, ""))
 
 	pattern_PluginService_CreatePlugin_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "plugins"}, ""))
@@ -717,6 +782,8 @@ var (
 
 var (
 	forward_PluginService_GetConfiguredPlugins_0 = runtime.ForwardResponseMessage
+
+	forward_PluginService_GetAvailablePlugins_0 = runtime.ForwardResponseMessage
 
 	forward_PluginService_GetPlugin_0 = runtime.ForwardResponseMessage
 

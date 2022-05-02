@@ -11,6 +11,7 @@ import (
 	"github.com/kong/koko/internal/log"
 	"github.com/kong/koko/internal/plugin"
 	"github.com/kong/koko/internal/resource"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
@@ -856,4 +857,54 @@ func TestPluginListByConsumer(t *testing.T) {
 		gotIDs = append(gotIDs, item.Object().Value("id").String().Raw())
 	}
 	require.ElementsMatch(t, []string{PluginIDOne, PluginIDTwo}, gotIDs)
+}
+
+func TestAvailablePlugins(t *testing.T) {
+	s, cleanup := setup(t)
+	defer cleanup()
+
+	c := httpexpect.New(t, s.URL)
+	body := c.GET("/v1/available-plugins").Expect().Status(http.StatusOK).JSON().Object()
+	var actual []string
+	for _, item := range body.Value("names").Array().Iter() {
+		actual = append(actual, item.String().Raw())
+	}
+
+	assert.Equal(t, []string{
+		"acl",
+		"acme",
+		"aws-lambda",
+		"azure-functions",
+		"basic-auth",
+		"bot-detection",
+		"correlation-id",
+		"cors",
+		"datadog",
+		"file-log",
+		"grpc-gateway",
+		"grpc-web",
+		"hmac-auth",
+		"http-log",
+		"ip-restriction",
+		"jwt",
+		"key-auth",
+		"ldap-auth",
+		"loggly",
+		"post-function",
+		"pre-function",
+		"prometheus",
+		"proxy-cache",
+		"rate-limiting",
+		"request-size-limiting",
+		"request-termination",
+		"request-transformer",
+		"response-ratelimiting",
+		"response-transformer",
+		"session",
+		"statsd",
+		"syslog",
+		"tcp-log",
+		"udp-log",
+		"zipkin",
+	}, actual)
 }

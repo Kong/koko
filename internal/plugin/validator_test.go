@@ -13,6 +13,7 @@ import (
 	"github.com/kong/koko/internal/log"
 	"github.com/kong/koko/internal/model/json/validation"
 	"github.com/kong/koko/internal/plugin/testdata"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	lua "github.com/yuin/gopher-lua"
 	"google.golang.org/protobuf/types/known/structpb"
@@ -880,19 +881,19 @@ func TestPluginLuaSchema(t *testing.T) {
 	}
 	for _, pluginName := range pluginNames {
 		jsonSchmea := fmt.Sprintf("{\"plugin_name\": \"%s\"}", pluginName)
-		err := addLuaSchema(pluginName, jsonSchmea, validator.rawLuaSchemas)
+		err := addLuaSchema(pluginName, jsonSchmea, validator.rawLuaSchemas, &validator.luaSchemaNames)
 		require.Nil(t, err)
 	}
 
 	t.Run("ensure error adding the same plugin name", func(t *testing.T) {
-		err := addLuaSchema("two", "{}", validator.rawLuaSchemas)
+		err := addLuaSchema("two", "{}", validator.rawLuaSchemas, &validator.luaSchemaNames)
 		require.EqualError(t, err, "schema for plugin 'two' already exists")
 	})
 
 	t.Run("ensure error adding an empty schema", func(t *testing.T) {
-		err := addLuaSchema("empty", "", validator.rawLuaSchemas)
+		err := addLuaSchema("empty", "", validator.rawLuaSchemas, &validator.luaSchemaNames)
 		require.EqualError(t, err, "schema cannot be empty")
-		err = addLuaSchema("empty", "       ", validator.rawLuaSchemas)
+		err = addLuaSchema("empty", "       ", validator.rawLuaSchemas, &validator.luaSchemaNames)
 		require.EqualError(t, err, "schema cannot be empty")
 	})
 
@@ -911,4 +912,9 @@ func TestPluginLuaSchema(t *testing.T) {
 		require.Empty(t, rawJSONSchema)
 		require.Errorf(t, err, "raw JSON schema not found for plugin: 'invalid-plugin'")
 	})
+}
+
+func TestLuaValidator_GetAvailablePluginNames(t *testing.T) {
+	validator := &LuaValidator{luaSchemaNames: []string{"a", "b", "c"}}
+	assert.Equal(t, validator.luaSchemaNames, validator.GetAvailablePluginNames())
 }
