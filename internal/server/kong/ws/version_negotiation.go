@@ -29,15 +29,15 @@ type negotiatedVersions map[string]string
 
 func (h NegotiationHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "POST" || r.Header.Get("Content-Type") != "application/json" {
-		http.Error(w, `{"message": "Invalid request"}`, http.StatusBadRequest)
+		jsonErr(w, errMessage{"Invalid request"}, http.StatusBadRequest)
 		return
 	}
 
 	m, err := h.authenticator.Authenticate(r)
 	if err != nil {
-		autherr, ok := err.(ErrAuth)
+		authErr, ok := err.(ErrAuth)
 		if ok {
-			jsonErr(w, errMessage{Message: autherr.Message}, autherr.HTTPStatus)
+			jsonErr(w, errMessage{Message: authErr.Message}, authErr.HTTPStatus)
 		} else {
 			jsonErr(w, errMessage{Message: "error while authenticating"}, http.StatusInternalServerError)
 			h.logger.With(zap.Error(err)).Error("error while authenticating")
@@ -62,16 +62,16 @@ func (h NegotiationHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	m.setNodeNegotiatedVersions(req.Node.ID, negVers)
 
-	jsonbody, err := json.Marshal(resp)
+	jsonBody, err := json.Marshal(resp)
 	if err != nil {
 		jsonErr(w, errMessage{Message: err.Error()}, http.StatusBadRequest)
 		return
 	}
-	h.logger.Debug("encoded response", zap.Binary("jsonbody", jsonbody))
+	h.logger.Debug("encoded response", zap.Binary("jsonBody", jsonBody))
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	_, err = w.Write(jsonbody)
+	_, err = w.Write(jsonBody)
 	if err != nil {
 		h.logger.With(zap.Error(err)).Error("error writing response")
 	}
@@ -166,23 +166,18 @@ func validateVersionRequest(req interface{}) error {
 		inputSchema = jsonschema.MustCompileString(inputSchemaBase, inputSchemaSource)
 	}
 
-	err := inputSchema.Validate(req)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return inputSchema.Validate(req)
 }
 
 func jsonErr(w http.ResponseWriter, content interface{}, code int) {
-	jsonbody, err := json.Marshal(content)
-	if err != nil {
-		http.Error(w, "Very bad content", code)
-		return
-	}
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusBadRequest)
-	_, _ = w.Write(jsonbody)
+	jsonBody, err := json.Marshal(content)
+	if err != nil {
+		jsonBody = []byte(`{"message": "Internal Error"}`)
+		code = http.StatusInternalServerError
+	}
+	w.WriteHeader(code)
+	_, _ = w.Write(jsonBody)
 }
 
 type errMessage struct {
