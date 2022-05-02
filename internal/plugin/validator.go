@@ -55,9 +55,10 @@ func NewLuaValidator(opts Opts) (*LuaValidator, error) {
 		return nil, err
 	}
 	return &LuaValidator{
-		goksV:         validator,
-		logger:        opts.Logger,
-		rawLuaSchemas: map[string][]byte{},
+		goksV:          validator,
+		logger:         opts.Logger,
+		rawLuaSchemas:  map[string][]byte{},
+		luaSchemaNames: make([]string, 0),
 	}, nil
 }
 
@@ -213,18 +214,13 @@ func (v *LuaValidator) LoadSchemasFromEmbed(fs embed.FS, dirName string) error {
 		if err != nil {
 			return err
 		}
-		err = addLuaSchema(pluginName, pluginSchema, v.rawLuaSchemas)
+		err = addLuaSchema(pluginName, pluginSchema, v.rawLuaSchemas, &v.luaSchemaNames)
 		if err != nil {
 			return err
 		}
 	}
 
-	// Store a static list of the plugin names, in ascending order.
-	v.luaSchemaNames = make([]string, 0, len(v.rawLuaSchemas))
-	for name := range v.rawLuaSchemas {
-		v.luaSchemaNames = append(v.luaSchemaNames, name)
-	}
-	// Sorting for predictability.
+	// Sorting available plugins for predictability.
 	sort.Strings(v.luaSchemaNames)
 
 	t2 := time.Now()
@@ -248,7 +244,7 @@ func (v *LuaValidator) GetAvailablePluginNames() []string {
 	return v.luaSchemaNames
 }
 
-func addLuaSchema(name string, schema string, rawLuaSchemas map[string][]byte) error {
+func addLuaSchema(name string, schema string, rawLuaSchemas map[string][]byte, luaSchemaNames *[]string) error {
 	if _, found := rawLuaSchemas[name]; found {
 		return fmt.Errorf("schema for plugin '%s' already exists", name)
 	}
@@ -257,5 +253,6 @@ func addLuaSchema(name string, schema string, rawLuaSchemas map[string][]byte) e
 		return fmt.Errorf("schema cannot be empty")
 	}
 	rawLuaSchemas[name] = []byte(schema)
+	*luaSchemaNames = append(*luaSchemaNames, name)
 	return nil
 }
