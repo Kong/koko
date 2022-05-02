@@ -288,7 +288,7 @@ func NewGRPC(opts HandlerOpts) *grpc.Server {
 		serverOpts = append(serverOpts, grpc.StreamInterceptor(opts.GRPCStreamInterceptor))
 	}
 
-	server := grpc.NewServer(opts)
+	server := grpc.NewServer(serverOpts)
 	services := buildServices(opts)
 	v1.RegisterMetaServiceServer(server, &MetaService{})
 	v1.RegisterServiceServiceServer(server, services.service)
