@@ -23,8 +23,8 @@ type Validator interface {
 	// ProcessDefaults executes the process_auto_fields() Lua function for the given plugin.
 	ProcessDefaults(*model.Plugin) error
 
-	// GetAvailablePluginNames returns all available plugins (defined in the `schemas` folder
-	// for this package), in ascending order. The returned slice must not be modified.
+	// GetAvailablePluginNames returns all available plugins, in
+	// ascending order. The returned slice must not be modified.
 	GetAvailablePluginNames() []string
 
 	// GetRawLuaSchema returns the raw Lua schema for the given plugin. In the event the plugin
