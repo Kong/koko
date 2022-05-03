@@ -60,7 +60,7 @@ func Run(ctx context.Context, config ServerConfig) error {
 	}
 
 	defer metrics.Close()
-	if metricsHandler := metrics.CreateHandler(logger); metricsHandler != nil {
+	if metricsHandler, err := metrics.CreateHandler(logger); err == nil {
 		s, err := server.NewHTTP(server.HTTPOpts{
 			Address: ":9090",
 			Logger:  logger.With(zap.String("component", "metrics")),
