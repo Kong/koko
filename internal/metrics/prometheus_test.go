@@ -25,7 +25,10 @@ func TestPrometheusCounter(t *testing.T) {
 	}
 	wg.Wait()
 
-	counterVec, ok := client.getCollector("test_count").(*prometheus.CounterVec)
+	collector, err := client.getCollector(counterCollector, "test_count", Tag{Key: "service", Value: "test"})
+	require.Nil(t, err)
+
+	counterVec, ok := collector.(*prometheus.CounterVec)
 	require.True(t, ok)
 
 	counter, err := counterVec.GetMetricWith(prometheus.Labels{"service": "test"})
@@ -50,7 +53,10 @@ func TestPrometheusGuage(t *testing.T) {
 	}
 	wg.Wait()
 
-	gaugeVec, ok := client.getCollector("test_gauge").(*prometheus.GaugeVec)
+	collector, err := client.getCollector(gaugeCollector, "test_gauge", Tag{Key: "service", Value: "test"})
+	require.Nil(t, err)
+
+	gaugeVec, ok := collector.(*prometheus.GaugeVec)
 	require.True(t, ok)
 
 	gauge, err := gaugeVec.GetMetricWith(prometheus.Labels{"service": "test"})
@@ -75,7 +81,10 @@ func TestPrometheusHistogram(t *testing.T) {
 	}
 	wg.Wait()
 
-	histogramVec, ok := client.getCollector("test_histogram").(*prometheus.HistogramVec)
+	collector, err := client.getCollector(histogramCollector, "test_histogram", Tag{Key: "service", Value: "test"})
+	require.Nil(t, err)
+
+	histogramVec, ok := collector.(*prometheus.HistogramVec)
 	require.True(t, ok)
 
 	observer, err := histogramVec.GetMetricWith(prometheus.Labels{"service": "test"})

@@ -125,7 +125,6 @@ func (e *EventService) updateClients(eventID string) {
 			clientLogger.Debug("skipping re-configure as seenID is up-to-date")
 			return true
 		}
-
 		clientLogger.Debug("reconfigure event sent")
 		// TODO(hbagdi): can this block indefinitely?
 		err := node.stream.Send(&relay.FetchReconfigureEventsResponse{})
