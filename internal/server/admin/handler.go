@@ -2,7 +2,7 @@ package admin
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"net/http"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
@@ -32,10 +32,8 @@ type HandlerOpts struct {
 
 	StoreLoader util.StoreLoader
 
-	GetRawLuaSchema func(name string) ([]byte, error)
-
-	GRPCInterceptors      []grpc.UnaryServerInterceptor
-	GRPCStreamInterceptor grpc.StreamServerInterceptor
+	GetAvailablePluginNames func() []string
+	GetRawLuaSchema         func(name string) ([]byte, error)
 }
 
 type CommonOpts struct {
@@ -97,6 +95,7 @@ func buildServices(opts HandlerOpts) services {
 					zap.String("admin-service", "plugin"),
 				},
 			},
+			getAvailablePluginNames: opts.GetAvailablePluginNames,
 		},
 		upstream: &UpstreamService{
 			CommonOpts: CommonOpts{
@@ -268,10 +267,16 @@ func NewHandler(opts HandlerOpts) (http.Handler, error) {
 
 func validateOpts(opts HandlerOpts) error {
 	if opts.StoreLoader == nil {
-		return fmt.Errorf("opts.StoreLoader is required")
+		return errors.New("opts.StoreLoader is required")
 	}
 	if opts.Logger == nil {
-		return fmt.Errorf("opts.Logger is required")
+		return errors.New("opts.Logger is required")
+	}
+	if opts.GetRawLuaSchema == nil {
+		return errors.New("opts.GetRawLuaSchema function is required")
+	}
+	if opts.GetAvailablePluginNames == nil {
+		return errors.New("opts.GetAvailablePluginNames function is required")
 	}
 	return nil
 }

@@ -20,6 +20,7 @@ import (
 type PluginService struct {
 	v1.UnimplementedPluginServiceServer
 	CommonOpts
+	getAvailablePluginNames func() []string
 }
 
 func (s *PluginService) GetPlugin(ctx context.Context,
@@ -192,6 +193,15 @@ func (s *PluginService) GetConfiguredPlugins(ctx context.Context,
 	sort.Strings(names)
 	return &v1.GetConfiguredPluginsResponse{
 		Names: names,
+	}, nil
+}
+
+func (s *PluginService) GetAvailablePlugins(
+	_ context.Context,
+	_ *v1.GetAvailablePluginsRequest,
+) (*v1.GetAvailablePluginsResponse, error) {
+	return &v1.GetAvailablePluginsResponse{
+		Names: s.getAvailablePluginNames(),
 	}, nil
 }
 

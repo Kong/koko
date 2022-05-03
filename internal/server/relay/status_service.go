@@ -108,7 +108,7 @@ func (s StatusService) ClearStatus(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-	if id == "" {
+	if statusID == "" {
 		return &relay.ClearStatusResponse{}, nil
 	}
 	err = db.Delete(ctx,
