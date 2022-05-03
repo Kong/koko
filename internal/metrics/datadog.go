@@ -19,7 +19,7 @@ const (
 )
 
 func newDatadogClient(logger *zap.Logger, agentAddr string) (*datadogClient, error) {
-	client, err := statsd.New(agentAddr, statsd.WithNamespace(metricNamespace))
+	client, err := statsd.New(agentAddr)
 	if err != nil {
 		return nil, err
 	}

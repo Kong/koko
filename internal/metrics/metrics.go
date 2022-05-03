@@ -43,7 +43,7 @@ const (
 )
 
 const (
-	metricNamespace = "kong"
+	metricPrefix = "kong"
 )
 
 var validClientTypes = map[string]ClientType{
@@ -99,19 +99,23 @@ func InitMetricsClient(logger *zap.Logger, clientType string) error {
 	return nil
 }
 
+func prefixMetricName(name string) string {
+	return fmt.Sprintf("%s_%s", metricPrefix, name)
+}
+
 // Gauge measures the value of a metric at a particular time.
 func Gauge(name string, value float64, tags ...Tag) {
-	activeClient.Gauge(name, value, tags...)
+	activeClient.Gauge(prefixMetricName(name), value, tags...)
 }
 
 // Count tracks how many times something happened
 func Count(name string, value int64, tags ...Tag) {
-	activeClient.Count(name, value, tags...)
+	activeClient.Count(prefixMetricName(name), value, tags...)
 }
 
 // Histogram tracks the statistical distribution of a set of values
 func Histogram(name string, value float64, tags ...Tag) {
-	activeClient.Histogram(name, value, tags...)
+	activeClient.Histogram(prefixMetricName(name), value, tags...)
 }
 
 // CreateHandler create an http.Handler if supported by the client.

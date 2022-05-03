@@ -51,8 +51,7 @@ func (c *prometheusClient) Gauge(name string, value float64, tags ...Tag) {
 	defer c.lock.Unlock()
 
 	opts := prometheus.GaugeOpts{
-		Name:      name,
-		Namespace: metricNamespace,
+		Name: name,
 	}
 
 	collector, err := c.register(prometheus.NewGaugeVec(opts,
@@ -80,8 +79,7 @@ func (c *prometheusClient) Count(name string, value int64, tags ...Tag) {
 	defer c.lock.Unlock()
 
 	opts := prometheus.CounterOpts{
-		Name:      name,
-		Namespace: metricNamespace,
+		Name: name,
 	}
 
 	collector, err := c.register(prometheus.NewCounterVec(opts,
@@ -109,8 +107,7 @@ func (c *prometheusClient) Histogram(name string, value float64, tags ...Tag) {
 	defer c.lock.Unlock()
 
 	opts := prometheus.HistogramOpts{
-		Name:      name,
-		Namespace: metricNamespace,
+		Name: name,
 	}
 
 	collector, err := c.register(prometheus.NewHistogramVec(opts,
