@@ -97,7 +97,9 @@ func Run(ctx context.Context, config ServerConfig) error {
 	g.AddWithCtxE(s.Run)
 
 	// Set up relay server using the same opts as the admin API server.
-	rawGRPCServer := grpc.NewServer(serverUtil.LoggerInterceptor(adminOpts.Logger))
+	rawGRPCServer := grpc.NewServer(
+		grpc.UnaryInterceptor(serverUtil.LoggerInterceptor(adminOpts.Logger)),
+	)
 	admin.RegisterAdminService(rawGRPCServer, adminOpts)
 
 	grpcServer, err := server.NewGRPC(server.GRPCOpts{
