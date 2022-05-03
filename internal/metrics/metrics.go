@@ -11,7 +11,7 @@ import (
 var activeClient metricsClient = noopClient{}
 
 type Tag struct {
-	Name  string
+	Key  string
 	Value string
 }
 
