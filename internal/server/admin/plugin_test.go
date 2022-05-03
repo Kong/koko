@@ -908,29 +908,3 @@ func TestAvailablePlugins(t *testing.T) {
 		"zipkin",
 	}, actual)
 }
-
-func TestPluginValidate(t *testing.T) {
-	s, cleanup := setup(t)
-	defer cleanup()
-
-	c := httpexpect.New(t, s.URL)
-	t.Run("validate a global plugin", func(t *testing.T) {
-		pluginBytes, err := json.Marshal(goodKeyAuthPlugin())
-		require.Nil(t, err)
-		res := c.POST("/v1/validate-plugins").WithBytes(pluginBytes).Expect()
-		res.Status(200)
-	})
-	t.Run("validate an unknown plugin", func(t *testing.T) {
-		pluginBytes, err := json.Marshal(&v1.Plugin{Name: "no-auth"})
-		require.Nil(t, err)
-		res := c.POST("/v1/validate-plugins").WithBytes(pluginBytes).Expect()
-		res.Status(400)
-		body := res.JSON().Object()
-		body.ValueEqual("message", "validation error")
-		body.Value("details").Array().Length().Equal(1)
-		errRes := body.Value("details").Array().Element(0)
-		errRes.Object().ValueEqual("type", v1.ErrorType_ERROR_TYPE_FIELD.String())
-		errRes.Object().ValueEqual("field", "name")
-		errRes.Object().ValueEqual("messages", []string{"plugin(no-auth) does not exist"})
-	})
-}

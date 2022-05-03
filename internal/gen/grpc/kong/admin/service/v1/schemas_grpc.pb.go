@@ -22,6 +22,7 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type SchemasServiceClient interface {
+	ValidateLuaPlugin(ctx context.Context, in *ValidateLuaPluginRequest, opts ...grpc.CallOption) (*ValidateLuaPluginResponse, error)
 	GetSchemas(ctx context.Context, in *GetSchemasRequest, opts ...grpc.CallOption) (*GetSchemasResponse, error)
 	GetLuaSchemasPlugin(ctx context.Context, in *GetLuaSchemasPluginRequest, opts ...grpc.CallOption) (*GetLuaSchemasPluginResponse, error)
 }
@@ -32,6 +33,15 @@ type schemasServiceClient struct {
 
 func NewSchemasServiceClient(cc grpc.ClientConnInterface) SchemasServiceClient {
 	return &schemasServiceClient{cc}
+}
+
+func (c *schemasServiceClient) ValidateLuaPlugin(ctx context.Context, in *ValidateLuaPluginRequest, opts ...grpc.CallOption) (*ValidateLuaPluginResponse, error) {
+	out := new(ValidateLuaPluginResponse)
+	err := c.cc.Invoke(ctx, "/kong.admin.service.v1.SchemasService/ValidateLuaPlugin", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (c *schemasServiceClient) GetSchemas(ctx context.Context, in *GetSchemasRequest, opts ...grpc.CallOption) (*GetSchemasResponse, error) {
@@ -56,6 +66,7 @@ func (c *schemasServiceClient) GetLuaSchemasPlugin(ctx context.Context, in *GetL
 // All implementations must embed UnimplementedSchemasServiceServer
 // for forward compatibility
 type SchemasServiceServer interface {
+	ValidateLuaPlugin(context.Context, *ValidateLuaPluginRequest) (*ValidateLuaPluginResponse, error)
 	GetSchemas(context.Context, *GetSchemasRequest) (*GetSchemasResponse, error)
 	GetLuaSchemasPlugin(context.Context, *GetLuaSchemasPluginRequest) (*GetLuaSchemasPluginResponse, error)
 	mustEmbedUnimplementedSchemasServiceServer()
@@ -65,6 +76,9 @@ type SchemasServiceServer interface {
 type UnimplementedSchemasServiceServer struct {
 }
 
+func (UnimplementedSchemasServiceServer) ValidateLuaPlugin(context.Context, *ValidateLuaPluginRequest) (*ValidateLuaPluginResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ValidateLuaPlugin not implemented")
+}
 func (UnimplementedSchemasServiceServer) GetSchemas(context.Context, *GetSchemasRequest) (*GetSchemasResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetSchemas not implemented")
 }
@@ -82,6 +96,24 @@ type UnsafeSchemasServiceServer interface {
 
 func RegisterSchemasServiceServer(s grpc.ServiceRegistrar, srv SchemasServiceServer) {
 	s.RegisterService(&SchemasService_ServiceDesc, srv)
+}
+
+func _SchemasService_ValidateLuaPlugin_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ValidateLuaPluginRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SchemasServiceServer).ValidateLuaPlugin(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/kong.admin.service.v1.SchemasService/ValidateLuaPlugin",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SchemasServiceServer).ValidateLuaPlugin(ctx, req.(*ValidateLuaPluginRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _SchemasService_GetSchemas_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -127,6 +159,10 @@ var SchemasService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "kong.admin.service.v1.SchemasService",
 	HandlerType: (*SchemasServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "ValidateLuaPlugin",
+			Handler:    _SchemasService_ValidateLuaPlugin_Handler,
+		},
 		{
 			MethodName: "GetSchemas",
 			Handler:    _SchemasService_GetSchemas_Handler,
