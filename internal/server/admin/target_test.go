@@ -18,7 +18,7 @@ func TestTargetCreate(t *testing.T) {
 	upstream := goodUpstream()
 	upstream.Id = uuid.NewString()
 	res := c.POST("/v1/upstreams").WithJSON(upstream).Expect()
-	res.Status(201)
+	res.Status(http.StatusCreated)
 
 	t.Run("creating a target with a non-existent upstream fails",
 		func(t *testing.T) {
@@ -31,7 +31,7 @@ func TestTargetCreate(t *testing.T) {
 			}
 
 			res := c.PUT("/v1/targets/" + target.Id).WithJSON(target).Expect()
-			res.Status(400)
+			res.Status(http.StatusBadRequest)
 			body := res.JSON().Object()
 			body.ValueEqual("message", "data constraint error")
 			body.Value("details").Array().Length().Equal(1)
@@ -47,7 +47,7 @@ func TestTargetCreate(t *testing.T) {
 			},
 		}
 		res = c.POST("/v1/targets").WithJSON(target).Expect()
-		res.Status(201)
+		res.Status(http.StatusCreated)
 	})
 	t.Run("recreating the same target on the same upstream fails", func(t *testing.T) {
 		target := &v1.Target{
@@ -58,7 +58,7 @@ func TestTargetCreate(t *testing.T) {
 			},
 		}
 		res := c.PUT("/v1/targets/" + target.Id).WithJSON(target).Expect()
-		res.Status(400)
+		res.Status(http.StatusBadRequest)
 		body := res.JSON().Object()
 		body.ValueEqual("message", "data constraint error")
 		body.Value("details").Array().Length().Equal(1)
@@ -72,7 +72,7 @@ func TestTargetCreate(t *testing.T) {
 		upstream.Name = "bar"
 		upstream.Id = uuid.NewString()
 		res := c.PUT("/v1/upstreams/" + upstream.Id).WithJSON(upstream).Expect()
-		res.Status(200)
+		res.Status(http.StatusOK)
 
 		target := &v1.Target{
 			Target: "10.42.42.42",
@@ -81,7 +81,7 @@ func TestTargetCreate(t *testing.T) {
 			},
 		}
 		res = c.POST("/v1/targets").WithJSON(target).Expect()
-		res.Status(201)
+		res.Status(http.StatusCreated)
 	})
 	t.Run("creating a target with an invalid target fails", func(t *testing.T) {
 		target := &v1.Target{
@@ -91,7 +91,7 @@ func TestTargetCreate(t *testing.T) {
 			},
 		}
 		res = c.POST("/v1/targets").WithJSON(target).Expect()
-		res.Status(400)
+		res.Status(http.StatusBadRequest)
 		body := res.JSON().Object()
 		body.ValueEqual("message", "validation error")
 		body.Value("details").Array().Length().Equal(1)
@@ -107,7 +107,7 @@ func TestTargetCreate(t *testing.T) {
 			},
 		}
 		res = c.POST("/v1/targets").WithJSON(target).Expect()
-		res.Status(400)
+		res.Status(http.StatusBadRequest)
 		body := res.JSON().Object()
 		body.ValueEqual("message", "validation error")
 		body.Value("details").Array().Length().Equal(1)
@@ -123,7 +123,7 @@ func TestTargetCreate(t *testing.T) {
 			},
 		}
 		res = c.POST("/v1/targets").WithJSON(target).Expect()
-		res.Status(400)
+		res.Status(http.StatusBadRequest)
 		body := res.JSON().Object()
 		body.ValueEqual("message", "validation error")
 		body.Value("details").Array().Length().Equal(1)
@@ -139,7 +139,7 @@ func TestTargetCreate(t *testing.T) {
 			},
 		}
 		res = c.POST("/v1/targets").WithJSON(target).Expect()
-		res.Status(400)
+		res.Status(http.StatusBadRequest)
 		body := res.JSON().Object()
 		body.ValueEqual("message", "validation error")
 		body.Value("details").Array().Length().Equal(1)
@@ -156,7 +156,7 @@ func TestTargetCreate(t *testing.T) {
 			Id: uuid.NewString(),
 		}
 		res := c.POST("/v1/targets").WithJSON(target).Expect()
-		res.Status(201)
+		res.Status(http.StatusCreated)
 		body := res.JSON().Path("$.item").Object()
 		body.Value("id").Equal(target.Id)
 	})
@@ -170,7 +170,7 @@ func TestTargetUpsert(t *testing.T) {
 	upstream := goodUpstream()
 	upstream.Id = uuid.NewString()
 	res := c.POST("/v1/upstreams").WithJSON(upstream).Expect()
-	res.Status(201)
+	res.Status(http.StatusCreated)
 
 	t.Run("creating a target with a non-existent upstream fails", func(t *testing.T) {
 		target := &v1.Target{
@@ -181,7 +181,7 @@ func TestTargetUpsert(t *testing.T) {
 		}
 		targetID := uuid.NewString()
 		res := c.PUT("/v1/targets/" + targetID).WithJSON(target).Expect()
-		res.Status(400)
+		res.Status(http.StatusBadRequest)
 		body := res.JSON().Object()
 		body.ValueEqual("message", "data constraint error")
 		body.Value("details").Array().Length().Equal(1)
@@ -198,7 +198,7 @@ func TestTargetUpsert(t *testing.T) {
 		}
 		targetID := uuid.NewString()
 		res = c.PUT("/v1/targets/" + targetID).WithJSON(target).Expect()
-		res.Status(200)
+		res.Status(http.StatusOK)
 		res.JSON().Object().Path("$.item.id").Equal(targetID)
 	})
 	t.Run("recreating the same target on the same upstream fails", func(t *testing.T) {
@@ -210,7 +210,7 @@ func TestTargetUpsert(t *testing.T) {
 		}
 		targetID := uuid.NewString()
 		res := c.PUT("/v1/targets/" + targetID).WithJSON(target).Expect()
-		res.Status(400)
+		res.Status(http.StatusBadRequest)
 		body := res.JSON().Object()
 		body.ValueEqual("message", "data constraint error")
 		body.Value("details").Array().Length().Equal(1)
@@ -228,14 +228,14 @@ func TestTargetUpsert(t *testing.T) {
 		}
 		targetID := uuid.NewString()
 		res = c.PUT("/v1/targets/" + targetID).WithJSON(target).Expect()
-		res.Status(200)
+		res.Status(http.StatusOK)
 		res.JSON().Object().Path("$.item.id").Equal(targetID)
 		res.JSON().Object().Path("$.item.upstream.id").Equal(upstream.Id)
 
 		newUpstream := goodUpstream()
 		newUpstream.Name = "baz"
 		res := c.POST("/v1/upstreams").WithJSON(newUpstream).Expect()
-		res.Status(201)
+		res.Status(http.StatusCreated)
 		newUpstreamID := res.JSON().Object().Path("$.item.id").String().Raw()
 		newTarget := &v1.Target{
 			Target: "10.60.24.7",
@@ -244,7 +244,7 @@ func TestTargetUpsert(t *testing.T) {
 			},
 		}
 		res = c.PUT("/v1/targets/" + targetID).WithJSON(newTarget).Expect()
-		res.Status(200)
+		res.Status(http.StatusOK)
 		object := res.JSON().Object().Path("$.item").Object()
 		object.Value("id").Equal(targetID)
 		object.Value("target").Equal("10.60.24.7:8000")
@@ -272,7 +272,7 @@ func TestTargetDelete(t *testing.T) {
 	c := httpexpect.New(t, s.URL)
 	upstream := goodUpstream()
 	res := c.POST("/v1/upstreams").WithJSON(upstream).Expect()
-	res.Status(201)
+	res.Status(http.StatusCreated)
 	upstreamID := res.JSON().Object().Path("$.item.id").String().Raw()
 
 	target := &v1.Target{
@@ -282,15 +282,15 @@ func TestTargetDelete(t *testing.T) {
 		},
 	}
 	res = c.POST("/v1/targets").WithJSON(target).Expect()
-	res.Status(201)
+	res.Status(http.StatusCreated)
 	targetID := res.JSON().Object().Path("$.item.id").String().Raw()
 
 	t.Run("deleting a non-existent target returns 404", func(t *testing.T) {
 		randomID := "071f5040-3e4a-46df-9d98-451e79e318fd"
-		c.DELETE("/v1/targets/" + randomID).Expect().Status(404)
+		c.DELETE("/v1/targets/" + randomID).Expect().Status(http.StatusNotFound)
 	})
 	t.Run("deleting a target return 204", func(t *testing.T) {
-		c.DELETE("/v1/targets/" + targetID).Expect().Status(204)
+		c.DELETE("/v1/targets/" + targetID).Expect().Status(http.StatusNoContent)
 	})
 	t.Run("delete request without an ID returns 400", func(t *testing.T) {
 		res := c.DELETE("/v1/targets/").Expect()
@@ -312,7 +312,7 @@ func TestTargetRead(t *testing.T) {
 	c := httpexpect.New(t, s.URL)
 	upstream := goodUpstream()
 	res := c.POST("/v1/upstreams").WithJSON(upstream).Expect()
-	res.Status(201)
+	res.Status(http.StatusCreated)
 	upstreamID := res.JSON().Object().Path("$.item.id").String().Raw()
 
 	target := &v1.Target{
@@ -322,12 +322,12 @@ func TestTargetRead(t *testing.T) {
 		},
 	}
 	res = c.POST("/v1/targets").WithJSON(target).Expect()
-	res.Status(201)
+	res.Status(http.StatusCreated)
 	targetID := res.JSON().Object().Path("$.item.id").String().Raw()
 
 	t.Run("reading a non-existent target returns 404", func(t *testing.T) {
 		randomID := "071f5040-3e4a-46df-9d98-451e79e318fd"
-		c.GET("/v1/targets/" + randomID).Expect().Status(404)
+		c.GET("/v1/targets/" + randomID).Expect().Status(http.StatusNotFound)
 	})
 	t.Run("reading a target return 200", func(t *testing.T) {
 		res := c.GET("/v1/targets/" + targetID).Expect().Status(http.StatusOK)
@@ -353,21 +353,21 @@ func TestTargetList(t *testing.T) {
 		Name: "foo",
 	}
 	res := c.POST("/v1/upstreams").WithJSON(upstream).Expect()
-	res.Status(201)
+	res.Status(http.StatusCreated)
 
 	upstreamID1 := res.JSON().Path("$.item.id").String().Raw()
 	upstream = &v1.Upstream{
 		Name: "bar",
 	}
 	res = c.POST("/v1/upstreams").WithJSON(upstream).Expect()
-	res.Status(201)
+	res.Status(http.StatusCreated)
 	upstreamID2 := res.JSON().Path("$.item.id").String().Raw()
 
 	upstream = &v1.Upstream{
 		Name: "baz",
 	}
 	res = c.POST("/v1/upstreams").WithJSON(upstream).Expect()
-	res.Status(201)
+	res.Status(http.StatusCreated)
 	upstreamID3 := res.JSON().Path("$.item.id").String().Raw()
 
 	target := &v1.Target{
@@ -377,7 +377,7 @@ func TestTargetList(t *testing.T) {
 		Target: "10.0.42.1",
 	}
 	res = c.POST("/v1/targets").WithJSON(target).Expect()
-	res.Status(201)
+	res.Status(http.StatusCreated)
 	targetID1 := res.JSON().Path("$.item.id").String().Raw()
 	target = &v1.Target{
 		Upstream: &v1.Upstream{
@@ -386,7 +386,7 @@ func TestTargetList(t *testing.T) {
 		Target: "10.0.42.2",
 	}
 	res = c.POST("/v1/targets").WithJSON(target).Expect()
-	res.Status(201)
+	res.Status(http.StatusCreated)
 	targetID2 := res.JSON().Path("$.item.id").String().Raw()
 
 	target = &v1.Target{
@@ -396,7 +396,7 @@ func TestTargetList(t *testing.T) {
 		Target: "10.0.42.3",
 	}
 	res = c.POST("/v1/targets").WithJSON(target).Expect()
-	res.Status(201)
+	res.Status(http.StatusCreated)
 	targetID3 := res.JSON().Path("$.item.id").String().Raw()
 
 	target = &v1.Target{
@@ -406,7 +406,7 @@ func TestTargetList(t *testing.T) {
 		Target: "10.0.42.4",
 	}
 	res = c.POST("/v1/targets").WithJSON(target).Expect()
-	res.Status(201)
+	res.Status(http.StatusCreated)
 	targetID4 := res.JSON().Path("$.item.id").String().Raw()
 
 	target = &v1.Target{
@@ -416,7 +416,7 @@ func TestTargetList(t *testing.T) {
 		Target: "10.0.42.5",
 	}
 	res = c.POST("/v1/targets").WithJSON(target).Expect()
-	res.Status(201)
+	res.Status(http.StatusCreated)
 	targetID5 := res.JSON().Path("$.item.id").String().Raw()
 
 	t.Run("list all targets", func(t *testing.T) {

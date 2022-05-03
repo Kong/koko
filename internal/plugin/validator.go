@@ -3,6 +3,7 @@ package plugin
 import (
 	"embed"
 	"fmt"
+	"sort"
 	"strings"
 	"time"
 
@@ -14,9 +15,20 @@ import (
 	"go.uber.org/zap"
 )
 
+// Validator handles various needs for plugin validation.
 type Validator interface {
+	// Validate executes the validate() Lua function for the given plugin.
 	Validate(*model.Plugin) error
+
+	// ProcessDefaults executes the process_auto_fields() Lua function for the given plugin.
 	ProcessDefaults(*model.Plugin) error
+
+	// GetAvailablePluginNames returns all available plugins, in
+	// ascending order. The returned slice must not be modified.
+	GetAvailablePluginNames() []string
+
+	// GetRawLuaSchema returns the raw Lua schema for the given plugin. In the event the plugin
+	// does not exist, an error is returned. The returned slice must not be modified.
 	GetRawLuaSchema(name string) ([]byte, error)
 }
 
@@ -26,9 +38,10 @@ type Opts struct {
 }
 
 type LuaValidator struct {
-	goksV         *goksPlugin.Validator
-	logger        *zap.Logger
-	rawLuaSchemas map[string][]byte
+	goksV          *goksPlugin.Validator
+	logger         *zap.Logger
+	rawLuaSchemas  map[string][]byte
+	luaSchemaNames []string
 }
 
 func NewLuaValidator(opts Opts) (*LuaValidator, error) {
@@ -42,12 +55,14 @@ func NewLuaValidator(opts Opts) (*LuaValidator, error) {
 		return nil, err
 	}
 	return &LuaValidator{
-		goksV:         validator,
-		logger:        opts.Logger,
-		rawLuaSchemas: map[string][]byte{},
+		goksV:          validator,
+		logger:         opts.Logger,
+		rawLuaSchemas:  map[string][]byte{},
+		luaSchemaNames: make([]string, 0),
 	}, nil
 }
 
+// Validate implements the Validator.Validate interface.
 func (v *LuaValidator) Validate(plugin *model.Plugin) error {
 	start := time.Now()
 	defer func() {
@@ -158,6 +173,7 @@ func f(m map[string]interface{}) ([]*model.ErrorDetail, error) {
 	return res, nil
 }
 
+// ProcessDefaults implements the Validator.ProcessDefaults interface.
 func (v *LuaValidator) ProcessDefaults(plugin *model.Plugin) error {
 	pluginJSON, err := json.Marshal(plugin)
 	if err != nil {
@@ -198,11 +214,15 @@ func (v *LuaValidator) LoadSchemasFromEmbed(fs embed.FS, dirName string) error {
 		if err != nil {
 			return err
 		}
-		err = addLuaSchema(pluginName, pluginSchema, v.rawLuaSchemas)
+		err = addLuaSchema(pluginName, pluginSchema, v.rawLuaSchemas, &v.luaSchemaNames)
 		if err != nil {
 			return err
 		}
 	}
+
+	// Sorting available plugins for predictability.
+	sort.Strings(v.luaSchemaNames)
+
 	t2 := time.Now()
 	v.logger.
 		With(zap.Duration("loading-time", t2.Sub(t1))).
@@ -210,6 +230,7 @@ func (v *LuaValidator) LoadSchemasFromEmbed(fs embed.FS, dirName string) error {
 	return nil
 }
 
+// GetRawLuaSchema implements the Validator.GetRawLuaSchema interface.
 func (v *LuaValidator) GetRawLuaSchema(name string) ([]byte, error) {
 	rawLuaSchema, ok := v.rawLuaSchemas[name]
 	if !ok {
@@ -218,7 +239,12 @@ func (v *LuaValidator) GetRawLuaSchema(name string) ([]byte, error) {
 	return rawLuaSchema, nil
 }
 
-func addLuaSchema(name string, schema string, rawLuaSchemas map[string][]byte) error {
+// GetAvailablePluginNames implements the Validator.GetAvailablePluginNames interface.
+func (v *LuaValidator) GetAvailablePluginNames() []string {
+	return v.luaSchemaNames
+}
+
+func addLuaSchema(name string, schema string, rawLuaSchemas map[string][]byte, luaSchemaNames *[]string) error {
 	if _, found := rawLuaSchemas[name]; found {
 		return fmt.Errorf("schema for plugin '%s' already exists", name)
 	}
@@ -227,5 +253,6 @@ func addLuaSchema(name string, schema string, rawLuaSchemas map[string][]byte) e
 		return fmt.Errorf("schema cannot be empty")
 	}
 	rawLuaSchemas[name] = []byte(schema)
+	*luaSchemaNames = append(*luaSchemaNames, name)
 	return nil
 }

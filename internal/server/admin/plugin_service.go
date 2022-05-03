@@ -11,6 +11,7 @@ import (
 	pbModel "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/service/v1"
 	"github.com/kong/koko/internal/model"
+	"github.com/kong/koko/internal/plugin"
 	"github.com/kong/koko/internal/resource"
 	"github.com/kong/koko/internal/server/util"
 	"github.com/kong/koko/internal/store"
@@ -20,6 +21,7 @@ import (
 type PluginService struct {
 	v1.UnimplementedPluginServiceServer
 	CommonOpts
+	validator plugin.Validator
 }
 
 func (s *PluginService) GetPlugin(ctx context.Context,
@@ -192,6 +194,15 @@ func (s *PluginService) GetConfiguredPlugins(ctx context.Context,
 	sort.Strings(names)
 	return &v1.GetConfiguredPluginsResponse{
 		Names: names,
+	}, nil
+}
+
+func (s *PluginService) GetAvailablePlugins(
+	_ context.Context,
+	_ *v1.GetAvailablePluginsRequest,
+) (*v1.GetAvailablePluginsResponse, error) {
+	return &v1.GetAvailablePluginsResponse{
+		Names: s.validator.GetAvailablePluginNames(),
 	}, nil
 }
 

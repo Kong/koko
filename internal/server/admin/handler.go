@@ -2,13 +2,14 @@ package admin
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"net/http"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	model "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/service/v1"
 	"github.com/kong/koko/internal/json"
+	"github.com/kong/koko/internal/plugin"
 	"github.com/kong/koko/internal/server"
 	"github.com/kong/koko/internal/server/util"
 	"github.com/kong/koko/internal/store"
@@ -32,7 +33,7 @@ type HandlerOpts struct {
 
 	StoreLoader util.StoreLoader
 
-	GetRawLuaSchema func(name string) ([]byte, error)
+	Validator plugin.Validator
 }
 
 type CommonOpts struct {
@@ -94,6 +95,7 @@ func buildServices(opts HandlerOpts) services {
 					zap.String("admin-service", "plugin"),
 				},
 			},
+			validator: opts.Validator,
 		},
 		upstream: &UpstreamService{
 			CommonOpts: CommonOpts{
@@ -115,7 +117,7 @@ func buildServices(opts HandlerOpts) services {
 			loggerFields: []zapcore.Field{
 				zap.String("admin-service", "schemas"),
 			},
-			getRawLuaSchema: opts.GetRawLuaSchema,
+			validator: opts.Validator,
 		},
 		node: &NodeService{
 			CommonOpts: CommonOpts{
@@ -265,18 +267,18 @@ func NewHandler(opts HandlerOpts) (http.Handler, error) {
 
 func validateOpts(opts HandlerOpts) error {
 	if opts.StoreLoader == nil {
-		return fmt.Errorf("opts.StoreLoader is required")
+		return errors.New("opts.StoreLoader is required")
 	}
 	if opts.Logger == nil {
-		return fmt.Errorf("opts.Logger is required")
+		return errors.New("opts.Logger is required")
+	}
+	if opts.Validator == nil {
+		return errors.New("opts.Validator is required")
 	}
 	return nil
 }
 
-func NewGRPC(opts HandlerOpts) *grpc.Server {
-	server := grpc.NewServer(grpc.ChainUnaryInterceptor(
-		util.LoggerInterceptor(opts.Logger)),
-	)
+func RegisterAdminService(server *grpc.Server, opts HandlerOpts) {
 	services := buildServices(opts)
 	v1.RegisterMetaServiceServer(server, &MetaService{})
 	v1.RegisterServiceServiceServer(server, services.service)
@@ -291,5 +293,4 @@ func NewGRPC(opts HandlerOpts) *grpc.Server {
 	v1.RegisterCACertificateServiceServer(server, services.caCertificate)
 	v1.RegisterConsumerServiceServer(server, services.consumer)
 	v1.RegisterSNIServiceServer(server, services.sni)
-	return server
 }

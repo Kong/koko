@@ -5,6 +5,7 @@ package e2e
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"strings"
 	"testing"
 
@@ -309,7 +310,7 @@ func TestVersionCompatibility(t *testing.T) {
 		pluginBytes, err := json.Marshal(plugin)
 		require.Nil(t, err)
 		res := admin.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
-		res.Status(201)
+		res.Status(http.StatusCreated)
 	}
 
 	util.WaitFunc(t, func() error {

@@ -260,6 +260,18 @@ func TestRelayStatusServiceClear(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, list.GetAll(), 0)
 	})
+	t.Run("clear status no-ops when node is not found", func(t *testing.T) {
+		ctx, cancel := context.WithCancel(ctx)
+		defer cancel()
+
+		_, err = client.ClearStatus(ctx, &relay.ClearStatusRequest{
+			ContextReference: &model.EntityReference{
+				Type: "node",
+				Id:   uuid.NewString(),
+			},
+		})
+		require.NoError(t, err)
+	})
 	t.Run("clear status throws an error with invalid type", func(t *testing.T) {
 		ctx, cancel := context.WithCancel(ctx)
 		defer cancel()

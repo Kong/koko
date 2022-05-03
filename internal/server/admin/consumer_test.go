@@ -36,7 +36,7 @@ func TestConsumerCreate(t *testing.T) {
 	t.Run("creating a empty consumer fails with 400", func(t *testing.T) {
 		consumer := &v1.Consumer{}
 		res := c.POST("/v1/consumers").WithJSON(consumer).Expect()
-		res.Status(400)
+		res.Status(http.StatusBadRequest)
 		body := res.JSON().Object()
 		body.ValueEqual("message", "validation error")
 		body.Value("details").Array().Length().Equal(1)
@@ -54,7 +54,7 @@ func TestConsumerCreate(t *testing.T) {
 			res := c.POST("/v1/consumers").
 				WithJSON(consumer).
 				Expect()
-			res.Status(201)
+			res.Status(http.StatusCreated)
 			res.Header("grpc-metadata-koko-status-code").Empty()
 			// Now try to create a new consumer with same username
 			res = c.POST("/v1/consumers").
@@ -78,7 +78,7 @@ func TestConsumerCreate(t *testing.T) {
 			res := c.POST("/v1/consumers").
 				WithJSON(consumer).
 				Expect()
-			res.Status(201)
+			res.Status(http.StatusCreated)
 			res.Header("grpc-metadata-koko-status-code").Empty()
 			// Now try to create a new consumer with same CustomID
 			res = c.POST("/v1/consumers").
@@ -99,7 +99,7 @@ func TestConsumerCreate(t *testing.T) {
 		consumer.CustomId = "withCustomID"
 		consumer.Id = uuid.NewString()
 		res := c.POST("/v1/consumers").WithJSON(consumer).Expect()
-		res.Status(201)
+		res.Status(http.StatusCreated)
 		body := res.JSON().Path("$.item").Object()
 		body.Value("id").Equal(consumer.Id)
 	})
@@ -108,7 +108,7 @@ func TestConsumerCreate(t *testing.T) {
 		consumer.Username = "withSpaces"
 		consumer.CustomId = "custom ID"
 		res := c.POST("/v1/consumers").WithJSON(consumer).Expect()
-		res.Status(201)
+		res.Status(http.StatusCreated)
 		body := res.JSON().Path("$.item").Object()
 		body.Value("username").String().Equal("withSpaces")
 		body.Value("custom_id").String().Equal("custom ID")
