@@ -93,7 +93,6 @@ func InitMetricsClient(logger *zap.Logger, clientType string) error {
 	case Prometheus:
 		activeClient = newPrometheusClient(logger.With(zap.String("component", "prometheus")))
 	case NoOp:
-		fallthrough
 	default:
 		return errors.New("metrics client config not set")
 	}
