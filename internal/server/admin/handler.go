@@ -281,10 +281,7 @@ func validateOpts(opts HandlerOpts) error {
 	return nil
 }
 
-func NewGRPC(opts HandlerOpts) *grpc.Server {
-	server := grpc.NewServer(grpc.ChainUnaryInterceptor(
-		util.LoggerInterceptor(opts.Logger)),
-	)
+func RegisterAdminService(server *grpc.Server, opts HandlerOpts) {
 	services := buildServices(opts)
 	v1.RegisterMetaServiceServer(server, &MetaService{})
 	v1.RegisterServiceServiceServer(server, services.service)
@@ -299,5 +296,4 @@ func NewGRPC(opts HandlerOpts) *grpc.Server {
 	v1.RegisterCACertificateServiceServer(server, services.caCertificate)
 	v1.RegisterConsumerServiceServer(server, services.consumer)
 	v1.RegisterSNIServiceServer(server, services.sni)
-	return server
 }
