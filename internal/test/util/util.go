@@ -84,13 +84,17 @@ func WaitForKong(t *testing.T) error {
 }
 
 func WaitForKongAdminAPI(t *testing.T) error {
-	return WaitFor(t,
+	err := WaitFor(t,
 		defaultKongHTTPAdminPort,
 		http.MethodGet,
 		"/",
 		fmt.Sprintf("kong-dp-admin-%d", defaultKongHTTPAdminPort),
 		http.StatusOK,
 	)
+	if err == nil {
+		time.Sleep(defaultTimeout)
+	}
+	return err
 }
 
 func WaitForKongPort(t *testing.T, port int) error {

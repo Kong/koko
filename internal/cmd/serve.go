@@ -3,7 +3,6 @@ package cmd
 import (
 	"context"
 	"crypto/tls"
-	"fmt"
 
 	"github.com/kong/koko/internal/config"
 	"github.com/kong/koko/internal/log"
@@ -64,21 +63,9 @@ func setup() (initOpts, error) {
 		return initOpts{}, err
 	}
 
-	logger, err := setupLogging(cfg.Log)
+	logger, err := log.SetupLogging(cfg.Log.Level)
 	if err != nil {
 		return initOpts{}, err
 	}
 	return initOpts{Config: cfg, Logger: logger}, nil
-}
-
-func setupLogging(c config.Log) (*zap.Logger, error) {
-	zapConfig := zap.NewProductionConfig()
-	level := config.Levels[c.Level]
-	zapConfig.Level.SetLevel(level)
-	logger, err := zapConfig.Build()
-	if err != nil {
-		return nil, fmt.Errorf("create logger: %v", err)
-	}
-	log.Logger = logger
-	return logger, nil
 }

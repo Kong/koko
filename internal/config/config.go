@@ -11,17 +11,9 @@ import (
 	"github.com/kong/koko/internal/db"
 	"github.com/kong/koko/internal/persistence/postgres"
 	"github.com/kong/koko/internal/persistence/sqlite"
-	"go.uber.org/zap/zapcore"
 )
 
 var (
-	Levels = map[string]zapcore.Level{
-		"debug": zapcore.DebugLevel,
-		"info":  zapcore.InfoLevel,
-		"warn":  zapcore.WarnLevel,
-		"error": zapcore.ErrorLevel,
-	}
-
 	defaultConfigYAML = []byte(`
 log:
   level: info
