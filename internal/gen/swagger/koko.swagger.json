@@ -1526,6 +1526,38 @@
         ]
       }
     },
+    "/v1/schemas/lua/plugins/validate": {
+      "post": {
+        "operationId": "SchemasService_ValidateLuaPlugin",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/kong.admin.service.v1.ValidateLuaPluginResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "item",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/kong.admin.model.v1.Plugin"
+            }
+          }
+        ],
+        "tags": [
+          "kong.admin.service.v1.SchemasService"
+        ]
+      }
+    },
     "/v1/schemas/lua/plugins/{name}": {
       "get": {
         "operationId": "SchemasService_GetLuaSchemasPlugin",
@@ -3898,6 +3930,9 @@
           "$ref": "#/definitions/kong.admin.model.v1.Upstream"
         }
       }
+    },
+    "kong.admin.service.v1.ValidateLuaPluginResponse": {
+      "type": "object"
     },
     "kong.relay.service.v1.ClearStatusResponse": {
       "type": "object"

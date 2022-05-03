@@ -7,6 +7,7 @@ import (
 	"github.com/kong/koko/internal/json"
 	"github.com/kong/koko/internal/model/json/schema"
 	"github.com/kong/koko/internal/plugin"
+	"github.com/kong/koko/internal/resource"
 	"github.com/kong/koko/internal/server/util"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -69,6 +70,20 @@ func (s *SchemasService) GetLuaSchemasPlugin(ctx context.Context,
 	return &v1.GetLuaSchemasPluginResponse{
 		Schema: luaSchema,
 	}, nil
+}
+
+func (s *SchemasService) ValidateLuaPlugin(
+	ctx context.Context,
+	req *v1.ValidateLuaPluginRequest,
+) (*v1.ValidateLuaPluginResponse, error) {
+	res := resource.NewPlugin()
+	res.Plugin = req.Item
+	if err := res.ProcessDefaults(); err != nil {
+		return nil, s.err(ctx, err)
+	} else if err := res.Validate(); err != nil {
+		return nil, s.err(ctx, err)
+	}
+	return &v1.ValidateLuaPluginResponse{}, nil
 }
 
 func (s *SchemasService) err(ctx context.Context, err error) error {
