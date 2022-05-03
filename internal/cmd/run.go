@@ -94,13 +94,11 @@ func Run(ctx context.Context, config ServerConfig) error {
 	g.AddWithCtxE(s.Run)
 
 	// setup relay server
-	rawGRPCServer := admin.NewGRPC(admin.HandlerOpts{
-		Logger:      logger.With(zap.String("component", "admin-server")),
+	rawGRPCServer := grpc.NewServer(serverUtil.LoggerInterceptor(adminLogger))
+	admin.RegisterAdminService(rawGRPCServer, admin.HandlerOpts{
+		Logger:      adminLogger,
 		StoreLoader: storeLoader,
 	})
-	if err != nil {
-		return err
-	}
 
 	grpcServer, err := server.NewGRPC(server.GRPCOpts{
 		Address:    ":3001",
