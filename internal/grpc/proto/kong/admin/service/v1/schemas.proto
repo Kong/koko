@@ -4,10 +4,18 @@ package kong.admin.service.v1;
 
 import "google/api/annotations.proto";
 import "google/protobuf/struct.proto";
+import "kong/admin/model/v1/plugin.proto";
 
 option go_package = "github.com/kong/koko/internal/gen/kong/admin/service/v1;v1";
 
 service SchemasService {
+  rpc ValidateLuaPlugin(ValidateLuaPluginRequest) returns (ValidateLuaPluginResponse) {
+    option (google.api.http) = {
+      post: "/v1/schemas/lua/plugins/validate"
+      body: "item"
+    };
+  }
+
   rpc GetSchemas(GetSchemasRequest) returns (GetSchemasResponse) {
     option (google.api.http) = {
       get: "/v1/schemas/json/{name}"
@@ -38,3 +46,9 @@ message GetLuaSchemasPluginRequest {
 message GetLuaSchemasPluginResponse {
   google.protobuf.Struct schema = 1;
 }
+
+message ValidateLuaPluginRequest {
+  model.v1.Plugin item = 1;
+}
+
+message ValidateLuaPluginResponse {}
