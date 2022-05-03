@@ -20,10 +20,10 @@ type metricsClient interface {
 	// Gauge measures the value of a metric at a particular time.
 	Gauge(name string, value float64, tags ...Tag)
 
-	// Count tracks how many times something happened
+	// Count tracks how many times something happened.
 	Count(name string, value int64, tags ...Tag)
 
-	// Histogram tracks the statistical distribution of a set of values
+	// Histogram tracks the statistical distribution of a set of values.
 	Histogram(name string, value float64, tags ...Tag)
 
 	// CreateHandler create an http.Handler if supported by the client.
@@ -108,12 +108,12 @@ func Gauge(name string, value float64, tags ...Tag) {
 	activeClient.Gauge(prefixMetricName(name), value, tags...)
 }
 
-// Count tracks how many times something happened
+// Count tracks how many times something happened.
 func Count(name string, value int64, tags ...Tag) {
 	activeClient.Count(prefixMetricName(name), value, tags...)
 }
 
-// Histogram tracks the statistical distribution of a set of values
+// Histogram tracks the statistical distribution of a set of values.
 func Histogram(name string, value float64, tags ...Tag) {
 	activeClient.Histogram(prefixMetricName(name), value, tags...)
 }

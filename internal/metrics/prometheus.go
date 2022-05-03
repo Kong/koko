@@ -41,10 +41,15 @@ func newPrometheusClient(logger *zap.Logger) *prometheusClient {
 	}
 }
 
-func (c *prometheusClient) getCollector(collectorType collectorType, name string, tags ...Tag) (prometheus.Collector, error) {
+func (c *prometheusClient) getCollector(collectorType collectorType,
+	name string, tags ...Tag,
+) (prometheus.Collector, error) {
 	col, ok := c.collectors.Load(name)
 	if ok {
-		return col.(prometheus.Collector), nil
+		if collector, ok := col.(prometheus.Collector); ok {
+			return collector, nil
+		}
+		return nil, fmt.Errorf("metric name '%s' is not a collector", name)
 	}
 
 	c.lock.Lock()
