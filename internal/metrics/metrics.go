@@ -1,6 +1,7 @@
 package metrics
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -11,15 +12,25 @@ import (
 var activeClient metricsClient = noopClient{}
 
 type Tag struct {
-	Key  string
+	Key   string
 	Value string
 }
 
 type metricsClient interface {
-	Gauge(name string, value float64, tags ...Tag) error
-	Count(name string, value int64, tags ...Tag) error
-	Histogram(name string, value float64, tags ...Tag) error
-	CreateHandler(log *zap.Logger) http.Handler
+	// Gauge measures the value of a metric at a particular time.
+	Gauge(name string, value float64, tags ...Tag)
+
+	// Count tracks how many times something happened
+	Count(name string, value int64, tags ...Tag)
+
+	// Histogram tracks the statistical distribution of a set of values
+	Histogram(name string, value float64, tags ...Tag)
+
+	// CreateHandler create an http.Handler if supported by the client.
+	// Otherwise an error will be returned.
+	CreateHandler(log *zap.Logger) (http.Handler, error)
+
+	// Close the underlying client connection if supported.
 	Close()
 }
 
@@ -32,7 +43,7 @@ const (
 )
 
 const (
-	metricNamespace = "koko"
+	metricNamespace = "kong"
 )
 
 var validClientTypes = map[string]ClientType{
@@ -75,36 +86,42 @@ func InitMetricsClient(logger *zap.Logger, clientType string) error {
 		}
 
 		var err error
-		activeClient, err = newDatadogClient(agent)
+		activeClient, err = newDatadogClient(logger.With(zap.String("component", "datadog")), agent)
 		if err != nil {
 			return err
 		}
 	case Prometheus:
-		activeClient = newPrometheusClient()
+		activeClient = newPrometheusClient(logger.With(zap.String("component", "prometheus")))
 	case NoOp:
 		fallthrough
 	default:
-		logger.Info("metrics client config not set")
+		return errors.New("metrics client config not set")
 	}
 	return nil
 }
 
-func Gauge(name string, value float64, tags ...Tag) error {
-	return activeClient.Gauge(name, value, tags...)
+// Gauge measures the value of a metric at a particular time.
+func Gauge(name string, value float64, tags ...Tag) {
+	activeClient.Gauge(name, value, tags...)
 }
 
-func Count(name string, value int64, tags ...Tag) error {
-	return activeClient.Count(name, value, tags...)
+// Count tracks how many times something happened
+func Count(name string, value int64, tags ...Tag) {
+	activeClient.Count(name, value, tags...)
 }
 
-func Histogram(name string, value float64, tags ...Tag) error {
-	return activeClient.Histogram(name, value, tags...)
+// Histogram tracks the statistical distribution of a set of values
+func Histogram(name string, value float64, tags ...Tag) {
+	activeClient.Histogram(name, value, tags...)
 }
 
-func CreateHandler(log *zap.Logger) http.Handler {
+// CreateHandler create an http.Handler if supported by the client.
+// Otherwise an error will be returned.
+func CreateHandler(log *zap.Logger) (http.Handler, error) {
 	return activeClient.CreateHandler(log)
 }
 
+// Close the underlying client connection if supported.
 func Close() {
 	activeClient.Close()
 }

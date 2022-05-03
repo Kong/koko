@@ -8,7 +8,6 @@ import (
 
 	"github.com/google/uuid"
 	relay "github.com/kong/koko/internal/gen/grpc/kong/relay/service/v1"
-	"github.com/kong/koko/internal/metrics"
 	"github.com/kong/koko/internal/store"
 	storeEvent "github.com/kong/koko/internal/store/event"
 	"go.uber.org/zap"
@@ -125,10 +124,6 @@ func (e *EventService) updateClients(eventID string) {
 		if node.seenID == eventID {
 			clientLogger.Debug("skipping re-configure as seenID is up-to-date")
 			return true
-		}
-		if err := metrics.Count("reconfigure_events", 1,
-			metrics.Tag{Name: "service", Value: "event"}); err != nil {
-			clientLogger.With(zap.Error(err)).Error("metric error 'reconfigure_events'")
 		}
 
 		clientLogger.Debug("reconfigure event sent")

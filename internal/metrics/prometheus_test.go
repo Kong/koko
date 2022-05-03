@@ -4,21 +4,23 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/kong/koko/internal/log"
 	"github.com/prometheus/client_golang/prometheus"
 	dto "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/require"
 )
 
 func TestPrometheusCounter(t *testing.T) {
-	client := newPrometheusClient()
+	client := newPrometheusClient(log.Logger)
 
+	// Normally a prometheus counter is initialized in an init function.
+	// We are making sure counters registered the first time is thread safe when done on demand.
 	var wg sync.WaitGroup
 	for i := 0; i < 5; i++ {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			err := client.Count("test_count", 1, Tag{Name: "service", Value: "test"})
-			require.Nil(t, err)
+			client.Count("test_count", 1, Tag{Key: "service", Value: "test"})
 		}()
 	}
 	wg.Wait()
@@ -36,15 +38,14 @@ func TestPrometheusCounter(t *testing.T) {
 }
 
 func TestPrometheusGuage(t *testing.T) {
-	client := newPrometheusClient()
+	client := newPrometheusClient(log.Logger)
 
 	var wg sync.WaitGroup
 	for i := 0; i < 5; i++ {
 		wg.Add(1)
 		go func(v int) {
 			defer wg.Done()
-			err := client.Gauge("test_gauge", float64(v), Tag{Name: "service", Value: "test"})
-			require.Nil(t, err)
+			client.Gauge("test_gauge", float64(v), Tag{Key: "service", Value: "test"})
 		}(i)
 	}
 	wg.Wait()
@@ -62,15 +63,14 @@ func TestPrometheusGuage(t *testing.T) {
 }
 
 func TestPrometheusHistogram(t *testing.T) {
-	client := newPrometheusClient()
+	client := newPrometheusClient(log.Logger)
 
 	var wg sync.WaitGroup
 	for i := 0; i < 5; i++ {
 		wg.Add(1)
 		go func(v int) {
 			defer wg.Done()
-			err := client.Histogram("test_histogram", float64(v), Tag{Name: "service", Value: "test"})
-			require.Nil(t, err)
+			client.Histogram("test_histogram", float64(v), Tag{Key: "service", Value: "test"})
 		}(i)
 	}
 	wg.Wait()
