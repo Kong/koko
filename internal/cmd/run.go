@@ -54,7 +54,7 @@ func Run(ctx context.Context, config ServerConfig) error {
 	logger := config.Logger
 	var g gang.Gang
 
-	err := metrics.InitMetricsClient(logger, config.Metrics.ClientType)
+	err := metrics.InitMetricsClient(logger.With(zap.String("component", "metrics-collector")), config.Metrics.ClientType)
 	if err != nil {
 		return fmt.Errorf("init metrics client failure: %w", err)
 	}
