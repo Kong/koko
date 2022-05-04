@@ -47,11 +47,13 @@ func serveMain(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+
 	return Run(ctx, ServerConfig{
 		DPAuthCert: cert,
 		KongCPCert: cert,
 		Logger:     logger,
 		Database:   opts.Config.Database,
+		Metrics:    opts.Config.Metrics,
 	})
 }
 

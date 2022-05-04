@@ -12,6 +12,7 @@ import (
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/service/v1"
 	relay "github.com/kong/koko/internal/gen/grpc/kong/relay/service/v1"
 	grpcKongUtil "github.com/kong/koko/internal/gen/grpc/kong/util/v1"
+	"github.com/kong/koko/internal/metrics"
 	"github.com/kong/koko/internal/persistence"
 	"github.com/kong/koko/internal/plugin"
 	"github.com/kong/koko/internal/resource"
@@ -38,6 +39,7 @@ type ServerConfig struct {
 	KongCPCert tls.Certificate
 
 	Logger   *zap.Logger
+	Metrics  config.Metrics
 	Database config.Database
 }
 
@@ -51,6 +53,28 @@ const (
 func Run(ctx context.Context, config ServerConfig) error {
 	logger := config.Logger
 	var g gang.Gang
+
+	err := metrics.InitMetricsClient(logger.With(zap.String("component", "metrics-collector")), config.Metrics.ClientType)
+	if err != nil {
+		return fmt.Errorf("init metrics client failure: %w", err)
+	}
+
+	defer metrics.Close()
+	if config.Metrics.ClientType == metrics.Prometheus.String() {
+		metricsHandler, err := metrics.CreateHandler(logger)
+		if err != nil {
+			return fmt.Errorf("create metrics handler failure: %w", err)
+		}
+		s, err := server.NewHTTP(server.HTTPOpts{
+			Address: ":9090",
+			Logger:  logger.With(zap.String("component", "metrics")),
+			Handler: metricsHandler,
+		})
+		if err != nil {
+			return err
+		}
+		g.AddWithCtxE(s.Run)
+	}
 
 	persister, err := setupDB(logger, config.Database)
 	if err != nil {

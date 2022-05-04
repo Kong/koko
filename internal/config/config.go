@@ -23,6 +23,8 @@ admin:
     protocol: http
 database:
   query_timeout: 5s
+metrics:
+  client_type: noop
 `)
 	defaultConfig Config
 )
