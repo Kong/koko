@@ -31,7 +31,7 @@ type metricsClient interface {
 	CreateHandler(log *zap.Logger) (http.Handler, error)
 
 	// Close the underlying client connection if supported.
-	Close()
+	Close() error
 }
 
 type ClientType int
@@ -60,7 +60,7 @@ func ParseClientType(clientType string) (ClientType, error) {
 	if c, ok := validClientTypes[clientType]; ok {
 		return c, nil
 	}
-	return NoOp, fmt.Errorf("invalid metrics_client '%s'", clientType)
+	return NoOp, fmt.Errorf("invalid metrics_client %q", clientType)
 }
 
 func (c ClientType) String() string {
@@ -82,7 +82,7 @@ func InitMetricsClient(logger *zap.Logger, clientType string) error {
 	case Datadog:
 		agent := os.Getenv("DD_AGENT_HOST")
 		if agent == "" {
-			panic("Datadog client environment variable 'DD_AGENT_HOST' must be set")
+			return errors.New("datadog client environment variable 'DD_AGENT_HOST' must be set")
 		}
 
 		var err error
@@ -125,6 +125,6 @@ func CreateHandler(log *zap.Logger) (http.Handler, error) {
 }
 
 // Close the underlying client connection if supported.
-func Close() {
-	activeClient.Close()
+func Close() error {
+	return activeClient.Close()
 }

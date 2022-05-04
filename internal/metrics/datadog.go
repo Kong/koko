@@ -48,8 +48,8 @@ func (c *datadogClient) CreateHandler(log *zap.Logger) (http.Handler, error) {
 	return nil, errors.New("datadog metrics client has no http.Handler")
 }
 
-func (c *datadogClient) Close() {
-	c.client.Close()
+func (c *datadogClient) Close() error {
+	return c.client.Close()
 }
 
 func convertTags(tags ...Tag) []string {

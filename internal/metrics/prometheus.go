@@ -34,10 +34,8 @@ type prometheusClient struct {
 
 func newPrometheusClient(logger *zap.Logger) *prometheusClient {
 	return &prometheusClient{
-		log:        logger,
-		lock:       sync.Mutex{},
-		collectors: sync.Map{},
-		registry:   prometheus.NewRegistry(),
+		log:      logger,
+		registry: prometheus.NewRegistry(),
 	}
 }
 
@@ -132,7 +130,9 @@ func (c *prometheusClient) CreateHandler(log *zap.Logger) (http.Handler, error) 
 	return mux, nil
 }
 
-func (c *prometheusClient) Close() {}
+func (c *prometheusClient) Close() error {
+	return nil
+}
 
 func (c *prometheusClient) register(collector prometheus.Collector) (prometheus.Collector, error) {
 	if err := c.registry.Register(collector); err != nil {

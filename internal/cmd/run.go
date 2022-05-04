@@ -56,7 +56,7 @@ func Run(ctx context.Context, config ServerConfig) error {
 
 	err := metrics.InitMetricsClient(logger, config.Metrics.ClientType)
 	if err != nil {
-		return fmt.Errorf("setup metrics client: %v", err)
+		return fmt.Errorf("init metrics client failure: %w", err)
 	}
 
 	defer metrics.Close()

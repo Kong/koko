@@ -40,7 +40,9 @@ type Database struct {
 	QueryTimeout string   `json:"query_timeout,omitempty"`
 }
 
+// Metrics config.
 type Metrics struct {
+	// ClientType metrics client type e.g. prometheus, datadog.
 	ClientType string `json:"client_type,omitempty"`
 }
 
