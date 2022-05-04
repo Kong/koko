@@ -53,6 +53,8 @@ func TestPrometheusGuage(t *testing.T) {
 	}
 	wg.Wait()
 
+	client.Gauge("test_gauge", float64(10), Tag{Key: "service", Value: "test"})
+
 	collector, err := client.getCollector(gaugeCollector, "test_gauge", Tag{Key: "service", Value: "test"})
 	require.Nil(t, err)
 
