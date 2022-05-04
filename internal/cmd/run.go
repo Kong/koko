@@ -61,7 +61,10 @@ func Run(ctx context.Context, config ServerConfig) error {
 
 	defer metrics.Close()
 	if config.Metrics.ClientType == metrics.Prometheus.String() {
-		metricsHandler, _ := metrics.CreateHandler(logger)
+		metricsHandler, err := metrics.CreateHandler(logger)
+		if err != nil {
+			return fmt.Errorf("create metrics handler failure: %w", err)
+		}
 		s, err := server.NewHTTP(server.HTTPOpts{
 			Address: ":9090",
 			Logger:  logger.With(zap.String("component", "metrics")),

@@ -27,7 +27,6 @@ func (l prometheusLog) Println(v ...interface{}) {
 
 type prometheusClient struct {
 	log        *zap.Logger
-	lock       sync.Mutex
 	collectors sync.Map
 	registry   *prometheus.Registry
 }
@@ -49,9 +48,6 @@ func (c *prometheusClient) getCollector(collectorType collectorType,
 		}
 		return nil, fmt.Errorf("metric name '%s' is not a collector", name)
 	}
-
-	c.lock.Lock()
-	defer c.lock.Unlock()
 
 	var collector prometheus.Collector
 	switch collectorType {
