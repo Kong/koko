@@ -14,7 +14,7 @@ run:
 	go run main.go serve
 
 .PHONY: lint
-lint: buf-breaking
+lint:
 	buf format -d --exit-code
 	buf lint
 	./bin/golangci-lint run ./...
