@@ -10,6 +10,7 @@ import (
 
 type ConfigService interface {
 	GetCapabilities(context.Context, *GetCapabilitiesRequest) (*GetCapabilitiesResponse, error)
+	ReportMetadata(context.Context, *ReportMetadataRequest) (*ReportMetadataResponse, error)
 	SyncConfig(context.Context, *SyncConfigRequest) (*SyncConfigResponse, error)
 	PingCP(context.Context, *PingCPRequest) (*PingCPResponse, error)
 }
@@ -21,6 +22,16 @@ type ConfigServiceClient struct {
 func (c *ConfigServiceClient) GetCapabilities(ctx context.Context, in *GetCapabilitiesRequest) (*GetCapabilitiesResponse, error) {
 	var out GetCapabilitiesResponse
 	err := c.Peer.Do(ctx, 1, 1, in, &out)
+	if err != nil {
+		return nil, err
+	}
+
+	return &out, nil
+}
+
+func (c *ConfigServiceClient) ReportMetadata(ctx context.Context, in *ReportMetadataRequest) (*ReportMetadataResponse, error) {
+	var out ReportMetadataResponse
+	err := c.Peer.Do(ctx, 1, 4, in, &out)
 	if err != nil {
 		return nil, err
 	}
@@ -67,6 +78,17 @@ func (s *ConfigServiceServer) RPC(rpc wrpc.ID) wrpc.RPC {
 					return nil, err
 				}
 				return s.ConfigService.GetCapabilities(ctx, &in)
+			},
+		}
+	case 4:
+		return wrpc.RPCImpl{
+			HandlerFunc: func(ctx context.Context, decode func(interface{}) error) (interface{}, error) {
+				var in ReportMetadataRequest
+				err := decode(&in)
+				if err != nil {
+					return nil, err
+				}
+				return s.ConfigService.ReportMetadata(ctx, &in)
 			},
 		}
 	case 2:
