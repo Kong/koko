@@ -25,3 +25,5 @@ jobs:
       run: make gen-verify
     - name: make lint
       run: make lint
+    - name: make buf-breaking
+      run: make buf-breaking
