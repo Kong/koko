@@ -539,8 +539,40 @@
         ]
       }
     },
+    "/v1/configured-plugins": {
+      "get": {
+        "description": "Returns plugins in use. '/v1/configured_plugins' is deprecated, please use '/v1/configured-plugins'.",
+        "operationId": "PluginService_GetConfiguredPlugins2",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/kong.admin.service.v1.GetConfiguredPluginsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "cluster.id",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "kong.admin.service.v1.PluginService"
+        ]
+      }
+    },
     "/v1/configured_plugins": {
       "get": {
+        "description": "Returns plugins in use. '/v1/configured_plugins' is deprecated, please use '/v1/configured-plugins'.",
         "operationId": "PluginService_GetConfiguredPlugins",
         "responses": {
           "200": {

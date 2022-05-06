@@ -6,13 +6,20 @@ import "google/api/annotations.proto";
 import "kong/admin/model/v1/cluster.proto";
 import "kong/admin/model/v1/pagination.proto";
 import "kong/admin/model/v1/plugin.proto";
+import "protoc-gen-openapiv2/options/annotations.proto";
 
 option go_package = "github.com/kong/koko/internal/gen/kong/admin/service/v1;v1";
 
 service PluginService {
   rpc GetConfiguredPlugins(GetConfiguredPluginsRequest) returns (GetConfiguredPluginsResponse) {
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      description: "Returns plugins in use. '/v1/configured_plugins' is deprecated, please use '/v1/configured-plugins'."
+    };
     option (google.api.http) = {
       get: "/v1/configured_plugins"
+      additional_bindings {
+        get: "/v1/configured-plugins"
+      }
     };
   }
   rpc GetAvailablePlugins(GetAvailablePluginsRequest) returns (GetAvailablePluginsResponse) {
