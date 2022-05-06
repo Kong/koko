@@ -367,6 +367,39 @@ func TestUpstreamSync(t *testing.T) {
 	})
 }
 
+func TestUpstreamWithClientCertificateSync(t *testing.T) {
+	// Ensure that upstreams with a client certificate can be synced to Kong gateway.
+	cleanup := run.Koko(t)
+	defer cleanup()
+
+	c := httpexpect.New(t, "http://localhost:3000")
+
+	certificate := &v1.Certificate{
+		Id:   uuid.NewString(),
+		Cert: string(certs.DefaultSharedCert),
+		Key:  string(certs.DefaultSharedKey),
+	}
+	c.POST("/v1/certificates").WithJSON(certificate).Expect().Status(http.StatusCreated)
+
+	upstream := &v1.Upstream{
+		Id:                uuid.NewString(),
+		Name:              "foo",
+		ClientCertificate: &v1.Certificate{Id: certificate.Id},
+	}
+	c.POST("/v1/upstreams").WithJSON(upstream).Expect().Status(http.StatusCreated)
+
+	dpCleanup := run.KongDP(kong.GetKongConfForShared())
+	defer dpCleanup()
+
+	require.NoError(t, util.WaitForKongPort(t, 8001))
+
+	util.WaitFunc(t, func() error {
+		err := util.EnsureConfig(&v1.TestingConfig{Upstreams: []*v1.Upstream{upstream}})
+		t.Log("configuration mismatch", err)
+		return err
+	})
+}
+
 func TestConsumerSync(t *testing.T) {
 	// ensure that consumers can be synced to Kong gateway
 	cleanup := run.Koko(t)
