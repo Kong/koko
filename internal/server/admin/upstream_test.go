@@ -379,8 +379,8 @@ func assertGoodUpstream(t *testing.T, expected *v1.Upstream) func(res *httpexpec
 		passiveHealthCheck.Value("type").Equal(typedefs.ProtocolHTTP)
 		passiveHealthyConf := passiveHealthCheck.Value("healthy").Object()
 		passiveHealthyConf.Value("http_statuses").Array().Equal([]int{
-			200, 201, 202, 203, 204, 205, 206, 207, 208, 226, 300, 301, 302, 303, 304, 305, 306, 307, 308},
-		)
+			200, 201, 202, 203, 204, 205, 206, 207, 208, 226, 300, 301, 302, 303, 304, 305, 306, 307, 308,
+		})
 		passiveHealthyConf.Value("successes").Number().Equal(0)
 		passiveUnhealthyConf := passiveHealthCheck.Value("unhealthy").Object()
 		passiveUnhealthyConf.Value("http_failures").Number().Equal(0)
