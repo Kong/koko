@@ -479,6 +479,15 @@ func TestConfiguredPluginsList(t *testing.T) {
 		names.Contains("request-transformer")
 		names.Length().Equal(3)
 	})
+	t.Run("get configured plugins using /v1/configured-plugins", func(t *testing.T) {
+		body := c.GET("/v1/configured-plugins").Expect().
+			Status(http.StatusOK).JSON()
+		names := body.Path("$.names").Array()
+		names.Contains("basic-auth")
+		names.Contains("request-size-limiting")
+		names.Contains("request-transformer")
+		names.Length().Equal(3)
+	})
 }
 
 func TestPluginList(t *testing.T) {
