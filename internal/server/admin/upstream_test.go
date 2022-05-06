@@ -50,6 +50,27 @@ func TestUpstreamCreate(t *testing.T) {
 		body := res.JSON().Path("$.item").Object()
 		body.Value("client_certificate").Object().Value("id").String().Equal(certID)
 	})
+	t.Run("creating upstream with invalid certificate fails with 400", func(t *testing.T) {
+		upstream := &v1.Upstream{Name: uuid.NewString()}
+		upstream.ClientCertificate = &v1.Certificate{Id: uuid.NewString()}
+		res := c.POST("/v1/upstreams").
+			WithJSON(upstream).
+			Expect().
+			Status(http.StatusBadRequest)
+		body := res.JSON().Object()
+		body.Value("message").Equal("data constraint error")
+		errDetails := body.Value("details").Array()
+		errDetails.Length().Equal(1)
+		err := errDetails.Element(0).Object()
+		err.Value("type").String().Equal(v1.ErrorType_ERROR_TYPE_REFERENCE.String())
+		err.Value("field").String().Equal("client_certificate.id")
+		messages := err.Value("messages").Array()
+		messages.Length().Equal(1)
+		messages.Element(0).String().Equal(fmt.Sprintf(
+			"client_certificate_id (type: foreign) constraint failed for value '%s': ",
+			upstream.ClientCertificate.Id,
+		))
+	})
 	t.Run("creating an invalid upstream fails with 400", func(t *testing.T) {
 		upstream := &v1.Upstream{}
 		res := c.POST("/v1/upstreams").WithJSON(upstream).Expect()
