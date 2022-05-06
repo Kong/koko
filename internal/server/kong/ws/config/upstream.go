@@ -45,6 +45,7 @@ func (l *KongUpstreamLoader) Mutate(ctx context.Context,
 			return err
 		}
 		flattenForeign(m, "service")
+		flattenForeign(m, "client_certificate")
 		delete(m, "updated_at")
 		res = append(res, m)
 	}
