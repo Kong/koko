@@ -3,6 +3,7 @@ syntax = "proto3";
 package kong.admin.model.v1;
 
 import "google/protobuf/wrappers.proto";
+import "kong/admin/model/v1/certificate.proto";
 
 option go_package = "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1;v1";
 
@@ -22,7 +23,7 @@ message Upstream {
   Healthchecks healthchecks = 13;
   repeated string tags = 14;
   string host_header = 15;
-  // Certificate client_certificate = 16;
+  Certificate client_certificate = 16;
 }
 
 message Healthchecks {

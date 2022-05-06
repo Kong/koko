@@ -171,14 +171,22 @@ func (r Upstream) ProcessDefaults() error {
 }
 
 func (r Upstream) Indexes() []model.Index {
-	return []model.Index{
-		{
-			Name:      "name",
-			Type:      model.IndexUnique,
-			Value:     r.Upstream.Name,
-			FieldName: "name",
-		},
+	indexes := []model.Index{{
+		Name:      "name",
+		Type:      model.IndexUnique,
+		Value:     r.Upstream.Name,
+		FieldName: "name",
+	}}
+	if r.Upstream.ClientCertificate != nil {
+		indexes = append(indexes, model.Index{
+			Name:        "client_certificate_id",
+			Type:        model.IndexForeign,
+			ForeignType: TypeCertificate,
+			FieldName:   "client_certificate.id",
+			Value:       r.Upstream.ClientCertificate.Id,
+		})
 	}
+	return indexes
 }
 
 func init() {
@@ -301,6 +309,7 @@ func init() {
 					},
 				},
 			},
+			"client_certificate": typedefs.ReferenceObject,
 		},
 		AdditionalProperties: &falsy,
 		Required: []string{
