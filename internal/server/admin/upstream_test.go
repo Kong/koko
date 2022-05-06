@@ -344,17 +344,17 @@ func assertGoodUpstream(t *testing.T, expected *v1.Upstream) func(res *httpexpec
 		upstream := res.JSON().Path("$.item").Object()
 		_, err := uuid.Parse(upstream.Value("id").String().Raw())
 		assert.NoError(t, err)
+		upstream.Value("algorithm").String().Equal("round-robin")
 		upstream.Value("created_at").Number().Gt(0)
 		upstream.Value("hash_fallback").String().Equal("none")
 		upstream.Value("hash_on").String().Equal("none")
-		upstream.Value("hash_on_cookie_path").Equal("/")
+		upstream.Value("hash_on_cookie_path").String().Equal("/")
 		upstream.Value("name").String().Equal(expected.Name)
 		upstream.Value("slots").Number().Equal(10000)
 		upstream.Value("updated_at").Number().Gt(0)
-		upstream.ValueEqual("algorithm", "round-robin")
 
 		healthChecks := upstream.Value("healthchecks").Object()
-		healthChecks.Value("threshold").Equal(0)
+		healthChecks.Value("threshold").Number().Equal(0)
 
 		// Validate `$.item.healthchecks.active`.
 		activeHealthCheck := healthChecks.Value("active").Object()
@@ -376,7 +376,7 @@ func assertGoodUpstream(t *testing.T, expected *v1.Upstream) func(res *httpexpec
 
 		// Validate `$.item.healthchecks.passive`.
 		passiveHealthCheck := healthChecks.Value("passive").Object()
-		passiveHealthCheck.Value("type").Equal(typedefs.ProtocolHTTP)
+		passiveHealthCheck.Value("type").String().Equal(typedefs.ProtocolHTTP)
 		passiveHealthyConf := passiveHealthCheck.Value("healthy").Object()
 		passiveHealthyConf.Value("http_statuses").Array().Equal([]int{
 			200, 201, 202, 203, 204, 205, 206, 207, 208, 226, 300, 301, 302, 303, 304, 305, 306, 307, 308,
