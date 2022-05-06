@@ -42,6 +42,7 @@ service ConsumerService {
 message GetConsumerRequest {
   string id = 1;
   model.v1.RequestCluster cluster = 2;
+  string custom_id = 3;
 }
 
 message GetConsumerResponse {
