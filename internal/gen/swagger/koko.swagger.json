@@ -2660,6 +2660,9 @@
                 },
                 "host_header": {
                   "type": "string"
+                },
+                "client_certificate": {
+                  "$ref": "#/definitions/kong.admin.model.v1.Certificate"
                 }
               }
             }
@@ -3445,6 +3448,9 @@
         },
         "host_header": {
           "type": "string"
+        },
+        "client_certificate": {
+          "$ref": "#/definitions/kong.admin.model.v1.Certificate"
         }
       }
     },

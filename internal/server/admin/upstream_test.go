@@ -9,6 +9,8 @@ import (
 	"github.com/google/uuid"
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
 	"github.com/kong/koko/internal/json"
+	"github.com/kong/koko/internal/model/json/validation/typedefs"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )
@@ -19,20 +21,55 @@ func goodUpstream() *v1.Upstream {
 	}
 }
 
-func validateGoodUpstream(body *httpexpect.Object) {
-}
-
 func TestUpstreamCreate(t *testing.T) {
 	s, cleanup := setup(t)
 	defer cleanup()
 	c := httpexpect.New(t, s.URL)
 	t.Run("creates a valid upstream", func(t *testing.T) {
-		res := c.POST("/v1/upstreams").WithJSON(goodUpstream()).Expect()
-		res.Status(http.StatusCreated)
-		res.Header("grpc-metadata-koko-status-code").Empty()
+		upstream := goodUpstream()
+		c.Matcher(assertGoodUpstream(t, upstream)).
+			POST("/v1/upstreams").
+			WithJSON(upstream).
+			Expect().
+			Status(http.StatusCreated)
+	})
+	t.Run("creates a valid upstream with certificate", func(t *testing.T) {
+		res := c.POST("/v1/certificates").
+			WithJSON(&v1.Certificate{Cert: certOne, Key: keyOne}).
+			Expect().
+			Status(http.StatusCreated)
+		certID := res.JSON().Path("$.item.id").String().Raw()
+
+		upstream := &v1.Upstream{Name: uuid.NewString()}
+		upstream.ClientCertificate = &v1.Certificate{Id: certID}
+		res = c.Matcher(assertGoodUpstream(t, upstream)).
+			POST("/v1/upstreams").
+			WithJSON(upstream).
+			Expect().
+			Status(http.StatusCreated)
 		body := res.JSON().Path("$.item").Object()
-		body.Value("name").String().Equal("foo")
-		validateGoodUpstream(body)
+		body.Value("client_certificate").Object().Value("id").String().Equal(certID)
+	})
+	t.Run("creating upstream with invalid certificate fails with 400", func(t *testing.T) {
+		upstream := &v1.Upstream{Name: uuid.NewString()}
+		upstream.ClientCertificate = &v1.Certificate{Id: uuid.NewString()}
+		res := c.POST("/v1/upstreams").
+			WithJSON(upstream).
+			Expect().
+			Status(http.StatusBadRequest)
+		body := res.JSON().Object()
+		body.Value("message").Equal("data constraint error")
+		errDetails := body.Value("details").Array()
+		errDetails.Length().Equal(1)
+		err := errDetails.Element(0).Object()
+		err.Value("type").String().Equal(v1.ErrorType_ERROR_TYPE_REFERENCE.String())
+		err.Value("field").String().Equal("client_certificate.id")
+		messages := err.Value("messages").Array()
+		messages.Length().Equal(1)
+		messages.Element(0).String().Equal(fmt.Sprintf(
+			"client_certificate_id (type: foreign) constraint failed for value '%s': ",
+			upstream.ClientCertificate.Id,
+		))
 	})
 	t.Run("creating an invalid upstream fails with 400", func(t *testing.T) {
 		upstream := &v1.Upstream{}
@@ -80,12 +117,13 @@ func TestUpstreamUpsert(t *testing.T) {
 	defer cleanup()
 	c := httpexpect.New(t, s.URL)
 	t.Run("upserts a valid upstream", func(t *testing.T) {
-		res := c.PUT("/v1/upstreams/" + uuid.NewString()).
-			WithJSON(goodUpstream()).
-			Expect()
-		res.Status(http.StatusOK)
-		body := res.JSON().Path("$.item").Object()
-		validateGoodUpstream(body)
+		upstream := goodUpstream()
+		upstream.Id = uuid.NewString()
+		c.Matcher(assertGoodUpstream(t, upstream)).
+			PUT("/v1/upstreams/" + upstream.Id).
+			WithJSON(upstream).
+			Expect().
+			Status(http.StatusOK)
 	})
 	t.Run("upserting an invalid upstream fails with 400", func(t *testing.T) {
 		upstream := &v1.Upstream{
@@ -320,4 +358,55 @@ func TestUpstreamList(t *testing.T) {
 			id4,
 		}, gotIDs)
 	})
+}
+
+func assertGoodUpstream(t *testing.T, expected *v1.Upstream) func(res *httpexpect.Response) {
+	return func(res *httpexpect.Response) {
+		upstream := res.JSON().Path("$.item").Object()
+		_, err := uuid.Parse(upstream.Value("id").String().Raw())
+		assert.NoError(t, err)
+		upstream.Value("algorithm").String().Equal("round-robin")
+		upstream.Value("created_at").Number().Gt(0)
+		upstream.Value("hash_fallback").String().Equal("none")
+		upstream.Value("hash_on").String().Equal("none")
+		upstream.Value("hash_on_cookie_path").String().Equal("/")
+		upstream.Value("name").String().Equal(expected.Name)
+		upstream.Value("slots").Number().Equal(10000)
+		upstream.Value("updated_at").Number().Gt(0)
+
+		healthChecks := upstream.Value("healthchecks").Object()
+		healthChecks.Value("threshold").Number().Equal(0)
+
+		// Validate `$.item.healthchecks.active`.
+		activeHealthCheck := healthChecks.Value("active").Object()
+		activeHealthCheck.Value("concurrency").Number().Equal(10)
+		activeHealthCheck.Value("http_path").String().Equal("/")
+		activeHealthCheck.Value("https_verify_certificate").Boolean().Equal(true)
+		activeHealthCheck.Value("timeout").Number().Equal(1)
+		activeHealthCheck.Value("type").String().Equal(typedefs.ProtocolHTTP)
+		activeHealthyConf := activeHealthCheck.Value("healthy").Object()
+		activeHealthyConf.Value("http_statuses").Array().Equal([]int{200, 302})
+		activeHealthyConf.Value("interval").Number().Equal(0)
+		activeHealthyConf.Value("successes").Number().Equal(0)
+		activeUnhealthyConf := activeHealthCheck.Value("unhealthy").Object()
+		activeUnhealthyConf.Value("http_failures").Number().Equal(0)
+		activeUnhealthyConf.Value("http_statuses").Array().Equal([]int{429, 404, 500, 501, 502, 503, 504, 505})
+		activeUnhealthyConf.Value("interval").Number().Equal(0)
+		activeUnhealthyConf.Value("tcp_failures").Number().Equal(0)
+		activeUnhealthyConf.Value("timeouts").Number().Equal(0)
+
+		// Validate `$.item.healthchecks.passive`.
+		passiveHealthCheck := healthChecks.Value("passive").Object()
+		passiveHealthCheck.Value("type").String().Equal(typedefs.ProtocolHTTP)
+		passiveHealthyConf := passiveHealthCheck.Value("healthy").Object()
+		passiveHealthyConf.Value("http_statuses").Array().Equal([]int{
+			200, 201, 202, 203, 204, 205, 206, 207, 208, 226, 300, 301, 302, 303, 304, 305, 306, 307, 308,
+		})
+		passiveHealthyConf.Value("successes").Number().Equal(0)
+		passiveUnhealthyConf := passiveHealthCheck.Value("unhealthy").Object()
+		passiveUnhealthyConf.Value("http_failures").Number().Equal(0)
+		passiveUnhealthyConf.Value("http_statuses").Array().Equal([]int{429, 500, 503})
+		passiveUnhealthyConf.Value("tcp_failures").Number().Equal(0)
+		passiveUnhealthyConf.Value("timeouts").Number().Equal(0)
+	}
 }
