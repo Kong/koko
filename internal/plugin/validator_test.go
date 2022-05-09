@@ -181,7 +181,7 @@ func TestValidate(t *testing.T) {
 	t.Run("validates nested config structs", func(t *testing.T) {
 		var config structpb.Struct
 		configString := `{"add":{"headers":["nokey"]}}`
-		require.Nil(t, json.Unmarshal([]byte(configString), &config))
+		require.Nil(t, json.ProtoJSONUnmarshal([]byte(configString), &config))
 		err := validator.Validate(&model.Plugin{
 			Name:      "request-transformer",
 			Config:    &config,
@@ -276,7 +276,7 @@ func TestValidate(t *testing.T) {
 	t.Run("aws-lambda plugin errors out when custom_entity_check fails", func(t *testing.T) {
 		var config structpb.Struct
 		configString := `{"proxy_url": "https://my-proxy-server:3128"}`
-		require.Nil(t, json.Unmarshal([]byte(configString), &config))
+		require.Nil(t, json.ProtoJSONUnmarshal([]byte(configString), &config))
 		p := &model.Plugin{
 			Name:      "aws-lambda",
 			Protocols: []string{"http", "https"},
@@ -388,7 +388,7 @@ func TestValidate(t *testing.T) {
 
 		for _, policy := range policies {
 			var config structpb.Struct
-			require.Nil(t, json.Unmarshal([]byte(policy.config), &config))
+			require.Nil(t, json.ProtoJSONUnmarshal([]byte(policy.config), &config))
 			p := &model.Plugin{
 				Name:      "rate-limiting",
 				Protocols: []string{"http", "https"},
@@ -522,7 +522,7 @@ func TestValidate(t *testing.T) {
 
 		for _, policy := range policies {
 			var config structpb.Struct
-			require.Nil(t, json.Unmarshal([]byte(policy.config), &config))
+			require.Nil(t, json.ProtoJSONUnmarshal([]byte(policy.config), &config))
 			p := &model.Plugin{
 				Name:      "rate-limiting",
 				Protocols: []string{"http", "https"},
@@ -591,7 +591,7 @@ func TestValidate(t *testing.T) {
 
 		for _, policy := range policies {
 			var config structpb.Struct
-			require.Nil(t, json.Unmarshal([]byte(policy.config), &config))
+			require.Nil(t, json.ProtoJSONUnmarshal([]byte(policy.config), &config))
 			p := &model.Plugin{
 				Name:      "response-ratelimiting",
 				Protocols: []string{"http", "https"},
@@ -650,7 +650,7 @@ func TestValidate(t *testing.T) {
 
 		for _, strategy := range strategies {
 			var config structpb.Struct
-			require.Nil(t, json.Unmarshal([]byte(strategy.config), &config))
+			require.Nil(t, json.ProtoJSONUnmarshal([]byte(strategy.config), &config))
 			p := &model.Plugin{
 				Name:      "proxy-cache",
 				Protocols: []string{"http", "https"},
@@ -848,7 +848,7 @@ func TestValidate(t *testing.T) {
 		}
 		for _, policy := range tt {
 			var config structpb.Struct
-			require.Nil(t, json.Unmarshal([]byte(policy.config), &config))
+			require.Nil(t, json.ProtoJSONUnmarshal([]byte(policy.config), &config))
 			p := &model.Plugin{
 				Name:      policy.name,
 				Protocols: []string{"http", "https"},
@@ -902,7 +902,7 @@ func TestPluginLuaSchema(t *testing.T) {
 			var pluginSchema testPluginSchema
 			rawJSONSchmea, err := validator.GetRawLuaSchema(pluginName)
 			require.Nil(t, err)
-			require.Nil(t, json.Unmarshal(rawJSONSchmea, &pluginSchema))
+			require.Nil(t, json.ProtoJSONUnmarshal(rawJSONSchmea, &pluginSchema))
 			require.EqualValues(t, pluginName, pluginSchema.Name)
 		}
 	})

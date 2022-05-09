@@ -31,11 +31,11 @@ func flattenForeign(m Map, entityType string) {
 // TODO(hbagdi): explore better alternatives using reflect.
 func convert(from interface{}) (Map, error) {
 	var m Map
-	jsonBytes, err := protoJSON.Marshal(from)
+	jsonBytes, err := protoJSON.ProtoJSONMarshal(from)
 	if err != nil {
 		return nil, fmt.Errorf("jsonpb marshal: %v", err)
 	}
-	err = protoJSON.Unmarshal(jsonBytes, &m)
+	err = protoJSON.ProtoJSONUnmarshal(jsonBytes, &m)
 	if err != nil {
 		return nil, fmt.Errorf("jsonpb unmarshal: %v", err)
 	}

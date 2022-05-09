@@ -70,7 +70,7 @@ func (v *LuaValidator) Validate(plugin *model.Plugin) error {
 			zap.Duration("validation-time", time.Since(start))).
 			Debug("plugin validated via lua VM")
 	}()
-	pluginJSON, err := json.Marshal(plugin)
+	pluginJSON, err := json.ProtoJSONMarshal(plugin)
 	if err != nil {
 		return fmt.Errorf("marshal JSON: %v", err)
 	}
@@ -86,7 +86,7 @@ func validationErr(name string, e error) error {
 		return nil
 	}
 	var errMap map[string]interface{}
-	err := json.Unmarshal([]byte(e.Error()), &errMap)
+	err := json.ProtoJSONUnmarshal([]byte(e.Error()), &errMap)
 	if err != nil {
 		return fmt.Errorf("unmarshal kong plugin validation error: %v", err)
 	}
@@ -175,7 +175,7 @@ func f(m map[string]interface{}) ([]*model.ErrorDetail, error) {
 
 // ProcessDefaults implements the Validator.ProcessDefaults interface.
 func (v *LuaValidator) ProcessDefaults(plugin *model.Plugin) error {
-	pluginJSON, err := json.Marshal(plugin)
+	pluginJSON, err := json.ProtoJSONMarshal(plugin)
 	if err != nil {
 		return fmt.Errorf("marshal JSON: %v", err)
 	}

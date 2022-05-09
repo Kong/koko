@@ -1,11 +1,11 @@
 package ws
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 
 	"github.com/gorilla/websocket"
+	"github.com/kong/koko/internal/json"
 	"go.uber.org/zap"
 )
 

@@ -54,7 +54,7 @@ func TestServiceCreate(t *testing.T) {
 		service := goodService()
 		service.Name = "disabled-svc"
 		service.Enabled = wrapperspb.Bool(false)
-		serviceJSON, err := json.Marshal(service)
+		serviceJSON, err := json.ProtoJSONMarshal(service)
 		require.Nil(t, err)
 		res := c.POST("/v1/services").WithBytes(serviceJSON).Expect()
 		res.Status(http.StatusCreated)
@@ -67,7 +67,7 @@ func TestServiceCreate(t *testing.T) {
 			Name: "with-url-svc",
 			Url:  "https://example.com:8080/sample/path",
 		}
-		serviceJSON, err := json.Marshal(service)
+		serviceJSON, err := json.ProtoJSONMarshal(service)
 		require.Nil(t, err)
 		res := c.POST("/v1/services").WithBytes(serviceJSON).Expect()
 		res.Status(http.StatusCreated)
@@ -85,7 +85,7 @@ func TestServiceCreate(t *testing.T) {
 			Name: "with-url-without-port-svc",
 			Url:  "https://foo/bar",
 		}
-		serviceJSON, err := json.Marshal(service)
+		serviceJSON, err := json.ProtoJSONMarshal(service)
 		require.Nil(t, err)
 		res := c.POST("/v1/services").WithBytes(serviceJSON).Expect()
 		res.Status(http.StatusCreated)
@@ -103,7 +103,7 @@ func TestServiceCreate(t *testing.T) {
 			Name: "invalid",
 			Url:  "foo.com",
 		}
-		serviceJSON, err := json.Marshal(service)
+		serviceJSON, err := json.ProtoJSONMarshal(service)
 		require.Nil(t, err)
 		res := c.POST("/v1/services").WithBytes(serviceJSON).Expect()
 		res.Status(http.StatusBadRequest)
@@ -122,7 +122,7 @@ func TestServiceCreate(t *testing.T) {
 			Name: "invalid",
 			Url:  "ftp://foo.com",
 		}
-		serviceJSON, err := json.Marshal(service)
+		serviceJSON, err := json.ProtoJSONMarshal(service)
 		require.Nil(t, err)
 		res := c.POST("/v1/services").WithBytes(serviceJSON).Expect()
 		res.Status(http.StatusBadRequest)
@@ -142,7 +142,7 @@ func TestServiceCreate(t *testing.T) {
 			Name: "invalid",
 			Url:  "https://foo",
 		}
-		serviceJSON, err := json.Marshal(service)
+		serviceJSON, err := json.ProtoJSONMarshal(service)
 		require.Nil(t, err)
 		res := c.POST("/v1/services").WithBytes(serviceJSON).Expect()
 		res.Status(http.StatusCreated)

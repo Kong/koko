@@ -62,7 +62,7 @@ func TestPluginCreate(t *testing.T) {
 	defer cleanup()
 	c := httpexpect.New(t, s.URL)
 	t.Run("creates a valid global plugin", func(t *testing.T) {
-		pluginBytes, err := json.Marshal(goodKeyAuthPlugin())
+		pluginBytes, err := json.ProtoJSONMarshal(goodKeyAuthPlugin())
 		require.Nil(t, err)
 		res := c.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
 		res.Status(http.StatusCreated)
@@ -71,7 +71,7 @@ func TestPluginCreate(t *testing.T) {
 		validateKeyAuthPlugin(body)
 	})
 	t.Run("recreating the same plugin fails", func(t *testing.T) {
-		pluginBytes, err := json.Marshal(goodKeyAuthPlugin())
+		pluginBytes, err := json.ProtoJSONMarshal(goodKeyAuthPlugin())
 		require.Nil(t, err)
 		res := c.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
 		res.Status(http.StatusBadRequest)
@@ -94,7 +94,7 @@ func TestPluginCreate(t *testing.T) {
 			Enabled:   wrapperspb.Bool(true),
 			Protocols: []string{"http", "https"},
 		}
-		pluginBytes, err := json.Marshal(plugin)
+		pluginBytes, err := json.ProtoJSONMarshal(plugin)
 		require.Nil(t, err)
 		res := c.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
 		res.Status(http.StatusBadRequest)
@@ -117,7 +117,7 @@ func TestPluginCreate(t *testing.T) {
 				Id: service.Id,
 			},
 		}
-		pluginBytes, err := json.Marshal(plugin)
+		pluginBytes, err := json.ProtoJSONMarshal(plugin)
 		require.Nil(t, err)
 		res = c.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
 		res.Status(http.StatusCreated)
@@ -131,7 +131,7 @@ func TestPluginCreate(t *testing.T) {
 			Enabled:   wrapperspb.Bool(true),
 			Protocols: []string{"http", "https"},
 		}
-		pluginBytes, err := json.Marshal(plugin)
+		pluginBytes, err := json.ProtoJSONMarshal(plugin)
 		require.Nil(t, err)
 		res := c.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
 		res.Status(http.StatusBadRequest)
@@ -154,7 +154,7 @@ func TestPluginCreate(t *testing.T) {
 				Id: route.Id,
 			},
 		}
-		pluginBytes, err := json.Marshal(plugin)
+		pluginBytes, err := json.ProtoJSONMarshal(plugin)
 		require.Nil(t, err)
 		res = c.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
 		res.Status(http.StatusCreated)
@@ -168,7 +168,7 @@ func TestPluginCreate(t *testing.T) {
 		consumerID := body.Value("id").String().Raw()
 		var config structpb.Struct
 		configString := `{"header_name": "Kong-Request-ID", "generator": "uuid#counter", "echo_downstream": true }`
-		require.Nil(t, json.Unmarshal([]byte(configString), &config))
+		require.Nil(t, json.ProtoJSONUnmarshal([]byte(configString), &config))
 		plugin := &v1.Plugin{
 			Name:      "correlation-id",
 			Protocols: []string{"http", "https"},
@@ -177,7 +177,7 @@ func TestPluginCreate(t *testing.T) {
 			},
 			Config: &config,
 		}
-		pluginBytes, err := json.Marshal(plugin)
+		pluginBytes, err := json.ProtoJSONMarshal(plugin)
 		require.Nil(t, err)
 		res = c.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
 		res.Status(http.StatusCreated)
@@ -208,7 +208,7 @@ func TestPluginCreate(t *testing.T) {
 					Id: service.Id,
 				},
 			}
-			pluginBytes, err := json.Marshal(plugin)
+			pluginBytes, err := json.ProtoJSONMarshal(plugin)
 			require.Nil(t, err)
 			res = c.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
 			res.Status(http.StatusCreated)
@@ -218,7 +218,7 @@ func TestPluginCreate(t *testing.T) {
 			plugin := &v1.Plugin{
 				Name: "no-auth",
 			}
-			pluginBytes, err := json.Marshal(plugin)
+			pluginBytes, err := json.ProtoJSONMarshal(plugin)
 			require.Nil(t, err)
 			res := c.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
 			res.Status(http.StatusBadRequest)
@@ -250,7 +250,7 @@ func TestPluginUpsert(t *testing.T) {
 	defer cleanup()
 	c := httpexpect.New(t, s.URL)
 	t.Run("upsert a valid plugin", func(t *testing.T) {
-		pluginBytes, err := json.Marshal(goodKeyAuthPlugin())
+		pluginBytes, err := json.ProtoJSONMarshal(goodKeyAuthPlugin())
 		require.Nil(t, err)
 		res := c.PUT("/v1/plugins/" + uuid.NewString()).
 			WithBytes(pluginBytes).
@@ -261,7 +261,7 @@ func TestPluginUpsert(t *testing.T) {
 	})
 	t.Run("re-upserting the same plugin with different id fails",
 		func(t *testing.T) {
-			pluginBytes, err := json.Marshal(goodKeyAuthPlugin())
+			pluginBytes, err := json.ProtoJSONMarshal(goodKeyAuthPlugin())
 			require.Nil(t, err)
 			res := c.PUT("/v1/plugins/" + uuid.NewString()).
 				WithBytes(pluginBytes).
@@ -285,7 +285,7 @@ func TestPluginUpsert(t *testing.T) {
 				Id: uuid.NewString(),
 			},
 		}
-		pluginBytes, err := json.Marshal(plugin)
+		pluginBytes, err := json.ProtoJSONMarshal(plugin)
 		require.Nil(t, err)
 		res := c.PUT("/v1/plugins/" + uuid.NewString()).
 			WithBytes(pluginBytes).
@@ -332,7 +332,7 @@ func TestPluginUpsert(t *testing.T) {
 		res.JSON().Path("$.item.config.second").Null()
 	})
 	t.Run("upsert plugin without id fails", func(t *testing.T) {
-		pluginBytes, err := json.Marshal(goodKeyAuthPlugin())
+		pluginBytes, err := json.ProtoJSONMarshal(goodKeyAuthPlugin())
 		require.Nil(t, err)
 		res := c.PUT("/v1/plugins/").
 			WithBytes(pluginBytes).
@@ -347,7 +347,7 @@ func TestPluginDelete(t *testing.T) {
 	s, cleanup := setup(t)
 	defer cleanup()
 	c := httpexpect.New(t, s.URL)
-	pluginBytes, err := json.Marshal(goodKeyAuthPlugin())
+	pluginBytes, err := json.ProtoJSONMarshal(goodKeyAuthPlugin())
 	require.Nil(t, err)
 	res := c.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
 	id := res.JSON().Path("$.item.id").String().Raw()
@@ -377,7 +377,7 @@ func TestPluginRead(t *testing.T) {
 	s, cleanup := setup(t)
 	defer cleanup()
 	c := httpexpect.New(t, s.URL)
-	pluginBytes, err := json.Marshal(goodKeyAuthPlugin())
+	pluginBytes, err := json.ProtoJSONMarshal(goodKeyAuthPlugin())
 	require.Nil(t, err)
 	res := c.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
 	res.Status(http.StatusCreated)
@@ -426,7 +426,7 @@ func TestConfiguredPluginsList(t *testing.T) {
 		Enabled:   wrapperspb.Bool(true),
 		Protocols: []string{"http", "https"},
 	}
-	pluginBytes, err := json.Marshal(plugin)
+	pluginBytes, err := json.ProtoJSONMarshal(plugin)
 	require.Nil(t, err)
 	c.POST("/v1/plugins").WithBytes(pluginBytes).
 		Expect().Status(http.StatusCreated)
@@ -439,7 +439,7 @@ func TestConfiguredPluginsList(t *testing.T) {
 			Id: svc.Id,
 		},
 	}
-	pluginBytes, err = json.Marshal(plugin)
+	pluginBytes, err = json.ProtoJSONMarshal(plugin)
 	require.Nil(t, err)
 	c.POST("/v1/plugins").WithBytes(pluginBytes).
 		Expect().Status(http.StatusCreated)
@@ -452,7 +452,7 @@ func TestConfiguredPluginsList(t *testing.T) {
 			Id: route.Id,
 		},
 	}
-	pluginBytes, err = json.Marshal(plugin)
+	pluginBytes, err = json.ProtoJSONMarshal(plugin)
 	require.Nil(t, err)
 	c.POST("/v1/plugins").WithBytes(pluginBytes).
 		Expect().Status(http.StatusCreated)
@@ -465,7 +465,7 @@ func TestConfiguredPluginsList(t *testing.T) {
 			Id: route.Id,
 		},
 	}
-	pluginBytes, err = json.Marshal(plugin)
+	pluginBytes, err = json.ProtoJSONMarshal(plugin)
 	require.Nil(t, err)
 	c.POST("/v1/plugins").WithBytes(pluginBytes).
 		Expect().Status(http.StatusCreated)
@@ -542,7 +542,7 @@ func TestPluginList(t *testing.T) {
 	res.Status(http.StatusCreated)
 	routeID3 := res.JSON().Path("$.item.id").String().Raw()
 
-	pluginBytes, err := json.Marshal(goodKeyAuthPlugin())
+	pluginBytes, err := json.ProtoJSONMarshal(goodKeyAuthPlugin())
 	require.Nil(t, err)
 	res = c.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
 	res.Status(http.StatusCreated)
@@ -552,7 +552,7 @@ func TestPluginList(t *testing.T) {
 		Enabled:   wrapperspb.Bool(true),
 		Protocols: []string{"http", "https"},
 	}
-	pluginBytes, err = json.Marshal(plg)
+	pluginBytes, err = json.ProtoJSONMarshal(plg)
 	require.Nil(t, err)
 	res = c.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
 	res.Status(http.StatusCreated)
@@ -565,7 +565,7 @@ func TestPluginList(t *testing.T) {
 			Id: serviceID1,
 		},
 	}
-	pluginBytes, err = json.Marshal(plg)
+	pluginBytes, err = json.ProtoJSONMarshal(plg)
 	require.Nil(t, err)
 	res = c.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
 	res.Status(http.StatusCreated)
@@ -578,7 +578,7 @@ func TestPluginList(t *testing.T) {
 			Id: serviceID1,
 		},
 	}
-	pluginBytes, err = json.Marshal(plg)
+	pluginBytes, err = json.ProtoJSONMarshal(plg)
 	require.Nil(t, err)
 	res = c.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
 	res.Status(http.StatusCreated)
@@ -591,7 +591,7 @@ func TestPluginList(t *testing.T) {
 			Id: serviceID2,
 		},
 	}
-	pluginBytes, err = json.Marshal(plg)
+	pluginBytes, err = json.ProtoJSONMarshal(plg)
 	require.Nil(t, err)
 	res = c.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
 	res.Status(http.StatusCreated)
@@ -604,7 +604,7 @@ func TestPluginList(t *testing.T) {
 			Id: routeID1,
 		},
 	}
-	pluginBytes, err = json.Marshal(plg)
+	pluginBytes, err = json.ProtoJSONMarshal(plg)
 	require.Nil(t, err)
 	res = c.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
 	res.Status(http.StatusCreated)
@@ -617,7 +617,7 @@ func TestPluginList(t *testing.T) {
 			Id: routeID2,
 		},
 	}
-	pluginBytes, err = json.Marshal(plg)
+	pluginBytes, err = json.ProtoJSONMarshal(plg)
 	require.Nil(t, err)
 	res = c.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
 	res.Status(http.StatusCreated)
@@ -630,7 +630,7 @@ func TestPluginList(t *testing.T) {
 			Id: routeID2,
 		},
 	}
-	pluginBytes, err = json.Marshal(plg)
+	pluginBytes, err = json.ProtoJSONMarshal(plg)
 	require.Nil(t, err)
 	res = c.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
 	res.Status(http.StatusCreated)
@@ -812,7 +812,7 @@ func TestPluginListByConsumer(t *testing.T) {
 	consumerID := body.Value("id").String().Raw()
 	var config structpb.Struct
 	configString := `{"header_name": "Kong-Request-ID", "generator": "uuid#counter", "echo_downstream": true }`
-	require.Nil(t, json.Unmarshal([]byte(configString), &config))
+	require.Nil(t, json.ProtoJSONUnmarshal([]byte(configString), &config))
 	plugin := &v1.Plugin{
 		Name:      "correlation-id",
 		Protocols: []string{"http", "https"},
@@ -821,7 +821,7 @@ func TestPluginListByConsumer(t *testing.T) {
 		},
 		Config: &config,
 	}
-	pluginBytes, err := json.Marshal(plugin)
+	pluginBytes, err := json.ProtoJSONMarshal(plugin)
 	require.Nil(t, err)
 	res = c.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
 	res.Status(http.StatusCreated)
@@ -829,7 +829,7 @@ func TestPluginListByConsumer(t *testing.T) {
 	PluginIDOne := body.Value("id").String().Raw()
 
 	configString = `{"allow": ["10.10.10.10"]}`
-	require.Nil(t, json.Unmarshal([]byte(configString), &config))
+	require.Nil(t, json.ProtoJSONUnmarshal([]byte(configString), &config))
 
 	plugin = &v1.Plugin{
 		Name:      "ip-restriction",
@@ -839,7 +839,7 @@ func TestPluginListByConsumer(t *testing.T) {
 		},
 		Config: &config,
 	}
-	pluginBytes, err = json.Marshal(plugin)
+	pluginBytes, err = json.ProtoJSONMarshal(plugin)
 	require.Nil(t, err)
 	res = c.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
 	res.Status(http.StatusCreated)
@@ -852,7 +852,7 @@ func TestPluginListByConsumer(t *testing.T) {
 		Enabled:   wrapperspb.Bool(true),
 		Protocols: []string{"http", "https"},
 	}
-	pluginBytes, err = json.Marshal(plugin)
+	pluginBytes, err = json.ProtoJSONMarshal(plugin)
 	require.Nil(t, err)
 	res = c.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
 	res.Status(http.StatusCreated)

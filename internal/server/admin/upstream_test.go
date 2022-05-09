@@ -187,7 +187,7 @@ func TestUpstreamUpsert(t *testing.T) {
 				},
 			},
 		}
-		upstreamJSON, err := json.Marshal(upstream)
+		upstreamJSON, err := json.ProtoJSONMarshal(upstream)
 		require.Nil(t, err)
 		res = c.PUT("/v1/upstreams/" + uid).
 			WithBytes(upstreamJSON).

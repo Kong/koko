@@ -2,12 +2,12 @@ package schema
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"strings"
 	"sync"
 
 	genJSONSchema "github.com/kong/koko/internal/gen/jsonschema"
+	"github.com/kong/koko/internal/json"
 	"github.com/santhosh-tekuri/jsonschema/v5"
 )
 

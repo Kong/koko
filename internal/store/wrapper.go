@@ -1,10 +1,9 @@
 package store
 
 import (
-	encodingJSON "encoding/json"
 	"fmt"
 
-	protoJSON "github.com/kong/koko/internal/json"
+	"github.com/kong/koko/internal/json"
 	"github.com/kong/koko/internal/model"
 )
 
@@ -15,13 +14,13 @@ const (
 )
 
 type valueWrapper struct {
-	Type   int                     `json:"type,omitempty"`
-	Object encodingJSON.RawMessage `json:"object,omitempty"`
-	RefID  string                  `json:"ref_id,omitempty"`
+	Type   int             `json:"type,omitempty"`
+	Object json.RawMessage `json:"object,omitempty"`
+	RefID  string          `json:"ref_id,omitempty"`
 }
 
 func wrapUniqueIndex(refID string) ([]byte, error) {
-	value, err := encodingJSON.Marshal(valueWrapper{
+	value, err := json.Marshal(valueWrapper{
 		Type:  valueTypeIndexUnique,
 		RefID: refID,
 	})
@@ -33,7 +32,7 @@ func wrapUniqueIndex(refID string) ([]byte, error) {
 
 func unwrapUniqueIndex(value []byte) (string, error) {
 	var v valueWrapper
-	err := encodingJSON.Unmarshal(value, &v)
+	err := json.Unmarshal(value, &v)
 	if err != nil {
 		return "", fmt.Errorf("json unmarshal unique index: %v", err)
 	}
@@ -44,7 +43,7 @@ func unwrapUniqueIndex(value []byte) (string, error) {
 }
 
 func wrapForeignIndex() ([]byte, error) {
-	value, err := encodingJSON.Marshal(valueWrapper{
+	value, err := json.Marshal(valueWrapper{
 		Type: valueTypeIndexForeign,
 	})
 	if err != nil {
@@ -55,7 +54,7 @@ func wrapForeignIndex() ([]byte, error) {
 
 func verifyForeignValue(value []byte) error {
 	var indexValue valueWrapper
-	err := encodingJSON.Unmarshal(value, &indexValue)
+	err := json.Unmarshal(value, &indexValue)
 	if err != nil {
 		return err
 	}
@@ -67,11 +66,11 @@ func verifyForeignValue(value []byte) error {
 }
 
 func wrapObject(object model.Object) ([]byte, error) {
-	jsonObject, err := protoJSON.Marshal(object.Resource())
+	jsonObject, err := json.ProtoJSONMarshal(object.Resource())
 	if err != nil {
 		return nil, err
 	}
-	value, err := encodingJSON.Marshal(valueWrapper{
+	value, err := json.Marshal(valueWrapper{
 		Type:   valueTypeObject,
 		Object: jsonObject,
 	})
@@ -84,11 +83,11 @@ func wrapObject(object model.Object) ([]byte, error) {
 func unwrapObject(value []byte, object model.Object) error {
 	var wrappedValue valueWrapper
 
-	err := encodingJSON.Unmarshal(value, &wrappedValue)
+	err := json.Unmarshal(value, &wrappedValue)
 	if err != nil {
 		return fmt.Errorf("json unmarshal wrapperValue: %v", err)
 	}
-	err = protoJSON.Unmarshal(wrappedValue.Object, object.Resource())
+	err = json.ProtoJSONUnmarshal(wrappedValue.Object, object.Resource())
 	if err != nil {
 		return fmt.Errorf("json unmarshal object: %v", err)
 	}

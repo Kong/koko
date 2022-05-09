@@ -18,7 +18,7 @@ type jsonWrapper struct {
 }
 
 func json(value string) []byte {
-	res, err := protoJSON.Marshal(jsonWrapper{value})
+	res, err := protoJSON.ProtoJSONMarshal(jsonWrapper{value})
 	if err != nil {
 		panic(fmt.Sprintf("marshal json: %v", err))
 	}
