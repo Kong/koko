@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/kong/koko/internal/server/kong/ws/config"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 )
@@ -57,7 +58,17 @@ func Test_acceptVersion(t *testing.T) {
 type dummyAuthenticator struct{}
 
 func (dummyAuthenticator) Authenticate(r *http.Request) (*Manager, error) {
-	return NewManager(ManagerOpts{Cluster: DefaultCluster{}}), nil
+	vc, err := config.NewVersionCompatibilityProcessor(config.VersionCompatibilityOpts{
+		Logger:        &zap.Logger{},
+		KongCPVersion: config.KongGatewayCompatibilityVersion,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return NewManager(ManagerOpts{
+		Cluster:                DefaultCluster{},
+		DPVersionCompatibility: vc,
+	}), nil
 }
 
 func dummyNegotiationHandler() NegotiationHandler {
@@ -76,7 +87,7 @@ func Test_rejectEmptyRequest(t *testing.T) {
 	dummyNegotiationHandler().ServeHTTP(rr, req)
 
 	assert.Equal(400, rr.Code)
-	assert.JSONEq(`{"message": "Invalid request"}`, rr.Body.String())
+	assert.JSONEq(`{"message": "Invalid content type"}`, rr.Body.String())
 }
 
 func Test_rejectTextRequest(t *testing.T) {
@@ -89,7 +100,7 @@ func Test_rejectTextRequest(t *testing.T) {
 	dummyNegotiationHandler().ServeHTTP(rr, req)
 
 	assert.Equal(400, rr.Code)
-	assert.JSONEq(`{"message": "Invalid request"}`, rr.Body.String())
+	assert.JSONEq(`{"message": "Invalid content type"}`, rr.Body.String())
 }
 
 func Test_rejectEmptyJSONRequest(t *testing.T) {

@@ -28,8 +28,13 @@ type NegotiationHandler struct {
 type negotiatedVersions map[string]string
 
 func (h NegotiationHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "POST" || r.Header.Get("Content-Type") != "application/json" {
-		jsonErr(w, errMessage{"Invalid request"}, http.StatusBadRequest)
+	if r.Method != "POST" {
+		jsonErr(w, errMessage{"Invalid method"}, http.StatusMethodNotAllowed)
+		return
+	}
+
+	if r.Header.Get("Content-Type") != "application/json" {
+		jsonErr(w, errMessage{"Invalid content type"}, http.StatusBadRequest)
 		return
 	}
 
@@ -64,7 +69,7 @@ func (h NegotiationHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	jsonBody, err := json.Marshal(resp)
 	if err != nil {
-		jsonErr(w, errMessage{Message: err.Error()}, http.StatusBadRequest)
+		jsonErr(w, errMessage{Message: err.Error()}, http.StatusInternalServerError)
 		return
 	}
 	h.logger.Debug("encoded response", zap.Binary("jsonBody", jsonBody))
