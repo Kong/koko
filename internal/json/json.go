@@ -44,8 +44,7 @@ func (m RawMessage) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON sets *m to a copy of data.
 func (m *RawMessage) UnmarshalJSON(data []byte) error {
-	p := (*json.RawMessage)(m)
-	return p.UnmarshalJSON(data)
+	return (*json.RawMessage)(m).UnmarshalJSON(data)
 }
 
 var (
