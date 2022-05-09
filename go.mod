@@ -3,7 +3,7 @@ module github.com/kong/koko
 go 1.18
 
 require (
-	github.com/DataDog/datadog-go/v5 v5.1.0
+	github.com/DataDog/datadog-go/v5 v5.1.1
 	github.com/blang/semver/v4 v4.0.0
 	github.com/bufbuild/buf v1.4.0
 	github.com/cenkalti/backoff/v4 v4.1.3
