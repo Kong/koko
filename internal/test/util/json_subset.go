@@ -81,14 +81,14 @@ func subset(o1, o2 interface{}, prefix string) error {
 
 func objectToMap(o interface{}) (map[string]interface{}, error) {
 	var m map[string]interface{}
-	marshal := protoJSON.ProtoJSONMarshal
-	unmarshal := protoJSON.ProtoJSONUnmarshal
+	protoJSONMarshal := protoJSON.ProtoJSONMarshal
+	protoJSONUnmarshal := protoJSON.ProtoJSONUnmarshal
 
-	jsonBytes, err := marshal(o)
+	jsonBytes, err := protoJSONMarshal(o)
 	if err != nil {
 		return nil, fmt.Errorf("marshal value into json: %v", err)
 	}
-	err = unmarshal(jsonBytes, &m)
+	err = protoJSONUnmarshal(jsonBytes, &m)
 	if err != nil {
 		return nil, fmt.Errorf("unmarshal value into map: %v", err)
 	}
