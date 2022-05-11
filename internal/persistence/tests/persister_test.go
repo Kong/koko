@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	protoJSON "github.com/kong/koko/internal/json"
+	internalJSON "github.com/kong/koko/internal/json"
 	"github.com/kong/koko/internal/persistence"
 	"github.com/kong/koko/internal/test/util"
 	"github.com/stretchr/testify/require"
@@ -18,7 +18,7 @@ type jsonWrapper struct {
 }
 
 func json(value string) []byte {
-	res, err := protoJSON.ProtoJSONMarshal(jsonWrapper{value})
+	res, err := internalJSON.ProtoJSONMarshal(jsonWrapper{value})
 	if err != nil {
 		panic(fmt.Sprintf("marshal json: %v", err))
 	}

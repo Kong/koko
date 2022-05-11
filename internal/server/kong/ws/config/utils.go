@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	protoJSON "github.com/kong/koko/internal/json"
+	"github.com/kong/koko/internal/json"
 )
 
 var (
@@ -31,11 +31,11 @@ func flattenForeign(m Map, entityType string) {
 // TODO(hbagdi): explore better alternatives using reflect.
 func convert(from interface{}) (Map, error) {
 	var m Map
-	jsonBytes, err := protoJSON.ProtoJSONMarshal(from)
+	jsonBytes, err := json.ProtoJSONMarshal(from)
 	if err != nil {
 		return nil, fmt.Errorf("jsonpb marshal: %v", err)
 	}
-	err = protoJSON.ProtoJSONUnmarshal(jsonBytes, &m)
+	err = json.ProtoJSONUnmarshal(jsonBytes, &m)
 	if err != nil {
 		return nil, fmt.Errorf("jsonpb unmarshal: %v", err)
 	}
