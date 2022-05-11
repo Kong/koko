@@ -38,7 +38,7 @@ func (s *SchemasService) GetSchemas(ctx context.Context,
 
 	// Convert the raw JSON into a map/struct and return response
 	jsonSchema := &structpb.Struct{}
-	err = json.Unmarshal(rawJSONSchema, jsonSchema)
+	err = json.ProtoJSONUnmarshal(rawJSONSchema, jsonSchema)
 	if err != nil {
 		return nil, s.err(ctx, err)
 	}
@@ -63,7 +63,7 @@ func (s *SchemasService) GetLuaSchemasPlugin(ctx context.Context,
 
 	// Convert the raw Lua (JSON) into a map/struct and return response
 	luaSchema := &structpb.Struct{}
-	err = json.Unmarshal(rawLuaSchema, luaSchema)
+	err = json.ProtoJSONUnmarshal(rawLuaSchema, luaSchema)
 	if err != nil {
 		return nil, s.err(ctx, err)
 	}

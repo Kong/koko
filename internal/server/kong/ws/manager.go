@@ -3,7 +3,6 @@ package ws
 import (
 	"bytes"
 	"context"
-	encodingJSON "encoding/json"
 	"fmt"
 	"io"
 	"net"
@@ -16,6 +15,7 @@ import (
 	admin "github.com/kong/koko/internal/gen/grpc/kong/admin/service/v1"
 	relay "github.com/kong/koko/internal/gen/grpc/kong/relay/service/v1"
 	grpcKongUtil "github.com/kong/koko/internal/gen/grpc/kong/util/v1"
+	"github.com/kong/koko/internal/json"
 	"github.com/kong/koko/internal/resource"
 	"github.com/kong/koko/internal/server/kong/ws/config"
 	"go.uber.org/zap"
@@ -394,7 +394,7 @@ func (m *Manager) getPluginList(node Node) ([]string, error) {
 			"expected %v", messageType, websocket.BinaryMessage)
 	}
 	var info basicInfo
-	err = encodingJSON.Unmarshal(message, &info)
+	err = json.Unmarshal(message, &info)
 	if err != nil {
 		return nil, fmt.Errorf("unmarshal basic-info json message: %v", err)
 	}

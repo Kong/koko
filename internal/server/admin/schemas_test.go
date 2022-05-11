@@ -120,7 +120,7 @@ func TestPluginValidate(t *testing.T) {
 	c, path := httpexpect.New(t, s.URL), "/v1/schemas/lua/plugins/validate"
 
 	t.Run("validate a global plugin with valid config", func(t *testing.T) {
-		pluginBytes, err := json.Marshal(goodKeyAuthPlugin())
+		pluginBytes, err := json.ProtoJSONMarshal(goodKeyAuthPlugin())
 		require.NoError(t, err)
 		res := c.POST(path).WithBytes(pluginBytes).Expect()
 		res.Status(http.StatusOK)
@@ -133,7 +133,7 @@ func TestPluginValidate(t *testing.T) {
 				"key_names": structpb.NewStringValue("apikey"),
 			},
 		}
-		pluginBytes, err := json.Marshal(plugin)
+		pluginBytes, err := json.ProtoJSONMarshal(plugin)
 		require.NoError(t, err)
 		res := c.POST(path).WithBytes(pluginBytes).Expect()
 		res.Status(http.StatusBadRequest)
@@ -149,7 +149,7 @@ func TestPluginValidate(t *testing.T) {
 	t.Run("validate a global plugin with invalid config", func(t *testing.T) {
 		plugin := goodKeyAuthPlugin()
 		plugin.Config = invalidConfig
-		pluginBytes, err := json.Marshal(plugin)
+		pluginBytes, err := json.ProtoJSONMarshal(plugin)
 		require.NoError(t, err)
 		res := c.POST(path).WithBytes(pluginBytes).Expect()
 		res.Status(http.StatusBadRequest)
@@ -163,7 +163,7 @@ func TestPluginValidate(t *testing.T) {
 	})
 
 	t.Run("validate an unknown plugin with valid config", func(t *testing.T) {
-		pluginBytes, err := json.Marshal(&v1.Plugin{Name: "no-auth"})
+		pluginBytes, err := json.ProtoJSONMarshal(&v1.Plugin{Name: "no-auth"})
 		require.NoError(t, err)
 		res := c.POST(path).WithBytes(pluginBytes).Expect()
 		res.Status(http.StatusBadRequest)
@@ -177,7 +177,7 @@ func TestPluginValidate(t *testing.T) {
 	})
 
 	t.Run("validate an unknown plugin with invalid config", func(t *testing.T) {
-		pluginBytes, err := json.Marshal(&v1.Plugin{Name: "no-auth", Config: invalidConfig})
+		pluginBytes, err := json.ProtoJSONMarshal(&v1.Plugin{Name: "no-auth", Config: invalidConfig})
 		require.NoError(t, err)
 		res := c.POST(path).WithBytes(pluginBytes).Expect()
 		res.Status(http.StatusBadRequest)

@@ -2,8 +2,9 @@ package config
 
 import (
 	"crypto/md5" //nolint: gosec
-	"encoding/json"
 	"fmt"
+
+	"github.com/kong/koko/internal/json"
 )
 
 func configHash(d interface{}) string {

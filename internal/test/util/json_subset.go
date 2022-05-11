@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"reflect"
 
-	protoJSON "github.com/kong/koko/internal/json"
+	"github.com/kong/koko/internal/json"
 )
 
 func JSONSubset(o1, o2 interface{}) error {
@@ -81,14 +81,14 @@ func subset(o1, o2 interface{}, prefix string) error {
 
 func objectToMap(o interface{}) (map[string]interface{}, error) {
 	var m map[string]interface{}
-	marshal := protoJSON.Marshal
-	unmarshal := protoJSON.Unmarshal
+	protoJSONMarshal := json.ProtoJSONMarshal
+	protoJSONUnmarshal := json.ProtoJSONUnmarshal
 
-	jsonBytes, err := marshal(o)
+	jsonBytes, err := protoJSONMarshal(o)
 	if err != nil {
 		return nil, fmt.Errorf("marshal value into json: %v", err)
 	}
-	err = unmarshal(jsonBytes, &m)
+	err = protoJSONUnmarshal(jsonBytes, &m)
 	if err != nil {
 		return nil, fmt.Errorf("unmarshal value into map: %v", err)
 	}

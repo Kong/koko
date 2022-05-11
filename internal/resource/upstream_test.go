@@ -108,9 +108,9 @@ func TestUpstream_ProcessDefaults(t *testing.T) {
 			},
 		}
 		actual := r.Resource()
-		expectedJSON, err := protoJSON.Marshal(expected)
+		expectedJSON, err := protoJSON.ProtoJSONMarshal(expected)
 		require.Nil(t, err)
-		actualJSON, err := protoJSON.Marshal(actual)
+		actualJSON, err := protoJSON.ProtoJSONMarshal(actual)
 		require.Nil(t, err)
 		require.JSONEq(t, string(expectedJSON), string(actualJSON))
 	})

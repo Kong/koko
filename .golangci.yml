@@ -102,3 +102,12 @@ issues:
   - linters:
       - gofumpt
     path: internal/gen/wrpc
+linters-settings:
+  depguard:
+    include-go-root: true
+    packages:
+      - encoding/json
+    packages-with-error-message:
+      - encoding/json: 'only the internal/json package is allowed'
+    ignore-file-rules:
+      - '**/internal/json/json.go'

@@ -2,7 +2,6 @@ package store
 
 import (
 	"context"
-	encodingJSON "encoding/json"
 	"fmt"
 	"sort"
 	"strings"
@@ -11,7 +10,7 @@ import (
 
 	"github.com/google/uuid"
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
-	protoJSON "github.com/kong/koko/internal/json"
+	"github.com/kong/koko/internal/json"
 	"github.com/kong/koko/internal/log"
 	"github.com/kong/koko/internal/model"
 	"github.com/kong/koko/internal/model/json/validation"
@@ -811,7 +810,7 @@ func TestStoredValue(t *testing.T) {
 		var v struct {
 			Object map[string]interface{} `json:"object"`
 		}
-		err = encodingJSON.Unmarshal(value, &v)
+		err = json.Unmarshal(value, &v)
 		require.Nil(t, err)
 		// check a wrapper type was rendered correctly,
 		// this fails if a protobuf unaware parser is used
@@ -947,8 +946,8 @@ type jsonWrapper struct {
 	Value string `json:"value"`
 }
 
-func json(value string) []byte {
-	res, err := protoJSON.Marshal(jsonWrapper{value})
+func marshalJSON(value string) []byte {
+	res, err := json.ProtoJSONMarshal(jsonWrapper{value})
 	if err != nil {
 		panic(fmt.Sprintf("marshal json: %v", err))
 	}
@@ -964,7 +963,7 @@ func TestFullListPaging(t *testing.T) {
 		require.Nil(t, err)
 		var expectedValuesBatchOne, expectedKeysBatchOne []string
 		for i := 0; i < 1001; i++ {
-			value := json(fmt.Sprintf("prefix-value-%06d", i))
+			value := marshalJSON(fmt.Sprintf("prefix-value-%06d", i))
 			key := fmt.Sprintf("myprefix/key%06d", i)
 			err = tx.Put(ctx, key, value)
 			require.Nil(t, err)

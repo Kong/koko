@@ -297,7 +297,7 @@ func TestVersionCompatibility(t *testing.T) {
 	for _, test := range tests {
 		var config structpb.Struct
 		if len(test.config) > 0 {
-			require.Nil(t, json.Unmarshal([]byte(test.config), &config))
+			require.Nil(t, json.ProtoJSONUnmarshal([]byte(test.config), &config))
 		}
 
 		plugin := &v1.Plugin{
@@ -307,7 +307,7 @@ func TestVersionCompatibility(t *testing.T) {
 			Enabled:   wrapperspb.Bool(true),
 			Protocols: []string{"http", "https"},
 		}
-		pluginBytes, err := json.Marshal(plugin)
+		pluginBytes, err := json.ProtoJSONMarshal(plugin)
 		require.Nil(t, err)
 		res := admin.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
 		res.Status(http.StatusCreated)
@@ -353,7 +353,7 @@ func ensurePlugins(plugins []vcPlugins) error {
 			if plugin.name == *dataPlanePlugin.Name && plugin.id == *dataPlanePlugin.ID {
 				// Ensure field updates occurred and validate
 				if len(plugin.fieldUpdateChecks) > 0 {
-					config, err := json.Marshal(dataPlanePlugin.Config)
+					config, err := json.ProtoJSONMarshal(dataPlanePlugin.Config)
 					if err != nil {
 						return fmt.Errorf("marshal %s plugin config: %v", plugin.name, err)
 					}

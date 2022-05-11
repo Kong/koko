@@ -13,11 +13,11 @@ import (
 func Validate(typ string, message proto.Message) error {
 	var v interface{}
 	var err error
-	js, err := json.Marshal(message)
+	js, err := json.ProtoJSONMarshal(message)
 	if err != nil {
 		return err
 	}
-	err = json.Unmarshal(js, &v)
+	err = json.ProtoJSONUnmarshal(js, &v)
 	if err != nil {
 		return err
 	}

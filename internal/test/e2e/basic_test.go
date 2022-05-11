@@ -274,7 +274,7 @@ func TestPluginSync(t *testing.T) {
 		Service:   &v1.Service{Id: service.Id},
 		Protocols: []string{"http", "https"},
 	}
-	pluginBytes, err := json.Marshal(plugin)
+	pluginBytes, err := json.ProtoJSONMarshal(plugin)
 	require.Nil(t, err)
 	res = c.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
 	res.Status(http.StatusCreated)
@@ -286,7 +286,7 @@ func TestPluginSync(t *testing.T) {
 		Route:     &v1.Route{Id: route.Id},
 		Protocols: []string{"http", "https"},
 	}
-	pluginBytes, err = json.Marshal(plugin)
+	pluginBytes, err = json.ProtoJSONMarshal(plugin)
 	require.Nil(t, err)
 	res = c.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
 	res.Status(http.StatusCreated)
@@ -294,7 +294,7 @@ func TestPluginSync(t *testing.T) {
 
 	var config structpb.Struct
 	configString := `{"header_name": "Kong-Request-ID", "generator": "uuid#counter", "echo_downstream": true }`
-	require.Nil(t, json.Unmarshal([]byte(configString), &config))
+	require.Nil(t, json.ProtoJSONUnmarshal([]byte(configString), &config))
 	plugin = &v1.Plugin{
 		Name:      "correlation-id",
 		Protocols: []string{"http", "https"},
@@ -304,7 +304,7 @@ func TestPluginSync(t *testing.T) {
 		Config: &config,
 	}
 
-	pluginBytes, err = json.Marshal(plugin)
+	pluginBytes, err = json.ProtoJSONMarshal(plugin)
 	require.Nil(t, err)
 	res = c.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
 	res.Status(http.StatusCreated)
@@ -315,7 +315,7 @@ func TestPluginSync(t *testing.T) {
 		Enabled:   wrapperspb.Bool(true),
 		Protocols: []string{"http", "https"},
 	}
-	pluginBytes, err = json.Marshal(plugin)
+	pluginBytes, err = json.ProtoJSONMarshal(plugin)
 	require.Nil(t, err)
 	res = c.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
 	res.Status(http.StatusCreated)
@@ -574,7 +574,7 @@ func TestServiceSync(t *testing.T) {
 	res := c.POST("/v1/services").WithJSON(enabledService).Expect()
 	res.Status(http.StatusCreated)
 
-	disabled, err := json.Marshal(disabledService())
+	disabled, err := json.ProtoJSONMarshal(disabledService())
 	require.Nil(t, err)
 	res = c.POST("/v1/services").WithBytes(disabled).Expect()
 	res.Status(http.StatusCreated)

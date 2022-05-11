@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io/fs"
@@ -9,6 +8,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/kong/koko/internal/json"
 	"github.com/kong/koko/internal/model/json/generator"
 	_ "github.com/kong/koko/internal/resource"
 )
