@@ -2,12 +2,16 @@ package admin
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 
+	pb "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/service/v1"
+	"github.com/kong/koko/internal/model"
 	"github.com/kong/koko/internal/plugin"
 	"github.com/kong/koko/internal/resource"
 	"github.com/kong/koko/internal/server/util"
+	"github.com/kong/koko/internal/store"
 	"go.uber.org/zap"
 )
 
@@ -35,10 +39,71 @@ func (s *PluginSchemaService) CreateLuaPluginSchema(ctx context.Context,
 	}, nil
 }
 
+func (s *PluginSchemaService) GetLuaPluginSchema(ctx context.Context,
+	req *v1.GetLuaPluginSchemaRequest,
+) (*v1.GetLuaPluginSchemaResponse, error) {
+	if req.Name == "" {
+		return nil, s.err(ctx, util.ErrClient{Message: "required name is missing"})
+	}
+	if !nameRegex.MatchString(req.Name) {
+		return nil, s.err(ctx, util.ErrClient{Message: "required name is invalid"})
+	}
+	db, err := s.CommonOpts.getDB(ctx, req.Cluster)
+	if err != nil {
+		return nil, err
+	}
+	res := resource.NewPluginSchema()
+	if err := db.Read(ctx, res, store.GetByID(req.Name)); err != nil {
+		return nil, s.err(ctx, err)
+	}
+	return &v1.GetLuaPluginSchemaResponse{
+		Item: res.PluginSchema,
+	}, nil
+}
+
+func (s *PluginSchemaService) ListLuaPluginSchemas(ctx context.Context,
+	req *v1.ListLuaPluginSchemasRequest,
+) (*v1.ListLuaPluginSchemasResponse, error) {
+	db, err := s.CommonOpts.getDB(ctx, req.Cluster)
+	if err != nil {
+		return nil, err
+	}
+
+	listFn := []store.ListOptsFunc{}
+	list := resource.NewList(resource.TypePluginSchema)
+	listOptFns, err := listOptsFromReq(req.Page)
+	if err != nil {
+		return nil, s.err(ctx, util.ErrClient{Message: err.Error()})
+	}
+
+	listFn = append(listFn, listOptFns...)
+
+	if err := db.List(ctx, list, listFn...); err != nil {
+		return nil, s.err(ctx, err)
+	}
+
+	return &v1.ListLuaPluginSchemasResponse{
+		Items: pluginSchemasFromObjects(list.GetAll()),
+		Page:  getPaginationResponse(list.GetTotalCount(), list.GetNextPage()),
+	}, nil
+}
+
 func (s *PluginSchemaService) err(ctx context.Context, err error) error {
 	return util.HandleErr(ctx, s.logger(ctx), err)
 }
 
 func (s *PluginSchemaService) logger(ctx context.Context) *zap.Logger {
 	return util.LoggerFromContext(ctx).With(s.loggerFields...)
+}
+
+func pluginSchemasFromObjects(objects []model.Object) []*pb.PluginSchema {
+	res := make([]*pb.PluginSchema, len(objects))
+	for i, object := range objects {
+		var ok bool
+		if res[i], ok = object.Resource().(*pb.PluginSchema); !ok {
+			panic(fmt.Sprintf("expected type '%T' but got '%T'",
+				&pb.PluginSchema{}, object.Resource()))
+		}
+	}
+	return res
 }
