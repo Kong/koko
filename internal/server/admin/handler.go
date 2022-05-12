@@ -58,6 +58,7 @@ type services struct {
 	service       v1.ServiceServiceServer
 	route         v1.RouteServiceServer
 	plugin        v1.PluginServiceServer
+	pluginSchema  v1.PluginSchemaServiceServer
 	upstream      v1.UpstreamServiceServer
 	target        v1.TargetServiceServer
 	schemas       v1.SchemasServiceServer
@@ -93,6 +94,15 @@ func buildServices(opts HandlerOpts) services {
 				storeLoader: opts.StoreLoader,
 				loggerFields: []zapcore.Field{
 					zap.String("admin-service", "plugin"),
+				},
+			},
+			validator: opts.Validator,
+		},
+		pluginSchema: &PluginSchemaService{
+			CommonOpts: CommonOpts{
+				storeLoader: opts.StoreLoader,
+				loggerFields: []zapcore.Field{
+					zap.String("admin-service", "plugin-schema"),
 				},
 			},
 			validator: opts.Validator,
@@ -208,6 +218,12 @@ func NewHandler(opts HandlerOpts) (http.Handler, error) {
 		return nil, err
 	}
 
+	err = v1.RegisterPluginSchemaServiceHandlerServer(context.Background(),
+		mux, services.pluginSchema)
+	if err != nil {
+		return nil, err
+	}
+
 	err = v1.RegisterUpstreamServiceHandlerServer(context.Background(),
 		mux, services.upstream)
 	if err != nil {
@@ -284,6 +300,7 @@ func RegisterAdminService(server *grpc.Server, opts HandlerOpts) {
 	v1.RegisterServiceServiceServer(server, services.service)
 	v1.RegisterRouteServiceServer(server, services.route)
 	v1.RegisterPluginServiceServer(server, services.plugin)
+	v1.RegisterPluginSchemaServiceServer(server, services.pluginSchema)
 	v1.RegisterUpstreamServiceServer(server, services.upstream)
 	v1.RegisterTargetServiceServer(server, services.target)
 	v1.RegisterSchemasServiceServer(server, services.schemas)

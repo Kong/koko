@@ -318,6 +318,7 @@ type grpcClients struct {
 	Service       v1.ServiceServiceClient
 	Route         v1.RouteServiceClient
 	Plugin        v1.PluginServiceClient
+	PluginSchema  v1.PluginSchemaServiceClient
 	Upstream      v1.UpstreamServiceClient
 	Target        v1.TargetServiceClient
 	Consumer      v1.ConsumerServiceClient
@@ -340,6 +341,7 @@ func setupGRPCClients() (grpcClients, error) {
 		Service:       v1.NewServiceServiceClient(cc),
 		Route:         v1.NewRouteServiceClient(cc),
 		Plugin:        v1.NewPluginServiceClient(cc),
+		PluginSchema:  v1.NewPluginSchemaServiceClient(cc),
 		Upstream:      v1.NewUpstreamServiceClient(cc),
 		Target:        v1.NewTargetServiceClient(cc),
 		Consumer:      v1.NewConsumerServiceClient(cc),

@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package kong.admin.service.v1;
+
+import "google/api/annotations.proto";
+import "kong/admin/model/v1/cluster.proto";
+import "kong/admin/model/v1/plugin_schema.proto";
+
+option go_package = "github.com/kong/koko/internal/gen/kong/admin/service/v1;v1";
+
+service PluginSchemaService {
+  rpc CreateLuaPluginSchema(CreateLuaPluginSchemaRequest) returns (CreateLuaPluginSchemaResponse) {
+    option (google.api.http) = {
+      post: "/v1/plugin-schemas/lua"
+      body: "item"
+    };
+  }
+}
+
+message CreateLuaPluginSchemaRequest {
+  model.v1.PluginSchema item = 1;
+  model.v1.RequestCluster cluster = 2;
+}
+
+message CreateLuaPluginSchemaResponse {
+  model.v1.PluginSchema item = 1;
+}
