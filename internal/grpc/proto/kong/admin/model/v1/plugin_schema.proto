@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package kong.admin.model.v1;
+
+option go_package = "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1;v1";
+
+message PluginSchema {
+  string name = 1;
+  string lua_schema = 2;
+  int32 created_at = 3;
+  int32 updated_at = 4;
+}

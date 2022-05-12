@@ -4,6 +4,8 @@ import (
 	"embed"
 	"fmt"
 	"io/fs"
+	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -864,6 +866,91 @@ func TestValidate(t *testing.T) {
 			} else {
 				require.Nil(t, err)
 			}
+		}
+	})
+}
+
+func TestValidateSchema(t *testing.T) {
+	validator := goodValidator
+	t.Run("valid plugin schema will properly validate", func(t *testing.T) {
+		schema := `return {
+	name = "validate-schema-test",
+	fields = {
+		{ config = {
+				type = "record",
+				fields = {
+					{ field = { type = "string" } }
+				}
+			}
+		}
+	}
+}`
+		pluginName, err := validator.ValidateSchema(schema)
+		assert.NoError(t, err)
+		require.Equal(t, "validate-schema-test", pluginName)
+	})
+
+	t.Run("validation should fail for bundled plugin schemas", func(t *testing.T) {
+		schemaFiles, _ := Schemas.ReadDir("schemas")
+		for _, schemaFile := range schemaFiles {
+			name := schemaFile.Name()
+			pluginName := strings.TrimSuffix(name, filepath.Ext(name))
+			schema, _ := Schemas.ReadFile("schemas/" + name)
+			_, err := validator.ValidateSchema(string(schema))
+			require.NotNil(t, err)
+			validationErr, ok := err.(validation.Error)
+			require.True(t, ok)
+			require.ElementsMatch(t, validationErr.Errs, []*model.ErrorDetail{
+				{
+					Type: model.ErrorType_ERROR_TYPE_ENTITY,
+					Messages: []string{
+						fmt.Sprintf("unique constraint failed: schema already exists for plugin '%s'", pluginName),
+					},
+				},
+			})
+		}
+	})
+
+	t.Run("invalid plugin schema will fail to validate", func(t *testing.T) {
+		tests := []struct {
+			schema     string
+			errMessage string
+		}{
+			{
+				errMessage: "invalid plugin schema: cannot be empty",
+			},
+			{
+				schema:     "    ",
+				errMessage: "invalid plugin schema: cannot be empty",
+			},
+			{
+				schema:     "invalid plugin schema",
+				errMessage: "stack traceback",
+			},
+			{
+				schema: "return {}",
+				errMessage: "[goks] 2 schema violations (fields: field required for entity check; " +
+					"name: field required for entity check)",
+			},
+			{
+				schema: `return {
+					name = "invalid-schema-test",
+					{ field = { type = "string" } }
+				}`,
+				errMessage: "stack traceback",
+			},
+		}
+		for _, test := range tests {
+			pluginName, err := validator.ValidateSchema(test.schema)
+			require.NotNil(t, err)
+			validationErr, ok := err.(validation.Error)
+			require.True(t, ok)
+			assert.Len(t, pluginName, 0)
+			assert.Len(t, validationErr.Errs, 1)
+			assert.Len(t, validationErr.Errs[0].Messages, 1)
+			assert.Equal(t, model.ErrorType_ERROR_TYPE_FIELD, validationErr.Errs[0].Type)
+			assert.Equal(t, "lua_schema", validationErr.Errs[0].Field)
+			assert.Contains(t, validationErr.Errs[0].Messages[0], test.errMessage)
 		}
 	})
 }

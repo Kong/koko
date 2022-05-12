@@ -20,6 +20,11 @@ type Validator interface {
 	// Validate executes the validate() Lua function for the given plugin.
 	Validate(*model.Plugin) error
 
+	// ValidateSchema executes the ValidateSchema() Lua function for the given plugin schema
+	// and returns the plugin name. In the event the schema is not valid or the plugin name
+	// already exists (e.g. bundled plugin), an error is returned.
+	ValidateSchema(pluginSchema string) (string, error)
+
 	// ProcessDefaults executes the process_auto_fields() Lua function for the given plugin.
 	ProcessDefaults(*model.Plugin) error
 
@@ -79,6 +84,29 @@ func (v *LuaValidator) Validate(plugin *model.Plugin) error {
 		return validationErr(plugin.Name, err)
 	}
 	return nil
+}
+
+func (v *LuaValidator) ValidateSchema(pluginSchema string) (string, error) {
+	start := time.Now()
+	pluginName, err := v.goksV.ValidateSchema(pluginSchema)
+	defer func() {
+		if len(pluginName) == 0 {
+			pluginName = "no plugin name could be retrieved"
+		}
+		v.logger.With(zap.String("plugin-schema", pluginName),
+			zap.Duration("validation-time", time.Since(start))).
+			Debug("plugin schema validated via lua VM")
+	}()
+	if err != nil {
+		return "", validationSchemaErr(model.ErrorType_ERROR_TYPE_FIELD, "lua_schema", err.Error())
+	}
+	for _, luaSchemaName := range v.luaSchemaNames {
+		if pluginName == luaSchemaName {
+			return "", validationSchemaErr(model.ErrorType_ERROR_TYPE_ENTITY, "",
+				fmt.Sprintf("unique constraint failed: schema already exists for plugin '%s'", pluginName))
+		}
+	}
+	return pluginName, nil
 }
 
 func validationErr(name string, e error) error {
@@ -143,6 +171,19 @@ func entityErr(err interface{}) *model.ErrorDetail {
 		}
 	}
 	return nil
+}
+
+func validationSchemaErr(errType model.ErrorType, field string, message string) error {
+	err := &model.ErrorDetail{
+		Type:     errType,
+		Messages: []string{message},
+	}
+	if len(field) > 0 {
+		err.Field = field
+	}
+	return validation.Error{
+		Errs: []*model.ErrorDetail{err},
+	}
 }
 
 var flattenStyle = flatten.SeparatorStyle{
