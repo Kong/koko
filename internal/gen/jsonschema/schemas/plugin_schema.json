@@ -1,0 +1,27 @@
+{
+  "required": [
+    "lua_schema"
+  ],
+  "properties": {
+    "created_at": {
+      "minimum": 1,
+      "type": "integer"
+    },
+    "lua_schema": {
+      "maxLength": 8192,
+      "type": "string"
+    },
+    "name": {
+      "maxLength": 128,
+      "minLength": 1,
+      "pattern": "^[0-9a-zA-Z.\\-_~]*$",
+      "type": "string"
+    },
+    "updated_at": {
+      "minimum": 1,
+      "type": "integer"
+    }
+  },
+  "additionalProperties": false,
+  "type": "object"
+}

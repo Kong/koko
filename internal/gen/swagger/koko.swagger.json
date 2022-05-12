@@ -24,6 +24,9 @@
       "name": "kong.admin.service.v1.PluginService"
     },
     {
+      "name": "kong.admin.service.v1.PluginSchemaService"
+    },
+    {
       "name": "kong.admin.service.v1.RouteService"
     },
     {
@@ -986,6 +989,122 @@
         ],
         "tags": [
           "kong.admin.service.v1.NodeService"
+        ]
+      }
+    },
+    "/v1/plugin-schemas/lua": {
+      "get": {
+        "operationId": "PluginSchemaService_ListLuaPluginSchemas",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/kong.admin.service.v1.ListLuaPluginSchemasResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "cluster.id",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "page.size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "page.number",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "tags": [
+          "kong.admin.service.v1.PluginSchemaService"
+        ]
+      },
+      "post": {
+        "operationId": "PluginSchemaService_CreateLuaPluginSchema",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/kong.admin.service.v1.CreateLuaPluginSchemaResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "item",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/kong.admin.model.v1.PluginSchema"
+            }
+          },
+          {
+            "name": "cluster.id",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "kong.admin.service.v1.PluginSchemaService"
+        ]
+      }
+    },
+    "/v1/plugin-schemas/lua/{name}": {
+      "get": {
+        "operationId": "PluginSchemaService_GetLuaPluginSchema",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/kong.admin.service.v1.GetLuaPluginSchemaResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "cluster.id",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "kong.admin.service.v1.PluginSchemaService"
         ]
       }
     },
@@ -3159,6 +3278,25 @@
         }
       }
     },
+    "kong.admin.model.v1.PluginSchema": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "lua_schema": {
+          "type": "string"
+        },
+        "created_at": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "updated_at": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
     "kong.admin.model.v1.RequestCluster": {
       "type": "object",
       "properties": {
@@ -3510,6 +3648,14 @@
         }
       }
     },
+    "kong.admin.service.v1.CreateLuaPluginSchemaResponse": {
+      "type": "object",
+      "properties": {
+        "item": {
+          "$ref": "#/definitions/kong.admin.model.v1.PluginSchema"
+        }
+      }
+    },
     "kong.admin.service.v1.CreateNodeResponse": {
       "type": "object",
       "properties": {
@@ -3653,6 +3799,14 @@
         }
       }
     },
+    "kong.admin.service.v1.GetLuaPluginSchemaResponse": {
+      "type": "object",
+      "properties": {
+        "item": {
+          "$ref": "#/definitions/kong.admin.model.v1.PluginSchema"
+        }
+      }
+    },
     "kong.admin.service.v1.GetLuaSchemasPluginResponse": {
       "type": "object",
       "properties": {
@@ -3776,6 +3930,20 @@
           "type": "array",
           "items": {
             "$ref": "#/definitions/kong.admin.model.v1.Consumer"
+          }
+        },
+        "page": {
+          "$ref": "#/definitions/kong.admin.model.v1.PaginationResponse"
+        }
+      }
+    },
+    "kong.admin.service.v1.ListLuaPluginSchemasResponse": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/kong.admin.model.v1.PluginSchema"
           }
         },
         "page": {
