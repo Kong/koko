@@ -3,6 +3,7 @@ package admin
 import (
 	"fmt"
 	"net/http"
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -128,5 +129,110 @@ func TestPluginSchema_Create(t *testing.T) {
 				fmt.Sprintf("unique constraint failed: schema already exists for plugin '%s'", pluginName),
 			})
 		}
+	})
+}
+
+func TestPluginSchema_Get(t *testing.T) {
+	s, cleanup := setup(t)
+	defer cleanup()
+	c := httpexpect.New(t, s.URL)
+
+	pluginSchemaBytes, err := json.ProtoJSONMarshal(goodPluginSchema("new-lua-plugin"))
+	assert.NoError(t, err)
+	res := c.POST("/v1/plugin-schemas/lua").WithBytes(pluginSchemaBytes).Expect()
+	res.Status(http.StatusCreated)
+	name := res.JSON().Path("$.item.name").String().Raw()
+
+	t.Run("valid plugin schema ID returns 200", func(t *testing.T) {
+		res := c.GET("/v1/plugin-schemas/lua/" + name).Expect().Status(http.StatusOK)
+		body := res.JSON().Path("$.item").Object()
+		validatePluginSchema("new-lua-plugin", body)
+	})
+
+	t.Run("valid plugin schema name returns 200", func(t *testing.T) {
+		res := c.GET("/v1/plugin-schemas/lua/new-lua-plugin").Expect().Status(http.StatusOK)
+		body := res.JSON().Path("$.item").Object()
+		validatePluginSchema("new-lua-plugin", body)
+	})
+
+	t.Run("non-existent plugin schema returns 404", func(t *testing.T) {
+		nonExistentName := "/non-existent-plugin-schema"
+		c.GET("/v1/plugin-schemas/lua" + nonExistentName).Expect().Status(http.StatusNotFound)
+	})
+
+	t.Run("get request without a name returns 400", func(t *testing.T) {
+		res := c.GET("/v1/plugin-schemas/lua/").Expect().Status(http.StatusBadRequest)
+		body := res.JSON().Object()
+		body.ValueEqual("message", "required name is missing")
+	})
+
+	t.Run("get request with invalid characters in name returns 400", func(t *testing.T) {
+		pluginNames := []string{
+			"lua plugin",
+			"lua\\plugin",
+			"lua+plugin",
+			"lua!plugin",
+		}
+		for _, pluginName := range pluginNames {
+			fmt.Fprintf(os.Stderr, "\n\n%s\n", pluginName)
+			res := c.GET(fmt.Sprintf("/v1/plugin-schemas/lua/%s", pluginName)).Expect().Status(http.StatusBadRequest)
+			body := res.JSON().Object()
+			body.ValueEqual("message", "required name is invalid")
+		}
+	})
+}
+
+func TestPluginSchema_List(t *testing.T) {
+	s, cleanup := setup(t)
+	defer cleanup()
+	c := httpexpect.New(t, s.URL)
+
+	var pluginSchemaNames []string
+	for i := 1; i <= 6; i++ {
+		pluginName := fmt.Sprintf("plugin-schema-%d", i)
+		pluginSchemaBytes, err := json.ProtoJSONMarshal(goodPluginSchema(pluginName))
+		assert.NoError(t, err)
+		res := c.POST("/v1/plugin-schemas/lua").WithBytes(pluginSchemaBytes).Expect()
+		res.Status(http.StatusCreated)
+		pluginSchemaNames = append(pluginSchemaNames, res.JSON().Path("$.item.name").String().Raw())
+	}
+
+	t.Run("list all plugin schemas", func(t *testing.T) {
+		body := c.GET("/v1/plugin-schemas/lua").Expect().Status(http.StatusOK).JSON().Object()
+		items := body.Value("items").Array()
+		items.Length().Equal(6)
+		var gotPluginSchemaNames []string
+		for _, item := range items.Iter() {
+			gotPluginSchemaNames = append(gotPluginSchemaNames, item.Object().Value("name").String().Raw())
+		}
+		require.ElementsMatch(t, pluginSchemaNames, gotPluginSchemaNames)
+	})
+
+	t.Run("list returns multiple plugin schemas with paging", func(t *testing.T) {
+		body := c.GET("/v1/plugin-schemas/lua").
+			WithQuery("page.size", "4").
+			WithQuery("page.number", "1").
+			Expect().Status(http.StatusOK).JSON().Object()
+		items := body.Value("items").Array()
+		items.Length().Equal(4)
+		var gotPluginSchemaNames []string
+		for _, item := range items.Iter() {
+			gotPluginSchemaNames = append(gotPluginSchemaNames, item.Object().Value("name").String().Raw())
+		}
+		body.Value("page").Object().Value("total_count").Number().Equal(6)
+		body.Value("page").Object().Value("next_page_num").Number().Equal(2)
+
+		body = c.GET("/v1/plugin-schemas/lua").
+			WithQuery("page.size", "4").
+			WithQuery("page.number", "2").
+			Expect().Status(http.StatusOK).JSON().Object()
+		items = body.Value("items").Array()
+		items.Length().Equal(2)
+		for _, item := range items.Iter() {
+			gotPluginSchemaNames = append(gotPluginSchemaNames, item.Object().Value("name").String().Raw())
+		}
+		body.Value("page").Object().Value("total_count").Number().Equal(6)
+		body.Value("page").Object().NotContainsKey("next_page_num")
+		require.ElementsMatch(t, pluginSchemaNames, gotPluginSchemaNames)
 	})
 }
