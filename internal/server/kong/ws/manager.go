@@ -18,6 +18,7 @@ import (
 	"github.com/kong/koko/internal/json"
 	"github.com/kong/koko/internal/resource"
 	"github.com/kong/koko/internal/server/kong/ws/config"
+	"github.com/kong/koko/internal/store"
 	"go.uber.org/zap"
 )
 
@@ -286,6 +287,7 @@ func (m *Manager) updateExpectedHash(ctx context.Context, hash string) {
 var defaultRequestTimeout = 5 * time.Second
 
 func (m *Manager) Run(ctx context.Context) {
+	go m.nodeCleanThread(ctx)
 	for {
 		stream, err := m.setupStream(ctx)
 		if err != nil {
@@ -298,6 +300,99 @@ func (m *Manager) Run(ctx context.Context) {
 			return
 		}
 	}
+}
+
+func (m *Manager) nodeCleanThread(ctx context.Context) {
+	ticker := time.NewTicker(1 * time.Hour)
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			m.logger.Debug("cleaning up nodes")
+			m.cleanupNodesWithRetry(ctx)
+		}
+	}
+}
+
+func (m *Manager) cleanupNodesWithRetry(ctx context.Context) {
+	const backoffLimit = 5 * time.Minute
+	backoffer := newBackOff(ctx, backoffLimit)
+	for {
+		err := m.cleanupNodes(ctx)
+		if err == nil {
+			break
+		}
+		if ctx.Err() != nil {
+			return
+		}
+		waitDuration := backoffer.NextBackOff()
+		if waitDuration == backoff.Stop {
+			m.logger.Error("failed to clean up nodes after retries",
+				zap.Error(err))
+			break
+		}
+		m.logger.Error("failed to clean up nodes, "+
+			"retrying with backoff",
+			zap.Error(err), zap.Duration("retry-after", waitDuration))
+		time.Sleep(waitDuration)
+	}
+}
+
+func (m *Manager) cleanupNodes(ctx context.Context) error {
+	const cleanupDelay = 24 * time.Hour
+	nodes, err := m.listNodes(ctx)
+	if err != nil {
+		return fmt.Errorf("list nodes: %w", err)
+	}
+	cutoffTime := int32(time.Now().Add(-cleanupDelay).Unix())
+	for _, node := range nodes {
+		if node.LastPing < cutoffTime {
+			err := m.deleteNode(ctx, node.Id)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func (m *Manager) deleteNode(ctx context.Context, id string) error {
+	ctx, cancel := context.WithTimeout(ctx, defaultRequestTimeout)
+	defer cancel()
+	_, err := m.configClient.Node.DeleteNode(ctx, &admin.DeleteNodeRequest{
+		Cluster: m.reqCluster(),
+		Id:      id,
+	})
+	if err != nil {
+		return fmt.Errorf("delete node: %v", err)
+	}
+	return nil
+}
+
+func (m *Manager) listNodes(ctx context.Context) ([]*model.Node, error) {
+	ctx, cancel := context.WithTimeout(ctx, defaultRequestTimeout)
+	defer cancel()
+	var nodes []*model.Node
+	var page int32 = 1
+	for {
+		resp, err := m.configClient.Node.ListNodes(ctx, &admin.ListNodesRequest{
+			Cluster: m.reqCluster(),
+			Page: &model.PaginationRequest{
+				Number: page,
+				Size:   store.MaxPageSize,
+			},
+		})
+		if err != nil {
+			return nil, err
+		}
+		nodes = append(nodes, resp.Items...)
+		if resp.Page == nil || resp.Page.NextPageNum == 0 {
+			break
+		}
+		page = resp.Page.NextPageNum
+	}
+	return nodes, nil
 }
 
 func (m *Manager) setupStream(ctx context.Context) (relay.
