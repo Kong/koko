@@ -21,7 +21,7 @@ require (
 	github.com/kong/go-wrpc v0.0.0-20210914213024-d4348db6b815
 	github.com/kong/goks v0.4.3
 	github.com/lib/pq v1.10.5
-	github.com/mattn/go-sqlite3 v1.14.12
+	github.com/mattn/go-sqlite3 v1.14.13
 	github.com/prometheus/client_golang v1.12.1
 	github.com/prometheus/client_model v0.2.0
 	github.com/santhosh-tekuri/jsonschema/v5 v5.0.0
