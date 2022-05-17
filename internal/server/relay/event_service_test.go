@@ -32,7 +32,11 @@ func TestEventService(t *testing.T) {
 	server := NewEventService(ctx, opts)
 	require.NotNil(t, server)
 	l := setup()
-	s := grpc.NewServer(grpc.ChainUnaryInterceptor(serverUtil.LoggerInterceptor(log.Logger)))
+	grpcServOpts := []grpc.ServerOption{
+		grpc.ChainUnaryInterceptor(serverUtil.LoggerInterceptor(opts.Logger), serverUtil.PanicInterceptor(opts.Logger)),
+		grpc.ChainStreamInterceptor(serverUtil.PanicStreamInterceptor(opts.Logger)),
+	}
+	s := grpc.NewServer(grpcServOpts...)
 	relay.RegisterEventServiceServer(s, server)
 	cc := clientConn(t, l)
 	client := relay.NewEventServiceClient(cc)

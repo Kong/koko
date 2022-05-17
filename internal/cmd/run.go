@@ -69,7 +69,7 @@ func Run(ctx context.Context, config ServerConfig) error {
 		s, err := server.NewHTTP(server.HTTPOpts{
 			Address: ":9090",
 			Logger:  logger.With(zap.String("component", "metrics")),
-			Handler: metricsHandler,
+			Handler: serverUtil.HandlerWithRecovery(metricsHandler, logger),
 		})
 		if err != nil {
 			return err
@@ -116,7 +116,7 @@ func Run(ctx context.Context, config ServerConfig) error {
 	s, err := server.NewHTTP(server.HTTPOpts{
 		Address: ":3000",
 		Logger:  adminOpts.Logger,
-		Handler: serverUtil.HandlerWithLogger(h, adminOpts.Logger),
+		Handler: serverUtil.HandlerWithRecovery(serverUtil.HandlerWithLogger(h, adminOpts.Logger), adminOpts.Logger),
 	})
 	if err != nil {
 		return err
@@ -125,8 +125,10 @@ func Run(ctx context.Context, config ServerConfig) error {
 
 	// Set up relay server using the same opts as the admin API server.
 	rawGRPCServer := grpc.NewServer(
-		grpc.UnaryInterceptor(serverUtil.LoggerInterceptor(adminOpts.Logger)),
-	)
+		grpc.ChainUnaryInterceptor(
+			serverUtil.LoggerInterceptor(adminOpts.Logger),
+			serverUtil.PanicInterceptor(adminOpts.Logger)),
+		grpc.ChainStreamInterceptor(serverUtil.PanicStreamInterceptor(adminOpts.Logger)))
 	admin.RegisterAdminService(rawGRPCServer, adminOpts)
 
 	grpcServer, err := server.NewGRPC(server.GRPCOpts{
@@ -278,7 +280,7 @@ func Run(ctx context.Context, config ServerConfig) error {
 	s, err = server.NewHTTP(server.HTTPOpts{
 		Address: ":3100",
 		Logger:  controlLogger,
-		Handler: serverUtil.HandlerWithLogger(handler, controlLogger),
+		Handler: serverUtil.HandlerWithRecovery(serverUtil.HandlerWithLogger(handler, controlLogger), controlLogger),
 		TLS: &tls.Config{
 			MinVersion:   tls.VersionTLS12,
 			Certificates: []tls.Certificate{config.KongCPCert},
@@ -296,10 +298,11 @@ func Run(ctx context.Context, config ServerConfig) error {
 		return err
 	}
 
+	healthLogger := logger.With(zap.String("component", "health-server"))
 	s, err = server.NewHTTP(server.HTTPOpts{
 		Address: ":4200",
-		Logger:  logger.With(zap.String("component", "health-server")),
-		Handler: handler,
+		Logger:  healthLogger,
+		Handler: serverUtil.HandlerWithRecovery(handler, healthLogger),
 	})
 	if err != nil {
 		return err
