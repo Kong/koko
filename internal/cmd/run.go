@@ -287,6 +287,9 @@ func Run(ctx context.Context, config ServerConfig) error {
 			),
 		}
 	}
+	negotiator.AddService("config", "v1", "wRPC configuration", &ws.Configer{
+		Manager: m,
+	})
 
 	handler, err := ws.NewHandler(ws.HandlerOpts{
 		Logger:        controlLogger,
