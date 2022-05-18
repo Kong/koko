@@ -132,6 +132,10 @@ func SetSpanResource(ctx context.Context) {
 }
 
 func HandleErr(ctx context.Context, logger *zap.Logger, err error) error {
+	if err == nil {
+		return nil
+	}
+
 	logger = LoggerWithSpan(ctx, logger)
 	if errors.Is(err, store.ErrNotFound) {
 		return status.Error(codes.NotFound, "")
