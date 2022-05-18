@@ -1653,6 +1653,294 @@
         ]
       }
     },
+    "/v1/schemas/json/ca-certificate/validate": {
+      "post": {
+        "operationId": "SchemasService_ValidateCACertificateSchema",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/kong.admin.service.v1.ValidateCACertificateSchemaResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "item",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/kong.admin.model.v1.CACertificate"
+            }
+          }
+        ],
+        "tags": [
+          "kong.admin.service.v1.SchemasService"
+        ]
+      }
+    },
+    "/v1/schemas/json/certificate/validate": {
+      "post": {
+        "operationId": "SchemasService_ValidateCertificateSchema",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/kong.admin.service.v1.ValidateCertificateSchemaResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "item",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/kong.admin.model.v1.Certificate"
+            }
+          }
+        ],
+        "tags": [
+          "kong.admin.service.v1.SchemasService"
+        ]
+      }
+    },
+    "/v1/schemas/json/consumer/validate": {
+      "post": {
+        "operationId": "SchemasService_ValidateConsumerSchema",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/kong.admin.service.v1.ValidateConsumerSchemaResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "item",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/kong.admin.model.v1.Consumer"
+            }
+          }
+        ],
+        "tags": [
+          "kong.admin.service.v1.SchemasService"
+        ]
+      }
+    },
+    "/v1/schemas/json/plugin/validate": {
+      "post": {
+        "operationId": "SchemasService_ValidatePluginSchema",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/kong.admin.service.v1.ValidatePluginSchemaResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "item",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/kong.admin.model.v1.Plugin"
+            }
+          }
+        ],
+        "tags": [
+          "kong.admin.service.v1.SchemasService"
+        ]
+      }
+    },
+    "/v1/schemas/json/route/validate": {
+      "post": {
+        "operationId": "SchemasService_ValidateRouteSchema",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/kong.admin.service.v1.ValidateRouteSchemaResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "item",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/kong.admin.model.v1.Route"
+            }
+          }
+        ],
+        "tags": [
+          "kong.admin.service.v1.SchemasService"
+        ]
+      }
+    },
+    "/v1/schemas/json/service/validate": {
+      "post": {
+        "operationId": "SchemasService_ValidateServiceSchema",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/kong.admin.service.v1.ValidateServiceSchemaResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "item",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/kong.admin.model.v1.Service"
+            }
+          }
+        ],
+        "tags": [
+          "kong.admin.service.v1.SchemasService"
+        ]
+      }
+    },
+    "/v1/schemas/json/sni/validate": {
+      "post": {
+        "operationId": "SchemasService_ValidateSNISchema",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/kong.admin.service.v1.ValidateSNISchemaResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "item",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/kong.admin.model.v1.SNI"
+            }
+          }
+        ],
+        "tags": [
+          "kong.admin.service.v1.SchemasService"
+        ]
+      }
+    },
+    "/v1/schemas/json/target/validate": {
+      "post": {
+        "operationId": "SchemasService_ValidateTargetSchema",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/kong.admin.service.v1.ValidateTargetSchemaResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "item",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/kong.admin.model.v1.Target"
+            }
+          }
+        ],
+        "tags": [
+          "kong.admin.service.v1.SchemasService"
+        ]
+      }
+    },
+    "/v1/schemas/json/upstream/validate": {
+      "post": {
+        "operationId": "SchemasService_ValidateUpstreamSchema",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/kong.admin.service.v1.ValidateUpstreamSchemaResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "item",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/kong.admin.model.v1.Upstream"
+            }
+          }
+        ],
+        "tags": [
+          "kong.admin.service.v1.SchemasService"
+        ]
+      }
+    },
     "/v1/schemas/json/{name}": {
       "get": {
         "operationId": "SchemasService_GetSchemas",
@@ -4143,7 +4431,34 @@
         }
       }
     },
+    "kong.admin.service.v1.ValidateCACertificateSchemaResponse": {
+      "type": "object"
+    },
+    "kong.admin.service.v1.ValidateCertificateSchemaResponse": {
+      "type": "object"
+    },
+    "kong.admin.service.v1.ValidateConsumerSchemaResponse": {
+      "type": "object"
+    },
     "kong.admin.service.v1.ValidateLuaPluginResponse": {
+      "type": "object"
+    },
+    "kong.admin.service.v1.ValidatePluginSchemaResponse": {
+      "type": "object"
+    },
+    "kong.admin.service.v1.ValidateRouteSchemaResponse": {
+      "type": "object"
+    },
+    "kong.admin.service.v1.ValidateSNISchemaResponse": {
+      "type": "object"
+    },
+    "kong.admin.service.v1.ValidateServiceSchemaResponse": {
+      "type": "object"
+    },
+    "kong.admin.service.v1.ValidateTargetSchemaResponse": {
+      "type": "object"
+    },
+    "kong.admin.service.v1.ValidateUpstreamSchemaResponse": {
       "type": "object"
     },
     "kong.relay.service.v1.ClearStatusResponse": {
