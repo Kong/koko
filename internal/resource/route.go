@@ -60,6 +60,9 @@ func (r Route) Resource() model.Resource {
 	return r.Route
 }
 
+// SetResource implements the Object.SetResource interface.
+func (r Route) SetResource(pr model.Resource) error { return SetResource(r, pr) }
+
 func (r Route) Indexes() []model.Index {
 	res := []model.Index{
 		{

@@ -134,6 +134,9 @@ func (r Upstream) Resource() model.Resource {
 	return r.Upstream
 }
 
+// SetResource implements the Object.SetResource interface.
+func (r Upstream) SetResource(pr model.Resource) error { return SetResource(r, pr) }
+
 func (r Upstream) Validate() error {
 	err := validation.Validate(string(TypeUpstream), r.Upstream)
 	if err != nil {

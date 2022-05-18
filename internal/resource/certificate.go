@@ -42,6 +42,9 @@ func (r Certificate) Resource() model.Resource {
 	return r.Certificate
 }
 
+// SetResource implements the Object.SetResource interface.
+func (r Certificate) SetResource(pr model.Resource) error { return SetResource(r, pr) }
+
 func (r Certificate) Validate() error {
 	err := validation.Validate(string(TypeCertificate), r.Certificate)
 	if err != nil {

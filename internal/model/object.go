@@ -20,6 +20,9 @@ type Object interface {
 	Validate() error
 	Indexes() []Index
 	ProcessDefaults() error
+
+	// SetResource replaces the object's underlining resource with the provided resource.
+	SetResource(Resource) error
 }
 
 type TypeIndex string
