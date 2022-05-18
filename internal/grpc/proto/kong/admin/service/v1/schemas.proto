@@ -4,7 +4,18 @@ package kong.admin.service.v1;
 
 import "google/api/annotations.proto";
 import "google/protobuf/struct.proto";
+import "kong/admin/model/v1/ca_certificate.proto";
+import "kong/admin/model/v1/certificate.proto";
+import "kong/admin/model/v1/consumer.proto";
+import "kong/admin/model/v1/hash.proto";
+import "kong/admin/model/v1/node.proto";
 import "kong/admin/model/v1/plugin.proto";
+import "kong/admin/model/v1/route.proto";
+import "kong/admin/model/v1/service.proto";
+import "kong/admin/model/v1/sni.proto";
+import "kong/admin/model/v1/status.proto";
+import "kong/admin/model/v1/target.proto";
+import "kong/admin/model/v1/upstream.proto";
 
 option go_package = "github.com/kong/koko/internal/gen/kong/admin/service/v1;v1";
 
@@ -13,6 +24,69 @@ service SchemasService {
     option (google.api.http) = {
       post: "/v1/schemas/lua/plugins/validate"
       body: "item"
+    };
+  }
+
+  rpc ValidateCACertificateSchema(ValidateCACertificateSchemaRequest) returns (ValidateCACertificateSchemaResponse) {
+    option (google.api.http) = {
+      post: "/v1/schemas/json/ca-certificate/validate",
+      body: "item"
+    };
+  }
+
+  rpc ValidateCertificateSchema(ValidateCertificateSchemaRequest) returns (ValidateCertificateSchemaResponse) {
+    option (google.api.http) = {
+      post: "/v1/schemas/json/certificate/validate",
+      body: "item",
+    };
+  }
+
+  rpc ValidateConsumerSchema(ValidateConsumerSchemaRequest) returns (ValidateConsumerSchemaResponse) {
+    option (google.api.http) = {
+      post: "/v1/schemas/json/consumer/validate",
+      body: "item",
+    };
+  }
+
+  rpc ValidatePluginSchema(ValidatePluginSchemaRequest) returns (ValidatePluginSchemaResponse) {
+    option (google.api.http) = {
+      post: "/v1/schemas/json/plugin/validate",
+      body: "item",
+    };
+  }
+
+  rpc ValidateRouteSchema(ValidateRouteSchemaRequest) returns (ValidateRouteSchemaResponse) {
+    option (google.api.http) = {
+      post: "/v1/schemas/json/route/validate",
+      body: "item",
+    };
+  }
+
+  rpc ValidateServiceSchema(ValidateServiceSchemaRequest) returns (ValidateServiceSchemaResponse) {
+    option (google.api.http) = {
+      post: "/v1/schemas/json/service/validate",
+      body: "item",
+    };
+  }
+
+  rpc ValidateSNISchema(ValidateSNISchemaRequest) returns (ValidateSNISchemaResponse) {
+    option (google.api.http) = {
+      post: "/v1/schemas/json/sni/validate",
+      body: "item",
+    };
+  }
+
+  rpc ValidateTargetSchema(ValidateTargetSchemaRequest) returns (ValidateTargetSchemaResponse) {
+    option (google.api.http) = {
+      post: "/v1/schemas/json/target/validate",
+      body: "item",
+    };
+  }
+
+  rpc ValidateUpstreamSchema(ValidateUpstreamSchemaRequest) returns (ValidateUpstreamSchemaResponse) {
+    option (google.api.http) = {
+      post: "/v1/schemas/json/upstream/validate",
+      body: "item",
     };
   }
 
@@ -52,3 +126,64 @@ message ValidateLuaPluginRequest {
 }
 
 message ValidateLuaPluginResponse {}
+
+message ValidateCACertificateSchemaRequest {
+  model.v1.CACertificate item = 1;
+}
+
+message ValidateCertificateSchemaRequest {
+  model.v1.Certificate item = 1;
+}
+
+message ValidateConfigHashSchemaRequest {
+  model.v1.ConfigHash item = 1;
+}
+
+message ValidateConsumerSchemaRequest {
+  model.v1.Consumer item = 1;
+}
+
+message ValidateNodeSchemaRequest {
+  model.v1.Node item = 1;
+}
+
+message ValidatePluginSchemaRequest {
+  model.v1.Plugin item = 1;
+}
+
+message ValidateRouteSchemaRequest {
+  model.v1.Route item = 1;
+}
+
+message ValidateServiceSchemaRequest {
+  model.v1.Service item = 1;
+}
+
+message ValidateSNISchemaRequest {
+  model.v1.SNI item = 1;
+}
+
+message ValidateStatusSchemaRequest {
+  model.v1.Status item = 1;
+}
+
+message ValidateTargetSchemaRequest {
+  model.v1.Target item = 1;
+}
+
+message ValidateUpstreamSchemaRequest {
+  model.v1.Upstream item = 1;
+}
+
+message ValidateCACertificateSchemaResponse {}
+message ValidateCertificateSchemaResponse {}
+message ValidateConfigHashSchemaResponse {}
+message ValidateConsumerSchemaResponse {}
+message ValidateNodeSchemaResponse {}
+message ValidatePluginSchemaResponse {}
+message ValidateRouteSchemaResponse {}
+message ValidateServiceSchemaResponse {}
+message ValidateSNISchemaResponse {}
+message ValidateStatusSchemaResponse {}
+message ValidateTargetSchemaResponse {}
+message ValidateUpstreamSchemaResponse {}
