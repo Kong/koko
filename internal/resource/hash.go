@@ -37,6 +37,9 @@ func (r Hash) Resource() model.Resource {
 	return r.Hash
 }
 
+// SetResource implements the Object.SetResource interface.
+func (r Hash) SetResource(pr model.Resource) error { return SetResource(r, pr) }
+
 func (r Hash) Validate() error {
 	return validation.Validate(string(TypeHash), r.Hash)
 }

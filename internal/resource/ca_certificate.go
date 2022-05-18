@@ -48,6 +48,9 @@ func (r CACertificate) Resource() model.Resource {
 	return r.CACertificate
 }
 
+// SetResource implements the Object.SetResource interface.
+func (r CACertificate) SetResource(pr model.Resource) error { return SetResource(r, pr) }
+
 func (r CACertificate) Validate() error {
 	err := validation.Validate(string(TypeCACertificate), r.CACertificate)
 	if err != nil {
