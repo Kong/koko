@@ -12,9 +12,9 @@ message Upstream {
   string host_header = 3;
   Certificate client_certificate = 4;
   string algorithm = 5;
-  int32 slots = 6;
+  int64 slots = 6;
   Healthcheck healthchecks = 7;
-  int32 created_at = 8;
+  int64 created_at = 8;
   string hash_on = 9;
   string hash_fallback = 10;
   string hash_on_header = 11;
@@ -31,13 +31,13 @@ message Healthcheck {
 }
 
 message ActiveHealthcheck {
-  int32 concurrency = 1;
+  int64 concurrency = 1;
   ActiveHealthy healthy = 2;
   string http_path = 3;
   string https_sni = 4;
   bool https_verify_certificate = 5;
   string type = 6;
-  int32 timeout = 7;
+  int64 timeout = 7;
   ActiveUnhealthy unhealthy = 8;
 }
 
@@ -48,27 +48,27 @@ message PassiveHealthcheck {
 }
 
 message ActiveHealthy {
-  repeated int32 http_statuses = 1;
-  int32 interval = 2;
-  int32 successes = 3;
+  repeated int64 http_statuses = 1;
+  int64 interval = 2;
+  int64 successes = 3;
 }
 
 message ActiveUnhealthy {
-  int32 http_failures = 1;
-  repeated int32 http_statuses = 2;
-  int32 tcp_failures = 3;
-  int32 timeouts = 4;
-  int32 interval = 5;
+  int64 http_failures = 1;
+  repeated int64 http_statuses = 2;
+  int64 tcp_failures = 3;
+  int64 timeouts = 4;
+  int64 interval = 5;
 }
 
 message PassiveHealthy {
-  repeated int32 http_statuses = 1;
-  int32 successes = 2;
+  repeated int64 http_statuses = 1;
+  int64 successes = 2;
 }
 
 message PassiveUnhealthy {
-  int32 http_failures = 1;
-  repeated int32 http_statuses = 2;
-  int32 tcp_failures = 3;
-  int32 timeouts = 4;
+  int64 http_failures = 1;
+  repeated int64 http_statuses = 2;
+  int64 tcp_failures = 3;
+  int64 timeouts = 4;
 }

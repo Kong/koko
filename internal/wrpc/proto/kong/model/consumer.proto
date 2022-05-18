@@ -8,6 +8,6 @@ message Consumer {
   string id = 1;
   string custom_id = 2;
   string username = 3;
-  int32 created_at = 4;
+  int64 created_at = 4;
   repeated string tags = 5;
 }
