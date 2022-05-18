@@ -19,6 +19,15 @@ service ConfigService {
   // +wrpc:rpc-id=1
   rpc GetCapabilities(GetCapabilitiesRequest) returns (GetCapabilitiesResponse);
 
+  // ReportBasicInfo informs the software installed in the DP.  Currently
+  // this is the list of plugins with respective version.  It's required
+  // that the DP send this information in order to receive configuration
+  // updates.
+  //
+  // Call direction: DP to CP
+  // +wrpc:rpc-id=4
+  rpc ReportMetadata(ReportMetadataRequest) returns (ReportMetadataResponse);
+
   // SyncConfig is used by a CP to send a configuration request to the DP.
   // CP may make concurrent calls to DP to update configuration. To guard
   // against race conditions, version field in the request is used (read
@@ -59,13 +68,38 @@ message GetCapabilitiesResponse {
   repeated Capability capabilities = 1;
 }
 
+message ReportMetadataRequest {
+  repeated PluginVersion plugins = 1;
+}
+
+message ReportMetadataResponse {
+  oneof response {
+    string ok = 1;
+    string error = 2;
+  }
+}
+
+message PluginVersion {
+  string name = 1;
+  string version = 2;
+}
+
+message GranularHashes {
+  string config = 1;
+  string routes = 2;
+  string services = 3;
+  string plugins = 4;
+  string upstreams = 5;
+  string targets = 6;
+}
+
 message SyncConfigRequest {
   // Config represents a configuration of Kong Gateway.
   // This is same as the declarative configuration of Kong.
   //
   // DP MUST NOT combine configuration from two SyncConfigRequest. Config in
   // each request is self-contained.
-  model.Config config = 1;
+  kong.model.Config config = 1;
 
   // On every configuration change, CP MUST increment the version field
   // in the request.
@@ -73,6 +107,10 @@ message SyncConfigRequest {
   // connection between a DP node and a CP node.
   //
   uint64 version = 2;
+
+  // raw binary hash of the config data.
+  string config_hash = 3;
+  GranularHashes hashes = 4;
 }
 
 message SyncConfigResponse {
@@ -99,6 +137,8 @@ message SyncConfigError {
   ErrorType err_type = 3;
 }
 
-message PingCPRequest {}
+message PingCPRequest {
+  string hash = 1;
+}
 
 message PingCPResponse {}

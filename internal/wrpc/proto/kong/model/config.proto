@@ -5,6 +5,7 @@ package kong.model;
 import "kong/model/ca_certificate.proto";
 import "kong/model/certificate.proto";
 import "kong/model/consumer.proto";
+import "kong/model/parameter.proto";
 import "kong/model/plugin.proto";
 import "kong/model/plugin_entities.proto";
 import "kong/model/route.proto";
@@ -30,4 +31,5 @@ message Config {
   PluginData plugin_data = 11;
 
   repeated Workspace workspaces = 12;
+  repeated Parameter parameters = 13;
 }
