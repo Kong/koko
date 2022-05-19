@@ -74,7 +74,7 @@ func (r Status) Indexes() []model.Index {
 }
 
 func init() {
-	err := model.RegisterType(TypeStatus, func() model.Object {
+	err := model.RegisterType(TypeStatus, &v1.Status{}, func() model.Object {
 		return NewStatus()
 	})
 	if err != nil {

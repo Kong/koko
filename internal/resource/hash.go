@@ -57,7 +57,7 @@ func (r Hash) Indexes() []model.Index {
 }
 
 func init() {
-	err := model.RegisterType(TypeHash, func() model.Object {
+	err := model.RegisterType(TypeHash, &v1.ConfigHash{}, func() model.Object {
 		return NewHash()
 	})
 	if err != nil {

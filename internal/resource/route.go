@@ -104,7 +104,7 @@ func (r Route) ProcessDefaults() error {
 }
 
 func init() {
-	err := model.RegisterType(TypeRoute, func() model.Object {
+	err := model.RegisterType(TypeRoute, &v1.Route{}, func() model.Object {
 		return NewRoute()
 	})
 	if err != nil {

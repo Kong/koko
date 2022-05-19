@@ -116,7 +116,7 @@ func (r Service) Indexes() []model.Index {
 }
 
 func init() {
-	err := model.RegisterType(TypeService, func() model.Object {
+	err := model.RegisterType(TypeService, &v1.Service{}, func() model.Object {
 		return NewService()
 	})
 	if err != nil {

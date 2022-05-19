@@ -193,7 +193,7 @@ func (r Upstream) Indexes() []model.Index {
 }
 
 func init() {
-	err := model.RegisterType(TypeUpstream, func() model.Object {
+	err := model.RegisterType(TypeUpstream, &v1.Upstream{}, func() model.Object {
 		return NewUpstream()
 	})
 	if err != nil {

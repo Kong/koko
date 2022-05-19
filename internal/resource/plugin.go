@@ -117,7 +117,7 @@ func (r Plugin) Indexes() []model.Index {
 }
 
 func init() {
-	err := model.RegisterType(TypePlugin, func() model.Object {
+	err := model.RegisterType(TypePlugin, &v1.Plugin{}, func() model.Object {
 		return NewPlugin()
 	})
 	if err != nil {

@@ -88,7 +88,7 @@ func (c Consumer) Indexes() []model.Index {
 }
 
 func init() {
-	err := model.RegisterType(TypeConsumer, func() model.Object {
+	err := model.RegisterType(TypeConsumer, &v1.Consumer{}, func() model.Object {
 		return NewConsumer()
 	})
 	if err != nil {
