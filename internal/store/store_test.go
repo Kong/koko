@@ -26,6 +26,7 @@ func TestCreate(t *testing.T) {
 	require.Nil(t, err)
 	ctx := context.Background()
 	s := New(persister, log.Logger).ForCluster("default")
+	sid := uuid.NewString()
 	t.Run("creating a nil object fails", func(t *testing.T) {
 		err := s.Create(ctx, nil)
 		require.Equal(t, errNoObject, err)
@@ -54,6 +55,39 @@ func TestCreate(t *testing.T) {
 		require.NotPanics(t, func() {
 			uuid.MustParse(svc.Service.Id)
 		})
+	})
+	t.Run("creating an object with id succeeds", func(t *testing.T) {
+		svc := resource.NewService()
+		svc.Service = &v1.Service{
+			Id:   sid,
+			Name: "fubar",
+			Host: "foo.com",
+			Path: "/bar",
+		}
+		err := s.Create(ctx, svc)
+		require.Nil(t, err)
+	})
+	t.Run("creating an object with id that already exists fails", func(t *testing.T) {
+		svc := resource.NewService()
+		svc.Service = &v1.Service{
+			Id:   sid,
+			Name: "fubar2",
+			Host: "foo.com",
+			Path: "/bar",
+		}
+		err := s.Create(ctx, svc)
+		require.IsType(t, ErrConstraint{}, err)
+		constraintErr, ok := err.(ErrConstraint)
+		require.True(t, ok)
+		require.Equal(t,
+			model.Index{
+				Name:      "id",
+				FieldName: "id",
+				Type:      "unique",
+				Value:     sid,
+			},
+			constraintErr.Index)
+		require.Equal(t, "", constraintErr.Message)
 	})
 	t.Run("creating an object with unique index violation fails", func(t *testing.T) {
 		svc := resource.NewService()

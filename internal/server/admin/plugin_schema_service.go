@@ -31,6 +31,12 @@ func (s *PluginSchemaService) CreateLuaPluginSchema(ctx context.Context,
 	res := resource.NewPluginSchema()
 	res.PluginSchema = req.Item
 	if err := db.Create(ctx, res); err != nil {
+		errConstraint, ok := err.(store.ErrConstraint)
+		if ok {
+			errConstraint.Index.FieldName = "name"
+			errConstraint.Index.Name = "name"
+			err = errConstraint
+		}
 		return nil, s.err(ctx, err)
 	}
 	util.SetHeader(ctx, http.StatusCreated)

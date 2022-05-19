@@ -176,19 +176,36 @@ func TestServiceCreate(t *testing.T) {
 		}
 		require.ElementsMatch(t, []string{"path", "connect_timeout"}, fields)
 	})
-	t.Run("recreating the service with the same name fails",
-		func(t *testing.T) {
-			svc := goodService()
-			res := c.POST("/v1/services").WithJSON(svc).Expect()
-			res.Status(http.StatusBadRequest)
-			body := res.JSON().Object()
-			body.ValueEqual("message", "data constraint error")
-			body.Value("details").Array().Length().Equal(1)
-			err := body.Value("details").Array().Element(0)
-			err.Object().ValueEqual("type", v1.ErrorType_ERROR_TYPE_REFERENCE.
-				String())
-			err.Object().ValueEqual("field", "name")
-		})
+	t.Run("recreating the service with the same name fails", func(t *testing.T) {
+		svc := goodService()
+		res := c.POST("/v1/services").WithJSON(svc).Expect()
+		res.Status(http.StatusBadRequest)
+		body := res.JSON().Object()
+		body.ValueEqual("message", "data constraint error")
+		body.Value("details").Array().Length().Equal(1)
+		err := body.Value("details").Array().Element(0)
+		err.Object().ValueEqual("type", v1.ErrorType_ERROR_TYPE_REFERENCE.
+			String())
+		err.Object().ValueEqual("field", "name")
+	})
+	t.Run("recreating the service with the same id fails", func(t *testing.T) {
+		sid := uuid.NewString()
+		svc := goodService()
+		svc.Name = "same-id-service"
+		svc.Id = sid
+		res := c.POST("/v1/services").WithJSON(svc).Expect()
+		res.Status(http.StatusCreated)
+
+		res = c.POST("/v1/services").WithJSON(svc).Expect()
+		res.Status(http.StatusBadRequest)
+		body := res.JSON().Object()
+		body.ValueEqual("message", "data constraint error")
+		body.Value("details").Array().Length().Equal(1)
+		err := body.Value("details").Array().Element(0)
+		err.Object().ValueEqual("type", v1.ErrorType_ERROR_TYPE_REFERENCE.
+			String())
+		err.Object().ValueEqual("field", "id")
+	})
 	t.Run("service with a '-' in name can be created", func(t *testing.T) {
 		svc := goodService()
 		svc.Name = "foo-with-dash"
