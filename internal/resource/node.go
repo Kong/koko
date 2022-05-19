@@ -72,7 +72,7 @@ func (r Node) Indexes() []model.Index {
 }
 
 func init() {
-	err := model.RegisterType(TypeNode, func() model.Object {
+	err := model.RegisterType(TypeNode, &v1.Node{}, func() model.Object {
 		return NewNode()
 	})
 	if err != nil {

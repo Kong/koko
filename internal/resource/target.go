@@ -139,7 +139,7 @@ func (t Target) ProcessDefaults() error {
 }
 
 func init() {
-	err := model.RegisterType(TypeTarget, func() model.Object {
+	err := model.RegisterType(TypeTarget, &v1.Target{}, func() model.Object {
 		return NewTarget()
 	})
 	if err != nil {

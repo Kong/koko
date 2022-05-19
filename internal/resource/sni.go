@@ -82,7 +82,7 @@ func (r SNI) Indexes() []model.Index {
 }
 
 func init() {
-	err := model.RegisterType(TypeSNI, func() model.Object {
+	err := model.RegisterType(TypeSNI, &v1.SNI{}, func() model.Object {
 		return NewSNI()
 	})
 	if err != nil {

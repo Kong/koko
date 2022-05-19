@@ -131,7 +131,7 @@ func (r Certificate) Indexes() []model.Index {
 }
 
 func init() {
-	err := model.RegisterType(TypeCertificate, func() model.Object {
+	err := model.RegisterType(TypeCertificate, &v1.Certificate{}, func() model.Object {
 		return NewCertificate()
 	})
 	if err != nil {
