@@ -21,6 +21,10 @@
 // Package generator provides utilities to generate a JSON-schema.
 package generator
 
+import (
+	"github.com/kong/koko/internal/model/json/extension"
+)
+
 // Schema represents a JSON Schema object type.
 type Schema struct {
 	// RFC draft-wright-json-schema-00
@@ -65,6 +69,9 @@ type Schema struct {
 	BinaryEncoding string  `json:"binaryEncoding,omitempty"` // section 4.3
 
 	Extras map[string]interface{} `json:"-"`
+
+	// Our "x-koko-config" JSON schema extension.
+	XKokoConfig *extension.Config `json:"x-koko-config,omitempty"`
 
 	// Added by hbagdi
 	If       *Schema     `json:"if,omitempty"`

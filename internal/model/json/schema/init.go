@@ -8,6 +8,7 @@ import (
 
 	genJSONSchema "github.com/kong/koko/internal/gen/jsonschema"
 	"github.com/kong/koko/internal/json"
+	"github.com/kong/koko/internal/model/json/extension"
 	"github.com/santhosh-tekuri/jsonschema/v5"
 )
 
@@ -31,6 +32,10 @@ func initSchemas() {
 	compiler := jsonschema.NewCompiler()
 	compiler.ExtractAnnotations = true
 	compiler.AssertFormat = true
+
+	// Register our custom schema config extension.
+	registerExtension(compiler, &extension.Config{})
+
 	for _, file := range files {
 		name := file.Name()
 		if !strings.HasSuffix(name, ".json") {
@@ -72,4 +77,8 @@ func GetRawJSONSchema(name string) ([]byte, error) {
 		return []byte{}, fmt.Errorf("raw JSON schema not found for entity: '%s'", name)
 	}
 	return rawJSONSchema, nil
+}
+
+func registerExtension(c *jsonschema.Compiler, ext extension.Extension) {
+	c.RegisterExtension(ext.Name(), ext.Schema(), ext)
 }

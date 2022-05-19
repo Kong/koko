@@ -5,6 +5,7 @@ import (
 
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
 	"github.com/kong/koko/internal/model"
+	"github.com/kong/koko/internal/model/json/extension"
 	"github.com/kong/koko/internal/model/json/generator"
 	"github.com/kong/koko/internal/model/json/validation"
 	"github.com/kong/koko/internal/model/json/validation/typedefs"
@@ -119,6 +120,7 @@ func init() {
 			"last_ping",
 			"version",
 		},
+		XKokoConfig: &extension.Config{DisableValidateEndpoint: true},
 	}
 	err = generator.Register(string(TypeNode), nodeSchema)
 	if err != nil {

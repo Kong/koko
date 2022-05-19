@@ -5,6 +5,7 @@ import (
 
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/service/v1"
 	"github.com/kong/koko/internal/json"
+	"github.com/kong/koko/internal/model/json/extension"
 	"github.com/kong/koko/internal/model/json/schema"
 	"github.com/kong/koko/internal/plugin"
 	"github.com/kong/koko/internal/resource"
@@ -42,6 +43,12 @@ func (s *SchemasService) GetSchemas(ctx context.Context,
 	if err != nil {
 		return nil, s.err(ctx, err)
 	}
+
+	// Remove our custom JSON schema extension used for internal-only reasons.
+	if f := jsonSchema.Fields; f != nil {
+		delete(f, (&extension.Config{}).Name())
+	}
+
 	return &v1.GetSchemasResponse{
 		Schema: jsonSchema,
 	}, nil
