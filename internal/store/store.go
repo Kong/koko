@@ -111,6 +111,9 @@ func (s *ObjectStore) Create(ctx context.Context, object model.Object,
 	}
 
 	return s.withTx(ctx, func(tx persistence.Tx) error {
+		if err := s.checkID(ctx, tx, object); err != nil {
+			return err
+		}
 		if err := s.createIndexes(ctx, tx, object); err != nil {
 			return err
 		}
@@ -119,6 +122,31 @@ func (s *ObjectStore) Create(ctx context.Context, object model.Object,
 		}
 		return tx.Put(ctx, id, value)
 	})
+}
+
+func (s *ObjectStore) checkID(ctx context.Context,
+	tx persistence.Tx, object model.Object,
+) error {
+	objectInDB, err := model.NewObject(object.Type())
+	if err != nil {
+		return err
+	}
+
+	err = s.readByTypeID(ctx, tx, object.Type(), object.ID(), objectInDB)
+	if err != nil {
+		if err == ErrNotFound {
+			return nil
+		}
+		return err
+	}
+	return ErrConstraint{
+		Index: model.Index{
+			Name:      "id",
+			FieldName: "id",
+			Type:      model.IndexUnique,
+			Value:     object.ID(),
+		},
+	}
 }
 
 func (s *ObjectStore) Upsert(ctx context.Context, object model.Object,

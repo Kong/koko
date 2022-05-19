@@ -91,15 +91,7 @@ func (r PluginSchema) ProcessDefaults() error {
 }
 
 func (r PluginSchema) Indexes() []model.Index {
-	// TODO(fero): remove index for name as the ID when unique fix is added for IDs (bug)
-	return []model.Index{
-		{
-			Name:      "name",
-			Type:      model.IndexUnique,
-			Value:     r.PluginSchema.Name,
-			FieldName: "name",
-		},
-	}
+	return nil
 }
 
 func init() {
