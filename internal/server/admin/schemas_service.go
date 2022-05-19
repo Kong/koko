@@ -5,6 +5,7 @@ import (
 
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/service/v1"
 	"github.com/kong/koko/internal/json"
+	"github.com/kong/koko/internal/model"
 	"github.com/kong/koko/internal/model/json/extension"
 	"github.com/kong/koko/internal/model/json/schema"
 	"github.com/kong/koko/internal/plugin"
@@ -14,6 +15,7 @@ import (
 	"go.uber.org/zap/zapcore"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
@@ -91,6 +93,82 @@ func (s *SchemasService) ValidateLuaPlugin(
 		return nil, s.err(ctx, err)
 	}
 	return &v1.ValidateLuaPluginResponse{}, nil
+}
+
+func (s *SchemasService) ValidateCACertificateSchema(
+	ctx context.Context,
+	req *v1.ValidateCACertificateSchemaRequest,
+) (*v1.ValidateCACertificateSchemaResponse, error) {
+	return &v1.ValidateCACertificateSchemaResponse{}, s.validateSchema(ctx, req.Item)
+}
+
+func (s *SchemasService) ValidateCertificateSchema(
+	ctx context.Context,
+	req *v1.ValidateCertificateSchemaRequest,
+) (*v1.ValidateCertificateSchemaResponse, error) {
+	return &v1.ValidateCertificateSchemaResponse{}, s.validateSchema(ctx, req.Item)
+}
+
+func (s *SchemasService) ValidateConsumerSchema(
+	ctx context.Context,
+	req *v1.ValidateConsumerSchemaRequest,
+) (*v1.ValidateConsumerSchemaResponse, error) {
+	return &v1.ValidateConsumerSchemaResponse{}, s.validateSchema(ctx, req.Item)
+}
+
+func (s *SchemasService) ValidatePluginSchema(
+	ctx context.Context,
+	req *v1.ValidatePluginSchemaRequest,
+) (*v1.ValidatePluginSchemaResponse, error) {
+	return &v1.ValidatePluginSchemaResponse{}, s.validateSchema(ctx, req.Item)
+}
+
+func (s *SchemasService) ValidateRouteSchema(
+	ctx context.Context,
+	req *v1.ValidateRouteSchemaRequest,
+) (*v1.ValidateRouteSchemaResponse, error) {
+	return &v1.ValidateRouteSchemaResponse{}, s.validateSchema(ctx, req.Item)
+}
+
+func (s *SchemasService) ValidateServiceSchema(
+	ctx context.Context,
+	req *v1.ValidateServiceSchemaRequest,
+) (*v1.ValidateServiceSchemaResponse, error) {
+	return &v1.ValidateServiceSchemaResponse{}, s.validateSchema(ctx, req.Item)
+}
+
+func (s *SchemasService) ValidateSNISchema(
+	ctx context.Context,
+	req *v1.ValidateSNISchemaRequest,
+) (*v1.ValidateSNISchemaResponse, error) {
+	return &v1.ValidateSNISchemaResponse{}, s.validateSchema(ctx, req.Item)
+}
+
+func (s *SchemasService) ValidateTargetSchema(
+	ctx context.Context,
+	req *v1.ValidateTargetSchemaRequest,
+) (*v1.ValidateTargetSchemaResponse, error) {
+	return &v1.ValidateTargetSchemaResponse{}, s.validateSchema(ctx, req.Item)
+}
+
+func (s *SchemasService) ValidateUpstreamSchema(
+	ctx context.Context,
+	req *v1.ValidateUpstreamSchemaRequest,
+) (*v1.ValidateUpstreamSchemaResponse, error) {
+	return &v1.ValidateUpstreamSchemaResponse{}, s.validateSchema(ctx, req.Item)
+}
+
+// validateSchema handles the relevant entity's JSONSchema validation,
+// along with any specific validation associated to the entity.
+func (s *SchemasService) validateSchema(ctx context.Context, item proto.Message) error {
+	obj, err := model.ObjectFromProto(item)
+	if err != nil {
+		// As long as every model object has had its type & underlining Protobuf definition
+		// registered (via `model.RegisterType()`), this would never error.
+		return err
+	}
+
+	return s.err(ctx, obj.Validate())
 }
 
 func (s *SchemasService) err(ctx context.Context, err error) error {
