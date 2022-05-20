@@ -17,10 +17,11 @@ type Tag struct {
 }
 
 type metricsClient interface {
-	// Gauge measures the value of a metric at a particular time.
+	// Gauge measures the absolute value of a metric at a particular time.
 	Gauge(name string, value float64, tags ...Tag)
 
-	// GaugeAdd adds a new measure to a gauge.
+	// GaugeAdd adds value to the existing measure of a gauge.
+	// It can be used to add or subtract to the existing measure.
 	GaugeAdd(name string, value float64, tags ...Tag)
 
 	// Count tracks how many times something happened.
