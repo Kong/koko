@@ -11,6 +11,8 @@ type noopClient struct{}
 
 func (c noopClient) Gauge(string, float64, ...Tag) {}
 
+func (c noopClient) GaugeAdd(string, float64, ...Tag) {}
+
 func (c noopClient) Count(string, int64, ...Tag) {}
 
 func (c noopClient) Histogram(string, float64, ...Tag) {}

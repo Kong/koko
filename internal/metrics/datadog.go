@@ -32,6 +32,8 @@ func (c *datadogClient) Gauge(name string, value float64, tags ...Tag) {
 	}
 }
 
+func (c *datadogClient) GaugeAdd(name string, value float64, tags ...Tag) {}
+
 func (c *datadogClient) Count(name string, value int64, tags ...Tag) {
 	if err := c.client.Count(name, value, convertTags(tags...), defaultRate); err != nil {
 		c.log.With(zap.Error(err)).Error("failed to update count", zap.String("name", name))
