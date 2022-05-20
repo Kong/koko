@@ -18,23 +18,24 @@ var (
 	protoToType = map[string]Type{}
 )
 
-// RegisterType handles mapping an object's type name to its model & generated Protobuf
-// message. An error will be returned when the type is already registered.
+// RegisterType handles mapping an object's type name to its model & an optional, generated
+// Protobuf message. An error will be returned when the type is already registered.
 func RegisterType(typ Type, p proto.Message, fn func() Object) error {
 	if _, ok := types[typ]; ok {
 		return fmt.Errorf("type already registered: %v", typ)
 	}
-	var pr protoreflect.Message
-	if p == nil {
-		return errors.New("must not provide empty Protobuf message")
-	} else if pr = p.ProtoReflect(); !pr.IsValid() {
-		return errors.New("must not provide invalid Protobuf message")
+	if p != nil {
+		pr := p.ProtoReflect()
+		if !pr.IsValid() {
+			return errors.New("must not provide invalid Protobuf message")
+		}
+		protoName := string(pr.Descriptor().FullName())
+		if _, ok := protoToType[protoName]; ok {
+			return fmt.Errorf("protobuf message already registered: %s", protoName)
+		}
+		protoToType[protoName] = typ
 	}
-	protoName := string(pr.Descriptor().FullName())
-	if _, ok := protoToType[protoName]; ok {
-		return fmt.Errorf("protobuf message already registered: %s", protoName)
-	}
-	types[typ], protoToType[protoName] = fn, typ
+	types[typ] = fn
 	return nil
 }
 

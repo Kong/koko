@@ -31,7 +31,10 @@ func (s *registerTypeSuite) TestAlreadyRegistered() {
 }
 
 func (s *registerTypeSuite) TestEmptyProtoMessage() {
-	assert.EqualError(s.T(), RegisterType("foo", nil, nil), "must not provide empty Protobuf message")
+	typ, r := Type("foo"), &testConsumerObj{}
+	require.NoError(s.T(), RegisterType(typ, nil, func() Object { return r }))
+	assert.Equal(s.T(), r, types[typ]())
+	assert.NotContains(s.T(), "kong.admin.model.v1.Consumer", protoToType)
 }
 
 func (s *registerTypeSuite) TestInvalidProtoMessage() {
