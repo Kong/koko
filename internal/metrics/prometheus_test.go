@@ -97,7 +97,8 @@ func TestPrometheusGuageAdd(t *testing.T) {
 	m := &dto.Metric{}
 	err = gauge.Write(m)
 	require.Nil(t, err)
-	require.Equal(t, float64(10), m.Gauge.GetValue())
+	// 1 + 2 + 3 + 4 + 10 = 20
+	require.Equal(t, float64(20), m.Gauge.GetValue())
 }
 
 func TestPrometheusHistogram(t *testing.T) {
