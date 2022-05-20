@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"regexp"
+	"sync"
 
 	"github.com/gorilla/websocket"
 	"go.uber.org/zap"
@@ -37,6 +38,7 @@ func truncateHash(s32 string) (sum, error) {
 }
 
 type Node struct {
+	lock     sync.RWMutex
 	ID       string
 	Version  string
 	Hostname string
@@ -68,6 +70,9 @@ func (n *Node) readThread() error {
 }
 
 func (n *Node) write(payload []byte, hash sum) error {
+	n.lock.Lock()
+	defer n.lock.Unlock()
+
 	if n.hash == hash {
 		n.logger.With(zap.String("config_hash",
 			hash.String())).Info("hash matched, skipping update")
