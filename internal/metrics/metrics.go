@@ -18,11 +18,11 @@ type Tag struct {
 
 type metricsClient interface {
 	// Gauge measures the absolute value of a metric at a particular time.
-	Gauge(name string, value float64, tags ...Tag)
+	Gauge(name string, value int64, tags ...Tag)
 
 	// GaugeAdd adds value to the existing measure of a gauge.
 	// It can be used to add or subtract to the existing measure.
-	GaugeAdd(name string, value float64, tags ...Tag)
+	GaugeAdd(name string, value int64, tags ...Tag)
 
 	// Count tracks how many times something happened.
 	Count(name string, value int64, tags ...Tag)
@@ -108,12 +108,12 @@ func prefixMetricName(name string) string {
 }
 
 // Gauge measures the value of a metric at a particular time.
-func Gauge(name string, value float64, tags ...Tag) {
+func Gauge(name string, value int64, tags ...Tag) {
 	activeClient.Gauge(prefixMetricName(name), value, tags...)
 }
 
 // GaugeAdd adds a new measure to a gauge.
-func GaugeAdd(name string, value float64, tags ...Tag) {
+func GaugeAdd(name string, value int64, tags ...Tag) {
 	activeClient.GaugeAdd(prefixMetricName(name), value, tags...)
 }
 

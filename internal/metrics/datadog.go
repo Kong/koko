@@ -28,14 +28,14 @@ func newDatadogClient(logger *zap.Logger, agentAddr string) (*datadogClient, err
 
 // Gauge uses Count as the underlying measure for storing metrics.
 // We assume it is okay to limit Gauge to int.
-func (c *datadogClient) Gauge(name string, value float64, tags ...Tag) {
-	if err := c.client.Count(name, int64(value), convertTags(tags...), defaultRate); err != nil {
+func (c *datadogClient) Gauge(name string, value int64, tags ...Tag) {
+	if err := c.client.Count(name, value, convertTags(tags...), defaultRate); err != nil {
 		c.log.With(zap.Error(err)).Error("failed to update gauge", zap.String("name", name))
 	}
 }
 
-func (c *datadogClient) GaugeAdd(name string, value float64, tags ...Tag) {
-	if err := c.client.Count(name, int64(value), convertTags(tags...), defaultRate); err != nil {
+func (c *datadogClient) GaugeAdd(name string, value int64, tags ...Tag) {
+	if err := c.client.Count(name, value, convertTags(tags...), defaultRate); err != nil {
 		c.log.With(zap.Error(err)).Error("failed to update gauge", zap.String("name", name))
 	}
 }
