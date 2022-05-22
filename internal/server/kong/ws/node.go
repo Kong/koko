@@ -156,6 +156,9 @@ func (n *Node) readThread() error {
 }
 
 func (n *Node) write(payload []byte, hash sum) error {
+	if n.conn == nil {
+		return fmt.Errorf("node.write is only for plain WebSocket nodes")
+	}
 	n.lock.RLock()
 	defer n.lock.RUnlock()
 
