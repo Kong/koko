@@ -16,7 +16,6 @@ import (
 	admin "github.com/kong/koko/internal/gen/grpc/kong/admin/service/v1"
 	relay "github.com/kong/koko/internal/gen/grpc/kong/relay/service/v1"
 	grpcKongUtil "github.com/kong/koko/internal/gen/grpc/kong/util/v1"
-	"github.com/kong/koko/internal/json"
 	"github.com/kong/koko/internal/metrics"
 	"github.com/kong/koko/internal/resource"
 	"github.com/kong/koko/internal/server/kong/ws/config"
@@ -196,7 +195,7 @@ func nodeLogger(node *Node, logger *zap.Logger) *zap.Logger {
 		zap.String("node-id", node.ID),
 		zap.String("node-hostname", node.Hostname),
 		zap.String("node-version", node.Version),
-		zap.String("client-ip", node.conn.RemoteAddr().String()))
+		zap.String("client-ip", node.RemoteAddr().String()))
 }
 
 func increaseMetricCounter(code int) {
@@ -228,7 +227,7 @@ func (m *Manager) AddNode(node *Node) {
 			zap.Error(err),
 			zap.String("node-id", node.ID),
 		).Info("kong DP node rejected")
-		err := node.conn.Close()
+		err := node.Close()
 		if err != nil {
 			m.logger.With(zap.Error(err)).Error(
 				"failed to close websocket connection")
@@ -280,6 +279,10 @@ func (m *Manager) removeNode(node *Node) {
 		m.logger.Info("no nodes connected, disabling stream")
 		m.streamer.Disable()
 	}
+}
+
+func (m *Manager) FindNode(remoteAddress string) (*Node, bool) {
+	return m.nodes.FindNode(remoteAddress)
 }
 
 // broadcast sends the most recent configuration to all connected nodes.
@@ -523,30 +526,8 @@ type nodeAttributes struct {
 	Version string
 }
 
-func (m *Manager) getPluginList(node *Node) ([]string, error) {
-	messageType, message, err := node.conn.ReadMessage()
-	if err != nil {
-		return nil, fmt.Errorf("read websocket message: %v", err)
-	}
-	if messageType != websocket.BinaryMessage {
-		return nil, fmt.Errorf("kong data-plane sent a message of type %v, "+
-			"expected %v", messageType, websocket.BinaryMessage)
-	}
-	var info basicInfo
-	err = json.Unmarshal(message, &info)
-	if err != nil {
-		return nil, fmt.Errorf("unmarshal basic-info json message: %v", err)
-	}
-
-	plugins := make([]string, 0, len(info.Plugins))
-	for _, p := range info.Plugins {
-		plugins = append(plugins, p.Name)
-	}
-	return plugins, nil
-}
-
 func (m *Manager) validateNode(node *Node) error {
-	pluginList, err := m.getPluginList(node)
+	pluginList, err := node.GetPluginList()
 	if err != nil {
 		return err
 	}

@@ -27,6 +27,16 @@ func (l *NodeList) Remove(node *Node) error {
 	return nil
 }
 
+func (l *NodeList) FindNode(remoteAddress string) (node *Node, ok bool) {
+	value, ok := l.nodes.Load(remoteAddress)
+	if !ok {
+		return
+	}
+
+	node, ok = value.(*Node)
+	return
+}
+
 func (l *NodeList) All() []*Node {
 	var res []*Node
 	l.nodes.Range(func(key, value interface{}) bool {

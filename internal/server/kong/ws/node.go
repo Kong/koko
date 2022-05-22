@@ -4,10 +4,13 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"fmt"
+	"net"
 	"regexp"
 	"sync"
 
 	"github.com/gorilla/websocket"
+	"github.com/kong/go-wrpc/wrpc"
+	"github.com/kong/koko/internal/json"
 	"go.uber.org/zap"
 )
 
@@ -44,6 +47,7 @@ type Node struct {
 	Version  string
 	Hostname string
 	conn     *websocket.Conn
+	peer     *wrpc.Peer
 	logger   *zap.Logger
 	hash     sum
 }
@@ -56,8 +60,59 @@ func (e ErrConnClosed) Error() string {
 	return fmt.Sprintf("websocket connection closed (code: %v)", e.Code)
 }
 
+func (n *Node) Close() error {
+	if n.conn != nil {
+		return n.conn.Close()
+	}
+
+	if n.peer != nil {
+		return n.peer.Close()
+	}
+
+	return nil
+}
+
+func (n *Node) RemoteAddr() net.Addr {
+	if n.conn != nil {
+		return n.conn.RemoteAddr()
+	}
+	if n.peer != nil {
+		return n.peer.RemoteAddr()
+	}
+	return nil
+}
+
+func (n *Node) GetPluginList() ([]string, error) {
+	if n.conn == nil {
+		return nil, fmt.Errorf("not implemented")
+	}
+
+	messageType, message, err := n.conn.ReadMessage()
+	if err != nil {
+		return nil, fmt.Errorf("read websocket message: %v", err)
+	}
+	if messageType != websocket.BinaryMessage {
+		return nil, fmt.Errorf("kong data-plane sent a message of type %v, "+
+			"expected %v", messageType, websocket.BinaryMessage)
+	}
+	var info basicInfo
+	err = json.Unmarshal(message, &info)
+	if err != nil {
+		return nil, fmt.Errorf("unmarshal basic-info json message: %v", err)
+	}
+	plugins := make([]string, 0, len(info.Plugins))
+	for _, p := range info.Plugins {
+		plugins = append(plugins, p.Name)
+	}
+	return plugins, nil
+}
+
 // readThread continuously reads messages from connected DP node.
 func (n *Node) readThread() error {
+	if n.conn == nil {
+		return fmt.Errorf("readThread is only for plain WebSocket nodes")
+	}
+
 	for {
 		_, message, err := n.conn.ReadMessage()
 		if err != nil {
@@ -72,6 +127,9 @@ func (n *Node) readThread() error {
 }
 
 func (n *Node) write(payload []byte, hash sum) error {
+	if n.conn == nil {
+		return fmt.Errorf("node.write is only for plain WebSocket nodes")
+	}
 	n.lock.RLock()
 	defer n.lock.RUnlock()
 

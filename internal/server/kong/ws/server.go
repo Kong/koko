@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/websocket"
+	"github.com/kong/go-wrpc/wrpc"
 	"github.com/kong/koko/internal/json"
 	"go.uber.org/zap"
 )
@@ -25,6 +26,10 @@ type HandlerOpts struct {
 func NewHandler(opts HandlerOpts) (http.Handler, error) {
 	mux := &http.ServeMux{}
 	mux.Handle("/v1/outlet", Handler{
+		logger:        opts.Logger,
+		authenticator: opts.Authenticator,
+	})
+	mux.Handle("/v1/wrpc", WrpcHandler{
 		logger:        opts.Logger,
 		authenticator: opts.Authenticator,
 	})
@@ -124,4 +129,52 @@ func (h Handler) respondWithErr(w http.ResponseWriter, _ *http.Request,
 	}
 	h.logger.With(zap.Error(err)).Error("error while authenticating")
 	w.WriteHeader(http.StatusInternalServerError)
+}
+
+type WrpcHandler struct {
+	logger        *zap.Logger
+	authenticator Authenticator
+}
+
+func (h WrpcHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if err := validateRequest(r); err != nil {
+		h.closeWithErr(w, http.StatusBadRequest, err)
+		return
+	}
+	m, err := h.authenticator.Authenticate(r)
+	if err != nil {
+		h.closeWithErr(w, http.StatusBadRequest, err)
+		return
+	}
+	peer := &wrpc.Peer{
+		ErrLogger: func(err error) {
+			h.logger.With(zap.Error(err), zap.String("wrpc-client-ip", r.RemoteAddr)).Error("peer object")
+		},
+	}
+	if err != nil {
+		h.logger.With(zap.Error(err)).Error("register base wRPC services")
+	}
+	err = peer.Upgrade(w, r)
+	if err != nil {
+		h.logger.With(zap.Error(err)).Error("upgrade to wRPC connection failed")
+		return
+	}
+
+	queryParams := r.URL.Query()
+	node := &Node{
+		ID:       queryParams.Get(nodeIDKey),
+		Hostname: queryParams.Get(nodeHostnameKey),
+		Version:  queryParams.Get(nodeVersionKey),
+		peer:     peer,
+		logger:   h.logger.With(zap.String("wrpc-client-ip", r.RemoteAddr)),
+	}
+	m.AddNode(node)
+}
+
+func (h WrpcHandler) closeWithErr(w http.ResponseWriter, statusCode int, errmsg error) {
+	w.WriteHeader(statusCode)
+	_, err := w.Write([]byte(errmsg.Error()))
+	if err != nil {
+		h.logger.With(zap.Error(err)).Error("Writing error to WebSocket")
+	}
 }
