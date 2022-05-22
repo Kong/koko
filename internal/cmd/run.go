@@ -274,9 +274,15 @@ func Run(ctx context.Context, config ServerConfig) error {
 		Context: ctx,
 		AuthFn:  authFn,
 	}
+
+	negotiator := &ws.Negotiator{
+		CpNodeID: m.Cluster.Get(),
+	}
+
 	handler, err := ws.NewHandler(ws.HandlerOpts{
 		Logger:        controlLogger,
 		Authenticator: authenticator,
+		BaseServices:  negotiator,
 	})
 	if err != nil {
 		return err
