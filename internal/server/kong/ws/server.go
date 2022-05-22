@@ -21,6 +21,7 @@ var upgrader = websocket.Upgrader{}
 type HandlerOpts struct {
 	Logger        *zap.Logger
 	Authenticator Authenticator
+	BaseServices  HandleRegisterer
 }
 
 func NewHandler(opts HandlerOpts) (http.Handler, error) {
@@ -32,6 +33,7 @@ func NewHandler(opts HandlerOpts) (http.Handler, error) {
 	mux.Handle("/v1/wrpc", WrpcHandler{
 		logger:        opts.Logger,
 		authenticator: opts.Authenticator,
+		baseServices:  opts.BaseServices,
 	})
 	mux.HandleFunc("/health", func(w http.ResponseWriter,
 		_ *http.Request,
@@ -134,6 +136,7 @@ func (h Handler) respondWithErr(w http.ResponseWriter, _ *http.Request,
 type WrpcHandler struct {
 	logger        *zap.Logger
 	authenticator Authenticator
+	baseServices  HandleRegisterer
 }
 
 func (h WrpcHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -151,6 +154,7 @@ func (h WrpcHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			h.logger.With(zap.Error(err), zap.String("wrpc-client-ip", r.RemoteAddr)).Error("peer object")
 		},
 	}
+	err = h.baseServices.Register(peer)
 	if err != nil {
 		h.logger.With(zap.Error(err)).Error("register base wRPC services")
 	}
