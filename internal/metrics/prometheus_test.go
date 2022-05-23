@@ -46,14 +46,14 @@ func TestPrometheusGuage(t *testing.T) {
 	var wg sync.WaitGroup
 	for i := 0; i < 5; i++ {
 		wg.Add(1)
-		go func(v int) {
+		go func(v int64) {
 			defer wg.Done()
-			client.Gauge("test_gauge", float64(v), Tag{Key: "service", Value: "test"})
-		}(i)
+			client.Gauge("test_gauge", v, Tag{Key: "service", Value: "test"})
+		}(int64(i))
 	}
 	wg.Wait()
 
-	client.Gauge("test_gauge", float64(10), Tag{Key: "service", Value: "test"})
+	client.Gauge("test_gauge", 10, Tag{Key: "service", Value: "test"})
 
 	collector, err := client.getCollector(gaugeCollector, "test_gauge", Tag{Key: "service", Value: "test"})
 	require.Nil(t, err)
@@ -68,6 +68,37 @@ func TestPrometheusGuage(t *testing.T) {
 	err = gauge.Write(m)
 	require.Nil(t, err)
 	require.Equal(t, float64(10), m.Gauge.GetValue())
+}
+
+func TestPrometheusGuageAdd(t *testing.T) {
+	client := newPrometheusClient(log.Logger)
+
+	var wg sync.WaitGroup
+	for i := 0; i < 5; i++ {
+		wg.Add(1)
+		go func(v int64) {
+			defer wg.Done()
+			client.GaugeAdd("test_gauge_add", v, Tag{Key: "service", Value: "test_add"})
+		}(int64(i))
+	}
+	wg.Wait()
+
+	client.GaugeAdd("test_gauge_add", 10, Tag{Key: "service", Value: "test_add"})
+
+	collector, err := client.getCollector(gaugeCollector, "test_gauge_add", Tag{Key: "service", Value: "test_add"})
+	require.Nil(t, err)
+
+	gaugeVec, ok := collector.(*prometheus.GaugeVec)
+	require.True(t, ok)
+
+	gauge, err := gaugeVec.GetMetricWith(prometheus.Labels{"service": "test_add"})
+	require.Nil(t, err)
+
+	m := &dto.Metric{}
+	err = gauge.Write(m)
+	require.Nil(t, err)
+	// 1 + 2 + 3 + 4 + 10 = 20
+	require.Equal(t, float64(20), m.Gauge.GetValue())
 }
 
 func TestPrometheusHistogram(t *testing.T) {

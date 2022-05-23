@@ -75,14 +75,27 @@ func (c *prometheusClient) getCollector(collectorType collectorType,
 	return collector, nil
 }
 
-func (c *prometheusClient) Gauge(name string, value float64, tags ...Tag) {
+func (c *prometheusClient) Gauge(name string, value int64, tags ...Tag) {
 	collector, err := c.getCollector(gaugeCollector, name, tags...)
 	if err != nil {
 		c.log.With(zap.Error(err)).Error("failed to update gauge")
 		return
 	}
 	if gauge, ok := collector.(*prometheus.GaugeVec); ok {
-		gauge.With(convertToLabels(tags...)).Set(value)
+		gauge.With(convertToLabels(tags...)).Set(float64(value))
+		return
+	}
+	c.log.Error("collector is not a gauge", zap.String("name", name))
+}
+
+func (c *prometheusClient) GaugeAdd(name string, value int64, tags ...Tag) {
+	collector, err := c.getCollector(gaugeCollector, name, tags...)
+	if err != nil {
+		c.log.With(zap.Error(err)).Error("failed to update gauge")
+		return
+	}
+	if gauge, ok := collector.(*prometheus.GaugeVec); ok {
+		gauge.With(convertToLabels(tags...)).Add(float64(value))
 		return
 	}
 	c.log.Error("collector is not a gauge", zap.String("name", name))
