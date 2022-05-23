@@ -1,4 +1,4 @@
-package plugin
+package validators
 
 import (
 	"embed"
@@ -14,7 +14,8 @@ import (
 	"github.com/kong/koko/internal/json"
 	"github.com/kong/koko/internal/log"
 	"github.com/kong/koko/internal/model/json/validation"
-	"github.com/kong/koko/internal/plugin/testdata"
+	"github.com/kong/koko/internal/plugin"
+	"github.com/kong/koko/internal/plugin/validators/testdata"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	lua "github.com/yuin/gopher-lua"
@@ -35,7 +36,7 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
-	err = goodValidator.LoadSchemasFromEmbed(Schemas, "schemas")
+	err = goodValidator.LoadSchemasFromEmbed(plugin.Schemas, "schemas")
 	if err != nil {
 		panic(err)
 	}
@@ -64,7 +65,7 @@ func TestLoadSchemasFromEmbed(t *testing.T) {
 	validator, err := NewLuaValidator(Opts{Logger: log.Logger})
 	require.Nil(t, err)
 	t.Run("errors when dir doesn't exist", func(t *testing.T) {
-		err = validator.LoadSchemasFromEmbed(Schemas, "does-not-exist")
+		err = validator.LoadSchemasFromEmbed(plugin.Schemas, "does-not-exist")
 		require.NotNil(t, err)
 		require.IsType(t, &fs.PathError{}, err)
 	})
@@ -73,7 +74,7 @@ func TestLoadSchemasFromEmbed(t *testing.T) {
 		require.NotNil(t, err)
 	})
 	t.Run("loads a value schemas directory", func(t *testing.T) {
-		err = validator.LoadSchemasFromEmbed(Schemas, "schemas")
+		err = validator.LoadSchemasFromEmbed(plugin.Schemas, "schemas")
 		require.Nil(t, err)
 	})
 	t.Run("loading bad schema fails", func(t *testing.T) {
@@ -891,11 +892,11 @@ func TestValidateSchema(t *testing.T) {
 	})
 
 	t.Run("validation should fail for bundled plugin schemas", func(t *testing.T) {
-		schemaFiles, _ := Schemas.ReadDir("schemas")
+		schemaFiles, _ := plugin.Schemas.ReadDir("schemas")
 		for _, schemaFile := range schemaFiles {
 			name := schemaFile.Name()
 			pluginName := strings.TrimSuffix(name, filepath.Ext(name))
-			schema, _ := Schemas.ReadFile("schemas/" + name)
+			schema, _ := plugin.Schemas.ReadFile("schemas/" + name)
 			_, err := validator.ValidateSchema(string(schema))
 			require.NotNil(t, err)
 			validationErr, ok := err.(validation.Error)

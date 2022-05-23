@@ -10,6 +10,7 @@ import (
 	internalModel "github.com/kong/koko/internal/model"
 	"github.com/kong/koko/internal/model/json/validation"
 	"github.com/kong/koko/internal/plugin"
+	"github.com/kong/koko/internal/plugin/validators"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/types/known/structpb"
 )
@@ -34,7 +35,7 @@ func TestPlugin_Type(t *testing.T) {
 }
 
 func setupLuaValidator(t *testing.T) {
-	validator, err := plugin.NewLuaValidator(plugin.Opts{Logger: log.Logger})
+	validator, err := validators.NewLuaValidator(validators.Opts{Logger: log.Logger})
 	require.Nil(t, err)
 	err = validator.LoadSchemasFromEmbed(plugin.Schemas, "schemas")
 	require.Nil(t, err)

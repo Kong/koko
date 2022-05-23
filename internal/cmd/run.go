@@ -15,6 +15,7 @@ import (
 	"github.com/kong/koko/internal/metrics"
 	"github.com/kong/koko/internal/persistence"
 	"github.com/kong/koko/internal/plugin"
+	"github.com/kong/koko/internal/plugin/validators"
 	"github.com/kong/koko/internal/resource"
 	"github.com/kong/koko/internal/server"
 	"github.com/kong/koko/internal/server/admin"
@@ -85,7 +86,7 @@ func Run(ctx context.Context, config ServerConfig) error {
 	store := store.New(persister, logger.With(zap.String("component",
 		"store"))).ForCluster("default")
 
-	validator, err := plugin.NewLuaValidator(plugin.Opts{Logger: logger})
+	validator, err := validators.NewLuaValidator(validators.Opts{Logger: logger})
 	if err != nil {
 		return err
 	}
