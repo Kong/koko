@@ -6,6 +6,7 @@ import (
 
 	"github.com/kong/koko/internal/log"
 	"github.com/kong/koko/internal/plugin"
+	"github.com/kong/koko/internal/plugin/validators"
 	"github.com/kong/koko/internal/resource"
 	serverUtil "github.com/kong/koko/internal/server/util"
 	"github.com/kong/koko/internal/store"
@@ -16,7 +17,7 @@ import (
 var validator plugin.Validator
 
 func init() {
-	luaValidator, err := plugin.NewLuaValidator(plugin.Opts{Logger: log.Logger})
+	luaValidator, err := validators.NewLuaValidator(validators.Opts{Logger: log.Logger})
 	if err != nil {
 		panic(err)
 	}

@@ -12,6 +12,7 @@ import (
 	"github.com/kong/koko/internal/json"
 	"github.com/kong/koko/internal/log"
 	"github.com/kong/koko/internal/plugin"
+	"github.com/kong/koko/internal/plugin/validators"
 	"github.com/kong/koko/internal/resource"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -31,7 +32,7 @@ const pluginSchemaFormat = `return {
 }`
 
 func init() {
-	validator, err := plugin.NewLuaValidator(plugin.Opts{Logger: log.Logger})
+	validator, err := validators.NewLuaValidator(validators.Opts{Logger: log.Logger})
 	if err != nil {
 		panic(err)
 	}
