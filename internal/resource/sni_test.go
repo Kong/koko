@@ -1,6 +1,7 @@
 package resource
 
 import (
+	"context"
 	"reflect"
 	"testing"
 
@@ -23,7 +24,7 @@ func TestSNI_Type(t *testing.T) {
 
 func TestSNI_ProcessDefaults(t *testing.T) {
 	sni := NewSNI()
-	require.Nil(t, sni.ProcessDefaults())
+	require.Nil(t, sni.ProcessDefaults(context.Background()))
 	require.NotPanics(t, func() {
 		uuid.MustParse(sni.ID())
 	})
@@ -56,7 +57,7 @@ func TestSNI_Validate(t *testing.T) {
 			name: "SNI without a name returns an error",
 			SNI: func() SNI {
 				res := NewSNI()
-				_ = res.ProcessDefaults()
+				_ = res.ProcessDefaults(context.Background())
 				res.SNI.Certificate = &v1.Certificate{
 					Id: uuid.NewString(),
 				}
@@ -76,7 +77,7 @@ func TestSNI_Validate(t *testing.T) {
 			name: "SNI without certificate returns an error",
 			SNI: func() SNI {
 				res := NewSNI()
-				_ = res.ProcessDefaults()
+				_ = res.ProcessDefaults(context.Background())
 				res.SNI.Name = "example.com"
 				return res
 			},
@@ -94,7 +95,7 @@ func TestSNI_Validate(t *testing.T) {
 			name: "SNI without a certificate id returns an error",
 			SNI: func() SNI {
 				res := NewSNI()
-				_ = res.ProcessDefaults()
+				_ = res.ProcessDefaults(context.Background())
 				res.SNI.Name = "*.example.com"
 				res.SNI.Certificate = &v1.Certificate{}
 				return res
@@ -114,7 +115,7 @@ func TestSNI_Validate(t *testing.T) {
 			name: "SNI with invalid name returns an error",
 			SNI: func() SNI {
 				res := NewSNI()
-				_ = res.ProcessDefaults()
+				_ = res.ProcessDefaults(context.Background())
 				res.SNI.Name = "TeST"
 				res.SNI.Certificate = &v1.Certificate{
 					Id: uuid.NewString(),
@@ -136,7 +137,7 @@ func TestSNI_Validate(t *testing.T) {
 			name: "SNI with an invalid wildcard position returns an error",
 			SNI: func() SNI {
 				res := NewSNI()
-				_ = res.ProcessDefaults()
+				_ = res.ProcessDefaults(context.Background())
 				res.SNI.Name = "foo.example.*"
 				res.SNI.Certificate = &v1.Certificate{
 					Id: uuid.NewString(),
@@ -158,7 +159,7 @@ func TestSNI_Validate(t *testing.T) {
 			name: "valid SNI with wildcard hostname returns no errors",
 			SNI: func() SNI {
 				res := NewSNI()
-				_ = res.ProcessDefaults()
+				_ = res.ProcessDefaults(context.Background())
 				res.SNI.Name = "*.example.com"
 				res.SNI.Certificate = &v1.Certificate{
 					Id: uuid.NewString(),
@@ -171,7 +172,7 @@ func TestSNI_Validate(t *testing.T) {
 			name: "valid SNI without wildcard hostname returns no errors",
 			SNI: func() SNI {
 				res := NewSNI()
-				_ = res.ProcessDefaults()
+				_ = res.ProcessDefaults(context.Background())
 				res.SNI.Name = "one-two.example.com"
 				res.SNI.Certificate = &v1.Certificate{
 					Id: uuid.NewString(),
@@ -183,7 +184,7 @@ func TestSNI_Validate(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := tt.SNI().Validate()
+			err := tt.SNI().Validate(context.Background())
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Validate() error = %v, wantErr %v", err, tt.wantErr)
 			}

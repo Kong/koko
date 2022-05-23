@@ -1,6 +1,7 @@
 package resource
 
 import (
+	"context"
 	"strings"
 	"testing"
 
@@ -34,7 +35,7 @@ func TestService_Type(t *testing.T) {
 func TestService_ProcessDefaults(t *testing.T) {
 	t.Run("defaults are correctly injected", func(t *testing.T) {
 		r := NewService()
-		err := r.ProcessDefaults()
+		err := r.ProcessDefaults(context.Background())
 		require.Nil(t, err)
 		require.True(t, validUUID(r.ID()))
 		// empty out the id for equality comparison
@@ -50,7 +51,7 @@ func TestService_ProcessDefaults(t *testing.T) {
 		r.Service.Retries = 1
 		r.Service.Protocol = "grpc"
 		r.Service.Enabled = wrapperspb.Bool(false)
-		err := r.ProcessDefaults()
+		err := r.ProcessDefaults(context.Background())
 		require.Nil(t, err)
 		require.True(t, validUUID(r.ID()))
 		// empty out the id and ts for equality comparison
@@ -68,7 +69,7 @@ func TestService_ProcessDefaults(t *testing.T) {
 	t.Run("url unpacked correctly", func(t *testing.T) {
 		r := NewService()
 		r.Service.Url = "https://test.org:8080/sample"
-		err := r.ProcessDefaults()
+		err := r.ProcessDefaults(context.Background())
 		require.Nil(t, err)
 		require.True(t, validUUID(r.ID()))
 		// empty out the id and ts for equality comparison
@@ -88,7 +89,7 @@ func TestService_ProcessDefaults(t *testing.T) {
 	t.Run("url without port unpacked correctly", func(t *testing.T) {
 		r := NewService()
 		r.Service.Url = "https://foo/bar"
-		err := r.ProcessDefaults()
+		err := r.ProcessDefaults(context.Background())
 		require.Nil(t, err)
 		require.True(t, validUUID(r.ID()))
 		// empty out the id and ts for equality comparison
@@ -109,7 +110,7 @@ func TestService_ProcessDefaults(t *testing.T) {
 
 func goodService() Service {
 	s := NewService()
-	_ = s.ProcessDefaults()
+	_ = s.ProcessDefaults(context.Background())
 	s.Service.Host = "good.example.com"
 	s.Service.Path = "/good-path"
 	return s
@@ -142,7 +143,7 @@ func TestService_Validate(t *testing.T) {
 			name: "default service throws an error",
 			Service: func() Service {
 				s := NewService()
-				_ = s.ProcessDefaults()
+				_ = s.ProcessDefaults(context.Background())
 				return s
 			},
 			wantErr: true,
@@ -510,7 +511,7 @@ func TestService_Validate(t *testing.T) {
 			Service: func() Service {
 				s := NewService()
 				s.Service.Url = "foo.org"
-				_ = s.ProcessDefaults()
+				_ = s.ProcessDefaults(context.Background())
 				return s
 			},
 			wantErr: true,
@@ -528,7 +529,7 @@ func TestService_Validate(t *testing.T) {
 			Service: func() Service {
 				s := NewService()
 				s.Service.Url = "ftp://foo.com:420"
-				_ = s.ProcessDefaults()
+				_ = s.ProcessDefaults(context.Background())
 				return s
 			},
 			wantErr: true,
@@ -548,7 +549,7 @@ func TestService_Validate(t *testing.T) {
 			Service: func() Service {
 				s := NewService()
 				s.Service.Url = "https://foo"
-				_ = s.ProcessDefaults()
+				_ = s.ProcessDefaults(context.Background())
 				return s
 			},
 			wantErr: false,
@@ -558,7 +559,7 @@ func TestService_Validate(t *testing.T) {
 			Service: func() Service {
 				s := goodService()
 				s.Service.Path = ""
-				_ = s.ProcessDefaults()
+				_ = s.ProcessDefaults(context.Background())
 				return s
 			},
 			wantErr: false,
@@ -598,7 +599,7 @@ func TestService_Validate(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := tt.Service().Validate()
+			err := tt.Service().Validate(context.Background())
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Validate() error = %v, wantErr %v", err, tt.wantErr)
 			}

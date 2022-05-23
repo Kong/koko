@@ -1,6 +1,7 @@
 package resource
 
 import (
+	"context"
 	"encoding/hex"
 	"fmt"
 	"net"
@@ -93,7 +94,7 @@ func (t Target) Indexes() []model.Index {
 	return res
 }
 
-func (t Target) Validate() error {
+func (t Target) Validate(ctx context.Context) error {
 	err := validation.Validate(string(TypeTarget), t.Target)
 	if err != nil {
 		return err
@@ -113,7 +114,7 @@ func (t Target) Validate() error {
 	return nil
 }
 
-func (t Target) ProcessDefaults() error {
+func (t Target) ProcessDefaults(ctx context.Context) error {
 	if t.Target == nil {
 		return fmt.Errorf("invalid nil resource")
 	}

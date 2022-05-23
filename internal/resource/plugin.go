@@ -1,6 +1,7 @@
 package resource
 
 import (
+	"context"
 	"fmt"
 
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
@@ -49,16 +50,16 @@ func (r Plugin) Resource() model.Resource {
 // SetResource implements the Object.SetResource interface.
 func (r Plugin) SetResource(pr model.Resource) error { return model.SetResource(r, pr) }
 
-func (r Plugin) Validate() error {
+func (r Plugin) Validate(ctx context.Context) error {
 	err := validation.Validate(string(TypePlugin), r.Plugin)
 	if err != nil {
 		return err
 	}
-	return validator.Validate(r.Plugin)
+	return validator.Validate(ctx, r.Plugin)
 }
 
-func (r Plugin) ProcessDefaults() error {
-	err := validator.ProcessDefaults(r.Plugin)
+func (r Plugin) ProcessDefaults(ctx context.Context) error {
+	err := validator.ProcessDefaults(ctx, r.Plugin)
 	return err
 }
 

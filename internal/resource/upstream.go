@@ -1,6 +1,7 @@
 package resource
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/imdario/mergo"
@@ -137,7 +138,7 @@ func (r Upstream) Resource() model.Resource {
 // SetResource implements the Object.SetResource interface.
 func (r Upstream) SetResource(pr model.Resource) error { return model.SetResource(r, pr) }
 
-func (r Upstream) Validate() error {
+func (r Upstream) Validate(ctx context.Context) error {
 	err := validation.Validate(string(TypeUpstream), r.Upstream)
 	if err != nil {
 		return err
@@ -161,7 +162,7 @@ func (r Upstream) Validate() error {
 	return nil
 }
 
-func (r Upstream) ProcessDefaults() error {
+func (r Upstream) ProcessDefaults(ctx context.Context) error {
 	if r.Upstream == nil {
 		return fmt.Errorf("invalid nil resource")
 	}

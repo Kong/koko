@@ -1,6 +1,7 @@
 package resource
 
 import (
+	"context"
 	"testing"
 
 	model "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
@@ -23,7 +24,7 @@ func TestHash_Type(t *testing.T) {
 func TestHash_Validate(t *testing.T) {
 	t.Run("empty hash must fail", func(t *testing.T) {
 		h := NewHash()
-		err := h.Validate()
+		err := h.Validate(context.Background())
 		require.Error(t, err)
 		verr, ok := err.(validation.Error)
 		require.True(t, ok)
@@ -39,8 +40,8 @@ func TestHash_Validate(t *testing.T) {
 	})
 	t.Run("default hash must fail", func(t *testing.T) {
 		h := NewHash()
-		_ = h.ProcessDefaults()
-		err := h.Validate()
+		_ = h.ProcessDefaults(context.Background())
+		err := h.Validate(context.Background())
 		require.Error(t, err)
 		verr, ok := err.(validation.Error)
 		require.True(t, ok)
@@ -56,16 +57,16 @@ func TestHash_Validate(t *testing.T) {
 	})
 	t.Run("good hash with a valid hash must pass", func(t *testing.T) {
 		h := NewHash()
-		_ = h.ProcessDefaults()
+		_ = h.ProcessDefaults(context.Background())
 		h.Hash.ExpectedHash = "37f525e2b6fc3cb4abd882f708ab80eb"
-		err := h.Validate()
+		err := h.Validate(context.Background())
 		require.NoError(t, err)
 	})
 	t.Run("bad hash with invalid hash fails", func(t *testing.T) {
 		h := NewHash()
-		_ = h.ProcessDefaults()
+		_ = h.ProcessDefaults(context.Background())
 		h.Hash.ExpectedHash = "37f525e2b6fc3cb4abd882f708ab80ex"
-		err := h.Validate()
+		err := h.Validate(context.Background())
 		verr, ok := err.(validation.Error)
 		require.True(t, ok)
 		e := []*model.ErrorDetail{
@@ -81,9 +82,9 @@ func TestHash_Validate(t *testing.T) {
 	})
 	t.Run("bad hash with invalid length fails", func(t *testing.T) {
 		h := NewHash()
-		_ = h.ProcessDefaults()
+		_ = h.ProcessDefaults(context.Background())
 		h.Hash.ExpectedHash = "37f525e2b6fc3cb4abd882f708ab80eff"
-		err := h.Validate()
+		err := h.Validate(context.Background())
 		verr, ok := err.(validation.Error)
 		require.True(t, ok)
 		e := []*model.ErrorDetail{

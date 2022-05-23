@@ -1,6 +1,7 @@
 package resource
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
@@ -43,7 +44,7 @@ func (r SNI) Resource() model.Resource {
 // SetResource implements the Object.SetResource interface.
 func (r SNI) SetResource(pr model.Resource) error { return model.SetResource(r, pr) }
 
-func (r SNI) Validate() error {
+func (r SNI) Validate(ctx context.Context) error {
 	err := validation.Validate(string(TypeSNI), r.SNI)
 	if err != nil {
 		return err
@@ -51,7 +52,7 @@ func (r SNI) Validate() error {
 	return nil
 }
 
-func (r SNI) ProcessDefaults() error {
+func (r SNI) ProcessDefaults(ctx context.Context) error {
 	if r.SNI == nil {
 		return fmt.Errorf("invalid nil resource")
 	}

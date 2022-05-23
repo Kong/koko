@@ -1,6 +1,7 @@
 package resource
 
 import (
+	"context"
 	"testing"
 
 	"github.com/google/uuid"
@@ -152,7 +153,7 @@ func TestCACertificate_Type(t *testing.T) {
 
 func TestCACertificate_ProcessDefaults(t *testing.T) {
 	cert := NewCACertificate()
-	require.Nil(t, cert.ProcessDefaults())
+	require.Nil(t, cert.ProcessDefaults(context.Background()))
 	require.NotPanics(t, func() {
 		uuid.MustParse(cert.ID())
 	})
@@ -184,7 +185,7 @@ func TestCACertificate_Validate(t *testing.T) {
 			name: "invalid certificate fails",
 			CACertificate: func() CACertificate {
 				cert := NewCACertificate()
-				_ = cert.ProcessDefaults()
+				_ = cert.ProcessDefaults(context.Background())
 				cert.CACertificate.Cert = "a"
 				return cert
 			},
@@ -201,7 +202,7 @@ func TestCACertificate_Validate(t *testing.T) {
 			name: "valid certificate, but invalid CA fails",
 			CACertificate: func() CACertificate {
 				cert := NewCACertificate()
-				_ = cert.ProcessDefaults()
+				_ = cert.ProcessDefaults(context.Background())
 				cert.CACertificate.Cert = invalidCert
 				return cert
 			},
@@ -219,7 +220,7 @@ func TestCACertificate_Validate(t *testing.T) {
 			name: "valid but expired certificate fails",
 			CACertificate: func() CACertificate {
 				cert := NewCACertificate()
-				_ = cert.ProcessDefaults()
+				_ = cert.ProcessDefaults(context.Background())
 				cert.CACertificate.Cert = expiredCert
 				return cert
 			},
@@ -236,7 +237,7 @@ func TestCACertificate_Validate(t *testing.T) {
 			name: "valid but multiple certificates fails",
 			CACertificate: func() CACertificate {
 				cert := NewCACertificate()
-				_ = cert.ProcessDefaults()
+				_ = cert.ProcessDefaults(context.Background())
 				cert.CACertificate.Cert = goodCertOne + goodCertTwo
 				return cert
 			},
@@ -253,7 +254,7 @@ func TestCACertificate_Validate(t *testing.T) {
 			name: "valid certificate",
 			CACertificate: func() CACertificate {
 				cert := NewCACertificate()
-				_ = cert.ProcessDefaults()
+				_ = cert.ProcessDefaults(context.Background())
 				cert.CACertificate.Cert = goodCertOne
 				return cert
 			},
@@ -261,7 +262,7 @@ func TestCACertificate_Validate(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := tt.CACertificate().Validate()
+			err := tt.CACertificate().Validate(context.Background())
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Validate() error = %v, wantErr %v", err, tt.wantErr)
 			}

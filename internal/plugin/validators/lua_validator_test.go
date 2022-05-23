@@ -1,6 +1,7 @@
 package validators
 
 import (
+	"context"
 	"embed"
 	"fmt"
 	"io/fs"
@@ -95,7 +96,7 @@ func TestProcessAutoFields(t *testing.T) {
 			Name:   "rate-limiting",
 			Config: config,
 		}
-		err = validator.ProcessDefaults(plugin)
+		err = validator.ProcessDefaults(context.Background(), plugin)
 		require.Nil(t, err)
 		require.NotPanics(t, func() {
 			uuid.MustParse(plugin.Id)
@@ -140,7 +141,7 @@ func TestValidate(t *testing.T) {
 			"policy": "redis",
 		})
 		require.Nil(t, err)
-		err = validator.Validate(&model.Plugin{
+		err = validator.Validate(context.Background(), &model.Plugin{
 			Name:      "rate-limiting",
 			Config:    config,
 			Protocols: []string{"http", "https"},
@@ -166,7 +167,7 @@ func TestValidate(t *testing.T) {
 		require.ElementsMatch(t, expected, validationErr.Errs)
 	})
 	t.Run("plugin does not exist", func(t *testing.T) {
-		err := validator.Validate(&model.Plugin{
+		err := validator.Validate(context.Background(), &model.Plugin{
 			Name: "no-auth",
 		})
 		require.NotNil(t, err)
@@ -185,7 +186,7 @@ func TestValidate(t *testing.T) {
 		var config structpb.Struct
 		configString := `{"add":{"headers":["nokey"]}}`
 		require.Nil(t, json.ProtoJSONUnmarshal([]byte(configString), &config))
-		err := validator.Validate(&model.Plugin{
+		err := validator.Validate(context.Background(), &model.Plugin{
 			Name:      "request-transformer",
 			Config:    &config,
 			Protocols: []string{"http", "https"},
@@ -209,8 +210,8 @@ func TestValidate(t *testing.T) {
 			Protocols: []string{"http", "https"},
 			Enabled:   wrapperspb.Bool(true),
 		}
-		require.Nil(t, validator.ProcessDefaults(p))
-		err := validator.Validate(p)
+		require.Nil(t, validator.ProcessDefaults(context.Background(), p))
+		err := validator.Validate(context.Background(), p)
 		require.Nil(t, err)
 	})
 	t.Run("serverless plugin schema", func(t *testing.T) {
@@ -245,8 +246,8 @@ func TestValidate(t *testing.T) {
 			Enabled:   wrapperspb.Bool(true),
 			Config:    config,
 		}
-		require.Nil(t, validator.ProcessDefaults(p))
-		err = validator.Validate(p)
+		require.Nil(t, validator.ProcessDefaults(context.Background(), p))
+		err = validator.Validate(context.Background(), p)
 		require.Nil(t, err)
 
 		p = &model.Plugin{
@@ -255,8 +256,8 @@ func TestValidate(t *testing.T) {
 			Enabled:   wrapperspb.Bool(true),
 			Config:    config,
 		}
-		require.Nil(t, validator.ProcessDefaults(p))
-		err = validator.Validate(p)
+		require.Nil(t, validator.ProcessDefaults(context.Background(), p))
+		err = validator.Validate(context.Background(), p)
 		require.Nil(t, err)
 	})
 	t.Run("serverless plugin schema accepts invalid lua-code", func(t *testing.T) {
@@ -272,8 +273,8 @@ func TestValidate(t *testing.T) {
 			Enabled:   wrapperspb.Bool(true),
 			Config:    config,
 		}
-		require.Nil(t, validator.ProcessDefaults(p))
-		err = validator.Validate(p)
+		require.Nil(t, validator.ProcessDefaults(context.Background(), p))
+		err = validator.Validate(context.Background(), p)
 		require.Nil(t, err)
 	})
 	t.Run("aws-lambda plugin errors out when custom_entity_check fails", func(t *testing.T) {
@@ -286,8 +287,8 @@ func TestValidate(t *testing.T) {
 			Enabled:   wrapperspb.Bool(true),
 			Config:    &config,
 		}
-		require.Nil(t, validator.ProcessDefaults(p))
-		err := validator.Validate(p)
+		require.Nil(t, validator.ProcessDefaults(context.Background(), p))
+		err := validator.Validate(context.Background(), p)
 		validationErr, ok := err.(validation.Error)
 		require.True(t, ok)
 		expected := []*model.ErrorDetail{
@@ -317,7 +318,7 @@ func TestValidate(t *testing.T) {
 				Protocols: []string{protocol},
 				Enabled:   wrapperspb.Bool(true),
 			}
-			err := validator.Validate(p)
+			err := validator.Validate(context.Background(), p)
 			require.Nil(t, err)
 		}
 	})
@@ -338,7 +339,7 @@ func TestValidate(t *testing.T) {
 				Enabled:   wrapperspb.Bool(true),
 				Config:    config,
 			}
-			err := validator.Validate(p)
+			err := validator.Validate(context.Background(), p)
 			require.NotNil(t, err)
 			validationErr, ok := err.(validation.Error)
 			require.True(t, ok)
@@ -398,7 +399,7 @@ func TestValidate(t *testing.T) {
 				Enabled:   wrapperspb.Bool(true),
 				Config:    &config,
 			}
-			err := validator.Validate(p)
+			err := validator.Validate(context.Background(), p)
 			if policy.wantsErr {
 				require.NotNil(t, err)
 				validationErr, ok := err.(validation.Error)
@@ -532,7 +533,7 @@ func TestValidate(t *testing.T) {
 				Enabled:   wrapperspb.Bool(true),
 				Config:    &config,
 			}
-			err := validator.Validate(p)
+			err := validator.Validate(context.Background(), p)
 			if policy.wantsErr {
 				require.NotNil(t, err)
 				validationErr, ok := err.(validation.Error)
@@ -601,7 +602,7 @@ func TestValidate(t *testing.T) {
 				Enabled:   wrapperspb.Bool(true),
 				Config:    &config,
 			}
-			err := validator.Validate(p)
+			err := validator.Validate(context.Background(), p)
 			if policy.wantsErr {
 				require.NotNil(t, err)
 				validationErr, ok := err.(validation.Error)
@@ -660,7 +661,7 @@ func TestValidate(t *testing.T) {
 				Enabled:   wrapperspb.Bool(true),
 				Config:    &config,
 			}
-			err := validator.Validate(p)
+			err := validator.Validate(context.Background(), p)
 			if strategy.wantsErr {
 				require.NotNil(t, err)
 				validationErr, ok := err.(validation.Error)
@@ -858,7 +859,7 @@ func TestValidate(t *testing.T) {
 				Enabled:   wrapperspb.Bool(true),
 				Config:    &config,
 			}
-			err := validator.Validate(p)
+			err := validator.Validate(context.Background(), p)
 			if policy.wantsErr {
 				require.NotNil(t, err)
 				validationErr, ok := err.(validation.Error)
@@ -886,7 +887,7 @@ func TestValidateSchema(t *testing.T) {
 		}
 	}
 }`
-		pluginName, err := validator.ValidateSchema(schema)
+		pluginName, err := validator.ValidateSchema(context.Background(), schema)
 		assert.NoError(t, err)
 		require.Equal(t, "validate-schema-test", pluginName)
 	})
@@ -897,7 +898,7 @@ func TestValidateSchema(t *testing.T) {
 			name := schemaFile.Name()
 			pluginName := strings.TrimSuffix(name, filepath.Ext(name))
 			schema, _ := plugin.Schemas.ReadFile("schemas/" + name)
-			_, err := validator.ValidateSchema(string(schema))
+			_, err := validator.ValidateSchema(context.Background(), string(schema))
 			require.NotNil(t, err)
 			validationErr, ok := err.(validation.Error)
 			require.True(t, ok)
@@ -942,7 +943,7 @@ func TestValidateSchema(t *testing.T) {
 			},
 		}
 		for _, test := range tests {
-			pluginName, err := validator.ValidateSchema(test.schema)
+			pluginName, err := validator.ValidateSchema(context.Background(), test.schema)
 			require.NotNil(t, err)
 			validationErr, ok := err.(validation.Error)
 			require.True(t, ok)
@@ -988,7 +989,7 @@ func TestPluginLuaSchema(t *testing.T) {
 	t.Run("validate plugin JSON schema", func(t *testing.T) {
 		for _, pluginName := range pluginNames {
 			var pluginSchema testPluginSchema
-			rawJSONSchmea, err := validator.GetRawLuaSchema(pluginName)
+			rawJSONSchmea, err := validator.GetRawLuaSchema(context.Background(), pluginName)
 			require.Nil(t, err)
 			require.Nil(t, json.ProtoJSONUnmarshal(rawJSONSchmea, &pluginSchema))
 			require.EqualValues(t, pluginName, pluginSchema.Name)
@@ -996,7 +997,7 @@ func TestPluginLuaSchema(t *testing.T) {
 	})
 
 	t.Run("ensure error retrieving unknown plugin JSON schema", func(t *testing.T) {
-		rawJSONSchema, err := validator.GetRawLuaSchema("invalid-plugin")
+		rawJSONSchema, err := validator.GetRawLuaSchema(context.Background(), "invalid-plugin")
 		require.Empty(t, rawJSONSchema)
 		require.Errorf(t, err, "raw JSON schema not found for plugin: 'invalid-plugin'")
 	})
@@ -1004,5 +1005,5 @@ func TestPluginLuaSchema(t *testing.T) {
 
 func TestLuaValidator_GetAvailablePluginNames(t *testing.T) {
 	validator := &LuaValidator{luaSchemaNames: []string{"a", "b", "c"}}
-	assert.Equal(t, validator.luaSchemaNames, validator.GetAvailablePluginNames())
+	assert.Equal(t, validator.luaSchemaNames, validator.GetAvailablePluginNames(context.Background()))
 }

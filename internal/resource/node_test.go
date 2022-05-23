@@ -1,6 +1,7 @@
 package resource
 
 import (
+	"context"
 	"strings"
 	"testing"
 
@@ -32,7 +33,7 @@ func TestNode_Type(t *testing.T) {
 func TestNode_ProcessDefaults(t *testing.T) {
 	t.Run("defaults are correctly injected", func(t *testing.T) {
 		r := NewNode()
-		err := r.ProcessDefaults()
+		err := r.ProcessDefaults(context.Background())
 		require.Nil(t, err)
 		require.True(t, validUUID(r.ID()))
 	})
@@ -40,7 +41,7 @@ func TestNode_ProcessDefaults(t *testing.T) {
 		r := NewNode()
 		id := uuid.NewString()
 		r.Node.Id = id
-		err := r.ProcessDefaults()
+		err := r.ProcessDefaults(context.Background())
 		require.Nil(t, err)
 		require.Equal(t, id, r.Node.Id)
 	})
@@ -257,7 +258,7 @@ func TestNode_Validate(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := tt.Node().Validate()
+			err := tt.Node().Validate(context.Background())
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Validate() error = %v, wantErr %v", err, tt.wantErr)
 			}

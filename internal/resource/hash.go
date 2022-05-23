@@ -1,6 +1,7 @@
 package resource
 
 import (
+	"context"
 	"fmt"
 
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
@@ -41,11 +42,11 @@ func (r Hash) Resource() model.Resource {
 // SetResource implements the Object.SetResource interface.
 func (r Hash) SetResource(pr model.Resource) error { return model.SetResource(r, pr) }
 
-func (r Hash) Validate() error {
+func (r Hash) Validate(ctx context.Context) error {
 	return validation.Validate(string(TypeHash), r.Hash)
 }
 
-func (r Hash) ProcessDefaults() error {
+func (r Hash) ProcessDefaults(ctx context.Context) error {
 	if r.Hash == nil {
 		return fmt.Errorf("invalid nil resource")
 	}

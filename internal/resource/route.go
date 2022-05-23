@@ -1,6 +1,7 @@
 package resource
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 
@@ -84,11 +85,11 @@ func (r Route) Indexes() []model.Index {
 	return res
 }
 
-func (r Route) Validate() error {
+func (r Route) Validate(ctx context.Context) error {
 	return validation.Validate(string(TypeRoute), r.Route)
 }
 
-func (r Route) ProcessDefaults() error {
+func (r Route) ProcessDefaults(ctx context.Context) error {
 	if r.Route == nil {
 		return fmt.Errorf("invalid nil resource")
 	}

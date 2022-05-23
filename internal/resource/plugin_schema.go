@@ -1,6 +1,7 @@
 package resource
 
 import (
+	"context"
 	"errors"
 
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
@@ -50,13 +51,13 @@ func (r PluginSchema) Resource() model.Resource {
 // SetResource implements the Object.SetResource interface.
 func (r PluginSchema) SetResource(pr model.Resource) error { return model.SetResource(r, pr) }
 
-func (r PluginSchema) Validate() error {
+func (r PluginSchema) Validate(ctx context.Context) error {
 	if err := validation.Validate(string(TypePluginSchema), r.PluginSchema); err != nil {
 		return err
 	}
 
 	// Re-uses goks Lua plugin validator
-	pluginName, err := validator.ValidateSchema(r.PluginSchema.LuaSchema)
+	pluginName, err := validator.ValidateSchema(ctx, r.PluginSchema.LuaSchema)
 	if err != nil {
 		return err
 	}
@@ -83,7 +84,7 @@ func (r PluginSchema) Validate() error {
 	return validation.Validate(string(TypePluginSchema), r.PluginSchema)
 }
 
-func (r PluginSchema) ProcessDefaults() error {
+func (r PluginSchema) ProcessDefaults(ctx context.Context) error {
 	if r.PluginSchema == nil {
 		return errors.New("invalid nil resource")
 	}

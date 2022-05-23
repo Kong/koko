@@ -1,6 +1,7 @@
 package resource
 
 import (
+	"context"
 	"fmt"
 
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
@@ -44,11 +45,11 @@ func (c Consumer) Type() model.Type {
 	return TypeConsumer
 }
 
-func (c Consumer) Validate() error {
+func (c Consumer) Validate(ctx context.Context) error {
 	return validation.Validate(string(TypeConsumer), c.Consumer)
 }
 
-func (c Consumer) ProcessDefaults() error {
+func (c Consumer) ProcessDefaults(ctx context.Context) error {
 	if c.Consumer == nil {
 		return fmt.Errorf("invalid nil resource")
 	}

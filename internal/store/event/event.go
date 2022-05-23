@@ -1,6 +1,8 @@
 package event
 
 import (
+	"context"
+
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/nonpublic/v1"
 	"github.com/kong/koko/internal/model"
 )
@@ -36,7 +38,7 @@ func (e Event) Resource() model.Resource {
 // SetResource implements the Object.SetResource interface.
 func (e Event) SetResource(r model.Resource) error { return model.SetResource(e, r) }
 
-func (e Event) Validate() error {
+func (e Event) Validate(ctx context.Context) error {
 	return nil
 }
 
@@ -44,6 +46,6 @@ func (e Event) Indexes() []model.Index {
 	return nil
 }
 
-func (e Event) ProcessDefaults() error {
+func (e Event) ProcessDefaults(ctx context.Context) error {
 	return nil
 }

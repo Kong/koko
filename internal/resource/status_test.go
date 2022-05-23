@@ -1,6 +1,7 @@
 package resource
 
 import (
+	"context"
 	"testing"
 
 	"github.com/google/uuid"
@@ -22,7 +23,7 @@ func TestStatus_Type(t *testing.T) {
 
 func TestStatus_ProcessDefaults(t *testing.T) {
 	s := NewStatus()
-	require.Nil(t, s.ProcessDefaults())
+	require.Nil(t, s.ProcessDefaults(context.Background()))
 	require.NotPanics(t, func() {
 		uuid.MustParse(s.ID())
 	})
@@ -55,7 +56,7 @@ func TestStatus_Validate(t *testing.T) {
 			name: "default status throws an error",
 			Status: func() Status {
 				s := NewStatus()
-				_ = s.ProcessDefaults()
+				_ = s.ProcessDefaults(context.Background())
 				return s
 			},
 			wantErr: true,
@@ -300,7 +301,7 @@ func TestStatus_Validate(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := tt.Status().Validate()
+			err := tt.Status().Validate(context.Background())
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Validate() error = %v, wantErr %v", err, tt.wantErr)
 			}

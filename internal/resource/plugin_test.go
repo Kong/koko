@@ -1,6 +1,7 @@
 package resource
 
 import (
+	"context"
 	"reflect"
 	"testing"
 	"time"
@@ -47,7 +48,7 @@ func TestPlugin_ProcessDefaults(t *testing.T) {
 	t.Run("defaults are correctly injected", func(t *testing.T) {
 		r := NewPlugin()
 		r.Plugin.Name = "basic-auth"
-		err := r.ProcessDefaults()
+		err := r.ProcessDefaults(context.Background())
 		require.Nil(t, err)
 		require.True(t, validUUID(r.ID()))
 		require.LessOrEqual(t, r.Plugin.CreatedAt, int32(time.Now().Unix()))
@@ -67,7 +68,7 @@ func TestPlugin_ProcessDefaults(t *testing.T) {
 		})
 		require.Nil(t, err)
 		r.Plugin.Config = config
-		err = r.ProcessDefaults()
+		err = r.ProcessDefaults(context.Background())
 		require.Nil(t, err)
 		require.Equal(t, float64(4242), r.Plugin.Config.AsMap()["redis_port"].(float64))
 		require.True(t, r.Plugin.Config.AsMap()["redis_ssl"].(bool))
@@ -94,7 +95,7 @@ func TestPlugin_Validate(t *testing.T) {
 					panic(err)
 				}
 				res.Plugin.Config = config
-				err = res.ProcessDefaults()
+				err = res.ProcessDefaults(context.Background())
 				if err != nil {
 					panic(err)
 				}
@@ -132,7 +133,7 @@ func TestPlugin_Validate(t *testing.T) {
 					panic(err)
 				}
 				res.Plugin.Config = config
-				err = res.ProcessDefaults()
+				err = res.ProcessDefaults(context.Background())
 				if err != nil {
 					panic(err)
 				}
@@ -163,7 +164,7 @@ func TestPlugin_Validate(t *testing.T) {
 				res := NewPlugin()
 				res.Plugin.Name = "jwt"
 				res.Plugin.Protocols = []string{"tcp"}
-				err := res.ProcessDefaults()
+				err := res.ProcessDefaults(context.Background())
 				if err != nil {
 					panic(err)
 				}
@@ -186,7 +187,7 @@ func TestPlugin_Validate(t *testing.T) {
 				res := NewPlugin()
 				res.Plugin.Name = "jwt"
 				res.Plugin.Protocols = []string{"smtp"}
-				err := res.ProcessDefaults()
+				err := res.ProcessDefaults(context.Background())
 				if err != nil {
 					panic(err)
 				}
@@ -207,7 +208,7 @@ func TestPlugin_Validate(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := tt.Plugin().Validate()
+			err := tt.Plugin().Validate(context.Background())
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Validate() error = %v, wantErr %v", err, tt.wantErr)
 			}

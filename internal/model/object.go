@@ -2,6 +2,7 @@ package model
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 
@@ -18,9 +19,9 @@ type Object interface {
 	ID() string
 	Type() Type
 	Resource() Resource
-	Validate() error
+	Validate(ctx context.Context) error
 	Indexes() []Index
-	ProcessDefaults() error
+	ProcessDefaults(ctx context.Context) error
 
 	// SetResource replaces the object's underlining resource with the provided resource.
 	SetResource(Resource) error
