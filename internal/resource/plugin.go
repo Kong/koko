@@ -15,7 +15,16 @@ const (
 	TypePlugin = model.Type("plugin")
 )
 
-var validator plugin.Validator
+var (
+	validator           plugin.Validator
+	pluginNameMaxLength = 128
+	pluginName          = &generator.Schema{
+		Type:      "string",
+		Pattern:   `^[0-9a-zA-Z\-]*$`,
+		MinLength: 1,
+		MaxLength: pluginNameMaxLength,
+	}
+)
 
 func SetValidator(v plugin.Validator) {
 	validator = v
@@ -129,7 +138,7 @@ func init() {
 		Type: "object",
 		Properties: map[string]*generator.Schema{
 			"id":         typedefs.ID,
-			"name":       typedefs.Name,
+			"name":       pluginName,
 			"created_at": typedefs.UnixEpoch,
 			"updated_at": typedefs.UnixEpoch,
 			"enabled": {
