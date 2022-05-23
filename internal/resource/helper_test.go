@@ -46,7 +46,7 @@ func TestSetResource(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := SetResource(tt.object, tt.resource)
+			err := model.SetResource(tt.object, tt.resource)
 			if tt.expectedErr != "" {
 				assert.EqualError(t, err, tt.expectedErr)
 				return

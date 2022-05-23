@@ -61,7 +61,7 @@ func (c Consumer) Resource() model.Resource {
 }
 
 // SetResource implements the Object.SetResource interface.
-func (c Consumer) SetResource(r model.Resource) error { return SetResource(c, r) }
+func (c Consumer) SetResource(r model.Resource) error { return model.SetResource(c, r) }
 
 func (c Consumer) Indexes() []model.Index {
 	maxIdxSize := 2

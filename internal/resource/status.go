@@ -48,7 +48,7 @@ func (r Status) Resource() model.Resource {
 }
 
 // SetResource implements the Object.SetResource interface.
-func (r Status) SetResource(pr model.Resource) error { return SetResource(r, pr) }
+func (r Status) SetResource(pr model.Resource) error { return model.SetResource(r, pr) }
 
 func (r Status) Validate() error {
 	return validation.Validate(string(TypeStatus), r.Status)
