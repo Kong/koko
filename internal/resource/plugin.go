@@ -47,7 +47,7 @@ func (r Plugin) Resource() model.Resource {
 }
 
 // SetResource implements the Object.SetResource interface.
-func (r Plugin) SetResource(pr model.Resource) error { return SetResource(r, pr) }
+func (r Plugin) SetResource(pr model.Resource) error { return model.SetResource(r, pr) }
 
 func (r Plugin) Validate() error {
 	err := validation.Validate(string(TypePlugin), r.Plugin)

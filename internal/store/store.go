@@ -11,7 +11,6 @@ import (
 	nonPublic "github.com/kong/koko/internal/gen/grpc/kong/nonpublic/v1"
 	"github.com/kong/koko/internal/model"
 	"github.com/kong/koko/internal/persistence"
-	"github.com/kong/koko/internal/resource"
 	"github.com/kong/koko/internal/store/event"
 	"go.uber.org/zap"
 )
@@ -221,7 +220,9 @@ func (s *ObjectStore) Upsert(ctx context.Context, object model.Object,
 func (s *ObjectStore) updateEvent(ctx context.Context, tx persistence.Tx,
 	object model.Object,
 ) error {
-	if object.Type() == resource.TypeNode {
+	// TODO(fero): create function on interface to determine if updateEvent should be ignored.
+	// this is a stop gap since no other object currently is required.
+	if object.Type() == "node" {
 		return nil
 	}
 	event := event.Event{

@@ -53,7 +53,7 @@ func (r Node) Resource() model.Resource {
 }
 
 // SetResource implements the Object.SetResource interface.
-func (r Node) SetResource(pr model.Resource) error { return SetResource(r, pr) }
+func (r Node) SetResource(pr model.Resource) error { return model.SetResource(r, pr) }
 
 func (r Node) Validate() error {
 	return validation.Validate(string(TypeNode), r.Node)

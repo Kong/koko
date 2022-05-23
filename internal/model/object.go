@@ -2,6 +2,7 @@ package model
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 
 	"google.golang.org/protobuf/proto"
@@ -78,4 +79,19 @@ func MultiValueIndex(values ...string) string {
 		}
 		return buf.String()
 	}
+}
+
+// SetResource replaces the object's underlining resource with the provided resource.
+func SetResource(o Object, r Resource) error {
+	expected, actual := o.Resource().ProtoReflect().Descriptor(), r.ProtoReflect().Descriptor()
+	if expected != actual {
+		return fmt.Errorf("unable to set resource: expected %q but got %q", expected.FullName(), actual.FullName())
+	}
+	dst := o.Resource()
+	if !dst.ProtoReflect().IsValid() {
+		return errors.New("unable to set resource: got invalid destination resource")
+	}
+	proto.Reset(dst)
+	proto.Merge(dst, r)
+	return nil
 }

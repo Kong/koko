@@ -72,7 +72,7 @@ func (t Target) Resource() model.Resource {
 }
 
 // SetResource implements the Object.SetResource interface.
-func (t Target) SetResource(r model.Resource) error { return SetResource(t, r) }
+func (t Target) SetResource(r model.Resource) error { return model.SetResource(t, r) }
 
 func (t Target) Indexes() []model.Index {
 	res := []model.Index{

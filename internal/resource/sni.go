@@ -41,7 +41,7 @@ func (r SNI) Resource() model.Resource {
 }
 
 // SetResource implements the Object.SetResource interface.
-func (r SNI) SetResource(pr model.Resource) error { return SetResource(r, pr) }
+func (r SNI) SetResource(pr model.Resource) error { return model.SetResource(r, pr) }
 
 func (r SNI) Validate() error {
 	err := validation.Validate(string(TypeSNI), r.SNI)

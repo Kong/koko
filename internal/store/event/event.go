@@ -3,7 +3,6 @@ package event
 import (
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/nonpublic/v1"
 	"github.com/kong/koko/internal/model"
-	"github.com/kong/koko/internal/resource"
 )
 
 const (
@@ -35,7 +34,7 @@ func (e Event) Resource() model.Resource {
 }
 
 // SetResource implements the Object.SetResource interface.
-func (e Event) SetResource(r model.Resource) error { return resource.SetResource(e, r) }
+func (e Event) SetResource(r model.Resource) error { return model.SetResource(e, r) }
 
 func (e Event) Validate() error {
 	return nil
