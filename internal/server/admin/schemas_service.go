@@ -65,7 +65,7 @@ func (s *SchemasService) GetLuaSchemasPlugin(ctx context.Context,
 
 	// Retrieve the raw JSON based on plugin name
 	s.logger(ctx).With(zap.String("name", req.Name)).Debug("reading Lua plugin schema by name")
-	rawLuaSchema, err := s.validator.GetRawLuaSchema(req.Name)
+	rawLuaSchema, err := s.validator.GetRawLuaSchema(ctx, req.Name)
 	if err != nil {
 		return nil, status.Errorf(codes.NotFound, "no plugin named '%s'", req.Name)
 	}
@@ -87,9 +87,9 @@ func (s *SchemasService) ValidateLuaPlugin(
 ) (*v1.ValidateLuaPluginResponse, error) {
 	res := resource.NewPlugin()
 	res.Plugin = req.Item
-	if err := res.ProcessDefaults(); err != nil {
+	if err := res.ProcessDefaults(ctx); err != nil {
 		return nil, s.err(ctx, err)
-	} else if err := res.Validate(); err != nil {
+	} else if err := res.Validate(ctx); err != nil {
 		return nil, s.err(ctx, err)
 	}
 	return &v1.ValidateLuaPluginResponse{}, nil
@@ -168,7 +168,7 @@ func (s *SchemasService) validateSchema(ctx context.Context, item proto.Message)
 		return err
 	}
 
-	return s.err(ctx, obj.Validate())
+	return s.err(ctx, obj.Validate(ctx))
 }
 
 func (s *SchemasService) err(ctx context.Context, err error) error {

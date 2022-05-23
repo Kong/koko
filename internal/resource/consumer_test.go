@@ -1,6 +1,7 @@
 package resource
 
 import (
+	"context"
 	"testing"
 
 	model "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
@@ -23,14 +24,14 @@ func TestConsumer_Type(t *testing.T) {
 
 func TestConsumer_Defaults(t *testing.T) {
 	c := NewConsumer()
-	err := c.ProcessDefaults()
+	err := c.ProcessDefaults(context.Background())
 	require.Nil(t, err)
 	require.True(t, validUUID(c.ID()))
 }
 
 func goodConsumer() Consumer {
 	c := NewConsumer()
-	_ = c.ProcessDefaults()
+	_ = c.ProcessDefaults(context.Background())
 	c.Consumer.Username = "my-company"
 	c.Consumer.CustomId = "my-company-ID"
 	return c
@@ -39,7 +40,7 @@ func goodConsumer() Consumer {
 func TestConsumer_Validate(t *testing.T) {
 	t.Run("empty consumer must fail", func(t *testing.T) {
 		c := NewConsumer()
-		err := c.Validate()
+		err := c.Validate(context.Background())
 		require.Error(t, err)
 		verr, ok := err.(validation.Error)
 		require.True(t, ok)
@@ -56,8 +57,8 @@ func TestConsumer_Validate(t *testing.T) {
 	})
 	t.Run("default consumer must fail", func(t *testing.T) {
 		c := NewConsumer()
-		_ = c.ProcessDefaults()
-		err := c.Validate()
+		_ = c.ProcessDefaults(context.Background())
+		err := c.Validate(context.Background())
 		require.Error(t, err)
 		verr, ok := err.(validation.Error)
 		require.True(t, ok)
@@ -73,33 +74,33 @@ func TestConsumer_Validate(t *testing.T) {
 	})
 	t.Run("good consumer with username and no custom_id must pass", func(t *testing.T) {
 		c := NewConsumer()
-		_ = c.ProcessDefaults()
+		_ = c.ProcessDefaults(context.Background())
 		c.Consumer.Username = "my-company-name"
-		err := c.Validate()
+		err := c.Validate(context.Background())
 		require.NoError(t, err)
 	})
 	t.Run("good consumer with custom_id and no username must pass", func(t *testing.T) {
 		c := NewConsumer()
-		_ = c.ProcessDefaults()
+		_ = c.ProcessDefaults(context.Background())
 		c.Consumer.CustomId = "my-company-ID"
-		err := c.Validate()
+		err := c.Validate(context.Background())
 		require.NoError(t, err)
 	})
 	t.Run("good consumer with custom_id and username must pass", func(t *testing.T) {
 		c := goodConsumer()
-		err := c.Validate()
+		err := c.Validate(context.Background())
 		require.NoError(t, err)
 	})
 	t.Run("good consumer with custom_id containing spaces must pass", func(t *testing.T) {
 		c := goodConsumer()
 		c.Consumer.CustomId = "my company ID"
-		err := c.Validate()
+		err := c.Validate(context.Background())
 		require.NoError(t, err)
 	})
 	t.Run("custom_id beginning with a space must fail", func(t *testing.T) {
 		c := goodConsumer()
 		c.Consumer.CustomId = " my company ID"
-		err := c.Validate()
+		err := c.Validate(context.Background())
 		require.Error(t, err)
 		verr, ok := err.(validation.Error)
 		require.True(t, ok)
@@ -117,7 +118,7 @@ func TestConsumer_Validate(t *testing.T) {
 	t.Run("custom_id ending with a space must fail", func(t *testing.T) {
 		c := goodConsumer()
 		c.Consumer.CustomId = "my company ID "
-		err := c.Validate()
+		err := c.Validate(context.Background())
 		require.Error(t, err)
 		verr, ok := err.(validation.Error)
 		require.True(t, ok)
@@ -135,7 +136,7 @@ func TestConsumer_Validate(t *testing.T) {
 	t.Run("invalid custom_id must fail", func(t *testing.T) {
 		c := goodConsumer()
 		c.Consumer.CustomId = "my company ID!"
-		err := c.Validate()
+		err := c.Validate(context.Background())
 		require.Error(t, err)
 		verr, ok := err.(validation.Error)
 		require.True(t, ok)

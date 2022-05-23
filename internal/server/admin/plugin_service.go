@@ -198,11 +198,11 @@ func (s *PluginService) GetConfiguredPlugins(ctx context.Context,
 }
 
 func (s *PluginService) GetAvailablePlugins(
-	_ context.Context,
+	ctx context.Context,
 	_ *v1.GetAvailablePluginsRequest,
 ) (*v1.GetAvailablePluginsResponse, error) {
 	return &v1.GetAvailablePluginsResponse{
-		Names: s.validator.GetAvailablePluginNames(),
+		Names: s.validator.GetAvailablePluginNames(ctx),
 	}, nil
 }
 

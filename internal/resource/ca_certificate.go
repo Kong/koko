@@ -1,6 +1,7 @@
 package resource
 
 import (
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
@@ -51,7 +52,7 @@ func (r CACertificate) Resource() model.Resource {
 // SetResource implements the Object.SetResource interface.
 func (r CACertificate) SetResource(pr model.Resource) error { return model.SetResource(r, pr) }
 
-func (r CACertificate) Validate() error {
+func (r CACertificate) Validate(ctx context.Context) error {
 	err := validation.Validate(string(TypeCACertificate), r.CACertificate)
 	if err != nil {
 		return err
@@ -112,7 +113,7 @@ func (r CACertificate) Validate() error {
 	return nil
 }
 
-func (r CACertificate) ProcessDefaults() error {
+func (r CACertificate) ProcessDefaults(ctx context.Context) error {
 	if r.CACertificate == nil {
 		return fmt.Errorf("invalid nil resource")
 	}

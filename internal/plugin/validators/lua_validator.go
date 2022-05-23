@@ -1,6 +1,7 @@
 package validators
 
 import (
+	"context"
 	"embed"
 	"fmt"
 	"sort"
@@ -12,12 +13,14 @@ import (
 	model "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
 	"github.com/kong/koko/internal/json"
 	"github.com/kong/koko/internal/model/json/validation"
+	"github.com/kong/koko/internal/server/util"
 	"go.uber.org/zap"
 )
 
 type Opts struct {
-	Logger   *zap.Logger
-	InjectFS *embed.FS
+	Logger      *zap.Logger
+	InjectFS    *embed.FS
+	StoreLoader util.StoreLoader
 }
 
 type LuaValidator struct {
@@ -25,6 +28,7 @@ type LuaValidator struct {
 	logger         *zap.Logger
 	rawLuaSchemas  map[string][]byte
 	luaSchemaNames []string
+	storeLoader    util.StoreLoader
 }
 
 func NewLuaValidator(opts Opts) (*LuaValidator, error) {
@@ -42,11 +46,12 @@ func NewLuaValidator(opts Opts) (*LuaValidator, error) {
 		logger:         opts.Logger,
 		rawLuaSchemas:  map[string][]byte{},
 		luaSchemaNames: make([]string, 0),
+		storeLoader:    opts.StoreLoader,
 	}, nil
 }
 
 // Validate implements the Validator.Validate interface.
-func (v *LuaValidator) Validate(plugin *model.Plugin) error {
+func (v *LuaValidator) Validate(ctx context.Context, plugin *model.Plugin) error {
 	start := time.Now()
 	defer func() {
 		v.logger.With(zap.String("plugin", plugin.Name),
@@ -64,7 +69,7 @@ func (v *LuaValidator) Validate(plugin *model.Plugin) error {
 	return nil
 }
 
-func (v *LuaValidator) ValidateSchema(pluginSchema string) (string, error) {
+func (v *LuaValidator) ValidateSchema(ctx context.Context, pluginSchema string) (string, error) {
 	start := time.Now()
 	pluginName, err := v.goksV.ValidateSchema(pluginSchema)
 	defer func() {
@@ -196,7 +201,7 @@ func f(m map[string]interface{}) ([]*model.ErrorDetail, error) {
 }
 
 // ProcessDefaults implements the Validator.ProcessDefaults interface.
-func (v *LuaValidator) ProcessDefaults(plugin *model.Plugin) error {
+func (v *LuaValidator) ProcessDefaults(ctx context.Context, plugin *model.Plugin) error {
 	pluginJSON, err := json.ProtoJSONMarshal(plugin)
 	if err != nil {
 		return fmt.Errorf("marshal JSON: %v", err)
@@ -253,7 +258,7 @@ func (v *LuaValidator) LoadSchemasFromEmbed(fs embed.FS, dirName string) error {
 }
 
 // GetRawLuaSchema implements the Validator.GetRawLuaSchema interface.
-func (v *LuaValidator) GetRawLuaSchema(name string) ([]byte, error) {
+func (v *LuaValidator) GetRawLuaSchema(ctx context.Context, name string) ([]byte, error) {
 	rawLuaSchema, ok := v.rawLuaSchemas[name]
 	if !ok {
 		return []byte{}, fmt.Errorf("raw Lua schema not found for plugin: '%s'", name)
@@ -262,7 +267,7 @@ func (v *LuaValidator) GetRawLuaSchema(name string) ([]byte, error) {
 }
 
 // GetAvailablePluginNames implements the Validator.GetAvailablePluginNames interface.
-func (v *LuaValidator) GetAvailablePluginNames() []string {
+func (v *LuaValidator) GetAvailablePluginNames(ctx context.Context) []string {
 	return v.luaSchemaNames
 }
 

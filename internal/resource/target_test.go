@@ -1,6 +1,7 @@
 package resource
 
 import (
+	"context"
 	"strings"
 	"testing"
 
@@ -33,7 +34,7 @@ func TestTarget_Type(t *testing.T) {
 func TestTarget_ProcessDefaults(t *testing.T) {
 	t.Run("defaults are correctly injected", func(t *testing.T) {
 		r := NewTarget()
-		err := r.ProcessDefaults()
+		err := r.ProcessDefaults(context.Background())
 		require.Nil(t, err)
 		require.True(t, validUUID(r.ID()))
 		// empty out the id for equality comparison
@@ -46,7 +47,7 @@ func TestTarget_ProcessDefaults(t *testing.T) {
 		r := NewTarget()
 		r.Target.Target = "10.42.42.42:42"
 		r.Target.Weight = wrapperspb.Int32(420)
-		err := r.ProcessDefaults()
+		err := r.ProcessDefaults(context.Background())
 		require.Nil(t, err)
 		require.True(t, validUUID(r.ID()))
 		// empty out the id and ts for equality comparison
@@ -64,7 +65,7 @@ func goodTarget() Target {
 	r.Target.Upstream = &model.Upstream{
 		Id: uuid.NewString(),
 	}
-	_ = r.ProcessDefaults()
+	_ = r.ProcessDefaults(context.Background())
 	return r
 }
 
@@ -178,7 +179,7 @@ func TestTarget_Validate(t *testing.T) {
 				t.Skip()
 			}
 			target := tt.Target()
-			err := target.Validate()
+			err := target.Validate(context.Background())
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Validate() error = %v, wantErr %v", err, tt.wantErr)
 			}

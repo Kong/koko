@@ -85,8 +85,12 @@ func Run(ctx context.Context, config ServerConfig) error {
 
 	store := store.New(persister, logger.With(zap.String("component",
 		"store"))).ForCluster("default")
+	storeLoader := serverUtil.DefaultStoreLoader{Store: store}
 
-	validator, err := validators.NewLuaValidator(validators.Opts{Logger: logger})
+	validator, err := validators.NewLuaValidator(validators.Opts{
+		Logger:      logger,
+		StoreLoader: storeLoader,
+	})
 	if err != nil {
 		return err
 	}
@@ -96,7 +100,6 @@ func Run(ctx context.Context, config ServerConfig) error {
 	}
 	resource.SetValidator(validator)
 
-	storeLoader := serverUtil.DefaultStoreLoader{Store: store}
 	adminOpts := admin.HandlerOpts{
 		Logger:      logger.With(zap.String("component", "admin-server")),
 		StoreLoader: storeLoader,

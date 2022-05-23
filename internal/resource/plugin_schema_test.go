@@ -1,6 +1,7 @@
 package resource
 
 import (
+	"context"
 	"fmt"
 	"testing"
 	"time"
@@ -55,7 +56,7 @@ func TestPluginSchema_ProcessDefaults(t *testing.T) {
 		r := PluginSchema{
 			PluginSchema: &model.PluginSchema{},
 		}
-		err := r.ProcessDefaults()
+		err := r.ProcessDefaults(context.Background())
 		assert.NoError(t, err)
 		require.LessOrEqual(t, r.PluginSchema.CreatedAt, int32(time.Now().Unix()))
 		require.LessOrEqual(t, r.PluginSchema.UpdatedAt, int32(time.Now().Unix()))
@@ -63,7 +64,7 @@ func TestPluginSchema_ProcessDefaults(t *testing.T) {
 
 	t.Run("error occurs with nil schema when processed", func(t *testing.T) {
 		r := PluginSchema{}
-		err := r.ProcessDefaults()
+		err := r.ProcessDefaults(context.Background())
 		require.NotNil(t, err)
 		require.EqualError(t, err, "invalid nil resource")
 	})
@@ -96,7 +97,7 @@ func TestPluginSchema_Validate(t *testing.T) {
 			pluginSchema: func() PluginSchema {
 				r := NewPluginSchema()
 				r.PluginSchema.LuaSchema = ""
-				_ = r.ProcessDefaults()
+				_ = r.ProcessDefaults(context.Background())
 				return r
 			},
 			wantErr: true,
@@ -112,7 +113,7 @@ func TestPluginSchema_Validate(t *testing.T) {
 			pluginSchema: func() PluginSchema {
 				r := NewPluginSchema()
 				r.PluginSchema.LuaSchema = goodPluginSchema("valid-plugin-schema")
-				_ = r.ProcessDefaults()
+				_ = r.ProcessDefaults(context.Background())
 				return r
 			},
 			wantErr:            false,
@@ -124,7 +125,7 @@ func TestPluginSchema_Validate(t *testing.T) {
 				r := NewPluginSchema()
 				r.PluginSchema.Name = "mismatch-plugin-name"
 				r.PluginSchema.LuaSchema = goodPluginSchema("valid-plugin-schema")
-				_ = r.ProcessDefaults()
+				_ = r.ProcessDefaults(context.Background())
 				return r
 			},
 			wantErr: true,
@@ -143,7 +144,7 @@ func TestPluginSchema_Validate(t *testing.T) {
 			pluginSchema: func() PluginSchema {
 				r := NewPluginSchema()
 				r.PluginSchema.LuaSchema = "return {}"
-				_ = r.ProcessDefaults()
+				_ = r.ProcessDefaults(context.Background())
 				return r
 			},
 			wantErr: true,
@@ -162,7 +163,7 @@ func TestPluginSchema_Validate(t *testing.T) {
 			pluginSchema: func() PluginSchema {
 				r := NewPluginSchema()
 				r.PluginSchema.LuaSchema = goodPluginSchema("invalid!name")
-				_ = r.ProcessDefaults()
+				_ = r.ProcessDefaults(context.Background())
 				return r
 			},
 			wantErr: true,
@@ -179,7 +180,7 @@ func TestPluginSchema_Validate(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			err := test.pluginSchema().Validate()
+			err := test.pluginSchema().Validate(context.Background())
 			if (err != nil) != test.wantErr {
 				t.Errorf("Validate() error = %v, wantErr %v", err, test.wantErr)
 			}

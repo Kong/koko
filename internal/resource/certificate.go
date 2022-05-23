@@ -2,6 +2,7 @@ package resource
 
 import (
 	"bytes"
+	"context"
 	"crypto/x509"
 	"fmt"
 
@@ -45,7 +46,7 @@ func (r Certificate) Resource() model.Resource {
 // SetResource implements the Object.SetResource interface.
 func (r Certificate) SetResource(pr model.Resource) error { return model.SetResource(r, pr) }
 
-func (r Certificate) Validate() error {
+func (r Certificate) Validate(ctx context.Context) error {
 	err := validation.Validate(string(TypeCertificate), r.Certificate)
 	if err != nil {
 		return err
@@ -118,7 +119,7 @@ func (r Certificate) Validate() error {
 	return nil
 }
 
-func (r Certificate) ProcessDefaults() error {
+func (r Certificate) ProcessDefaults(ctx context.Context) error {
 	if r.Certificate == nil {
 		return fmt.Errorf("invalid nil resource")
 	}

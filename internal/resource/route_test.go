@@ -1,6 +1,7 @@
 package resource
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"strings"
@@ -35,7 +36,7 @@ func TestRoute_Type(t *testing.T) {
 func TestRoute_ProcessDefaults(t *testing.T) {
 	t.Run("defaults are correctly injected", func(t *testing.T) {
 		r := NewRoute()
-		err := r.ProcessDefaults()
+		err := r.ProcessDefaults(context.Background())
 		require.Nil(t, err)
 		require.True(t, validUUID(r.ID()))
 		// empty out the id for equality comparison
@@ -54,7 +55,7 @@ func TestRoute_ProcessDefaults(t *testing.T) {
 		r.Route.StripPath = wrapperspb.Bool(false)
 		r.Route.RequestBuffering = wrapperspb.Bool(false)
 		r.Route.ResponseBuffering = wrapperspb.Bool(false)
-		err := r.ProcessDefaults()
+		err := r.ProcessDefaults(context.Background())
 		require.Nil(t, err)
 		require.True(t, validUUID(r.ID()))
 		// empty out the id and ts for equality comparison
@@ -74,7 +75,7 @@ func TestRoute_ProcessDefaults(t *testing.T) {
 
 func goodRoute() Route {
 	r := NewRoute()
-	_ = r.ProcessDefaults()
+	_ = r.ProcessDefaults(context.Background())
 	r.Route.Hosts = []string{"good.example.com"}
 	return r
 }
@@ -114,7 +115,7 @@ func TestRoute_Validate(t *testing.T) {
 			name: "default route throws an error",
 			Route: func() Route {
 				r := NewRoute()
-				_ = r.ProcessDefaults()
+				_ = r.ProcessDefaults(context.Background())
 				return r
 			},
 			wantErr: true,
@@ -516,7 +517,7 @@ func TestRoute_Validate(t *testing.T) {
 			name: "invalid CIDR range throws and error",
 			Route: func() Route {
 				r := NewRoute()
-				_ = r.ProcessDefaults()
+				_ = r.ProcessDefaults(context.Background())
 				r.Route.Protocols = []string{typedefs.ProtocolTCP}
 				r.Route.Destinations = []*model.CIDRPort{
 					{
@@ -581,7 +582,7 @@ func TestRoute_Validate(t *testing.T) {
 			name: "setting sni with tcp protocol errors",
 			Route: func() Route {
 				r := NewRoute()
-				_ = r.ProcessDefaults()
+				_ = r.ProcessDefaults(context.Background())
 				r.Route.Sources = []*model.CIDRPort{
 					{
 						Ip: "10.0.0.0/8",
@@ -606,7 +607,7 @@ func TestRoute_Validate(t *testing.T) {
 			name: "setting sni with udp protocol errors",
 			Route: func() Route {
 				r := NewRoute()
-				_ = r.ProcessDefaults()
+				_ = r.ProcessDefaults(context.Background())
 				r.Route.Sources = []*model.CIDRPort{
 					{
 						Ip: "10.0.0.0/8",
@@ -631,7 +632,7 @@ func TestRoute_Validate(t *testing.T) {
 			name: "setting sources, or destination with http protocol errors",
 			Route: func() Route {
 				r := NewRoute()
-				_ = r.ProcessDefaults()
+				_ = r.ProcessDefaults(context.Background())
 				r.Route.Sources = []*model.CIDRPort{
 					{
 						Ip: "10.0.0.0/8",
@@ -658,7 +659,7 @@ func TestRoute_Validate(t *testing.T) {
 			name: "setting sources, or destination with https protocol errors",
 			Route: func() Route {
 				r := NewRoute()
-				_ = r.ProcessDefaults()
+				_ = r.ProcessDefaults(context.Background())
 				r.Route.Sources = []*model.CIDRPort{
 					{
 						Ip: "10.0.0.0/8",
@@ -685,7 +686,7 @@ func TestRoute_Validate(t *testing.T) {
 			name: "setting methods with UDP, TCP or TLS protocol errors",
 			Route: func() Route {
 				r := NewRoute()
-				_ = r.ProcessDefaults()
+				_ = r.ProcessDefaults(context.Background())
 				r.Route.Sources = []*model.CIDRPort{
 					{
 						Ip: "10.0.0.0/8",
@@ -714,7 +715,7 @@ func TestRoute_Validate(t *testing.T) {
 			name: "setting paths with UDP, TCP or TLS protocol errors",
 			Route: func() Route {
 				r := NewRoute()
-				_ = r.ProcessDefaults()
+				_ = r.ProcessDefaults(context.Background())
 				r.Route.Sources = []*model.CIDRPort{
 					{
 						Ip: "10.0.0.0/8",
@@ -743,7 +744,7 @@ func TestRoute_Validate(t *testing.T) {
 			name: "setting headers with UDP, TCP or TLS protocol errors",
 			Route: func() Route {
 				r := NewRoute()
-				_ = r.ProcessDefaults()
+				_ = r.ProcessDefaults(context.Background())
 				r.Route.Sources = []*model.CIDRPort{
 					{
 						Ip: "10.0.0.0/8",
@@ -774,7 +775,7 @@ func TestRoute_Validate(t *testing.T) {
 			name: "setting hosts with UDP, TCP or TLS protocol errors",
 			Route: func() Route {
 				r := NewRoute()
-				_ = r.ProcessDefaults()
+				_ = r.ProcessDefaults(context.Background())
 				r.Route.Sources = []*model.CIDRPort{
 					{
 						Ip: "10.0.0.0/8",
@@ -804,7 +805,7 @@ func TestRoute_Validate(t *testing.T) {
 				"at least one of sources, destinations or snis must be set",
 			Route: func() Route {
 				r := NewRoute()
-				_ = r.ProcessDefaults()
+				_ = r.ProcessDefaults(context.Background())
 				r.Route.Protocols = []string{
 					typedefs.ProtocolTCP,
 					typedefs.ProtocolUDP,
@@ -828,7 +829,7 @@ func TestRoute_Validate(t *testing.T) {
 			name: "when protocol has grpc, sources cannot be set",
 			Route: func() Route {
 				r := NewRoute()
-				_ = r.ProcessDefaults()
+				_ = r.ProcessDefaults(context.Background())
 				r.Route.Sources = []*model.CIDRPort{
 					{
 						Ip: "10.0.0.0/8",
@@ -856,7 +857,7 @@ func TestRoute_Validate(t *testing.T) {
 			name: "when protocol has grpc, destination cannot be set",
 			Route: func() Route {
 				r := NewRoute()
-				_ = r.ProcessDefaults()
+				_ = r.ProcessDefaults(context.Background())
 				r.Route.Destinations = []*model.CIDRPort{
 					{
 						Ip: "10.0.0.0/8",
@@ -884,7 +885,7 @@ func TestRoute_Validate(t *testing.T) {
 			name: "when protocol has grpc, strip_path cannot be set",
 			Route: func() Route {
 				r := NewRoute()
-				_ = r.ProcessDefaults()
+				_ = r.ProcessDefaults(context.Background())
 				r.Route.StripPath = wrapperspb.Bool(true)
 				r.Route.Hosts = []string{"foo.example.com"}
 				r.Route.Protocols = []string{
@@ -908,7 +909,7 @@ func TestRoute_Validate(t *testing.T) {
 			name: "when protocol has grpc, methods cannot be set",
 			Route: func() Route {
 				r := NewRoute()
-				_ = r.ProcessDefaults()
+				_ = r.ProcessDefaults(context.Background())
 				r.Route.Methods = []string{"POST"}
 				r.Route.Hosts = []string{"foo.example.com"}
 				r.Route.Protocols = []string{
@@ -936,7 +937,7 @@ func TestRoute_Validate(t *testing.T) {
 				r.Route.Protocols = []string{
 					typedefs.ProtocolGRPCS,
 				}
-				_ = r.ProcessDefaults()
+				_ = r.ProcessDefaults(context.Background())
 				return r
 			},
 			wantErr: true,
@@ -957,7 +958,7 @@ func TestRoute_Validate(t *testing.T) {
 				r.Route.Protocols = []string{
 					typedefs.ProtocolTLSPassthrough,
 				}
-				_ = r.ProcessDefaults()
+				_ = r.ProcessDefaults(context.Background())
 				return r
 			},
 			wantErr: true,
@@ -978,7 +979,7 @@ func TestRoute_Validate(t *testing.T) {
 					typedefs.ProtocolTLSPassthrough,
 				}
 				r.Route.Snis = []string{"snis"}
-				_ = r.ProcessDefaults()
+				_ = r.ProcessDefaults(context.Background())
 				return r
 			},
 		},
@@ -991,7 +992,7 @@ func TestRoute_Validate(t *testing.T) {
 				}
 				r.Route.Snis = []string{"snis"}
 				r.Route.Methods = []string{"GET"}
-				_ = r.ProcessDefaults()
+				_ = r.ProcessDefaults(context.Background())
 				return r
 			},
 			wantErr: true,
@@ -1013,7 +1014,7 @@ func TestRoute_Validate(t *testing.T) {
 					typedefs.ProtocolTLSPassthrough,
 				}
 				r.Route.Snis = []string{"snis"}
-				_ = r.ProcessDefaults()
+				_ = r.ProcessDefaults(context.Background())
 				return r
 			},
 		},
@@ -1026,7 +1027,7 @@ func TestRoute_Validate(t *testing.T) {
 				}
 				r.Route.Methods = []string{"GET"}
 				r.Route.Snis = []string{"snis"}
-				_ = r.ProcessDefaults()
+				_ = r.ProcessDefaults(context.Background())
 				return r
 			},
 			wantErr: true,
@@ -1044,7 +1045,7 @@ func TestRoute_Validate(t *testing.T) {
 			name: "setting paths with TLSPassthrough protocol errors",
 			Route: func() Route {
 				r := NewRoute()
-				_ = r.ProcessDefaults()
+				_ = r.ProcessDefaults(context.Background())
 				r.Route.Paths = []string{"/foo"}
 				r.Route.Protocols = []string{
 					typedefs.ProtocolTLSPassthrough,
@@ -1067,7 +1068,7 @@ func TestRoute_Validate(t *testing.T) {
 			name: "setting headers with TLSPassthrough protocol errors",
 			Route: func() Route {
 				r := NewRoute()
-				_ = r.ProcessDefaults()
+				_ = r.ProcessDefaults(context.Background())
 				r.Route.Headers = map[string]*model.HeaderValues{
 					"foo": {Values: []string{"bar"}},
 				}
@@ -1092,7 +1093,7 @@ func TestRoute_Validate(t *testing.T) {
 			name: "setting hosts with TLSPassthrough protocol errors",
 			Route: func() Route {
 				r := NewRoute()
-				_ = r.ProcessDefaults()
+				_ = r.ProcessDefaults(context.Background())
 				r.Route.Hosts = []string{"foo.example.com"}
 				r.Route.Protocols = []string{
 					typedefs.ProtocolTLSPassthrough,
@@ -1115,7 +1116,7 @@ func TestRoute_Validate(t *testing.T) {
 			name: "validate destinations and sources",
 			Route: func() Route {
 				r := NewRoute()
-				_ = r.ProcessDefaults()
+				_ = r.ProcessDefaults(context.Background())
 				r.Route.Protocols = []string{typedefs.ProtocolTCP}
 				r.Route.Destinations = []*model.CIDRPort{
 					{
@@ -1152,7 +1153,7 @@ func TestRoute_Validate(t *testing.T) {
 				t.Skip()
 			}
 			route := tt.Route()
-			err := route.Validate()
+			err := route.Validate(context.Background())
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Validate() error = %v, wantErr %v", err, tt.wantErr)
 			}

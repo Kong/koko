@@ -96,7 +96,7 @@ func (s *ObjectStore) Create(ctx context.Context, object model.Object,
 	if object == nil {
 		return errNoObject
 	}
-	if err := preProcess(object); err != nil {
+	if err := preProcess(ctx, object); err != nil {
 		return err
 	}
 
@@ -156,7 +156,7 @@ func (s *ObjectStore) Upsert(ctx context.Context, object model.Object,
 	if object == nil {
 		return errNoObject
 	}
-	if err := preProcess(object); err != nil {
+	if err := preProcess(ctx, object); err != nil {
 		return err
 	}
 
@@ -246,14 +246,14 @@ func (s *ObjectStore) clock() string {
 	return uuid.NewString()
 }
 
-func preProcess(object model.Object) error {
-	err := object.ProcessDefaults()
+func preProcess(ctx context.Context, object model.Object) error {
+	err := object.ProcessDefaults(ctx)
 	if err != nil {
 		return err
 	}
 	addTS(object.Resource())
 
-	err = object.Validate()
+	err = object.Validate(ctx)
 	if err != nil {
 		return err
 	}

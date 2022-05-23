@@ -1,6 +1,7 @@
 package resource
 
 import (
+	"context"
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
@@ -43,7 +44,7 @@ func TestCertificate_Type(t *testing.T) {
 
 func TestCertificate_ProcessDefaults(t *testing.T) {
 	cert := NewCertificate()
-	require.Nil(t, cert.ProcessDefaults())
+	require.Nil(t, cert.ProcessDefaults(context.Background()))
 	require.NotPanics(t, func() {
 		uuid.MustParse(cert.ID())
 	})
@@ -94,7 +95,7 @@ func TestCertificate_Validate(t *testing.T) {
 			name: "certificate with a cert and no key throws an error",
 			Certificate: func() Certificate {
 				cert := NewCertificate()
-				_ = cert.ProcessDefaults()
+				_ = cert.ProcessDefaults(context.Background())
 				cert.Certificate.Cert = string(certPEM)
 				return cert
 			},
@@ -112,7 +113,7 @@ func TestCertificate_Validate(t *testing.T) {
 			name: "certificate with a key and no cert throws an error",
 			Certificate: func() Certificate {
 				cert := NewCertificate()
-				_ = cert.ProcessDefaults()
+				_ = cert.ProcessDefaults(context.Background())
 				cert.Certificate.Key = string(keyPEM)
 				return cert
 			},
@@ -130,7 +131,7 @@ func TestCertificate_Validate(t *testing.T) {
 			name: "certificate with an alt cert and no alt key throws an error",
 			Certificate: func() Certificate {
 				cert := NewCertificate()
-				_ = cert.ProcessDefaults()
+				_ = cert.ProcessDefaults(context.Background())
 				cert.Certificate.Cert = string(certPEM)
 				cert.Certificate.Key = string(keyPEM)
 				cert.Certificate.CertAlt = string(certPEM)
@@ -150,7 +151,7 @@ func TestCertificate_Validate(t *testing.T) {
 			name: "only alternate cert and key defined throws an error",
 			Certificate: func() Certificate {
 				cert := NewCertificate()
-				_ = cert.ProcessDefaults()
+				_ = cert.ProcessDefaults(context.Background())
 				cert.Certificate.CertAlt = string(certAltPEM)
 				cert.Certificate.KeyAlt = string(keyAltPEM)
 				return cert
@@ -169,7 +170,7 @@ func TestCertificate_Validate(t *testing.T) {
 			name: "certificate with an alt key and no alt cert throws an error",
 			Certificate: func() Certificate {
 				cert := NewCertificate()
-				_ = cert.ProcessDefaults()
+				_ = cert.ProcessDefaults(context.Background())
 				cert.Certificate.Cert = string(certPEM)
 				cert.Certificate.Key = string(keyPEM)
 				cert.Certificate.KeyAlt = string(keyPEM)
@@ -189,7 +190,7 @@ func TestCertificate_Validate(t *testing.T) {
 			name: "certificate with invalid alt cert and alt key throws an error",
 			Certificate: func() Certificate {
 				cert := NewCertificate()
-				_ = cert.ProcessDefaults()
+				_ = cert.ProcessDefaults(context.Background())
 				cert.Certificate.Cert = string(certPEM)
 				cert.Certificate.Key = string(keyPEM)
 				cert.Certificate.CertAlt = "a"
@@ -214,7 +215,7 @@ func TestCertificate_Validate(t *testing.T) {
 			name: "certificate with invalid alt cert and alt key throws an error",
 			Certificate: func() Certificate {
 				cert := NewCertificate()
-				_ = cert.ProcessDefaults()
+				_ = cert.ProcessDefaults(context.Background())
 				cert.Certificate.Cert = string(certPEM)
 				cert.Certificate.Key = string(keyPEM)
 				cert.Certificate.CertAlt = "a"
@@ -239,7 +240,7 @@ func TestCertificate_Validate(t *testing.T) {
 			name: "certificate and key match alternate cert and key encryption algo throws an error",
 			Certificate: func() Certificate {
 				cert := NewCertificate()
-				_ = cert.ProcessDefaults()
+				_ = cert.ProcessDefaults(context.Background())
 				cert.Certificate.Cert = string(certPEM)
 				cert.Certificate.Key = string(keyPEM)
 				cert.Certificate.CertAlt = string(certPEM)
@@ -259,7 +260,7 @@ func TestCertificate_Validate(t *testing.T) {
 			name: "cert with non matching key throws an error",
 			Certificate: func() Certificate {
 				cert := NewCertificate()
-				_ = cert.ProcessDefaults()
+				_ = cert.ProcessDefaults(context.Background())
 				cert.Certificate.Cert = string(certPEM)
 				cert.Certificate.Key = string(keyAltPEM)
 				return cert
@@ -276,7 +277,7 @@ func TestCertificate_Validate(t *testing.T) {
 			name: "alternate cert with non matching key throws an error",
 			Certificate: func() Certificate {
 				cert := NewCertificate()
-				_ = cert.ProcessDefaults()
+				_ = cert.ProcessDefaults(context.Background())
 				cert.Certificate.Cert = string(certPEM)
 				cert.Certificate.Key = string(keyPEM)
 				cert.Certificate.CertAlt = string(certAltPEM)
@@ -295,7 +296,7 @@ func TestCertificate_Validate(t *testing.T) {
 			name: "valid certificate and key passes",
 			Certificate: func() Certificate {
 				cert := NewCertificate()
-				_ = cert.ProcessDefaults()
+				_ = cert.ProcessDefaults(context.Background())
 				cert.Certificate.Cert = string(certPEM)
 				cert.Certificate.Key = string(keyPEM)
 				return cert
@@ -306,7 +307,7 @@ func TestCertificate_Validate(t *testing.T) {
 			name: "valid certificate and key with valid alternate cert and key passes",
 			Certificate: func() Certificate {
 				cert := NewCertificate()
-				_ = cert.ProcessDefaults()
+				_ = cert.ProcessDefaults(context.Background())
 				cert.Certificate.Cert = string(certPEM)
 				cert.Certificate.Key = string(keyPEM)
 				cert.Certificate.CertAlt = string(certAltPEM)
@@ -318,7 +319,7 @@ func TestCertificate_Validate(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := tt.Certificate().Validate()
+			err := tt.Certificate().Validate(context.Background())
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Validate() error = %v, wantErr %v", err, tt.wantErr)
 			}

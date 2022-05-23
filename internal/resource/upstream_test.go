@@ -1,6 +1,7 @@
 package resource
 
 import (
+	"context"
 	"testing"
 
 	"github.com/google/uuid"
@@ -33,7 +34,7 @@ func TestUpstream_Type(t *testing.T) {
 func TestUpstream_ProcessDefaults(t *testing.T) {
 	t.Run("defaults are correctly injected", func(t *testing.T) {
 		r := NewUpstream()
-		err := r.ProcessDefaults()
+		err := r.ProcessDefaults(context.Background())
 		require.Nil(t, err)
 		require.True(t, validUUID(r.ID()))
 		// empty out the id for equality comparison
@@ -56,7 +57,7 @@ func TestUpstream_ProcessDefaults(t *testing.T) {
 				},
 			},
 		}
-		err := r.ProcessDefaults()
+		err := r.ProcessDefaults(context.Background())
 		require.Nil(t, err)
 		require.True(t, validUUID(r.ID()))
 		// empty out the id equality comparison
@@ -349,7 +350,7 @@ func TestUpstream_Validate(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := tt.Upstream().Validate()
+			err := tt.Upstream().Validate(context.Background())
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Validate() error = %v, wantErr %v", err, tt.wantErr)
 			}
