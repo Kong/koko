@@ -9,7 +9,7 @@ type NodeList struct {
 	nodes sync.Map
 }
 
-func (l *NodeList) Add(node Node) error {
+func (l *NodeList) Add(node *Node) error {
 	remoteAddr := node.conn.RemoteAddr().String()
 	_, loaded := l.nodes.LoadOrStore(remoteAddr, node)
 	if loaded {
@@ -18,7 +18,7 @@ func (l *NodeList) Add(node Node) error {
 	return nil
 }
 
-func (l *NodeList) Remove(node Node) error {
+func (l *NodeList) Remove(node *Node) error {
 	remoteAddr := node.conn.RemoteAddr().String()
 	_, loaded := l.nodes.LoadAndDelete(remoteAddr)
 	if !loaded {
@@ -27,10 +27,10 @@ func (l *NodeList) Remove(node Node) error {
 	return nil
 }
 
-func (l *NodeList) All() []Node {
-	var res []Node
+func (l *NodeList) All() []*Node {
+	var res []*Node
 	l.nodes.Range(func(key, value interface{}) bool {
-		node, ok := value.(Node)
+		node, ok := value.(*Node)
 		if !ok {
 			panic(fmt.Sprintf("expected type %T but got %T", Node{}, value))
 		}

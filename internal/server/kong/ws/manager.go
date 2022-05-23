@@ -100,7 +100,7 @@ func (m *Manager) ReadConfig() ManagerConfig {
 	return m.config
 }
 
-func (m *Manager) updateNodeStatus(node Node) {
+func (m *Manager) updateNodeStatus(node *Node) {
 	m.writeNode(node)
 	ctx, cancel := context.WithTimeout(context.Background(), defaultRequestTimeout)
 	defer cancel()
@@ -119,9 +119,11 @@ func (m *Manager) updateNodeStatus(node Node) {
 
 var emptySum sum
 
-func (m *Manager) writeNode(node Node) {
+func (m *Manager) writeNode(node *Node) {
 	ctx, cancel := context.WithTimeout(context.Background(), defaultRequestTimeout)
 	defer cancel()
+	node.lock.RLock()
+	defer node.lock.RUnlock()
 
 	nodeToUpsert := &model.Node{
 		Id:       node.ID,
@@ -145,7 +147,7 @@ func (m *Manager) writeNode(node Node) {
 	}
 }
 
-func (m *Manager) setupPingHandler(node Node) {
+func (m *Manager) setupPingHandler(node *Node) {
 	c := node.conn
 	c.SetPingHandler(func(appData string) error {
 		// code inspired from the upstream library
@@ -158,7 +160,9 @@ func (m *Manager) setupPingHandler(node Node) {
 			return nil
 		}
 		m.logger.Debug("pingHandler received hash", zap.String("hash", appData))
+		node.lock.Lock()
 		node.hash, err = truncateHash(appData)
+		node.lock.Unlock()
 		if err != nil {
 			// Logging for now
 			m.logger.With(zap.Error(err), zap.String("appData", appData)).
@@ -170,7 +174,7 @@ func (m *Manager) setupPingHandler(node Node) {
 	})
 }
 
-func (m *Manager) AddNode(node Node) {
+func (m *Manager) AddNode(node *Node) {
 	loggerWithNode := m.logger.With(
 		zap.String("node-id", node.ID),
 		zap.String("client-ip", node.conn.RemoteAddr().String()))
@@ -479,7 +483,7 @@ type nodeAttributes struct {
 	Version string
 }
 
-func (m *Manager) getPluginList(node Node) ([]string, error) {
+func (m *Manager) getPluginList(node *Node) ([]string, error) {
 	messageType, message, err := node.conn.ReadMessage()
 	if err != nil {
 		return nil, fmt.Errorf("read websocket message: %v", err)
@@ -500,7 +504,7 @@ func (m *Manager) getPluginList(node Node) ([]string, error) {
 	return plugins, nil
 }
 
-func (m *Manager) validateNode(node Node) error {
+func (m *Manager) validateNode(node *Node) error {
 	pluginList, err := m.getPluginList(node)
 	if err != nil {
 		return err

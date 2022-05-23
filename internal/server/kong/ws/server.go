@@ -80,7 +80,7 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	queryParams := r.URL.Query()
-	node := Node{
+	node := &Node{
 		ID:       queryParams.Get(nodeIDKey),
 		Hostname: queryParams.Get(nodeHostnameKey),
 		Version:  queryParams.Get(nodeVersionKey),
