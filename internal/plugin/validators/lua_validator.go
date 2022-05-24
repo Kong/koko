@@ -3,6 +3,7 @@ package validators
 import (
 	"context"
 	"embed"
+	"errors"
 	"fmt"
 	"sort"
 	"strings"
@@ -10,7 +11,7 @@ import (
 
 	"github.com/jeremywohl/flatten"
 	goksPlugin "github.com/kong/goks/plugin"
-	model "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
+	grpcModel "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
 	"github.com/kong/koko/internal/json"
 	"github.com/kong/koko/internal/model/json/validation"
 	"github.com/kong/koko/internal/server/util"
@@ -51,7 +52,7 @@ func NewLuaValidator(opts Opts) (*LuaValidator, error) {
 }
 
 // Validate implements the Validator.Validate interface.
-func (v *LuaValidator) Validate(ctx context.Context, plugin *model.Plugin) error {
+func (v *LuaValidator) Validate(ctx context.Context, plugin *grpcModel.Plugin) error {
 	start := time.Now()
 	defer func() {
 		v.logger.With(zap.String("plugin", plugin.Name),
@@ -81,11 +82,11 @@ func (v *LuaValidator) ValidateSchema(ctx context.Context, pluginSchema string) 
 			Debug("plugin schema validated via lua VM")
 	}()
 	if err != nil {
-		return "", validationSchemaErr(model.ErrorType_ERROR_TYPE_FIELD, "lua_schema", err.Error())
+		return "", validationSchemaErr(grpcModel.ErrorType_ERROR_TYPE_FIELD, "lua_schema", err.Error())
 	}
 	for _, luaSchemaName := range v.luaSchemaNames {
 		if pluginName == luaSchemaName {
-			return "", validationSchemaErr(model.ErrorType_ERROR_TYPE_ENTITY, "",
+			return "", validationSchemaErr(grpcModel.ErrorType_ERROR_TYPE_ENTITY, "",
 				fmt.Sprintf("unique constraint failed: schema already exists for plugin '%s'", pluginName))
 		}
 	}
@@ -104,8 +105,8 @@ func validationErr(name string, e error) error {
 	res := validation.Error{}
 	// name error happens when plugin doesn't exist
 	if _, ok := errMap["name"]; ok {
-		res.Errs = append(res.Errs, &model.ErrorDetail{
-			Type:  model.ErrorType_ERROR_TYPE_FIELD,
+		res.Errs = append(res.Errs, &grpcModel.ErrorDetail{
+			Type:  grpcModel.ErrorType_ERROR_TYPE_FIELD,
 			Field: "name",
 			Messages: []string{
 				fmt.Sprintf("plugin(%v) does not exist", name),
@@ -136,7 +137,7 @@ func validationErr(name string, e error) error {
 	return res
 }
 
-func entityErr(err interface{}) *model.ErrorDetail {
+func entityErr(err interface{}) *grpcModel.ErrorDetail {
 	errs, ok := err.([]interface{})
 	if !ok {
 		panic(fmt.Sprintf("expected '@entity' key to be []interface{} but got"+
@@ -151,16 +152,16 @@ func entityErr(err interface{}) *model.ErrorDetail {
 		messages = append(messages, message)
 	}
 	if len(messages) > 0 {
-		return &model.ErrorDetail{
-			Type:     model.ErrorType_ERROR_TYPE_ENTITY,
+		return &grpcModel.ErrorDetail{
+			Type:     grpcModel.ErrorType_ERROR_TYPE_ENTITY,
 			Messages: messages,
 		}
 	}
 	return nil
 }
 
-func validationSchemaErr(errType model.ErrorType, field string, message string) error {
-	err := &model.ErrorDetail{
+func validationSchemaErr(errType grpcModel.ErrorType, field string, message string) error {
+	err := &grpcModel.ErrorDetail{
 		Type:     errType,
 		Messages: []string{message},
 	}
@@ -168,7 +169,7 @@ func validationSchemaErr(errType model.ErrorType, field string, message string) 
 		err.Field = field
 	}
 	return validation.Error{
-		Errs: []*model.ErrorDetail{err},
+		Errs: []*grpcModel.ErrorDetail{err},
 	}
 }
 
@@ -177,17 +178,17 @@ var flattenStyle = flatten.SeparatorStyle{
 	UseBracketsForArrayIndex: true,
 }
 
-func f(m map[string]interface{}) ([]*model.ErrorDetail, error) {
+func f(m map[string]interface{}) ([]*grpcModel.ErrorDetail, error) {
 	m, err := flatten.Flatten(m, "", flattenStyle)
 	if err != nil {
 		return nil, err
 	}
-	var res []*model.ErrorDetail
+	var res []*grpcModel.ErrorDetail
 	for k, v := range m {
 		switch typedV := v.(type) {
 		case string:
-			res = append(res, &model.ErrorDetail{
-				Type:     model.ErrorType_ERROR_TYPE_FIELD,
+			res = append(res, &grpcModel.ErrorDetail{
+				Type:     grpcModel.ErrorType_ERROR_TYPE_FIELD,
 				Field:    k,
 				Messages: []string{typedV},
 			})
@@ -201,7 +202,7 @@ func f(m map[string]interface{}) ([]*model.ErrorDetail, error) {
 }
 
 // ProcessDefaults implements the Validator.ProcessDefaults interface.
-func (v *LuaValidator) ProcessDefaults(ctx context.Context, plugin *model.Plugin) error {
+func (v *LuaValidator) ProcessDefaults(ctx context.Context, plugin *grpcModel.Plugin) error {
 	pluginJSON, err := json.ProtoJSONMarshal(plugin)
 	if err != nil {
 		return fmt.Errorf("marshal JSON: %v", err)
@@ -277,7 +278,7 @@ func addLuaSchema(name string, schema string, rawLuaSchemas map[string][]byte, l
 	}
 	trimmedSchema := strings.TrimSpace(schema)
 	if len(trimmedSchema) == 0 {
-		return fmt.Errorf("schema cannot be empty")
+		return errors.New("schema cannot be empty")
 	}
 	rawLuaSchemas[name] = []byte(schema)
 	*luaSchemaNames = append(*luaSchemaNames, name)
