@@ -29,7 +29,9 @@ func TestRelayStatusServiceUpdate(t *testing.T) {
 	server := NewStatusService(opts)
 	require.NotNil(t, server)
 	l := setup()
-	s := grpc.NewServer(grpc.ChainUnaryInterceptor(serverUtil.LoggerInterceptor(opts.Logger)))
+	s := grpc.NewServer(grpc.ChainUnaryInterceptor(
+		serverUtil.LoggerInterceptor(opts.Logger),
+		serverUtil.PanicInterceptor(opts.Logger)))
 	relay.RegisterStatusServiceServer(s, server)
 	cc := clientConn(t, l)
 	client := relay.NewStatusServiceClient(cc)
@@ -217,7 +219,9 @@ func TestRelayStatusServiceClear(t *testing.T) {
 	server := NewStatusService(opts)
 	require.NotNil(t, server)
 	l := setup()
-	s := grpc.NewServer(grpc.ChainUnaryInterceptor(serverUtil.LoggerInterceptor(opts.Logger)))
+	s := grpc.NewServer(grpc.ChainUnaryInterceptor(
+		serverUtil.LoggerInterceptor(opts.Logger),
+		serverUtil.PanicInterceptor(opts.Logger)))
 	relay.RegisterStatusServiceServer(s, server)
 	cc := clientConn(t, l)
 	client := relay.NewStatusServiceClient(cc)

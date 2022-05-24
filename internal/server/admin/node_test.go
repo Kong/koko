@@ -50,7 +50,9 @@ func TestNodeCreateUpsert(t *testing.T) {
 	}
 
 	l := setupBufConn()
-	grpcServer := grpc.NewServer(grpc.ChainUnaryInterceptor(serverUtil.LoggerInterceptor(log.Logger)))
+	grpcServer := grpc.NewServer(grpc.ChainUnaryInterceptor(
+		serverUtil.LoggerInterceptor(log.Logger),
+		serverUtil.PanicInterceptor(log.Logger)))
 	service.RegisterNodeServiceServer(grpcServer, nodeService)
 	cc := clientConn(t, l)
 
@@ -137,7 +139,9 @@ func TestNodeDelete(t *testing.T) {
 	}
 
 	l := setupBufConn()
-	grpcServer := grpc.NewServer(grpc.ChainUnaryInterceptor(serverUtil.LoggerInterceptor(log.Logger)))
+	grpcServer := grpc.NewServer(grpc.ChainUnaryInterceptor(
+		serverUtil.LoggerInterceptor(log.Logger),
+		serverUtil.PanicInterceptor(log.Logger)))
 	service.RegisterNodeServiceServer(grpcServer, nodeService)
 	cc := clientConn(t, l)
 
@@ -163,7 +167,7 @@ func TestNodeDelete(t *testing.T) {
 		Validator: validator,
 	})
 	require.Nil(t, err)
-	handler = serverUtil.HandlerWithLogger(handler, log.Logger)
+	handler = serverUtil.HandlerWithRecovery(serverUtil.HandlerWithLogger(handler, log.Logger), log.Logger)
 
 	s := httptest.NewServer(handler)
 	defer s.Close()
@@ -196,7 +200,9 @@ func TestNodeRead(t *testing.T) {
 	}
 
 	l := setupBufConn()
-	grpcServer := grpc.NewServer(grpc.ChainUnaryInterceptor(serverUtil.LoggerInterceptor(log.Logger)))
+	grpcServer := grpc.NewServer(grpc.ChainUnaryInterceptor(
+		serverUtil.LoggerInterceptor(log.Logger),
+		serverUtil.PanicInterceptor(log.Logger)))
 	service.RegisterNodeServiceServer(grpcServer, nodeService)
 	cc := clientConn(t, l)
 
@@ -222,7 +228,7 @@ func TestNodeRead(t *testing.T) {
 		Validator: validator,
 	})
 	require.Nil(t, err)
-	handler = serverUtil.HandlerWithLogger(handler, log.Logger)
+	handler = serverUtil.HandlerWithRecovery(serverUtil.HandlerWithLogger(handler, log.Logger), log.Logger)
 
 	s := httptest.NewServer(handler)
 	defer s.Close()
@@ -261,7 +267,9 @@ func TestNodeList(t *testing.T) {
 	}
 
 	l := setupBufConn()
-	grpcServer := grpc.NewServer(grpc.ChainUnaryInterceptor(serverUtil.LoggerInterceptor(log.Logger)))
+	grpcServer := grpc.NewServer(grpc.ChainUnaryInterceptor(
+		serverUtil.LoggerInterceptor(log.Logger),
+		serverUtil.PanicInterceptor(log.Logger)))
 	service.RegisterNodeServiceServer(grpcServer, nodeService)
 	cc := clientConn(t, l)
 
@@ -298,7 +306,7 @@ func TestNodeList(t *testing.T) {
 		Validator: validator,
 	})
 	require.Nil(t, err)
-	handler = serverUtil.HandlerWithLogger(handler, log.Logger)
+	handler = serverUtil.HandlerWithRecovery(serverUtil.HandlerWithLogger(handler, log.Logger), log.Logger)
 
 	s := httptest.NewServer(handler)
 	defer s.Close()

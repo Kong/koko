@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strconv"
 
+	grpcRecovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	pbModel "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
 	"github.com/kong/koko/internal/model/json/validation"
@@ -44,6 +45,37 @@ func HandlerWithLogger(handler http.Handler, logger *zap.Logger) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		handler.ServeHTTP(w, RequestContextWithLogger(r, logger))
 	})
+}
+
+// HandlerWithRecovery is http handler middleware that gracefully handles panics by calling a deferred recover
+// for all wrapped handlers. When a panic is encountered, a generic error message and response code 500 are returned
+// to the client. More detailed error information is logged if the service log level is set to Error or higher.
+func HandlerWithRecovery(handler http.Handler, logger *zap.Logger) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer func() {
+			if err := recover(); err != nil {
+				logPanic(r, err, logger)
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusInternalServerError)
+				errMsg := []byte(`{"message":"internal server error"}`)
+				if _, err := w.Write(errMsg); err != nil {
+					logger.Error("internal server error response after recovering from panic", zap.Error(err))
+				}
+			}
+		}()
+		handler.ServeHTTP(w, r)
+	})
+}
+
+func logPanic(req *http.Request, err interface{}, logger *zap.Logger) {
+	fields := []zap.Field{
+		zap.String("method", req.Method),
+		zap.String("path", req.URL.Path),
+		zap.String("host", req.Host),
+		zap.String("content-type", req.Header.Get("Content-Type")),
+		zap.Any("panic-message", err),
+	}
+	logger.Error("recovered from panic", fields...)
 }
 
 func RequestContextWithLogger(req *http.Request, logger *zap.Logger) *http.Request {
@@ -184,4 +216,24 @@ func LoggerInterceptor(logger *zap.Logger) grpc.UnaryServerInterceptor {
 		}
 		return handler(ctx, req)
 	}
+}
+
+// PanicInterceptor wraps the panic recovery handler grpcRecoveryHandler for use as a UnaryServerInterceptor.
+func PanicInterceptor(logger *zap.Logger) grpc.UnaryServerInterceptor {
+	return grpcRecovery.UnaryServerInterceptor(grpcRecoveryHandler(logger))
+}
+
+// PanicStreamInterceptor wraps the panic recovery handler grpcRecoveryHandler for use as a StreamServerInterceptor.
+func PanicStreamInterceptor(logger *zap.Logger) grpc.StreamServerInterceptor {
+	return grpcRecovery.StreamServerInterceptor(grpcRecoveryHandler(logger))
+}
+
+// grpcRecoveryHandler facilitates graceful handling of panics for use in both Unary and Stream grpc servers.
+// When a panic is encountered, a generic error message and response code 500 are returned to the client.
+// More detailed error information is logged if the service log level is set to Error or higher.
+func grpcRecoveryHandler(logger *zap.Logger) grpcRecovery.Option {
+	return grpcRecovery.WithRecoveryHandler(func(p interface{}) (err error) {
+		logger.Error(zap.Any("panic-message", p).String)
+		return status.Errorf(codes.Internal, "internal server error")
+	})
 }
