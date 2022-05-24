@@ -196,8 +196,5 @@ func (h wrpcHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		h.respondWithErr(w, r, err)
 		return
 	}
-
-	// TODO: add the node somewhere until it's completed by some service
-	_ = m
-	_ = node
+	m.AddPendingNode(node)
 }

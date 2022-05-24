@@ -64,6 +64,7 @@ func NewManager(opts ManagerOpts) *Manager {
 		configLoader: opts.DPConfigLoader,
 		payload:      payload,
 		nodes:        &NodeList{},
+		pendingNodes: &NodeList{},
 		config:       opts.Config,
 	}
 	m.streamer = &streamer{
@@ -91,6 +92,8 @@ type Manager struct {
 
 	payload *Payload
 	nodes   *NodeList
+
+	pendingNodes *NodeList
 
 	broadcastMutex sync.Mutex
 
@@ -291,6 +294,35 @@ func (m *Manager) removeNode(node *Node) {
 // or nil if not found.
 func (m *Manager) FindNode(remoteAddress string) *Node {
 	return m.nodes.FindNode(remoteAddress)
+}
+
+// A wrpc node isn't directly added to the `m.nodes` list.
+// Instead, as soon as their connection is live, they're added to
+// the `m.pendingNodes` list until it finishes some initialization.
+func (m *Manager) AddPendingNode(node *Node) {
+	m.writeNode(node)
+	if err := m.pendingNodes.Add(node); err != nil {
+		m.logger.With(zap.Error(err)).Error("adding to pending node list")
+		node.Close()
+	}
+}
+
+// Only when a node gets the list of plugins, it's validated
+// and, if successful, moved from the `m.pendingNodes` to the
+// final `m.nodes` list.
+func (m *Manager) addWrpcNode(node *Node, pluginList []string) error {
+	err := m.doNodeValidation(node, pluginList) // nolint: contextcheck
+	if err != nil {
+		return err
+	}
+
+	err = m.pendingNodes.Remove(node)
+	if err != nil {
+		return err
+	}
+
+	err = m.nodes.Add(node)
+	return err
 }
 
 // broadcast sends the most recent configuration to all connected nodes.
@@ -539,6 +571,10 @@ func (m *Manager) validateNode(node *Node) error {
 	if err != nil {
 		return fmt.Errorf("(websocket) unable to read plugin list from DP: %w", err)
 	}
+	return m.doNodeValidation(node, pluginList)
+}
+
+func (m *Manager) doNodeValidation(node *Node, pluginList []string) error {
 	mConfig := m.ReadConfig()
 	conditions := checkPreReqs(nodeAttributes{
 		Plugins: pluginList,
@@ -550,7 +586,7 @@ func (m *Manager) validateNode(node *Node) error {
 	ctx, cancel := context.WithTimeout(context.Background(), defaultRequestTimeout)
 	defer cancel()
 	// update status before returning
-	_, err = m.configClient.Status.UpdateStatus(ctx,
+	_, err := m.configClient.Status.UpdateStatus(ctx,
 		&relay.UpdateStatusRequest{
 			Item: &model.Status{
 				ContextReference: &model.EntityReference{
