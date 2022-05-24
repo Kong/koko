@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	model "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
+	grpcModel "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
 	"github.com/kong/koko/internal/json"
 	"github.com/kong/koko/internal/log"
 	"github.com/kong/koko/internal/model/json/validation"
@@ -92,7 +92,7 @@ func TestProcessAutoFields(t *testing.T) {
 			"second": 42,
 		})
 		require.Nil(t, err)
-		plugin := &model.Plugin{
+		plugin := &grpcModel.Plugin{
 			Name:   "rate-limiting",
 			Config: config,
 		}
@@ -141,7 +141,7 @@ func TestValidate(t *testing.T) {
 			"policy": "redis",
 		})
 		require.Nil(t, err)
-		err = validator.Validate(context.Background(), &model.Plugin{
+		err = validator.Validate(context.Background(), &grpcModel.Plugin{
 			Name:      "rate-limiting",
 			Config:    config,
 			Protocols: []string{"http", "https"},
@@ -149,9 +149,9 @@ func TestValidate(t *testing.T) {
 		})
 		validationErr, ok := err.(validation.Error)
 		require.True(t, ok)
-		expected := []*model.ErrorDetail{
+		expected := []*grpcModel.ErrorDetail{
 			{
-				Type: model.ErrorType_ERROR_TYPE_ENTITY,
+				Type: grpcModel.ErrorType_ERROR_TYPE_ENTITY,
 				Messages: []string{
 					"at least one of these fields must be non-empty: 'config.second'" +
 						", 'config.minute', 'config.hour', 'config.day', 'config.month', 'config.year'",
@@ -159,7 +159,7 @@ func TestValidate(t *testing.T) {
 				},
 			},
 			{
-				Type:     model.ErrorType_ERROR_TYPE_FIELD,
+				Type:     grpcModel.ErrorType_ERROR_TYPE_FIELD,
 				Field:    "config.redis_host",
 				Messages: []string{"required field missing"},
 			},
@@ -167,15 +167,15 @@ func TestValidate(t *testing.T) {
 		require.ElementsMatch(t, expected, validationErr.Errs)
 	})
 	t.Run("plugin does not exist", func(t *testing.T) {
-		err := validator.Validate(context.Background(), &model.Plugin{
+		err := validator.Validate(context.Background(), &grpcModel.Plugin{
 			Name: "no-auth",
 		})
 		require.NotNil(t, err)
 		validationErr, ok := err.(validation.Error)
 		require.True(t, ok)
-		expected := []*model.ErrorDetail{
+		expected := []*grpcModel.ErrorDetail{
 			{
-				Type:     model.ErrorType_ERROR_TYPE_FIELD,
+				Type:     grpcModel.ErrorType_ERROR_TYPE_FIELD,
 				Field:    "name",
 				Messages: []string{"plugin(no-auth) does not exist"},
 			},
@@ -186,7 +186,7 @@ func TestValidate(t *testing.T) {
 		var config structpb.Struct
 		configString := `{"add":{"headers":["nokey"]}}`
 		require.Nil(t, json.ProtoJSONUnmarshal([]byte(configString), &config))
-		err := validator.Validate(context.Background(), &model.Plugin{
+		err := validator.Validate(context.Background(), &grpcModel.Plugin{
 			Name:      "request-transformer",
 			Config:    &config,
 			Protocols: []string{"http", "https"},
@@ -195,9 +195,9 @@ func TestValidate(t *testing.T) {
 		require.NotNil(t, err)
 		validationErr, ok := err.(validation.Error)
 		require.True(t, ok)
-		expected := []*model.ErrorDetail{
+		expected := []*grpcModel.ErrorDetail{
 			{
-				Type:     model.ErrorType_ERROR_TYPE_FIELD,
+				Type:     grpcModel.ErrorType_ERROR_TYPE_FIELD,
 				Field:    "config.add.headers[0]",
 				Messages: []string{"invalid value: nokey"},
 			},
@@ -205,7 +205,7 @@ func TestValidate(t *testing.T) {
 		require.Equal(t, expected, validationErr.Errs)
 	})
 	t.Run("prometheus plugin schema", func(t *testing.T) {
-		p := &model.Plugin{
+		p := &grpcModel.Plugin{
 			Name:      "prometheus",
 			Protocols: []string{"http", "https"},
 			Enabled:   wrapperspb.Bool(true),
@@ -240,7 +240,7 @@ func TestValidate(t *testing.T) {
 			},
 		})
 		require.Nil(t, err)
-		p := &model.Plugin{
+		p := &grpcModel.Plugin{
 			Name:      "pre-function",
 			Protocols: []string{"http", "https"},
 			Enabled:   wrapperspb.Bool(true),
@@ -250,7 +250,7 @@ func TestValidate(t *testing.T) {
 		err = validator.Validate(context.Background(), p)
 		require.Nil(t, err)
 
-		p = &model.Plugin{
+		p = &grpcModel.Plugin{
 			Name:      "post-function",
 			Protocols: []string{"http", "https"},
 			Enabled:   wrapperspb.Bool(true),
@@ -267,7 +267,7 @@ func TestValidate(t *testing.T) {
 			},
 		})
 		require.Nil(t, err)
-		p := &model.Plugin{
+		p := &grpcModel.Plugin{
 			Name:      "pre-function",
 			Protocols: []string{"http", "https"},
 			Enabled:   wrapperspb.Bool(true),
@@ -281,7 +281,7 @@ func TestValidate(t *testing.T) {
 		var config structpb.Struct
 		configString := `{"proxy_url": "https://my-proxy-server:3128"}`
 		require.Nil(t, json.ProtoJSONUnmarshal([]byte(configString), &config))
-		p := &model.Plugin{
+		p := &grpcModel.Plugin{
 			Name:      "aws-lambda",
 			Protocols: []string{"http", "https"},
 			Enabled:   wrapperspb.Bool(true),
@@ -291,9 +291,9 @@ func TestValidate(t *testing.T) {
 		err := validator.Validate(context.Background(), p)
 		validationErr, ok := err.(validation.Error)
 		require.True(t, ok)
-		expected := []*model.ErrorDetail{
+		expected := []*grpcModel.ErrorDetail{
 			{
-				Type:     model.ErrorType_ERROR_TYPE_ENTITY,
+				Type:     grpcModel.ErrorType_ERROR_TYPE_ENTITY,
 				Messages: []string{"proxy_url scheme must be http"},
 			},
 		}
@@ -313,7 +313,7 @@ func TestValidate(t *testing.T) {
 			"udp",
 		}
 		for _, protocol := range protocols {
-			p := &model.Plugin{
+			p := &grpcModel.Plugin{
 				Name:      "prometheus",
 				Protocols: []string{protocol},
 				Enabled:   wrapperspb.Bool(true),
@@ -333,7 +333,7 @@ func TestValidate(t *testing.T) {
 		})
 		require.Nil(t, err)
 		for _, protocol := range protocols {
-			p := &model.Plugin{
+			p := &grpcModel.Plugin{
 				Name:      "rate-limiting",
 				Protocols: []string{protocol},
 				Enabled:   wrapperspb.Bool(true),
@@ -343,9 +343,9 @@ func TestValidate(t *testing.T) {
 			require.NotNil(t, err)
 			validationErr, ok := err.(validation.Error)
 			require.True(t, ok)
-			expected := []*model.ErrorDetail{
+			expected := []*grpcModel.ErrorDetail{
 				{
-					Type:     model.ErrorType_ERROR_TYPE_FIELD,
+					Type:     grpcModel.ErrorType_ERROR_TYPE_FIELD,
 					Field:    "protocols[0]",
 					Messages: []string{"expected one of: grpc, grpcs, http, https"},
 				},
@@ -357,7 +357,7 @@ func TestValidate(t *testing.T) {
 		policies := []struct {
 			config       string
 			wantsErr     bool
-			expectedErrs []*model.ErrorDetail
+			expectedErrs []*grpcModel.ErrorDetail
 		}{
 			{
 				config: `{
@@ -378,9 +378,9 @@ func TestValidate(t *testing.T) {
 					"policy": "cluster"
 				}`,
 				wantsErr: true,
-				expectedErrs: []*model.ErrorDetail{
+				expectedErrs: []*grpcModel.ErrorDetail{
 					{
-						Type:  model.ErrorType_ERROR_TYPE_FIELD,
+						Type:  grpcModel.ErrorType_ERROR_TYPE_FIELD,
 						Field: "config.policy",
 						Messages: []string{
 							"expected one of: local, redis",
@@ -393,7 +393,7 @@ func TestValidate(t *testing.T) {
 		for _, policy := range policies {
 			var config structpb.Struct
 			require.Nil(t, json.ProtoJSONUnmarshal([]byte(policy.config), &config))
-			p := &model.Plugin{
+			p := &grpcModel.Plugin{
 				Name:      "rate-limiting",
 				Protocols: []string{"http", "https"},
 				Enabled:   wrapperspb.Bool(true),
@@ -414,7 +414,7 @@ func TestValidate(t *testing.T) {
 		policies := []struct {
 			config       string
 			wantsErr     bool
-			expectedErrs []*model.ErrorDetail
+			expectedErrs []*grpcModel.ErrorDetail
 		}{
 			{
 				config: `{
@@ -444,9 +444,9 @@ func TestValidate(t *testing.T) {
 					"path": ""
 				}`,
 				wantsErr: true,
-				expectedErrs: []*model.ErrorDetail{
+				expectedErrs: []*grpcModel.ErrorDetail{
 					{
-						Type:  model.ErrorType_ERROR_TYPE_FIELD,
+						Type:  grpcModel.ErrorType_ERROR_TYPE_FIELD,
 						Field: "config.path",
 						Messages: []string{
 							"length must be at least 1",
@@ -461,9 +461,9 @@ func TestValidate(t *testing.T) {
 					"path": "path"
 				}`,
 				wantsErr: true,
-				expectedErrs: []*model.ErrorDetail{
+				expectedErrs: []*grpcModel.ErrorDetail{
 					{
-						Type:  model.ErrorType_ERROR_TYPE_FIELD,
+						Type:  grpcModel.ErrorType_ERROR_TYPE_FIELD,
 						Field: "config.path",
 						Messages: []string{
 							"should start with: /",
@@ -478,9 +478,9 @@ func TestValidate(t *testing.T) {
 					"path": "/path/200?"
 				}`,
 				wantsErr: true,
-				expectedErrs: []*model.ErrorDetail{
+				expectedErrs: []*grpcModel.ErrorDetail{
 					{
-						Type:  model.ErrorType_ERROR_TYPE_FIELD,
+						Type:  grpcModel.ErrorType_ERROR_TYPE_FIELD,
 						Field: "config.path",
 						Messages: []string{
 							"invalid path: '/path/200?' (characters outside of the reserved list of RFC 3986 found)",
@@ -495,9 +495,9 @@ func TestValidate(t *testing.T) {
 					"path": "/some%20words%"
 				}`,
 				wantsErr: true,
-				expectedErrs: []*model.ErrorDetail{
+				expectedErrs: []*grpcModel.ErrorDetail{
 					{
-						Type:  model.ErrorType_ERROR_TYPE_FIELD,
+						Type:  grpcModel.ErrorType_ERROR_TYPE_FIELD,
 						Field: "config.path",
 						Messages: []string{
 							"invalid url-encoded value: '%'",
@@ -512,9 +512,9 @@ func TestValidate(t *testing.T) {
 					"path": "/foo/bar//"
 				}`,
 				wantsErr: true,
-				expectedErrs: []*model.ErrorDetail{
+				expectedErrs: []*grpcModel.ErrorDetail{
 					{
-						Type:  model.ErrorType_ERROR_TYPE_FIELD,
+						Type:  grpcModel.ErrorType_ERROR_TYPE_FIELD,
 						Field: "config.path",
 						Messages: []string{
 							"must not have empty segments",
@@ -527,7 +527,7 @@ func TestValidate(t *testing.T) {
 		for _, policy := range policies {
 			var config structpb.Struct
 			require.Nil(t, json.ProtoJSONUnmarshal([]byte(policy.config), &config))
-			p := &model.Plugin{
+			p := &grpcModel.Plugin{
 				Name:      "rate-limiting",
 				Protocols: []string{"http", "https"},
 				Enabled:   wrapperspb.Bool(true),
@@ -548,7 +548,7 @@ func TestValidate(t *testing.T) {
 		policies := []struct {
 			config       string
 			wantsErr     bool
-			expectedErrs []*model.ErrorDetail
+			expectedErrs []*grpcModel.ErrorDetail
 		}{
 			{
 				config: `{
@@ -581,9 +581,9 @@ func TestValidate(t *testing.T) {
 					"policy": "cluster"
 				}`,
 				wantsErr: true,
-				expectedErrs: []*model.ErrorDetail{
+				expectedErrs: []*grpcModel.ErrorDetail{
 					{
-						Type:  model.ErrorType_ERROR_TYPE_FIELD,
+						Type:  grpcModel.ErrorType_ERROR_TYPE_FIELD,
 						Field: "config.policy",
 						Messages: []string{
 							"expected one of: local, redis",
@@ -596,7 +596,7 @@ func TestValidate(t *testing.T) {
 		for _, policy := range policies {
 			var config structpb.Struct
 			require.Nil(t, json.ProtoJSONUnmarshal([]byte(policy.config), &config))
-			p := &model.Plugin{
+			p := &grpcModel.Plugin{
 				Name:      "response-ratelimiting",
 				Protocols: []string{"http", "https"},
 				Enabled:   wrapperspb.Bool(true),
@@ -617,7 +617,7 @@ func TestValidate(t *testing.T) {
 		strategies := []struct {
 			config       string
 			wantsErr     bool
-			expectedErrs []*model.ErrorDetail
+			expectedErrs []*grpcModel.ErrorDetail
 		}{
 			{
 				config: `{
@@ -640,9 +640,9 @@ func TestValidate(t *testing.T) {
 					}
 				}`,
 				wantsErr: true,
-				expectedErrs: []*model.ErrorDetail{
+				expectedErrs: []*grpcModel.ErrorDetail{
 					{
-						Type:  model.ErrorType_ERROR_TYPE_FIELD,
+						Type:  grpcModel.ErrorType_ERROR_TYPE_FIELD,
 						Field: "config.memory.dictionary_name",
 						Messages: []string{
 							"length must be at least 1",
@@ -655,7 +655,7 @@ func TestValidate(t *testing.T) {
 		for _, strategy := range strategies {
 			var config structpb.Struct
 			require.Nil(t, json.ProtoJSONUnmarshal([]byte(strategy.config), &config))
-			p := &model.Plugin{
+			p := &grpcModel.Plugin{
 				Name:      "proxy-cache",
 				Protocols: []string{"http", "https"},
 				Enabled:   wrapperspb.Bool(true),
@@ -677,7 +677,7 @@ func TestValidate(t *testing.T) {
 			name         string
 			config       string
 			wantsErr     bool
-			expectedErrs []*model.ErrorDetail
+			expectedErrs []*grpcModel.ErrorDetail
 		}{
 			{
 				// test typedefs.sni
@@ -689,9 +689,9 @@ func TestValidate(t *testing.T) {
 					"redis_server_name": "192.0.2.1"
 				}`,
 				wantsErr: true,
-				expectedErrs: []*model.ErrorDetail{
+				expectedErrs: []*grpcModel.ErrorDetail{
 					{
-						Type:  model.ErrorType_ERROR_TYPE_FIELD,
+						Type:  grpcModel.ErrorType_ERROR_TYPE_FIELD,
 						Field: "config.redis_server_name",
 						Messages: []string{
 							"must not be an IP",
@@ -713,15 +713,15 @@ func TestValidate(t *testing.T) {
 					"redis_port": 99999999
 				}`,
 				wantsErr: true,
-				expectedErrs: []*model.ErrorDetail{
+				expectedErrs: []*grpcModel.ErrorDetail{
 					{
-						Type: model.ErrorType_ERROR_TYPE_ENTITY,
+						Type: grpcModel.ErrorType_ERROR_TYPE_ENTITY,
 						Messages: []string{
 							"failed conditional validation given value of field 'config.policy'",
 						},
 					},
 					{
-						Type:  model.ErrorType_ERROR_TYPE_FIELD,
+						Type:  grpcModel.ErrorType_ERROR_TYPE_FIELD,
 						Field: "config.redis_port",
 						Messages: []string{
 							"value should be between 0 and 65535",
@@ -753,23 +753,23 @@ func TestValidate(t *testing.T) {
 					]
 				}`,
 				wantsErr: true,
-				expectedErrs: []*model.ErrorDetail{
+				expectedErrs: []*grpcModel.ErrorDetail{
 					{
-						Type:  model.ErrorType_ERROR_TYPE_FIELD,
+						Type:  grpcModel.ErrorType_ERROR_TYPE_FIELD,
 						Field: "config.allow[0]",
 						Messages: []string{
 							"invalid ip or cidr range: '1.2.3.4.4'",
 						},
 					},
 					{
-						Type:  model.ErrorType_ERROR_TYPE_FIELD,
+						Type:  grpcModel.ErrorType_ERROR_TYPE_FIELD,
 						Field: "config.allow[1]",
 						Messages: []string{
 							"[3] = invalid ip or cidr range: '192.168.129.23/40'",
 						},
 					},
 					{
-						Type:  model.ErrorType_ERROR_TYPE_FIELD,
+						Type:  grpcModel.ErrorType_ERROR_TYPE_FIELD,
 						Field: "config.allow[2]",
 						Messages: []string{
 							"[4] = invalid ip or cidr range: 'asd'",
@@ -792,16 +792,16 @@ func TestValidate(t *testing.T) {
 					"api_uri": "acme"
 				}`,
 				wantsErr: true,
-				expectedErrs: []*model.ErrorDetail{
+				expectedErrs: []*grpcModel.ErrorDetail{
 					{
-						Type:  model.ErrorType_ERROR_TYPE_FIELD,
+						Type:  grpcModel.ErrorType_ERROR_TYPE_FIELD,
 						Field: "config.account_email",
 						Messages: []string{
 							"invalid value: example-example",
 						},
 					},
 					{
-						Type:  model.ErrorType_ERROR_TYPE_FIELD,
+						Type:  grpcModel.ErrorType_ERROR_TYPE_FIELD,
 						Field: "config.api_uri",
 						Messages: []string{
 							"missing host in url",
@@ -818,9 +818,9 @@ func TestValidate(t *testing.T) {
 					]
 				}`,
 				wantsErr: true,
-				expectedErrs: []*model.ErrorDetail{
+				expectedErrs: []*grpcModel.ErrorDetail{
 					{
-						Type:  model.ErrorType_ERROR_TYPE_FIELD,
+						Type:  grpcModel.ErrorType_ERROR_TYPE_FIELD,
 						Field: "config.key_names[0]",
 						Messages: []string{
 							"bad header name 'header!', allowed characters are A-Z, a-z, 0-9, '_', and '-'",
@@ -838,9 +838,9 @@ func TestValidate(t *testing.T) {
 					}
 				}`,
 				wantsErr: true,
-				expectedErrs: []*model.ErrorDetail{
+				expectedErrs: []*grpcModel.ErrorDetail{
 					{
-						Type:  model.ErrorType_ERROR_TYPE_FIELD,
+						Type:  grpcModel.ErrorType_ERROR_TYPE_FIELD,
 						Field: "config.custom_fields_by_lua",
 						Messages: []string{
 							`Error parsing function: lua-tree/share/lua/5.1/kong/tools/sandbox.lua:119:` +
@@ -853,7 +853,7 @@ func TestValidate(t *testing.T) {
 		for _, policy := range tt {
 			var config structpb.Struct
 			require.Nil(t, json.ProtoJSONUnmarshal([]byte(policy.config), &config))
-			p := &model.Plugin{
+			p := &grpcModel.Plugin{
 				Name:      policy.name,
 				Protocols: []string{"http", "https"},
 				Enabled:   wrapperspb.Bool(true),
@@ -902,9 +902,9 @@ func TestValidateSchema(t *testing.T) {
 			require.NotNil(t, err)
 			validationErr, ok := err.(validation.Error)
 			require.True(t, ok)
-			require.ElementsMatch(t, validationErr.Errs, []*model.ErrorDetail{
+			require.ElementsMatch(t, validationErr.Errs, []*grpcModel.ErrorDetail{
 				{
-					Type: model.ErrorType_ERROR_TYPE_ENTITY,
+					Type: grpcModel.ErrorType_ERROR_TYPE_ENTITY,
 					Messages: []string{
 						fmt.Sprintf("unique constraint failed: schema already exists for plugin '%s'", pluginName),
 					},
@@ -950,7 +950,7 @@ func TestValidateSchema(t *testing.T) {
 			assert.Len(t, pluginName, 0)
 			assert.Len(t, validationErr.Errs, 1)
 			assert.Len(t, validationErr.Errs[0].Messages, 1)
-			assert.Equal(t, model.ErrorType_ERROR_TYPE_FIELD, validationErr.Errs[0].Type)
+			assert.Equal(t, grpcModel.ErrorType_ERROR_TYPE_FIELD, validationErr.Errs[0].Type)
 			assert.Equal(t, "lua_schema", validationErr.Errs[0].Field)
 			assert.Contains(t, validationErr.Errs[0].Messages[0], test.errMessage)
 		}
