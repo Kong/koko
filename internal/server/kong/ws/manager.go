@@ -149,7 +149,7 @@ func (m *Manager) writeNode(node *Node) {
 
 func (m *Manager) setupPingHandler(node *Node) {
 	c := node.conn
-	c.SetPingHandler(func(appData string) error {
+	c.SetPingHandler(func(reportedHash string) error {
 		// code inspired from the upstream library
 		writeWait := time.Second
 		err := c.WriteControl(websocket.PongMessage, nil,
@@ -161,15 +161,18 @@ func (m *Manager) setupPingHandler(node *Node) {
 		}
 		loggerWithNode := nodeLogger(node, m.logger)
 		loggerWithNode.Info("websocket ping handler received hash",
-			zap.String("hash", appData))
+			zap.String("reported-hash", reportedHash))
 
-		node.lock.Lock()
-		node.hash, err = truncateHash(appData)
-		node.lock.Unlock()
+		hash, err := truncateHash(reportedHash)
 		if err != nil {
 			// Logging for now
-			loggerWithNode.With(zap.Error(err), zap.String("appData", appData)).
+			loggerWithNode.With(zap.Error(err),
+				zap.String("reported-hash", reportedHash)).
 				Error("ping handler: received invalid hash from kong data-plane")
+		} else {
+			node.lock.Lock()
+			node.hash = hash
+			node.lock.Unlock()
 		}
 		m.updateNodeStatus(node)
 
