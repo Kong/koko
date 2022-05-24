@@ -39,8 +39,8 @@ func (c *Configer) PingCP(
 	// find out the Node
 	// update the reported hash
 	c.Manager.logger.Debug("received PingCP method",
-						   zap.String("nodeAddr", peer.RemoteAddr().String()),
-						   zap.String("hash", req.Hash))
+		zap.String("nodeAddr", peer.RemoteAddr().String()),
+		zap.String("hash", req.Hash))
 	node, ok := c.Manager.FindNode(peer.RemoteAddr().String())
 	if !ok {
 		return nil, fmt.Errorf("can't find node from %v", peer.RemoteAddr())
@@ -67,7 +67,7 @@ func (c *Configer) ReportMetadata(
 	req *config_service.ReportMetadataRequest,
 ) (resp *config_service.ReportMetadataResponse, err error) {
 	c.Manager.logger.Debug("received ReportMetadata method",
-						   zap.String("nodeAddr", peer.RemoteAddr().String()))
+		zap.String("nodeAddr", peer.RemoteAddr().String()))
 	node, ok := c.Manager.pendingNodes.FindNode(peer.RemoteAddr().String())
 	if !ok {
 		return nil, fmt.Errorf("can't find node from %v", peer.RemoteAddr())
