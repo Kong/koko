@@ -2,6 +2,7 @@ package ws
 
 import (
 	"bytes"
+	"context"
 	"crypto/sha256"
 	"fmt"
 	"net"
@@ -10,8 +11,12 @@ import (
 
 	"github.com/gorilla/websocket"
 	"github.com/kong/go-wrpc/wrpc"
+	"github.com/kong/koko/internal/gen/wrpc/kong/model"
+	config_service "github.com/kong/koko/internal/gen/wrpc/kong/services/config/v1"
 	"github.com/kong/koko/internal/json"
+	"github.com/kong/koko/internal/server/kong/ws/config"
 	"go.uber.org/zap"
+	"google.golang.org/protobuf/encoding/protojson"
 )
 
 type sum [hashSize]byte
@@ -162,9 +167,6 @@ func (n *Node) readThread() error {
 // is different from the last one reported.
 // Used only on WebSocket protocol.
 func (n *Node) write(payload []byte, hash sum) error {
-	if n.conn == nil {
-		return fmt.Errorf("node.write is only for plain WebSocket nodes")
-	}
 	n.lock.RLock()
 	defer n.lock.RUnlock()
 
@@ -174,12 +176,38 @@ func (n *Node) write(payload []byte, hash sum) error {
 		return nil
 	}
 
-	err := n.conn.WriteMessage(websocket.BinaryMessage, payload)
-	if err != nil {
-		if wsCloseErr, ok := err.(*websocket.CloseError); ok {
-			return ErrConnClosed{Code: wsCloseErr.Code}
+	if n.conn != nil {
+		err := n.conn.WriteMessage(websocket.BinaryMessage, payload)
+		if err != nil {
+			if wsCloseErr, ok := err.(*websocket.CloseError); ok {
+				return ErrConnClosed{Code: wsCloseErr.Code}
+			}
+			return err
 		}
-		return err
+	}
+
+	if n.peer != nil {
+		uncomp, err := config.UncompressPayload(payload)
+		if err != nil {
+			n.logger.With(zap.Error(err)).Error("decompressing config payload")
+			return err
+		}
+
+		configTable := model.Config{}
+		err = protojson.Unmarshal(uncomp, &configTable)
+		if err != nil {
+			n.logger.With((zap.Error(err))).Error("unmarshaling config")
+			return err
+		}
+
+		c := config_service.ConfigServiceClient{Peer: n.peer}
+		_, err = c.SyncConfig(context.Background(), &config_service.SyncConfigRequest{
+			Config: &configTable,
+		})
+		if err != nil {
+			n.logger.With((zap.Error(err))).Error("calling SyncConfig")
+			return err
+		}
 	}
 	return nil
 }

@@ -348,7 +348,7 @@ func (m *Manager) broadcast() {
 			m.logger.With(zap.Error(err)).Sugar().Errorf("invalid hash [%v]", hash[:])
 			continue
 		}
-		err = node.write(payload.CompressedPayload, hash)
+		err = node.write(payload.CompressedPayload, hash) // nolint: contextcheck
 		if err != nil {
 			loggerWithNode.Error("broadcast to node failed", zap.Error(err))
 			// TODO(hbagdi: remove the node if connection has been closed?
