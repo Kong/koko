@@ -14,10 +14,14 @@ run:
 	go run main.go serve
 
 .PHONY: lint
-lint:
+lint: verify-tidy
 	buf format -d --exit-code
 	buf lint
 	./bin/golangci-lint run ./...
+
+.PHONY: verify-tidy
+verify-tidy:
+	./scripts/verify-tidy.sh
 
 .PHONY: all
 all: lint test
