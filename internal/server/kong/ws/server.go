@@ -66,29 +66,40 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			h.logger.With(zap.Error(err)).Error(
 				"write bad request response for websocket upgrade")
 		}
-		return
-	}
-	m, err := h.authenticator.Authenticate(r)
-	if err != nil {
-		h.respondWithErr(w, r, err)
-		return
-	}
-	c, err := upgrader.Upgrade(w, r, nil)
-	if err != nil {
-		h.logger.With(zap.Error(err)).Error("upgrade to websocket failed")
+		h.logger.Info("received invalid websocket upgrade request from DP",
+			zap.Error(err))
 		return
 	}
 
 	queryParams := r.URL.Query()
-	node := &Node{
-		ID:       queryParams.Get(nodeIDKey),
-		Hostname: queryParams.Get(nodeHostnameKey),
-		Version:  queryParams.Get(nodeVersionKey),
-		conn:     c,
-		logger: h.logger.With(
-			zap.String("client-ip", c.RemoteAddr().String()),
-		),
+	nodeID := queryParams.Get(nodeIDKey)
+	nodeHostname := queryParams.Get(nodeHostnameKey)
+	nodeVersion := queryParams.Get(nodeVersionKey)
+	loggerWithNode := h.logger.With(
+		zap.String("node-id", nodeID),
+		zap.String("node-hostname", nodeHostname),
+		zap.String("node-version", nodeVersion),
+	)
+
+	m, err := h.authenticator.Authenticate(r)
+	if err != nil {
+		h.respondWithErr(w, r, err)
+		loggerWithNode.Error("failed to authenticate DP node", zap.Error(err))
+		return
 	}
+	c, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		loggerWithNode.Error("failed to upgrade websocket connection", zap.Error(err))
+		return
+	}
+
+	node := &Node{
+		ID:       nodeID,
+		Hostname: nodeHostname,
+		Version:  nodeVersion,
+		conn:     c,
+	}
+	node.logger = nodeLogger(node, m.logger)
 	m.AddNode(node)
 }
 

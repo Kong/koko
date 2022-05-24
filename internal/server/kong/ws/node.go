@@ -65,6 +65,7 @@ func (n *Node) readThread() error {
 			}
 			return err
 		}
+		n.logger.Info("received message from DP")
 		n.logger.Sugar().Debugf("recv: %s", message)
 	}
 }

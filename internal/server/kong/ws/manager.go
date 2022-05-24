@@ -159,13 +159,16 @@ func (m *Manager) setupPingHandler(node *Node) {
 		} else if _, ok := err.(net.Error); ok {
 			return nil
 		}
-		m.logger.Debug("pingHandler received hash", zap.String("hash", appData))
+		loggerWithNode := nodeLogger(node, m.logger)
+		loggerWithNode.Info("websocket ping handler received hash",
+			zap.String("hash", appData))
+
 		node.lock.Lock()
 		node.hash, err = truncateHash(appData)
 		node.lock.Unlock()
 		if err != nil {
 			// Logging for now
-			m.logger.With(zap.Error(err), zap.String("appData", appData)).
+			loggerWithNode.With(zap.Error(err), zap.String("appData", appData)).
 				Error("ping handler: received invalid hash from kong data-plane")
 		}
 		m.updateNodeStatus(node)
@@ -174,10 +177,16 @@ func (m *Manager) setupPingHandler(node *Node) {
 	})
 }
 
-func (m *Manager) AddNode(node *Node) {
-	loggerWithNode := m.logger.With(
+func nodeLogger(node *Node, logger *zap.Logger) *zap.Logger {
+	return logger.With(
 		zap.String("node-id", node.ID),
+		zap.String("node-hostname", node.Hostname),
+		zap.String("node-version", node.Version),
 		zap.String("client-ip", node.conn.RemoteAddr().String()))
+}
+
+func (m *Manager) AddNode(node *Node) {
+	loggerWithNode := nodeLogger(node, m.logger)
 	// track each authenticated node
 	m.writeNode(node)
 	// check if node is compatible
@@ -237,9 +246,8 @@ func (m *Manager) broadcast() {
 			m.logger.With(zap.Error(err)).Error("unable to gather payload")
 			return
 		}
-		loggerWithNode := m.logger.With(zap.String("client-ip",
-			node.conn.RemoteAddr().String()))
-		loggerWithNode.Debug("broadcasting to node")
+		loggerWithNode := nodeLogger(node, m.logger)
+		loggerWithNode.Info("broadcasting to node")
 		// TODO(hbagdi): perf: use websocket.PreparedMessage
 		hash, err := truncateHash(payload.Hash)
 		if err != nil {
@@ -247,9 +255,10 @@ func (m *Manager) broadcast() {
 		}
 		err = node.write(payload.CompressedPayload, hash)
 		if err != nil {
-			m.logger.With(zap.Error(err)).Error("broadcast failed")
+			loggerWithNode.Error("broadcast to node failed", zap.Error(err))
 			// TODO(hbagdi: remove the node if connection has been closed?
 		}
+		loggerWithNode.Info("successfully sent payload to node")
 	}
 }
 
@@ -442,7 +451,7 @@ func (m *Manager) streamUpdateEvents(ctx context.Context, stream relay.
 		// TODO(hbagdi): make this concurrent, events can pile up and thrash
 		// caches unnecessarily
 		if up != nil {
-			m.logger.Debug("reconfigure event received")
+			m.logger.Info("reconfigure event received")
 			// TODO(hbagdi): add a rate-limiter to de-duplicate events in case
 			// of a short write burst
 			m.logger.Debug("reconcile payload")
@@ -462,7 +471,7 @@ func (m *Manager) streamUpdateEvents(ctx context.Context, stream relay.
 				// skip broadcasting if configuration could not be updated
 				continue
 			}
-			m.logger.Debug("broadcast configuration to all nodes")
+			m.logger.Info("broadcast configuration to all nodes")
 			go m.broadcast()
 		}
 	}
