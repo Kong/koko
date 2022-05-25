@@ -142,7 +142,7 @@ func entityErr(err interface{}) *model.ErrorDetail {
 		panic(fmt.Sprintf("expected '@entity' key to be []interface{} but got"+
 			" %T", err))
 	}
-	var messages []string
+	messages := make([]string, 0, len(errs))
 	for _, err := range errs {
 		message, ok := err.(string)
 		if !ok {

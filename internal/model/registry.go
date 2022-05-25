@@ -48,7 +48,7 @@ func NewObject(typ Type) (Object, error) {
 }
 
 func AllTypes() []Type {
-	var res []Type
+	res := make([]Type, 0, len(types))
 	for t := range types {
 		res = append(res, t)
 	}

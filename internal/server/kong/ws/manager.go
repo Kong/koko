@@ -515,7 +515,8 @@ func (m *Manager) getPluginList(node *Node) ([]string, error) {
 	if err != nil {
 		return nil, fmt.Errorf("unmarshal basic-info json message: %v", err)
 	}
-	var plugins []string
+
+	plugins := make([]string, 0, len(info.Plugins))
 	for _, p := range info.Plugins {
 		plugins = append(plugins, p.Name)
 	}

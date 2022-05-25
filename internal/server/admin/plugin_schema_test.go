@@ -188,7 +188,7 @@ func TestPluginSchema_List(t *testing.T) {
 	defer cleanup()
 	c := httpexpect.New(t, s.URL)
 
-	var pluginSchemaNames []string
+	pluginSchemaNames := make([]string, 0, 6)
 	for i := 1; i <= 6; i++ {
 		pluginName := fmt.Sprintf("plugin-schema-%d", i)
 		pluginSchemaBytes, err := json.ProtoJSONMarshal(goodPluginSchema(pluginName))
