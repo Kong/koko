@@ -5,6 +5,7 @@ import (
 	"embed"
 	"errors"
 	"fmt"
+	"regexp"
 	"sort"
 	"strings"
 	"time"
@@ -13,9 +14,13 @@ import (
 	goksPlugin "github.com/kong/goks/plugin"
 	grpcModel "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
 	"github.com/kong/koko/internal/json"
+	"github.com/kong/koko/internal/model"
 	"github.com/kong/koko/internal/model/json/validation"
+	"github.com/kong/koko/internal/plugin"
 	"github.com/kong/koko/internal/server/util"
+	"github.com/kong/koko/internal/store"
 	"go.uber.org/zap"
+	"google.golang.org/grpc/status"
 )
 
 type Opts struct {
@@ -31,6 +36,52 @@ type LuaValidator struct {
 	luaSchemaNames []string
 	storeLoader    util.StoreLoader
 }
+
+// TODO(fero): we need to come up with better isolation so we can use the resource package.
+// luaValidatorPluginSchema is used to mimic the resource PluginSchema in order to remove
+// a circular dependencies by bringing in the resource package.
+type luaValidatorPluginSchema struct {
+	PluginSchema *grpcModel.PluginSchema
+}
+
+func newLuaValidatorPluginSchema() luaValidatorPluginSchema {
+	return luaValidatorPluginSchema{
+		PluginSchema: &grpcModel.PluginSchema{},
+	}
+}
+
+func (r luaValidatorPluginSchema) ID() string {
+	return r.PluginSchema.Name
+}
+
+func (r luaValidatorPluginSchema) Type() model.Type {
+	return model.Type("plugin_schema") // Must match type of resource for store lookups
+}
+
+func (r luaValidatorPluginSchema) Resource() model.Resource {
+	return r.PluginSchema
+}
+
+// SetResource implements the Object.SetResource interface.
+func (r luaValidatorPluginSchema) SetResource(pr model.Resource) error {
+	return nil
+}
+
+func (r luaValidatorPluginSchema) Validate(ctx context.Context) error {
+	return nil
+}
+
+func (r luaValidatorPluginSchema) ProcessDefaults(ctx context.Context) error {
+	return nil
+}
+
+func (r luaValidatorPluginSchema) Indexes() []model.Index {
+	return []model.Index{}
+}
+
+const pluginNamePattern = `^[0-9a-zA-Z\-]*$`
+
+var pluginNameRegex = regexp.MustCompile(pluginNamePattern)
 
 func NewLuaValidator(opts Opts) (*LuaValidator, error) {
 	if opts.Logger == nil {
@@ -51,6 +102,10 @@ func NewLuaValidator(opts Opts) (*LuaValidator, error) {
 	}, nil
 }
 
+func (v *LuaValidator) SetStoreLoader(storeLoader util.StoreLoader) {
+	v.storeLoader = storeLoader
+}
+
 // Validate implements the Validator.Validate interface.
 func (v *LuaValidator) Validate(ctx context.Context, plugin *grpcModel.Plugin) error {
 	start := time.Now()
@@ -59,6 +114,8 @@ func (v *LuaValidator) Validate(ctx context.Context, plugin *grpcModel.Plugin) e
 			zap.Duration("validation-time", time.Since(start))).
 			Debug("plugin validated via lua VM")
 	}()
+	unloadLuaPluginSchema := v.loadLuaPluginSchema(ctx, plugin.Name)
+	defer unloadLuaPluginSchema()
 	pluginJSON, err := json.ProtoJSONMarshal(plugin)
 	if err != nil {
 		return fmt.Errorf("marshal JSON: %v", err)
@@ -203,6 +260,14 @@ func f(m map[string]interface{}) ([]*grpcModel.ErrorDetail, error) {
 
 // ProcessDefaults implements the Validator.ProcessDefaults interface.
 func (v *LuaValidator) ProcessDefaults(ctx context.Context, plugin *grpcModel.Plugin) error {
+	start := time.Now()
+	defer func() {
+		v.logger.With(zap.String("plugin", plugin.Name),
+			zap.Duration("process-defaults-time", time.Since(start))).
+			Debug("plugin defaults processed via lua VM")
+	}()
+	unloadLuaPluginSchema := v.loadLuaPluginSchema(ctx, plugin.Name)
+	defer unloadLuaPluginSchema()
 	pluginJSON, err := json.ProtoJSONMarshal(plugin)
 	if err != nil {
 		return fmt.Errorf("marshal JSON: %v", err)
@@ -283,4 +348,87 @@ func addLuaSchema(name string, schema string, rawLuaSchemas map[string][]byte, l
 	rawLuaSchemas[name] = []byte(schema)
 	*luaSchemaNames = append(*luaSchemaNames, name)
 	return nil
+}
+
+func (v *LuaValidator) getDB(ctx context.Context) (store.Store, error) {
+	// To ensure current tests can remain executing with a single validator a special case is being
+	// made to allow for a nil StoreLoader. This also ensures a panic will never occur when attempting
+	// to use a nil StoreLoader since it not being forced during instantiation on the LuaValidator.
+	if v.storeLoader == nil {
+		return nil, errors.New("invalid StoreLoader: store loader cannot be nil")
+	}
+
+	if ctx == nil {
+		return nil, errors.New("invalid context: cannot be nil")
+	}
+	reqCluster, ok := ctx.Value(plugin.ContextKeyCluster).(*grpcModel.RequestCluster)
+	if !ok {
+		return nil, errors.New("invalid context: failed to retrieve RequestCluster from context")
+	}
+
+	store, err := v.storeLoader.Load(ctx, reqCluster)
+	if err != nil {
+		if storeLoadErr, ok := err.(util.StoreLoadErr); ok {
+			return nil, status.Error(storeLoadErr.Code, storeLoadErr.Message)
+		}
+		return nil, err
+	}
+	return store, nil
+}
+
+func (v *LuaValidator) getPluginSchema(ctx context.Context, pluginName string) string {
+	db, err := v.getDB(ctx)
+	if err != nil {
+		v.logger.With(zap.Any("context", ctx)).
+			With(zap.String("name", pluginName)).
+			With(zap.Error(err)).Warn("retrieving database")
+		return ""
+	}
+	pluginName = strings.TrimSpace(pluginName)
+	if len(pluginName) == 0 {
+		v.logger.Debug("retrieving plugin schema failed: empty plugin name")
+		return ""
+	}
+	if !pluginNameRegex.MatchString(pluginName) {
+		v.logger.With(zap.String("name", pluginName)).Debug("retrieving plugin schema failed: invalid name")
+		return ""
+	}
+
+	ps := newLuaValidatorPluginSchema()
+	if err = db.Read(ctx, ps, store.GetByID(pluginName)); err != nil {
+		v.logger.With(zap.String("name", pluginName)).With(zap.Error(err)).Warn("retrieving plugin schema")
+	}
+	return ps.PluginSchema.LuaSchema
+}
+
+// loadLuaPluginSchema is used for non-bundled plugins. It will load a plugin schema from the StoreLoader
+// based on the plugin name and provide a mechanism to unload the schema from memory when goks operations
+// are complete. This method will never return an error in order to allow validation to pass to the
+// operations that are requesting a schema to load (e.g. Validate() and ProcessDefaults()).
+func (v *LuaValidator) loadLuaPluginSchema(ctx context.Context, pluginName string) func() {
+	if _, found := v.rawLuaSchemas[pluginName]; found {
+		// plugin schema is bundled and already loaded into memory
+		return func() {}
+	}
+
+	schema := v.getPluginSchema(ctx, pluginName)
+	if len(schema) == 0 {
+		// ensure the schema isn't loaded to allow validate error
+		return func() {}
+	}
+
+	if _, err := v.goksV.LoadSchema(schema); err != nil {
+		// load schema errors shouldn't trigger failure to allow validate error
+		return func() {}
+	}
+	unloadSchema := func() {
+		if err := v.goksV.UnloadSchema(pluginName); err != nil {
+			v.logger.With(zap.String("name", pluginName)).With(zap.Error(err)).Error("unloading plugin schema")
+		} else {
+			v.logger.With(zap.String("name", pluginName)).Debug("unloading plugin schema")
+		}
+	}
+
+	// Return the cleanup function for properly unloading the plugin schema
+	return unloadSchema
 }

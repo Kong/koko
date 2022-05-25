@@ -6,6 +6,12 @@ import (
 	model "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
 )
 
+type contextKey int
+
+const (
+	ContextKeyCluster contextKey = iota
+)
+
 // Validator handles various needs for plugin validation.
 type Validator interface {
 	// Validate executes the validate() Lua function for the given plugin.

@@ -8,28 +8,11 @@ import (
 	"github.com/google/uuid"
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
 	"github.com/kong/koko/internal/json"
-	"github.com/kong/koko/internal/log"
-	"github.com/kong/koko/internal/plugin"
-	"github.com/kong/koko/internal/plugin/validators"
-	"github.com/kong/koko/internal/resource"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )
-
-func init() {
-	validator, err := validators.NewLuaValidator(validators.Opts{Logger: log.Logger})
-	if err != nil {
-		panic(err)
-	}
-
-	err = validator.LoadSchemasFromEmbed(plugin.Schemas, "schemas")
-	if err != nil {
-		panic(err)
-	}
-	resource.SetValidator(validator)
-}
 
 func goodKeyAuthPlugin() *v1.Plugin {
 	return &v1.Plugin{
@@ -244,6 +227,52 @@ func TestPluginCreate(t *testing.T) {
 		body := res.JSON().Path("$.item").Object()
 		body.Value("id").Equal(plugin.Id)
 	})
+
+	t.Run("create a valid plugin from a non bundled schema", func(t *testing.T) {
+		res := c.POST("/v1/plugin-schemas/lua").WithJSON(goodPluginSchema("valid")).Expect()
+		res.Status(http.StatusCreated)
+
+		var config structpb.Struct
+		configString := `{"field": "non-bundled-plugin-configuration"}`
+		require.Nil(t, json.ProtoJSONUnmarshal([]byte(configString), &config))
+		plugin := &v1.Plugin{
+			Name:      "valid",
+			Protocols: []string{"http", "https"},
+			Config:    &config,
+		}
+		res = c.POST("/v1/plugins").WithJSON(plugin).Expect()
+		res.Status(http.StatusCreated)
+		body := res.JSON().Path("$.item").Object()
+		body.Value("name").Equal("valid")
+		cfg := body.Path("$.config").Object()
+		cfg.Value("field").Equal("non-bundled-plugin-configuration")
+	})
+
+	t.Run("fail to create a plugin from a non bundled schema", func(t *testing.T) {
+		res := c.POST("/v1/plugin-schemas/lua").WithJSON(goodPluginSchema("fail-validation")).Expect()
+		res.Status(http.StatusCreated)
+
+		var config structpb.Struct
+		configString := `{"non-existent-field": "non-bundled-plugin-configuration"}`
+		require.Nil(t, json.ProtoJSONUnmarshal([]byte(configString), &config))
+		plugin := &v1.Plugin{
+			Name:      "fail-validation",
+			Protocols: []string{"http", "https"},
+			Config:    &config,
+		}
+		res = c.POST("/v1/plugins").WithJSON(plugin).Expect()
+		res.Status(http.StatusBadRequest)
+		body := res.JSON().Object()
+		body.ValueEqual("message", "validation error")
+		body.Value("details").Array().Length().Equal(1)
+		errRes := body.Value("details").Array().Element(0)
+		errRes.Object().ValueEqual("type",
+			v1.ErrorType_ERROR_TYPE_FIELD.String())
+		errRes.Object().ValueEqual("field", "config.non-existent-field")
+		errRes.Object().ValueEqual("messages", []string{
+			"unknown field",
+		})
+	})
 }
 
 func TestPluginUpsert(t *testing.T) {
@@ -341,6 +370,58 @@ func TestPluginUpsert(t *testing.T) {
 		res.Status(http.StatusBadRequest)
 		body := res.JSON().Object()
 		body.ValueEqual("message", " '' is not a valid uuid")
+	})
+	t.Run("upsert a valid plugin from a non bundled schema", func(t *testing.T) {
+		res := c.POST("/v1/plugin-schemas/lua").WithJSON(goodPluginSchema("valid-upsert")).Expect()
+		res.Status(http.StatusCreated)
+
+		var config structpb.Struct
+		configString := `{"field": "non-bundled-plugin-configuration"}`
+		require.Nil(t, json.ProtoJSONUnmarshal([]byte(configString), &config))
+		plugin := &v1.Plugin{
+			Name:   "valid-upsert",
+			Config: &config,
+		}
+		res = c.PUT("/v1/plugins/" + uuid.NewString()).WithJSON(plugin).Expect()
+		res.Status(http.StatusOK)
+		body := res.JSON().Path("$.item").Object()
+		body.Value("name").Equal("valid-upsert")
+		cfg := body.Path("$.config").Object()
+		cfg.Value("field").Equal("non-bundled-plugin-configuration")
+	})
+	t.Run("update a valid plugin from a non bundled schema", func(t *testing.T) {
+		res := c.POST("/v1/plugin-schemas/lua").WithJSON(goodPluginSchema("valid-update")).Expect()
+		res.Status(http.StatusCreated)
+
+		id := uuid.NewString()
+		var config structpb.Struct
+		configString := `{"field": "non-bundled-plugin-configuration"}`
+		require.Nil(t, json.ProtoJSONUnmarshal([]byte(configString), &config))
+		plugin := &v1.Plugin{
+			Id:     id,
+			Name:   "valid-update",
+			Config: &config,
+		}
+		res = c.POST("/v1/plugins").WithJSON(plugin).Expect()
+		res.Status(http.StatusCreated)
+		body := res.JSON().Path("$.item").Object()
+		body.Value("name").Equal("valid-update")
+		cfg := body.Path("$.config").Object()
+		cfg.Value("field").Equal("non-bundled-plugin-configuration")
+
+		configString = `{"field": "updated-non-bundled-plugin-configuration"}`
+		require.Nil(t, json.ProtoJSONUnmarshal([]byte(configString), &config))
+		plugin = &v1.Plugin{
+			Id:     id,
+			Name:   "valid-update",
+			Config: &config,
+		}
+		res = c.PUT("/v1/plugins/" + id).WithJSON(plugin).Expect()
+		res.Status(http.StatusOK)
+		body = res.JSON().Path("$.item").Object()
+		body.Value("name").Equal("valid-update")
+		cfg = body.Path("$.config").Object()
+		cfg.Value("field").Equal("updated-non-bundled-plugin-configuration")
 	})
 }
 
