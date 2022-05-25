@@ -1,6 +1,7 @@
 package ws
 
 import (
+	"bytes"
 	"crypto/sha256"
 	"fmt"
 	"regexp"
@@ -74,7 +75,7 @@ func (n *Node) write(payload []byte, hash sum) error {
 	n.lock.RLock()
 	defer n.lock.RUnlock()
 
-	if n.hash == hash {
+	if bytes.Equal(n.hash[:], hash[:]) {
 		n.logger.With(zap.String("config_hash",
 			hash.String())).Info("hash matched, skipping update")
 		return nil

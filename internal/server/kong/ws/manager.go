@@ -247,7 +247,8 @@ func (m *Manager) broadcast() {
 			return
 		}
 		loggerWithNode := nodeLogger(node, m.logger)
-		loggerWithNode.Info("broadcasting to node")
+		loggerWithNode.Info("broadcasting to node",
+			zap.String("hash", payload.Hash))
 		// TODO(hbagdi): perf: use websocket.PreparedMessage
 		hash, err := truncateHash(payload.Hash)
 		if err != nil {
@@ -275,7 +276,14 @@ func (m *Manager) reconcileKongPayload(ctx context.Context) error {
 	}
 
 	m.updateExpectedHash(ctx, config.Hash)
-	return m.payload.UpdateBinary(config)
+	err = m.payload.UpdateBinary(config)
+	if err != nil {
+		return err
+	}
+	m.logger.Info("payload reconciled successfully",
+		zap.String("hash", config.Hash))
+
+	return nil
 }
 
 func (m *Manager) updateExpectedHash(ctx context.Context, hash string) {
@@ -287,6 +295,7 @@ func (m *Manager) updateExpectedHash(ctx context.Context, hash string) {
 	// TODO(hbagdi): add retry with backoff, take a new hash during retry into account
 	ctx, cancel := context.WithTimeout(ctx, defaultRequestTimeout)
 	defer cancel()
+	m.logger.Info("update expected hash in database", zap.String("hash", hash))
 	_, err := m.configClient.Status.UpdateExpectedHash(ctx, &relay.UpdateExpectedHashRequest{
 		Cluster: m.reqCluster(),
 		Hash:    hash,
