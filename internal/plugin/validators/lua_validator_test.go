@@ -18,6 +18,7 @@ import (
 	"github.com/kong/koko/internal/model/json/validation"
 	"github.com/kong/koko/internal/plugin"
 	"github.com/kong/koko/internal/plugin/validators/testdata"
+	"github.com/kong/koko/internal/resource"
 	serverUtil "github.com/kong/koko/internal/server/util"
 	"github.com/kong/koko/internal/store"
 	"github.com/kong/koko/internal/test/util"
@@ -63,7 +64,7 @@ func init() {
 
 	// PluginSchema may already be registered; safe to ignore error
 	_ = model.RegisterType("plugin_schema", &grpcModel.PluginSchema{}, func() model.Object {
-		return newLuaValidatorPluginSchema()
+		return resource.NewPluginSchema()
 	})
 }
 
@@ -81,7 +82,7 @@ func goodPluginSchema(name string) string {
 }
 
 func insertPluginSchema(t *testing.T, name string, schema string, storeLoader serverUtil.StoreLoader) error {
-	pluginSchema := newLuaValidatorPluginSchema()
+	pluginSchema := resource.NewPluginSchema()
 	pluginSchema.PluginSchema.Name = name
 	pluginSchema.PluginSchema.LuaSchema = schema
 
@@ -187,14 +188,18 @@ func TestProcessAutoFields(t *testing.T) {
 	t.Run("injects default fields for a non bundled plugin using a plugin schema ", func(t *testing.T) {
 		storeLoader := setupStoreLoader(t)
 		require.NotNil(t, storeLoader)
-		err := insertPluginSchema(t, "non-bundled", goodPluginSchema("non-bundled"), storeLoader)
-		require.NoError(t, err)
+
 		validator, err := NewLuaValidator(Opts{
 			Logger:      log.Logger,
 			StoreLoader: storeLoader,
 		})
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		require.NotNil(t, validator)
+
+		resource.SetValidator(validator)
+
+		err = insertPluginSchema(t, "non-bundled", goodPluginSchema("non-bundled"), storeLoader)
+		assert.NoError(t, err)
 
 		plugin := &grpcModel.Plugin{
 			Name:      "non-bundled",
@@ -1180,7 +1185,7 @@ func TestLuaValidator_LoadLuaPluginSchemaNoStoreLoader(t *testing.T) {
 func TestLuaValidator_LoadLuaPluginSchema(t *testing.T) {
 	storeLoader := setupStoreLoader(t)
 	require.NotNil(t, storeLoader)
-	goodValidator.SetStoreLoader(storeLoader)
+	goodValidator.storeLoader = storeLoader
 
 	t.Run("bundled plugin schema does not throw error", func(t *testing.T) {
 		cleanup := goodValidator.loadLuaPluginSchema(getValidContext(), "acl")
@@ -1219,7 +1224,7 @@ func TestLuaValidator_LoadLuaPluginSchema(t *testing.T) {
 func TestLuaValidator_GetPluginSchema(t *testing.T) {
 	storeLoader := setupStoreLoader(t)
 	require.NotNil(t, storeLoader)
-	goodValidator.SetStoreLoader(storeLoader)
+	goodValidator.storeLoader = storeLoader
 
 	t.Run("bundled plugin schema returns empty string", func(t *testing.T) {
 		schema := goodValidator.getPluginSchema(getValidContext(), "plugin-name")
@@ -1253,8 +1258,7 @@ func TestLuaValidator_GetPluginSchema(t *testing.T) {
 func TestLuaValidator_GetDB(t *testing.T) {
 	storeLoader := setupStoreLoader(t)
 	require.NotNil(t, storeLoader)
-	goodValidator.SetStoreLoader(storeLoader)
-
+	goodValidator.storeLoader = storeLoader
 	t.Run("context not containing RequestCluster returns error", func(t *testing.T) {
 		db, err := goodValidator.getDB(context.Background())
 		assert.Nil(t, db)

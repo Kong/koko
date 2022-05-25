@@ -5,7 +5,6 @@ import (
 	"embed"
 	"errors"
 	"fmt"
-	"regexp"
 	"sort"
 	"strings"
 	"time"
@@ -14,9 +13,9 @@ import (
 	goksPlugin "github.com/kong/goks/plugin"
 	grpcModel "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
 	"github.com/kong/koko/internal/json"
-	"github.com/kong/koko/internal/model"
 	"github.com/kong/koko/internal/model/json/validation"
 	"github.com/kong/koko/internal/plugin"
+	"github.com/kong/koko/internal/resource"
 	"github.com/kong/koko/internal/server/util"
 	"github.com/kong/koko/internal/store"
 	"go.uber.org/zap"
@@ -35,53 +34,12 @@ type LuaValidator struct {
 	rawLuaSchemas  map[string][]byte
 	luaSchemaNames []string
 	storeLoader    util.StoreLoader
+
+	// customPluginCheckMu ensures that only a single custom plugin schema is
+	// loaded and checked at a time.
+	// customPluginCheckMu sync.Mutex
+	// TODO(hbagdi): implement this
 }
-
-// TODO(fero): we need to come up with better isolation so we can use the resource package.
-// luaValidatorPluginSchema is used to mimic the resource PluginSchema in order to remove
-// a circular dependencies by bringing in the resource package.
-type luaValidatorPluginSchema struct {
-	PluginSchema *grpcModel.PluginSchema
-}
-
-func newLuaValidatorPluginSchema() luaValidatorPluginSchema {
-	return luaValidatorPluginSchema{
-		PluginSchema: &grpcModel.PluginSchema{},
-	}
-}
-
-func (r luaValidatorPluginSchema) ID() string {
-	return r.PluginSchema.Name
-}
-
-func (r luaValidatorPluginSchema) Type() model.Type {
-	return model.Type("plugin_schema") // Must match type of resource for store lookups
-}
-
-func (r luaValidatorPluginSchema) Resource() model.Resource {
-	return r.PluginSchema
-}
-
-// SetResource implements the Object.SetResource interface.
-func (r luaValidatorPluginSchema) SetResource(pr model.Resource) error {
-	return nil
-}
-
-func (r luaValidatorPluginSchema) Validate(ctx context.Context) error {
-	return nil
-}
-
-func (r luaValidatorPluginSchema) ProcessDefaults(ctx context.Context) error {
-	return nil
-}
-
-func (r luaValidatorPluginSchema) Indexes() []model.Index {
-	return []model.Index{}
-}
-
-const pluginNamePattern = `^[0-9a-zA-Z\-]*$`
-
-var pluginNameRegex = regexp.MustCompile(pluginNamePattern)
 
 func NewLuaValidator(opts Opts) (*LuaValidator, error) {
 	if opts.Logger == nil {
@@ -389,12 +347,8 @@ func (v *LuaValidator) getPluginSchema(ctx context.Context, pluginName string) s
 		v.logger.Debug("retrieving plugin schema failed: empty plugin name")
 		return ""
 	}
-	if !pluginNameRegex.MatchString(pluginName) {
-		v.logger.With(zap.String("name", pluginName)).Debug("retrieving plugin schema failed: invalid name")
-		return ""
-	}
 
-	ps := newLuaValidatorPluginSchema()
+	ps := resource.NewPluginSchema()
 	if err = db.Read(ctx, ps, store.GetByID(pluginName)); err != nil {
 		v.logger.With(zap.String("name", pluginName)).With(zap.Error(err)).Warn("retrieving plugin schema")
 	}
