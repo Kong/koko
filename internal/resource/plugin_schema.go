@@ -106,7 +106,7 @@ func init() {
 	pluginSchema := &generator.Schema{
 		Type: "object",
 		Properties: map[string]*generator.Schema{
-			"name": typedefs.Name,
+			"name": pluginName,
 			"lua_schema": {
 				Type:      "string",
 				MaxLength: maxPluginSchemaSize,

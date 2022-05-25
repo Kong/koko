@@ -14,7 +14,7 @@
     "name": {
       "maxLength": 128,
       "minLength": 1,
-      "pattern": "^[0-9a-zA-Z.\\-_~]*$",
+      "pattern": "^[0-9a-zA-Z\\-]*$",
       "type": "string"
     },
     "updated_at": {

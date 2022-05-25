@@ -355,7 +355,7 @@ func TestValidateJSONSchema(t *testing.T) {
 			errDetail.Value("field").String().Equal("name")
 			messages = errDetail.Value("messages").Array()
 			messages.Length().Equal(1)
-			messages.First().String().Equal("must match pattern '^[0-9a-zA-Z.\\-_~]*$'")
+			messages.First().String().Equal("must match pattern '^[0-9a-zA-Z\\-]*$'")
 
 			errDetail = errRes.Element(2).Object()
 			errDetail.Value("type").String().Equal(v1.ErrorType_ERROR_TYPE_FIELD.String())
