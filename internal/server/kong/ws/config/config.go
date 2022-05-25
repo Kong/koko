@@ -25,7 +25,7 @@ type CachedContent struct {
 type Payload struct {
 	content Content
 	cache   map[string]CachedContent
-	mu      sync.RWMutex
+	mu      sync.Mutex
 	vc      VersionCompatibility
 }
 
@@ -45,8 +45,8 @@ func NewPayload(opts PayloadOpts) (*Payload, error) {
 }
 
 func (p *Payload) Payload(versionStr string) (Content, error) {
-	p.mu.RLock()
-	defer p.mu.RUnlock()
+	p.mu.Lock()
+	defer p.mu.Unlock()
 
 	if _, found := p.cache[versionStr]; !found {
 		updatedPayload, err := p.vc.ProcessConfigTableUpdates(versionStr, p.content.CompressedPayload)
