@@ -71,8 +71,8 @@ func (n *Node) readThread() error {
 }
 
 func (n *Node) write(payload []byte, hash sum) error {
-	n.lock.Lock()
-	defer n.lock.Unlock()
+	n.lock.RLock()
+	defer n.lock.RUnlock()
 
 	if n.hash == hash {
 		n.logger.With(zap.String("config_hash",
@@ -87,6 +87,5 @@ func (n *Node) write(payload []byte, hash sum) error {
 		}
 		return err
 	}
-	n.hash = hash
 	return nil
 }
