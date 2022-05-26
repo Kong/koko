@@ -289,6 +289,23 @@ func (v *LuaValidator) GetRawLuaSchema(ctx context.Context, name string) ([]byte
 	return rawLuaSchema, nil
 }
 
+// GetNonBundledRawLuaSchema implements the Validator.GetNonBundledRawLuaSchema interface.
+func (v *LuaValidator) GetNonBundledRawLuaSchema(ctx context.Context, name string) ([]byte, error) {
+	start := time.Now()
+	defer func() {
+		v.logger.With(zap.String("plugin", name),
+			zap.Duration("get-non-bundled-schema-time", time.Since(start))).
+			Debug("non-bundled schema retrieved via lua VM")
+	}()
+	unloadLuaPluginSchema := v.loadLuaPluginSchema(ctx, name)
+	defer unloadLuaPluginSchema()
+	pluginSchema, err := v.goksV.SchemaAsJSON(name)
+	if err != nil {
+		return []byte{}, fmt.Errorf("raw Lua schema not found for non-bundled plugin: '%s'", name)
+	}
+	return []byte(pluginSchema), nil
+}
+
 // GetAvailablePluginNames implements the Validator.GetAvailablePluginNames interface.
 func (v *LuaValidator) GetAvailablePluginNames(ctx context.Context) []string {
 	return v.luaSchemaNames

@@ -11,8 +11,8 @@ import (
 	"github.com/kong/koko/internal/plugin"
 	"github.com/kong/koko/internal/resource"
 	"github.com/kong/koko/internal/server/util"
+	"github.com/kong/koko/internal/store"
 	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
@@ -21,8 +21,9 @@ import (
 
 type SchemasService struct {
 	v1.UnimplementedSchemasServiceServer
-	loggerFields []zapcore.Field
-	validator    plugin.Validator
+	validator plugin.Validator
+
+	CommonOpts
 }
 
 func (s *SchemasService) GetSchemas(ctx context.Context,
@@ -67,10 +68,13 @@ func (s *SchemasService) GetLuaSchemasPlugin(ctx context.Context,
 	s.logger(ctx).With(zap.String("name", req.Name)).Debug("reading Lua plugin schema by name")
 	rawLuaSchema, err := s.validator.GetRawLuaSchema(ctx, req.Name)
 	if err != nil {
-		return nil, status.Errorf(codes.NotFound, "no plugin named '%s'", req.Name)
+		// check if the plugin is a non-bundled one
+		rawLuaSchema, err = s.getNonBundledSchema(ctx, req)
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	// Convert the raw Lua (JSON) into a map/struct and return response
 	luaSchema := &structpb.Struct{}
 	err = json.ProtoJSONUnmarshal(rawLuaSchema, luaSchema)
 	if err != nil {
@@ -79,6 +83,21 @@ func (s *SchemasService) GetLuaSchemasPlugin(ctx context.Context,
 	return &v1.GetLuaSchemasPluginResponse{
 		Schema: luaSchema,
 	}, nil
+}
+
+func (s *SchemasService) getNonBundledSchema(
+	ctx context.Context, req *v1.GetLuaSchemasPluginRequest,
+) ([]byte, error) {
+	db, err := s.CommonOpts.getDB(ctx, req.Cluster)
+	if err != nil {
+		return nil, err
+	}
+	res := resource.NewPluginSchema()
+	ctx = context.WithValue(ctx, util.ContextKeyCluster, req.Cluster)
+	if err := db.Read(ctx, res, store.GetByID(req.Name)); err != nil {
+		return nil, status.Errorf(codes.NotFound, "no plugin named '%s'", req.Name)
+	}
+	return s.validator.GetNonBundledRawLuaSchema(ctx, req.Name)
 }
 
 func (s *SchemasService) ValidateLuaPlugin(
