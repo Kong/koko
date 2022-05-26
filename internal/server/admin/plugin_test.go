@@ -862,8 +862,9 @@ func TestPluginListByConsumer(t *testing.T) {
 		Expect().Status(http.StatusOK).JSON().Object()
 	items := body.Value("items").Array()
 	items.Length().Equal(2)
-	var gotIDs []string
-	for _, item := range items.Iter() {
+	itemArr := items.Iter()
+	gotIDs := make([]string, 0, len(itemArr))
+	for _, item := range itemArr {
 		gotIDs = append(gotIDs, item.Object().Value("id").String().Raw())
 	}
 	require.ElementsMatch(t, []string{PluginIDOne, PluginIDTwo}, gotIDs)
@@ -875,8 +876,9 @@ func TestAvailablePlugins(t *testing.T) {
 
 	c := httpexpect.New(t, s.URL)
 	body := c.GET("/v1/available-plugins").Expect().Status(http.StatusOK).JSON().Object()
-	var actual []string
-	for _, item := range body.Value("names").Array().Iter() {
+	names := body.Value("names").Array().Iter()
+	actual := make([]string, 0, len(names))
+	for _, item := range names {
 		actual = append(actual, item.String().Raw())
 	}
 

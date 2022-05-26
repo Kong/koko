@@ -15,7 +15,7 @@ func ParsePEMCert(cert []byte) (*x509.Certificate, error) {
 }
 
 func ParsePEMCerts(certs ...[]byte) ([]*x509.Certificate, error) {
-	var res []*x509.Certificate
+	res := make([]*x509.Certificate, 0, len(certs))
 	for _, cert := range certs {
 		cert, err := ParsePEMCert(cert)
 		if err != nil {

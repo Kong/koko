@@ -71,7 +71,7 @@ func TestCleanupNodes(t *testing.T) {
 		require.NotNil(t, res)
 	}
 
-	var expectedLiveNodeIDs []string
+	expectedLiveNodeIDs := make([]string, 0, 2)
 	liveNodePing := int32(time.Now().Unix())
 	for i := 0; i < 2; i++ {
 		id := uuid.NewString()
