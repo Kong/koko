@@ -255,6 +255,43 @@ func TestPluginSchema_Put(t *testing.T) {
 		validatePluginSchema("put-new-lua-plugin", "string", body)
 	})
 
+	t.Run("creating a Lua plugin schema with a missing schema fails", func(t *testing.T) {
+		res := c.PUT("/v1/plugin-schemas/lua/" + "put-missing-schema-lua-plugin").Expect()
+		res.Status(http.StatusBadRequest)
+		body := res.JSON().Object()
+		body.ValueEqual("message", "validation error")
+		body.Value("details").Array().Length().Equal(1)
+		resErr := body.Value("details").Array().Element(0)
+		resErr.Object().ValueEqual("type", v1.ErrorType_ERROR_TYPE_ENTITY.String())
+		resErr.Object().ValueEqual("messages", []string{
+			"missing properties: 'lua_schema'",
+		})
+	})
+
+	t.Run("creating Lua plugin schema should fail for bundled plugin schemas", func(t *testing.T) {
+		schemaFiles, _ := plugin.Schemas.ReadDir("schemas")
+		for _, schemaFile := range schemaFiles {
+			name := schemaFile.Name()
+			pluginName := name[:len(name)-len(filepath.Ext(name))]
+			schema, _ := plugin.Schemas.ReadFile("schemas/" + name)
+
+			pluginSchemaBytes, err := json.ProtoJSONMarshal(&v1.PluginSchema{
+				LuaSchema: string(schema),
+			})
+			assert.NoError(t, err)
+			res := c.PUT("/v1/plugin-schemas/lua/" + pluginName).WithBytes(pluginSchemaBytes).Expect()
+			res.Status(http.StatusBadRequest)
+			body := res.JSON().Object()
+			body.ValueEqual("message", "validation error")
+			body.Value("details").Array().Length().Equal(1)
+			resErr := body.Value("details").Array().Element(0)
+			resErr.Object().ValueEqual("type", v1.ErrorType_ERROR_TYPE_ENTITY.String())
+			resErr.Object().ValueEqual("messages", []string{
+				fmt.Sprintf("unique constraint failed: schema already exists for plugin '%s'", pluginName),
+			})
+		}
+	})
+
 	t.Run("create and update", func(t *testing.T) {
 		// Create an instance
 		pluginSchemaBytes, err := json.ProtoJSONMarshal(goodPluginSchema("put-again-lua-plugin", "string"))
@@ -275,5 +312,30 @@ func TestPluginSchema_Put(t *testing.T) {
 		res.Header("grpc-metadata-koko-status-code").Empty()
 		body = res.JSON().Path("$.item").Object()
 		validatePluginSchema("put-again-lua-plugin", "number", body)
+	})
+
+	t.Run("updating a valid schema with an empty one fails", func(t *testing.T) {
+		const name = "replace-with-empty-schema-lua-plugin"
+		// Create an instance
+		pluginSchemaBytes, err := json.ProtoJSONMarshal(goodPluginSchema(name, "string"))
+		assert.NoError(t, err)
+
+		res := c.PUT("/v1/plugin-schemas/lua/" + name).WithBytes(pluginSchemaBytes).Expect()
+		res.Status(http.StatusOK)
+
+		body := res.JSON().Path("$.item").Object()
+		validatePluginSchema(name, "string", body)
+
+		// put again, without schema
+		res = c.PUT("/v1/plugin-schemas/lua/" + name).Expect()
+		res.Status(http.StatusBadRequest)
+		body = res.JSON().Object()
+		body.ValueEqual("message", "validation error")
+		body.Value("details").Array().Length().Equal(1)
+		resErr := body.Value("details").Array().Element(0)
+		resErr.Object().ValueEqual("type", v1.ErrorType_ERROR_TYPE_ENTITY.String())
+		resErr.Object().ValueEqual("messages", []string{
+			"missing properties: 'lua_schema'",
+		})
 	})
 }
