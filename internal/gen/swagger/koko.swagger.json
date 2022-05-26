@@ -2068,6 +2068,12 @@
             "in": "path",
             "required": true,
             "type": "string"
+          },
+          {
+            "name": "cluster.id",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [

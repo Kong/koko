@@ -6,6 +6,7 @@ import "google/api/annotations.proto";
 import "google/protobuf/struct.proto";
 import "kong/admin/model/v1/ca_certificate.proto";
 import "kong/admin/model/v1/certificate.proto";
+import "kong/admin/model/v1/cluster.proto";
 import "kong/admin/model/v1/consumer.proto";
 import "kong/admin/model/v1/hash.proto";
 import "kong/admin/model/v1/node.proto";
@@ -115,6 +116,7 @@ message GetSchemasResponse {
 
 message GetLuaSchemasPluginRequest {
   string name = 1;
+  model.v1.RequestCluster cluster = 2;
 }
 
 message GetLuaSchemasPluginResponse {
