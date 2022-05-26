@@ -116,9 +116,9 @@ func pluginSchemasFromObjects(objects []model.Object) []*pb.PluginSchema {
 	return res
 }
 
-func (s *PluginSchemaService) UpdateLuaPluginSchema(ctx context.Context,
-	req *v1.UpdateLuaPluginSchemaRequest,
-) (*v1.UpdateLuaPluginSchemaResponse, error) {
+func (s *PluginSchemaService) UpsertLuaPluginSchema(ctx context.Context,
+	req *v1.UpsertLuaPluginSchemaRequest,
+) (*v1.UpsertLuaPluginSchemaResponse, error) {
 	if req.Name == "" {
 		return nil, s.err(ctx, util.ErrClient{Message: "required name is missing"})
 	}
@@ -141,7 +141,7 @@ func (s *PluginSchemaService) UpdateLuaPluginSchema(ctx context.Context,
 		return nil, s.err(ctx, err)
 	}
 
-	return &v1.UpdateLuaPluginSchemaResponse{
+	return &v1.UpsertLuaPluginSchemaResponse{
 		Item: res.PluginSchema,
 	}, nil
 }

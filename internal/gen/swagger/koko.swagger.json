@@ -1108,12 +1108,12 @@
         ]
       },
       "put": {
-        "operationId": "PluginSchemaService_UpdateLuaPluginSchema",
+        "operationId": "PluginSchemaService_UpsertLuaPluginSchema",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/kong.admin.service.v1.UpdateLuaPluginSchemaResponse"
+              "$ref": "#/definitions/kong.admin.service.v1.UpsertLuaPluginSchemaResponse"
             }
           },
           "default": {
@@ -4393,14 +4393,6 @@
         }
       }
     },
-    "kong.admin.service.v1.UpdateLuaPluginSchemaResponse": {
-      "type": "object",
-      "properties": {
-        "item": {
-          "$ref": "#/definitions/kong.admin.model.v1.PluginSchema"
-        }
-      }
-    },
     "kong.admin.service.v1.UpsertCACertificateResponse": {
       "type": "object",
       "properties": {
@@ -4422,6 +4414,14 @@
       "properties": {
         "item": {
           "$ref": "#/definitions/kong.admin.model.v1.Consumer"
+        }
+      }
+    },
+    "kong.admin.service.v1.UpsertLuaPluginSchemaResponse": {
+      "type": "object",
+      "properties": {
+        "item": {
+          "$ref": "#/definitions/kong.admin.model.v1.PluginSchema"
         }
       }
     },

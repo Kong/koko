@@ -336,7 +336,7 @@ func (x *ListLuaPluginSchemasResponse) GetPage() *v1.PaginationResponse {
 	return nil
 }
 
-type UpdateLuaPluginSchemaRequest struct {
+type UpsertLuaPluginSchemaRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
@@ -346,8 +346,8 @@ type UpdateLuaPluginSchemaRequest struct {
 	Cluster *v1.RequestCluster `protobuf:"bytes,3,opt,name=cluster,proto3" json:"cluster,omitempty"`
 }
 
-func (x *UpdateLuaPluginSchemaRequest) Reset() {
-	*x = UpdateLuaPluginSchemaRequest{}
+func (x *UpsertLuaPluginSchemaRequest) Reset() {
+	*x = UpsertLuaPluginSchemaRequest{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_kong_admin_service_v1_plugin_schema_proto_msgTypes[6]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -355,13 +355,13 @@ func (x *UpdateLuaPluginSchemaRequest) Reset() {
 	}
 }
 
-func (x *UpdateLuaPluginSchemaRequest) String() string {
+func (x *UpsertLuaPluginSchemaRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*UpdateLuaPluginSchemaRequest) ProtoMessage() {}
+func (*UpsertLuaPluginSchemaRequest) ProtoMessage() {}
 
-func (x *UpdateLuaPluginSchemaRequest) ProtoReflect() protoreflect.Message {
+func (x *UpsertLuaPluginSchemaRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_kong_admin_service_v1_plugin_schema_proto_msgTypes[6]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -373,33 +373,33 @@ func (x *UpdateLuaPluginSchemaRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use UpdateLuaPluginSchemaRequest.ProtoReflect.Descriptor instead.
-func (*UpdateLuaPluginSchemaRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use UpsertLuaPluginSchemaRequest.ProtoReflect.Descriptor instead.
+func (*UpsertLuaPluginSchemaRequest) Descriptor() ([]byte, []int) {
 	return file_kong_admin_service_v1_plugin_schema_proto_rawDescGZIP(), []int{6}
 }
 
-func (x *UpdateLuaPluginSchemaRequest) GetName() string {
+func (x *UpsertLuaPluginSchemaRequest) GetName() string {
 	if x != nil {
 		return x.Name
 	}
 	return ""
 }
 
-func (x *UpdateLuaPluginSchemaRequest) GetItem() *v1.PluginSchema {
+func (x *UpsertLuaPluginSchemaRequest) GetItem() *v1.PluginSchema {
 	if x != nil {
 		return x.Item
 	}
 	return nil
 }
 
-func (x *UpdateLuaPluginSchemaRequest) GetCluster() *v1.RequestCluster {
+func (x *UpsertLuaPluginSchemaRequest) GetCluster() *v1.RequestCluster {
 	if x != nil {
 		return x.Cluster
 	}
 	return nil
 }
 
-type UpdateLuaPluginSchemaResponse struct {
+type UpsertLuaPluginSchemaResponse struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
@@ -407,8 +407,8 @@ type UpdateLuaPluginSchemaResponse struct {
 	Item *v1.PluginSchema `protobuf:"bytes,1,opt,name=item,proto3" json:"item,omitempty"`
 }
 
-func (x *UpdateLuaPluginSchemaResponse) Reset() {
-	*x = UpdateLuaPluginSchemaResponse{}
+func (x *UpsertLuaPluginSchemaResponse) Reset() {
+	*x = UpsertLuaPluginSchemaResponse{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_kong_admin_service_v1_plugin_schema_proto_msgTypes[7]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -416,13 +416,13 @@ func (x *UpdateLuaPluginSchemaResponse) Reset() {
 	}
 }
 
-func (x *UpdateLuaPluginSchemaResponse) String() string {
+func (x *UpsertLuaPluginSchemaResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*UpdateLuaPluginSchemaResponse) ProtoMessage() {}
+func (*UpsertLuaPluginSchemaResponse) ProtoMessage() {}
 
-func (x *UpdateLuaPluginSchemaResponse) ProtoReflect() protoreflect.Message {
+func (x *UpsertLuaPluginSchemaResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_kong_admin_service_v1_plugin_schema_proto_msgTypes[7]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -434,12 +434,12 @@ func (x *UpdateLuaPluginSchemaResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use UpdateLuaPluginSchemaResponse.ProtoReflect.Descriptor instead.
-func (*UpdateLuaPluginSchemaResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use UpsertLuaPluginSchemaResponse.ProtoReflect.Descriptor instead.
+func (*UpsertLuaPluginSchemaResponse) Descriptor() ([]byte, []int) {
 	return file_kong_admin_service_v1_plugin_schema_proto_rawDescGZIP(), []int{7}
 }
 
-func (x *UpdateLuaPluginSchemaResponse) GetItem() *v1.PluginSchema {
+func (x *UpsertLuaPluginSchemaResponse) GetItem() *v1.PluginSchema {
 	if x != nil {
 		return x.Item
 	}
@@ -508,8 +508,8 @@ var file_kong_admin_service_v1_plugin_schema_proto_rawDesc = []byte{
 	0x61, 0x67, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x27, 0x2e, 0x6b, 0x6f, 0x6e, 0x67,
 	0x2e, 0x61, 0x64, 0x6d, 0x69, 0x6e, 0x2e, 0x6d, 0x6f, 0x64, 0x65, 0x6c, 0x2e, 0x76, 0x31, 0x2e,
 	0x50, 0x61, 0x67, 0x69, 0x6e, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e,
-	0x73, 0x65, 0x52, 0x04, 0x70, 0x61, 0x67, 0x65, 0x22, 0xa8, 0x01, 0x0a, 0x1c, 0x55, 0x70, 0x64,
-	0x61, 0x74, 0x65, 0x4c, 0x75, 0x61, 0x50, 0x6c, 0x75, 0x67, 0x69, 0x6e, 0x53, 0x63, 0x68, 0x65,
+	0x73, 0x65, 0x52, 0x04, 0x70, 0x61, 0x67, 0x65, 0x22, 0xa8, 0x01, 0x0a, 0x1c, 0x55, 0x70, 0x73,
+	0x65, 0x72, 0x74, 0x4c, 0x75, 0x61, 0x50, 0x6c, 0x75, 0x67, 0x69, 0x6e, 0x53, 0x63, 0x68, 0x65,
 	0x6d, 0x61, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x12, 0x0a, 0x04, 0x6e, 0x61, 0x6d,
 	0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x12, 0x35, 0x0a,
 	0x04, 0x69, 0x74, 0x65, 0x6d, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x21, 0x2e, 0x6b, 0x6f,
@@ -519,7 +519,7 @@ var file_kong_admin_service_v1_plugin_schema_proto_rawDesc = []byte{
 	0x03, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x23, 0x2e, 0x6b, 0x6f, 0x6e, 0x67, 0x2e, 0x61, 0x64, 0x6d,
 	0x69, 0x6e, 0x2e, 0x6d, 0x6f, 0x64, 0x65, 0x6c, 0x2e, 0x76, 0x31, 0x2e, 0x52, 0x65, 0x71, 0x75,
 	0x65, 0x73, 0x74, 0x43, 0x6c, 0x75, 0x73, 0x74, 0x65, 0x72, 0x52, 0x07, 0x63, 0x6c, 0x75, 0x73,
-	0x74, 0x65, 0x72, 0x22, 0x56, 0x0a, 0x1d, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x4c, 0x75, 0x61,
+	0x74, 0x65, 0x72, 0x22, 0x56, 0x0a, 0x1d, 0x55, 0x70, 0x73, 0x65, 0x72, 0x74, 0x4c, 0x75, 0x61,
 	0x50, 0x6c, 0x75, 0x67, 0x69, 0x6e, 0x53, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x52, 0x65, 0x73, 0x70,
 	0x6f, 0x6e, 0x73, 0x65, 0x12, 0x35, 0x0a, 0x04, 0x69, 0x74, 0x65, 0x6d, 0x18, 0x01, 0x20, 0x01,
 	0x28, 0x0b, 0x32, 0x21, 0x2e, 0x6b, 0x6f, 0x6e, 0x67, 0x2e, 0x61, 0x64, 0x6d, 0x69, 0x6e, 0x2e,
@@ -557,14 +557,14 @@ var file_kong_admin_service_v1_plugin_schema_proto_rawDesc = []byte{
 	0x75, 0x67, 0x69, 0x6e, 0x53, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f,
 	0x6e, 0x73, 0x65, 0x22, 0x1e, 0x82, 0xd3, 0xe4, 0x93, 0x02, 0x18, 0x12, 0x16, 0x2f, 0x76, 0x31,
 	0x2f, 0x70, 0x6c, 0x75, 0x67, 0x69, 0x6e, 0x2d, 0x73, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x73, 0x2f,
-	0x6c, 0x75, 0x61, 0x12, 0xaf, 0x01, 0x0a, 0x15, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x4c, 0x75,
+	0x6c, 0x75, 0x61, 0x12, 0xaf, 0x01, 0x0a, 0x15, 0x55, 0x70, 0x73, 0x65, 0x72, 0x74, 0x4c, 0x75,
 	0x61, 0x50, 0x6c, 0x75, 0x67, 0x69, 0x6e, 0x53, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x12, 0x33, 0x2e,
 	0x6b, 0x6f, 0x6e, 0x67, 0x2e, 0x61, 0x64, 0x6d, 0x69, 0x6e, 0x2e, 0x73, 0x65, 0x72, 0x76, 0x69,
-	0x63, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x4c, 0x75, 0x61, 0x50,
+	0x63, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x55, 0x70, 0x73, 0x65, 0x72, 0x74, 0x4c, 0x75, 0x61, 0x50,
 	0x6c, 0x75, 0x67, 0x69, 0x6e, 0x53, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x52, 0x65, 0x71, 0x75, 0x65,
 	0x73, 0x74, 0x1a, 0x34, 0x2e, 0x6b, 0x6f, 0x6e, 0x67, 0x2e, 0x61, 0x64, 0x6d, 0x69, 0x6e, 0x2e,
-	0x73, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x55, 0x70, 0x64, 0x61, 0x74,
-	0x65, 0x4c, 0x75, 0x61, 0x50, 0x6c, 0x75, 0x67, 0x69, 0x6e, 0x53, 0x63, 0x68, 0x65, 0x6d, 0x61,
+	0x73, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x55, 0x70, 0x73, 0x65, 0x72,
+	0x74, 0x4c, 0x75, 0x61, 0x50, 0x6c, 0x75, 0x67, 0x69, 0x6e, 0x53, 0x63, 0x68, 0x65, 0x6d, 0x61,
 	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x2b, 0x82, 0xd3, 0xe4, 0x93, 0x02, 0x25,
 	0x1a, 0x1d, 0x2f, 0x76, 0x31, 0x2f, 0x70, 0x6c, 0x75, 0x67, 0x69, 0x6e, 0x2d, 0x73, 0x63, 0x68,
 	0x65, 0x6d, 0x61, 0x73, 0x2f, 0x6c, 0x75, 0x61, 0x2f, 0x7b, 0x6e, 0x61, 0x6d, 0x65, 0x7d, 0x3a,
@@ -595,8 +595,8 @@ var file_kong_admin_service_v1_plugin_schema_proto_goTypes = []interface{}{
 	(*GetLuaPluginSchemaResponse)(nil),    // 3: kong.admin.service.v1.GetLuaPluginSchemaResponse
 	(*ListLuaPluginSchemasRequest)(nil),   // 4: kong.admin.service.v1.ListLuaPluginSchemasRequest
 	(*ListLuaPluginSchemasResponse)(nil),  // 5: kong.admin.service.v1.ListLuaPluginSchemasResponse
-	(*UpdateLuaPluginSchemaRequest)(nil),  // 6: kong.admin.service.v1.UpdateLuaPluginSchemaRequest
-	(*UpdateLuaPluginSchemaResponse)(nil), // 7: kong.admin.service.v1.UpdateLuaPluginSchemaResponse
+	(*UpsertLuaPluginSchemaRequest)(nil),  // 6: kong.admin.service.v1.UpsertLuaPluginSchemaRequest
+	(*UpsertLuaPluginSchemaResponse)(nil), // 7: kong.admin.service.v1.UpsertLuaPluginSchemaResponse
 	(*v1.PluginSchema)(nil),               // 8: kong.admin.model.v1.PluginSchema
 	(*v1.RequestCluster)(nil),             // 9: kong.admin.model.v1.RequestCluster
 	(*v1.PaginationRequest)(nil),          // 10: kong.admin.model.v1.PaginationRequest
@@ -612,17 +612,17 @@ var file_kong_admin_service_v1_plugin_schema_proto_depIdxs = []int32{
 	10, // 6: kong.admin.service.v1.ListLuaPluginSchemasRequest.page:type_name -> kong.admin.model.v1.PaginationRequest
 	8,  // 7: kong.admin.service.v1.ListLuaPluginSchemasResponse.items:type_name -> kong.admin.model.v1.PluginSchema
 	11, // 8: kong.admin.service.v1.ListLuaPluginSchemasResponse.page:type_name -> kong.admin.model.v1.PaginationResponse
-	8,  // 9: kong.admin.service.v1.UpdateLuaPluginSchemaRequest.item:type_name -> kong.admin.model.v1.PluginSchema
-	9,  // 10: kong.admin.service.v1.UpdateLuaPluginSchemaRequest.cluster:type_name -> kong.admin.model.v1.RequestCluster
-	8,  // 11: kong.admin.service.v1.UpdateLuaPluginSchemaResponse.item:type_name -> kong.admin.model.v1.PluginSchema
+	8,  // 9: kong.admin.service.v1.UpsertLuaPluginSchemaRequest.item:type_name -> kong.admin.model.v1.PluginSchema
+	9,  // 10: kong.admin.service.v1.UpsertLuaPluginSchemaRequest.cluster:type_name -> kong.admin.model.v1.RequestCluster
+	8,  // 11: kong.admin.service.v1.UpsertLuaPluginSchemaResponse.item:type_name -> kong.admin.model.v1.PluginSchema
 	0,  // 12: kong.admin.service.v1.PluginSchemaService.CreateLuaPluginSchema:input_type -> kong.admin.service.v1.CreateLuaPluginSchemaRequest
 	2,  // 13: kong.admin.service.v1.PluginSchemaService.GetLuaPluginSchema:input_type -> kong.admin.service.v1.GetLuaPluginSchemaRequest
 	4,  // 14: kong.admin.service.v1.PluginSchemaService.ListLuaPluginSchemas:input_type -> kong.admin.service.v1.ListLuaPluginSchemasRequest
-	6,  // 15: kong.admin.service.v1.PluginSchemaService.UpdateLuaPluginSchema:input_type -> kong.admin.service.v1.UpdateLuaPluginSchemaRequest
+	6,  // 15: kong.admin.service.v1.PluginSchemaService.UpsertLuaPluginSchema:input_type -> kong.admin.service.v1.UpsertLuaPluginSchemaRequest
 	1,  // 16: kong.admin.service.v1.PluginSchemaService.CreateLuaPluginSchema:output_type -> kong.admin.service.v1.CreateLuaPluginSchemaResponse
 	3,  // 17: kong.admin.service.v1.PluginSchemaService.GetLuaPluginSchema:output_type -> kong.admin.service.v1.GetLuaPluginSchemaResponse
 	5,  // 18: kong.admin.service.v1.PluginSchemaService.ListLuaPluginSchemas:output_type -> kong.admin.service.v1.ListLuaPluginSchemasResponse
-	7,  // 19: kong.admin.service.v1.PluginSchemaService.UpdateLuaPluginSchema:output_type -> kong.admin.service.v1.UpdateLuaPluginSchemaResponse
+	7,  // 19: kong.admin.service.v1.PluginSchemaService.UpsertLuaPluginSchema:output_type -> kong.admin.service.v1.UpsertLuaPluginSchemaResponse
 	16, // [16:20] is the sub-list for method output_type
 	12, // [12:16] is the sub-list for method input_type
 	12, // [12:12] is the sub-list for extension type_name
@@ -709,7 +709,7 @@ func file_kong_admin_service_v1_plugin_schema_proto_init() {
 			}
 		}
 		file_kong_admin_service_v1_plugin_schema_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*UpdateLuaPluginSchemaRequest); i {
+			switch v := v.(*UpsertLuaPluginSchemaRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -721,7 +721,7 @@ func file_kong_admin_service_v1_plugin_schema_proto_init() {
 			}
 		}
 		file_kong_admin_service_v1_plugin_schema_proto_msgTypes[7].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*UpdateLuaPluginSchemaResponse); i {
+			switch v := v.(*UpsertLuaPluginSchemaResponse); i {
 			case 0:
 				return &v.state
 			case 1:
