@@ -52,6 +52,7 @@ func (s *PluginService) CreatePlugin(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
+	ctx = context.WithValue(ctx, util.ContextKeyCluster, req.Cluster)
 	res := resource.NewPlugin()
 	res.Plugin = req.Item
 	if err := db.Create(ctx, res); err != nil {
@@ -73,6 +74,7 @@ func (s *PluginService) UpsertPlugin(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
+	ctx = context.WithValue(ctx, util.ContextKeyCluster, req.Cluster)
 	res := resource.NewPlugin()
 	res.Plugin = req.Item
 	if err := db.Upsert(ctx, res); err != nil {

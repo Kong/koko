@@ -14,6 +14,14 @@ type StoreLoadErr struct {
 	Message string
 }
 
+type contextKey int
+
+const (
+	// ContextKeyCluster is the key used to put and retrieve
+	// `*model.RequestCluster` into context.
+	ContextKeyCluster contextKey = iota
+)
+
 func (s StoreLoadErr) Error() string {
 	return fmt.Sprintf("%s (grpc-code: %d)", s.Message, s.Code)
 }

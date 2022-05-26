@@ -1,4 +1,4 @@
-package resource
+package resource_test
 
 import (
 	"context"
@@ -8,30 +8,31 @@ import (
 
 	model "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
 	"github.com/kong/koko/internal/model/json/validation"
+	"github.com/kong/koko/internal/resource"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestNewPluginSchema(t *testing.T) {
-	s := NewPluginSchema()
+	s := resource.NewPluginSchema()
 	require.NotNil(t, s)
 	require.NotNil(t, s.PluginSchema)
 }
 
 func TestPluginSchema_ID(t *testing.T) {
-	var s PluginSchema
+	var s resource.PluginSchema
 	require.Empty(t, s.ID())
 
-	s = NewPluginSchema()
+	s = resource.NewPluginSchema()
 	require.Equal(t, "", s.ID())
 
-	s = NewPluginSchema()
+	s = resource.NewPluginSchema()
 	s.PluginSchema.Name = "plugin-schema-name"
 	require.Equal(t, "plugin-schema-name", s.ID())
 }
 
 func TestPluginSchema_Type(t *testing.T) {
-	require.Equal(t, TypePluginSchema, NewPluginSchema().Type())
+	require.Equal(t, resource.TypePluginSchema, resource.NewPluginSchema().Type())
 }
 
 const pluginSchemaFormat = `return {
@@ -53,7 +54,7 @@ func goodPluginSchema(name string) string {
 
 func TestPluginSchema_ProcessDefaults(t *testing.T) {
 	t.Run("no errors occur when defaults are processed", func(t *testing.T) {
-		r := PluginSchema{
+		r := resource.PluginSchema{
 			PluginSchema: &model.PluginSchema{},
 		}
 		err := r.ProcessDefaults(context.Background())
@@ -63,7 +64,7 @@ func TestPluginSchema_ProcessDefaults(t *testing.T) {
 	})
 
 	t.Run("error occurs with nil schema when processed", func(t *testing.T) {
-		r := PluginSchema{}
+		r := resource.PluginSchema{}
 		err := r.ProcessDefaults(context.Background())
 		require.NotNil(t, err)
 		require.EqualError(t, err, "invalid nil resource")
@@ -74,15 +75,15 @@ func TestPluginSchema_Validate(t *testing.T) {
 	setupLuaValidator(t)
 	tests := []struct {
 		name               string
-		pluginSchema       func() PluginSchema
+		pluginSchema       func() resource.PluginSchema
 		wantErr            bool
 		expectedPluginName string
 		expectedErrs       []*model.ErrorDetail
 	}{
 		{
 			name: "missing plugin schema throws an error",
-			pluginSchema: func() PluginSchema {
-				return NewPluginSchema()
+			pluginSchema: func() resource.PluginSchema {
+				return resource.NewPluginSchema()
 			},
 			wantErr: true,
 			expectedErrs: []*model.ErrorDetail{
@@ -94,8 +95,8 @@ func TestPluginSchema_Validate(t *testing.T) {
 		},
 		{
 			name: "empty plugin schema throws an error",
-			pluginSchema: func() PluginSchema {
-				r := NewPluginSchema()
+			pluginSchema: func() resource.PluginSchema {
+				r := resource.NewPluginSchema()
 				r.PluginSchema.LuaSchema = ""
 				_ = r.ProcessDefaults(context.Background())
 				return r
@@ -110,8 +111,8 @@ func TestPluginSchema_Validate(t *testing.T) {
 		},
 		{
 			name: "valid plugin schema doesn't throw any error",
-			pluginSchema: func() PluginSchema {
-				r := NewPluginSchema()
+			pluginSchema: func() resource.PluginSchema {
+				r := resource.NewPluginSchema()
 				r.PluginSchema.LuaSchema = goodPluginSchema("valid-plugin-schema")
 				_ = r.ProcessDefaults(context.Background())
 				return r
@@ -121,8 +122,8 @@ func TestPluginSchema_Validate(t *testing.T) {
 		},
 		{
 			name: "error occurs when plugin name provided doesn't match expected",
-			pluginSchema: func() PluginSchema {
-				r := NewPluginSchema()
+			pluginSchema: func() resource.PluginSchema {
+				r := resource.NewPluginSchema()
 				r.PluginSchema.Name = "mismatch-plugin-name"
 				r.PluginSchema.LuaSchema = goodPluginSchema("valid-plugin-schema")
 				_ = r.ProcessDefaults(context.Background())
@@ -141,8 +142,8 @@ func TestPluginSchema_Validate(t *testing.T) {
 		},
 		{
 			name: "error occurs when invalid schema is validated",
-			pluginSchema: func() PluginSchema {
-				r := NewPluginSchema()
+			pluginSchema: func() resource.PluginSchema {
+				r := resource.NewPluginSchema()
 				r.PluginSchema.LuaSchema = "return {}"
 				_ = r.ProcessDefaults(context.Background())
 				return r
@@ -160,8 +161,8 @@ func TestPluginSchema_Validate(t *testing.T) {
 		},
 		{
 			name: "error occurs when invalid plugin name is derived from schema",
-			pluginSchema: func() PluginSchema {
-				r := NewPluginSchema()
+			pluginSchema: func() resource.PluginSchema {
+				r := resource.NewPluginSchema()
 				r.PluginSchema.LuaSchema = goodPluginSchema("invalid!name")
 				_ = r.ProcessDefaults(context.Background())
 				return r
