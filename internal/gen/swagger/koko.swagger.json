@@ -128,6 +128,13 @@
             "required": false,
             "type": "integer",
             "format": "int32"
+          },
+          {
+            "name": "page.filter",
+            "description": "Allows callers to provide a CEL expression to filter results on `list` API calls.\n\nFor example, given a resource with the following tags, `tag1` \u0026 `tag2`, the\nfollowing CEL expressions are supported:\n\n- Matches resources that have `tag1` as any tag:\n    - `\"tag1\" in tags`\n- Matches all resources that have both `tag1` \u0026 `tag2`:\n    - `[\"tag1\", \"tag2\"].all(x, x in tags)`\n    - `\"tag1\" in tags \u0026\u0026 \"tag2\" in tags`\n- Matches resources that have `tag1` or `tag2`:\n    - `[\"tag1\", \"tag2\"].exists(x, x in tags)`\n    - `\"tag1\" in tags || \"tag2\" in tags`\n\nLimitations:\nCurrently, it is only possible to filter on tags, and supported logical\noperators/macros are limited to only what is documented above.\n\nFor further information, you may view the CEL Specification:\nhttps://github.com/google/cel-spec",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [
@@ -351,6 +358,13 @@
             "required": false,
             "type": "integer",
             "format": "int32"
+          },
+          {
+            "name": "page.filter",
+            "description": "Allows callers to provide a CEL expression to filter results on `list` API calls.\n\nFor example, given a resource with the following tags, `tag1` \u0026 `tag2`, the\nfollowing CEL expressions are supported:\n\n- Matches resources that have `tag1` as any tag:\n    - `\"tag1\" in tags`\n- Matches all resources that have both `tag1` \u0026 `tag2`:\n    - `[\"tag1\", \"tag2\"].all(x, x in tags)`\n    - `\"tag1\" in tags \u0026\u0026 \"tag2\" in tags`\n- Matches resources that have `tag1` or `tag2`:\n    - `[\"tag1\", \"tag2\"].exists(x, x in tags)`\n    - `\"tag1\" in tags || \"tag2\" in tags`\n\nLimitations:\nCurrently, it is only possible to filter on tags, and supported logical\noperators/macros are limited to only what is documented above.\n\nFor further information, you may view the CEL Specification:\nhttps://github.com/google/cel-spec",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [
@@ -649,6 +663,13 @@
             "required": false,
             "type": "integer",
             "format": "int32"
+          },
+          {
+            "name": "page.filter",
+            "description": "Allows callers to provide a CEL expression to filter results on `list` API calls.\n\nFor example, given a resource with the following tags, `tag1` \u0026 `tag2`, the\nfollowing CEL expressions are supported:\n\n- Matches resources that have `tag1` as any tag:\n    - `\"tag1\" in tags`\n- Matches all resources that have both `tag1` \u0026 `tag2`:\n    - `[\"tag1\", \"tag2\"].all(x, x in tags)`\n    - `\"tag1\" in tags \u0026\u0026 \"tag2\" in tags`\n- Matches resources that have `tag1` or `tag2`:\n    - `[\"tag1\", \"tag2\"].exists(x, x in tags)`\n    - `\"tag1\" in tags || \"tag2\" in tags`\n\nLimitations:\nCurrently, it is only possible to filter on tags, and supported logical\noperators/macros are limited to only what is documented above.\n\nFor further information, you may view the CEL Specification:\nhttps://github.com/google/cel-spec",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [
@@ -923,6 +944,13 @@
             "required": false,
             "type": "integer",
             "format": "int32"
+          },
+          {
+            "name": "page.filter",
+            "description": "Allows callers to provide a CEL expression to filter results on `list` API calls.\n\nFor example, given a resource with the following tags, `tag1` \u0026 `tag2`, the\nfollowing CEL expressions are supported:\n\n- Matches resources that have `tag1` as any tag:\n    - `\"tag1\" in tags`\n- Matches all resources that have both `tag1` \u0026 `tag2`:\n    - `[\"tag1\", \"tag2\"].all(x, x in tags)`\n    - `\"tag1\" in tags \u0026\u0026 \"tag2\" in tags`\n- Matches resources that have `tag1` or `tag2`:\n    - `[\"tag1\", \"tag2\"].exists(x, x in tags)`\n    - `\"tag1\" in tags || \"tag2\" in tags`\n\nLimitations:\nCurrently, it is only possible to filter on tags, and supported logical\noperators/macros are limited to only what is documented above.\n\nFor further information, you may view the CEL Specification:\nhttps://github.com/google/cel-spec",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [
@@ -1037,6 +1065,13 @@
             "required": false,
             "type": "integer",
             "format": "int32"
+          },
+          {
+            "name": "page.filter",
+            "description": "Allows callers to provide a CEL expression to filter results on `list` API calls.\n\nFor example, given a resource with the following tags, `tag1` \u0026 `tag2`, the\nfollowing CEL expressions are supported:\n\n- Matches resources that have `tag1` as any tag:\n    - `\"tag1\" in tags`\n- Matches all resources that have both `tag1` \u0026 `tag2`:\n    - `[\"tag1\", \"tag2\"].all(x, x in tags)`\n    - `\"tag1\" in tags \u0026\u0026 \"tag2\" in tags`\n- Matches resources that have `tag1` or `tag2`:\n    - `[\"tag1\", \"tag2\"].exists(x, x in tags)`\n    - `\"tag1\" in tags || \"tag2\" in tags`\n\nLimitations:\nCurrently, it is only possible to filter on tags, and supported logical\noperators/macros are limited to only what is documented above.\n\nFor further information, you may view the CEL Specification:\nhttps://github.com/google/cel-spec",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [
@@ -1241,6 +1276,13 @@
             "required": false,
             "type": "integer",
             "format": "int32"
+          },
+          {
+            "name": "page.filter",
+            "description": "Allows callers to provide a CEL expression to filter results on `list` API calls.\n\nFor example, given a resource with the following tags, `tag1` \u0026 `tag2`, the\nfollowing CEL expressions are supported:\n\n- Matches resources that have `tag1` as any tag:\n    - `\"tag1\" in tags`\n- Matches all resources that have both `tag1` \u0026 `tag2`:\n    - `[\"tag1\", \"tag2\"].all(x, x in tags)`\n    - `\"tag1\" in tags \u0026\u0026 \"tag2\" in tags`\n- Matches resources that have `tag1` or `tag2`:\n    - `[\"tag1\", \"tag2\"].exists(x, x in tags)`\n    - `\"tag1\" in tags || \"tag2\" in tags`\n\nLimitations:\nCurrently, it is only possible to filter on tags, and supported logical\noperators/macros are limited to only what is documented above.\n\nFor further information, you may view the CEL Specification:\nhttps://github.com/google/cel-spec",
+            "in": "query",
+            "required": false,
+            "type": "string"
           },
           {
             "name": "consumer_id",
@@ -1487,6 +1529,13 @@
             "required": false,
             "type": "integer",
             "format": "int32"
+          },
+          {
+            "name": "page.filter",
+            "description": "Allows callers to provide a CEL expression to filter results on `list` API calls.\n\nFor example, given a resource with the following tags, `tag1` \u0026 `tag2`, the\nfollowing CEL expressions are supported:\n\n- Matches resources that have `tag1` as any tag:\n    - `\"tag1\" in tags`\n- Matches all resources that have both `tag1` \u0026 `tag2`:\n    - `[\"tag1\", \"tag2\"].all(x, x in tags)`\n    - `\"tag1\" in tags \u0026\u0026 \"tag2\" in tags`\n- Matches resources that have `tag1` or `tag2`:\n    - `[\"tag1\", \"tag2\"].exists(x, x in tags)`\n    - `\"tag1\" in tags || \"tag2\" in tags`\n\nLimitations:\nCurrently, it is only possible to filter on tags, and supported logical\noperators/macros are limited to only what is documented above.\n\nFor further information, you may view the CEL Specification:\nhttps://github.com/google/cel-spec",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [
@@ -2160,6 +2209,13 @@
             "required": false,
             "type": "integer",
             "format": "int32"
+          },
+          {
+            "name": "page.filter",
+            "description": "Allows callers to provide a CEL expression to filter results on `list` API calls.\n\nFor example, given a resource with the following tags, `tag1` \u0026 `tag2`, the\nfollowing CEL expressions are supported:\n\n- Matches resources that have `tag1` as any tag:\n    - `\"tag1\" in tags`\n- Matches all resources that have both `tag1` \u0026 `tag2`:\n    - `[\"tag1\", \"tag2\"].all(x, x in tags)`\n    - `\"tag1\" in tags \u0026\u0026 \"tag2\" in tags`\n- Matches resources that have `tag1` or `tag2`:\n    - `[\"tag1\", \"tag2\"].exists(x, x in tags)`\n    - `\"tag1\" in tags || \"tag2\" in tags`\n\nLimitations:\nCurrently, it is only possible to filter on tags, and supported logical\noperators/macros are limited to only what is documented above.\n\nFor further information, you may view the CEL Specification:\nhttps://github.com/google/cel-spec",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [
@@ -2426,6 +2482,13 @@
             "format": "int32"
           },
           {
+            "name": "page.filter",
+            "description": "Allows callers to provide a CEL expression to filter results on `list` API calls.\n\nFor example, given a resource with the following tags, `tag1` \u0026 `tag2`, the\nfollowing CEL expressions are supported:\n\n- Matches resources that have `tag1` as any tag:\n    - `\"tag1\" in tags`\n- Matches all resources that have both `tag1` \u0026 `tag2`:\n    - `[\"tag1\", \"tag2\"].all(x, x in tags)`\n    - `\"tag1\" in tags \u0026\u0026 \"tag2\" in tags`\n- Matches resources that have `tag1` or `tag2`:\n    - `[\"tag1\", \"tag2\"].exists(x, x in tags)`\n    - `\"tag1\" in tags || \"tag2\" in tags`\n\nLimitations:\nCurrently, it is only possible to filter on tags, and supported logical\noperators/macros are limited to only what is documented above.\n\nFor further information, you may view the CEL Specification:\nhttps://github.com/google/cel-spec",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
             "name": "certificate_id",
             "in": "query",
             "required": false,
@@ -2658,6 +2721,13 @@
             "required": false,
             "type": "integer",
             "format": "int32"
+          },
+          {
+            "name": "page.filter",
+            "description": "Allows callers to provide a CEL expression to filter results on `list` API calls.\n\nFor example, given a resource with the following tags, `tag1` \u0026 `tag2`, the\nfollowing CEL expressions are supported:\n\n- Matches resources that have `tag1` as any tag:\n    - `\"tag1\" in tags`\n- Matches all resources that have both `tag1` \u0026 `tag2`:\n    - `[\"tag1\", \"tag2\"].all(x, x in tags)`\n    - `\"tag1\" in tags \u0026\u0026 \"tag2\" in tags`\n- Matches resources that have `tag1` or `tag2`:\n    - `[\"tag1\", \"tag2\"].exists(x, x in tags)`\n    - `\"tag1\" in tags || \"tag2\" in tags`\n\nLimitations:\nCurrently, it is only possible to filter on tags, and supported logical\noperators/macros are limited to only what is documented above.\n\nFor further information, you may view the CEL Specification:\nhttps://github.com/google/cel-spec",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [
@@ -2778,6 +2848,13 @@
             "required": false,
             "type": "integer",
             "format": "int32"
+          },
+          {
+            "name": "page.filter",
+            "description": "Allows callers to provide a CEL expression to filter results on `list` API calls.\n\nFor example, given a resource with the following tags, `tag1` \u0026 `tag2`, the\nfollowing CEL expressions are supported:\n\n- Matches resources that have `tag1` as any tag:\n    - `\"tag1\" in tags`\n- Matches all resources that have both `tag1` \u0026 `tag2`:\n    - `[\"tag1\", \"tag2\"].all(x, x in tags)`\n    - `\"tag1\" in tags \u0026\u0026 \"tag2\" in tags`\n- Matches resources that have `tag1` or `tag2`:\n    - `[\"tag1\", \"tag2\"].exists(x, x in tags)`\n    - `\"tag1\" in tags || \"tag2\" in tags`\n\nLimitations:\nCurrently, it is only possible to filter on tags, and supported logical\noperators/macros are limited to only what is documented above.\n\nFor further information, you may view the CEL Specification:\nhttps://github.com/google/cel-spec",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [
@@ -2998,6 +3075,13 @@
             "required": false,
             "type": "integer",
             "format": "int32"
+          },
+          {
+            "name": "page.filter",
+            "description": "Allows callers to provide a CEL expression to filter results on `list` API calls.\n\nFor example, given a resource with the following tags, `tag1` \u0026 `tag2`, the\nfollowing CEL expressions are supported:\n\n- Matches resources that have `tag1` as any tag:\n    - `\"tag1\" in tags`\n- Matches all resources that have both `tag1` \u0026 `tag2`:\n    - `[\"tag1\", \"tag2\"].all(x, x in tags)`\n    - `\"tag1\" in tags \u0026\u0026 \"tag2\" in tags`\n- Matches resources that have `tag1` or `tag2`:\n    - `[\"tag1\", \"tag2\"].exists(x, x in tags)`\n    - `\"tag1\" in tags || \"tag2\" in tags`\n\nLimitations:\nCurrently, it is only possible to filter on tags, and supported logical\noperators/macros are limited to only what is documented above.\n\nFor further information, you may view the CEL Specification:\nhttps://github.com/google/cel-spec",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [
@@ -3540,6 +3624,10 @@
         "number": {
           "type": "integer",
           "format": "int32"
+        },
+        "filter": {
+          "type": "string",
+          "description": "Allows callers to provide a CEL expression to filter results on `list` API calls.\n\nFor example, given a resource with the following tags, `tag1` \u0026 `tag2`, the\nfollowing CEL expressions are supported:\n\n- Matches resources that have `tag1` as any tag:\n    - `\"tag1\" in tags`\n- Matches all resources that have both `tag1` \u0026 `tag2`:\n    - `[\"tag1\", \"tag2\"].all(x, x in tags)`\n    - `\"tag1\" in tags \u0026\u0026 \"tag2\" in tags`\n- Matches resources that have `tag1` or `tag2`:\n    - `[\"tag1\", \"tag2\"].exists(x, x in tags)`\n    - `\"tag1\" in tags || \"tag2\" in tags`\n\nLimitations:\nCurrently, it is only possible to filter on tags, and supported logical\noperators/macros are limited to only what is documented above.\n\nFor further information, you may view the CEL Specification:\nhttps://github.com/google/cel-spec"
         }
       }
     },

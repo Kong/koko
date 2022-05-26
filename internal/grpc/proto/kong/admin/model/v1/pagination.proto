@@ -7,6 +7,28 @@ option go_package = "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1;
 message PaginationRequest {
   int32 size = 1;
   int32 number = 2;
+
+  // Allows callers to provide a CEL expression to filter results on `list` API calls.
+  //
+  // For example, given a resource with the following tags, `tag1` & `tag2`, the
+  // following CEL expressions are supported:
+  //
+  // - Matches resources that have `tag1` as any tag:
+  //     - `"tag1" in tags`
+  // - Matches all resources that have both `tag1` & `tag2`:
+  //     - `["tag1", "tag2"].all(x, x in tags)`
+  //     - `"tag1" in tags && "tag2" in tags`
+  // - Matches resources that have `tag1` or `tag2`:
+  //     - `["tag1", "tag2"].exists(x, x in tags)`
+  //     - `"tag1" in tags || "tag2" in tags`
+  //
+  // Limitations:
+  // Currently, it is only possible to filter on tags, and supported logical
+  // operators/macros are limited to only what is documented above.
+  //
+  // For further information, you may view the CEL Specification:
+  // https://github.com/google/cel-spec
+  string filter = 3;
 }
 
 message PaginationResponse {
