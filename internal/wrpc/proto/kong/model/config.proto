@@ -18,7 +18,7 @@ import "kong/model/workspace.proto";
 option go_package = "github.com/kong/koko/internal/gen/wrpc/kong/model;model";
 
 message Config {
-  string format_version = 1;
+  string format_version = 1 [json_name = "_format_version"];
   repeated Service services = 2;
   repeated Route routes = 3;
   repeated Consumer consumers = 4;

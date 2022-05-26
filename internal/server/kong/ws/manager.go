@@ -104,6 +104,7 @@ type Manager struct {
 	config   ManagerConfig
 	configMu sync.RWMutex
 
+	configVersion      int64
 	latestExpectedHash string
 	hashMu             sync.RWMutex
 
@@ -329,6 +330,7 @@ func (m *Manager) addWrpcNode(node *Node, pluginList []string) error {
 func (m *Manager) broadcast() {
 	m.broadcastMutex.Lock()
 	defer m.broadcastMutex.Unlock()
+	configVersion := m.getConfigVersion()
 	for _, node := range m.nodes.All() {
 		payload, err := m.payload.Payload(context.Background(), node.Version)
 		if err != nil {
@@ -348,7 +350,7 @@ func (m *Manager) broadcast() {
 			m.logger.With(zap.Error(err)).Sugar().Errorf("invalid hash [%v]", hash[:])
 			continue
 		}
-		err = node.write(payload.CompressedPayload, hash) // nolint: contextcheck
+		err = node.write(payload.CompressedPayload, hash, configVersion) // nolint: contextcheck
 		if err != nil {
 			loggerWithNode.Error("broadcast to node failed", zap.Error(err))
 			// TODO(hbagdi: remove the node if connection has been closed?
@@ -380,12 +382,22 @@ func (m *Manager) reconcileKongPayload(ctx context.Context) error {
 	return nil
 }
 
+func (m *Manager) getConfigVersion() int64 {
+	m.hashMu.RLock()
+	defer m.hashMu.RUnlock()
+
+	return m.configVersion
+}
+
 func (m *Manager) updateExpectedHash(ctx context.Context, hash string) {
 	m.hashMu.Lock()
 	defer m.hashMu.Unlock()
 	if m.latestExpectedHash == hash {
 		return
 	}
+
+	m.configVersion++
+
 	// TODO(hbagdi): add retry with backoff, take a new hash during retry into account
 	ctx, cancel := context.WithTimeout(ctx, defaultRequestTimeout)
 	defer cancel()
