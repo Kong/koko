@@ -16,6 +16,8 @@ import (
 	"github.com/kong/koko/internal/resource"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/protobuf/types/known/structpb"
 )
 
 const pluginSchemaFormat = `return {
@@ -164,7 +166,12 @@ func TestPluginSchema_Get(t *testing.T) {
 	t.Run("get request without a name returns 400", func(t *testing.T) {
 		res := c.GET("/v1/plugin-schemas/").Expect().Status(http.StatusBadRequest)
 		body := res.JSON().Object()
-		body.ValueEqual("message", "required name is missing")
+		gotErr := body.Value("details").Array().Element(0)
+		gotErr.Object().ValueEqual("type", v1.ErrorType_ERROR_TYPE_ENTITY.
+			String())
+		gotErr.Object().ValueEqual("messages", []string{
+			"required name is missing",
+		})
 	})
 
 	t.Run("get request with invalid characters in name returns 400", func(t *testing.T) {
@@ -174,11 +181,15 @@ func TestPluginSchema_Get(t *testing.T) {
 			"lua+plugin",
 			"lua!plugin",
 		}
+		expectedErrMsg := fmt.Sprintf("must match pattern: '%s'", namePattern)
 		for _, pluginName := range pluginNames {
 			fmt.Fprintf(os.Stderr, "\n\n%s\n", pluginName)
 			res := c.GET(fmt.Sprintf("/v1/plugin-schemas/%s", pluginName)).Expect().Status(http.StatusBadRequest)
 			body := res.JSON().Object()
-			body.ValueEqual("message", "required name is invalid")
+			gotErr := body.Value("details").Array().Element(0)
+			gotErr.Object().ValueEqual("type", v1.ErrorType_ERROR_TYPE_ENTITY.
+				String())
+			gotErr.Object().ValueEqual("messages", []string{expectedErrMsg})
 		}
 	})
 }
@@ -337,5 +348,72 @@ func TestPluginSchema_Put(t *testing.T) {
 		resErr.Object().ValueEqual("messages", []string{
 			"missing properties: 'lua_schema'",
 		})
+	})
+}
+
+func TestPluginSchema_Delete(t *testing.T) {
+	s, cleanup := setup(t)
+	defer cleanup()
+	c := httpexpect.New(t, s.URL)
+
+	// create a plugin schema
+	pluginSchemaName := "new-lua-plugin"
+	res := c.POST("/v1/plugin-schemas").WithJSON(
+		goodPluginSchema(pluginSchemaName, "string"),
+	).Expect()
+	res.Status(http.StatusCreated)
+	res.Header("grpc-metadata-koko-status-code").Empty()
+	body := res.JSON().Path("$.item").Object()
+	validatePluginSchema(pluginSchemaName, "string", body)
+
+	t.Run("delete an unused plugin-schema successfully", func(t *testing.T) {
+		res := c.DELETE("/v1/plugin-schemas/" + pluginSchemaName).Expect()
+		res.Status(http.StatusNoContent)
+	})
+	t.Run("delete request without a name returns 400", func(t *testing.T) {
+		res := c.DELETE("/v1/plugin-schemas/").Expect().Status(http.StatusBadRequest)
+		body := res.JSON().Object()
+		gotErr := body.Value("details").Array().Element(0)
+		gotErr.Object().ValueEqual("type", v1.ErrorType_ERROR_TYPE_ENTITY.
+			String())
+		gotErr.Object().ValueEqual("messages", []string{
+			"required name is missing",
+		})
+	})
+	t.Run("deleting a non-existent plugin-schema returns 404", func(t *testing.T) {
+		res := c.DELETE("/v1/plugin-schemas/" + pluginSchemaName).Expect()
+		res.Status(http.StatusNotFound)
+	})
+	t.Run("deleting a plugin-schema currently in use fails", func(t *testing.T) {
+		name := "valid"
+		// add plugin-schema
+		res := c.POST("/v1/plugin-schemas").WithJSON(
+			goodPluginSchema(name, "string"),
+		).Expect()
+		res.Status(http.StatusCreated)
+
+		var config structpb.Struct
+		configString := `{"field": "non-bundled-plugin-configuration"}`
+		require.Nil(t, json.ProtoJSONUnmarshal([]byte(configString), &config))
+		plugin := &v1.Plugin{
+			Name:      name,
+			Protocols: []string{"http", "https"},
+			Config:    &config,
+		}
+		// add plugin from non-bundled schema
+		res = c.POST("/v1/plugins").WithJSON(plugin).Expect()
+		res.Status(http.StatusCreated)
+		body := res.JSON().Path("$.item").Object()
+		body.Value("name").Equal(name)
+		cfg := body.Path("$.config").Object()
+		cfg.Value("field").Equal("non-bundled-plugin-configuration")
+
+		// attempt to delete the plugin-schema
+		res = c.DELETE("/v1/plugin-schemas/" + name).Expect()
+		res.Status(http.StatusBadRequest)
+		body = res.JSON().Object()
+		body.ValueEqual("message", "plugin schema is currently in use, "+
+			"please delete existing plugins using the schema and try again")
+		body.ValueEqual("code", codes.InvalidArgument)
 	})
 }
