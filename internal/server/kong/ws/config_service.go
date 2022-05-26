@@ -73,7 +73,7 @@ func (c *Configer) ReportMetadata(
 		return nil, fmt.Errorf("can't find node from %v", peer.RemoteAddr())
 	}
 
-	var plugins []string
+	plugins := make([]string, 0, len(req.Plugins))
 	for _, p := range req.Plugins {
 		plugins = append(plugins, p.Name)
 	}

@@ -11,7 +11,6 @@ import (
 
 	"github.com/gorilla/websocket"
 	"github.com/kong/go-wrpc/wrpc"
-	"github.com/kong/koko/internal/gen/wrpc/kong/model"
 	config_service "github.com/kong/koko/internal/gen/wrpc/kong/services/config/v1"
 	"github.com/kong/koko/internal/json"
 	"github.com/kong/koko/internal/server/kong/ws/config"
@@ -158,7 +157,7 @@ func (n *Node) readThread() error {
 	}
 }
 
-func (n *Node) write(payload []byte, hash sum) error {
+func (n *Node) write(payload []byte, hash sum, configVersion int64) error {
 	n.lock.RLock()
 	defer n.lock.RUnlock()
 
@@ -184,18 +183,18 @@ func (n *Node) write(payload []byte, hash sum) error {
 			n.logger.With(zap.Error(err)).Error("decompressing config payload")
 			return err
 		}
+		n.logger.Debug("uncompressed config", zap.String("config", string(uncomp)))
 
-		configTable := model.Config{}
-		err = protojson.Unmarshal(uncomp, &configTable)
+		configTable := config_service.SyncConfigRequest{}
+		err = protojson.UnmarshalOptions{DiscardUnknown: true}.Unmarshal(uncomp, &configTable)
+		configTable.Version = uint64(configVersion)
 		if err != nil {
 			n.logger.With((zap.Error(err))).Error("unmarshaling config")
 			return err
 		}
 
 		c := config_service.ConfigServiceClient{Peer: n.peer}
-		_, err = c.SyncConfig(context.Background(), &config_service.SyncConfigRequest{
-			Config: &configTable,
-		})
+		_, err = c.SyncConfig(context.Background(), &configTable)
 		if err != nil {
 			n.logger.With((zap.Error(err))).Error("calling SyncConfig")
 			return err
