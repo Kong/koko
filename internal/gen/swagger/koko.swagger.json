@@ -1106,6 +1106,48 @@
         "tags": [
           "kong.admin.service.v1.PluginSchemaService"
         ]
+      },
+      "put": {
+        "operationId": "PluginSchemaService_UpdateLuaPluginSchema",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/kong.admin.service.v1.UpdateLuaPluginSchemaResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "item",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/kong.admin.model.v1.PluginSchema"
+            }
+          },
+          {
+            "name": "cluster.id",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "kong.admin.service.v1.PluginSchemaService"
+        ]
       }
     },
     "/v1/plugins": {
@@ -4348,6 +4390,14 @@
         },
         "page": {
           "$ref": "#/definitions/kong.admin.model.v1.PaginationResponse"
+        }
+      }
+    },
+    "kong.admin.service.v1.UpdateLuaPluginSchemaResponse": {
+      "type": "object",
+      "properties": {
+        "item": {
+          "$ref": "#/definitions/kong.admin.model.v1.PluginSchema"
         }
       }
     },

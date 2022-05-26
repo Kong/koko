@@ -25,6 +25,7 @@ type PluginSchemaServiceClient interface {
 	CreateLuaPluginSchema(ctx context.Context, in *CreateLuaPluginSchemaRequest, opts ...grpc.CallOption) (*CreateLuaPluginSchemaResponse, error)
 	GetLuaPluginSchema(ctx context.Context, in *GetLuaPluginSchemaRequest, opts ...grpc.CallOption) (*GetLuaPluginSchemaResponse, error)
 	ListLuaPluginSchemas(ctx context.Context, in *ListLuaPluginSchemasRequest, opts ...grpc.CallOption) (*ListLuaPluginSchemasResponse, error)
+	UpdateLuaPluginSchema(ctx context.Context, in *UpdateLuaPluginSchemaRequest, opts ...grpc.CallOption) (*UpdateLuaPluginSchemaResponse, error)
 }
 
 type pluginSchemaServiceClient struct {
@@ -62,6 +63,15 @@ func (c *pluginSchemaServiceClient) ListLuaPluginSchemas(ctx context.Context, in
 	return out, nil
 }
 
+func (c *pluginSchemaServiceClient) UpdateLuaPluginSchema(ctx context.Context, in *UpdateLuaPluginSchemaRequest, opts ...grpc.CallOption) (*UpdateLuaPluginSchemaResponse, error) {
+	out := new(UpdateLuaPluginSchemaResponse)
+	err := c.cc.Invoke(ctx, "/kong.admin.service.v1.PluginSchemaService/UpdateLuaPluginSchema", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // PluginSchemaServiceServer is the server API for PluginSchemaService service.
 // All implementations must embed UnimplementedPluginSchemaServiceServer
 // for forward compatibility
@@ -69,6 +79,7 @@ type PluginSchemaServiceServer interface {
 	CreateLuaPluginSchema(context.Context, *CreateLuaPluginSchemaRequest) (*CreateLuaPluginSchemaResponse, error)
 	GetLuaPluginSchema(context.Context, *GetLuaPluginSchemaRequest) (*GetLuaPluginSchemaResponse, error)
 	ListLuaPluginSchemas(context.Context, *ListLuaPluginSchemasRequest) (*ListLuaPluginSchemasResponse, error)
+	UpdateLuaPluginSchema(context.Context, *UpdateLuaPluginSchemaRequest) (*UpdateLuaPluginSchemaResponse, error)
 	mustEmbedUnimplementedPluginSchemaServiceServer()
 }
 
@@ -84,6 +95,9 @@ func (UnimplementedPluginSchemaServiceServer) GetLuaPluginSchema(context.Context
 }
 func (UnimplementedPluginSchemaServiceServer) ListLuaPluginSchemas(context.Context, *ListLuaPluginSchemasRequest) (*ListLuaPluginSchemasResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListLuaPluginSchemas not implemented")
+}
+func (UnimplementedPluginSchemaServiceServer) UpdateLuaPluginSchema(context.Context, *UpdateLuaPluginSchemaRequest) (*UpdateLuaPluginSchemaResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateLuaPluginSchema not implemented")
 }
 func (UnimplementedPluginSchemaServiceServer) mustEmbedUnimplementedPluginSchemaServiceServer() {}
 
@@ -152,6 +166,24 @@ func _PluginSchemaService_ListLuaPluginSchemas_Handler(srv interface{}, ctx cont
 	return interceptor(ctx, in, info, handler)
 }
 
+func _PluginSchemaService_UpdateLuaPluginSchema_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateLuaPluginSchemaRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PluginSchemaServiceServer).UpdateLuaPluginSchema(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/kong.admin.service.v1.PluginSchemaService/UpdateLuaPluginSchema",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PluginSchemaServiceServer).UpdateLuaPluginSchema(ctx, req.(*UpdateLuaPluginSchemaRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // PluginSchemaService_ServiceDesc is the grpc.ServiceDesc for PluginSchemaService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -170,6 +202,10 @@ var PluginSchemaService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListLuaPluginSchemas",
 			Handler:    _PluginSchemaService_ListLuaPluginSchemas_Handler,
+		},
+		{
+			MethodName: "UpdateLuaPluginSchema",
+			Handler:    _PluginSchemaService_UpdateLuaPluginSchema_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
