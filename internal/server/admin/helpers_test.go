@@ -41,15 +41,24 @@ func setup(t *testing.T) (*httptest.Server, func()) {
 }
 
 func setupWithDB(t *testing.T, store store.Store) (*httptest.Server, func()) {
+	storeLoader := serverUtil.DefaultStoreLoader{
+		Store: store,
+	}
 	handler, err := NewHandler(HandlerOpts{
-		Logger: log.Logger,
-		StoreLoader: serverUtil.DefaultStoreLoader{
-			Store: store,
-		},
-		Validator: validator,
+		Logger:      log.Logger,
+		StoreLoader: storeLoader,
+		Validator:   validator,
 	})
 	if err != nil {
 		t.Fatalf("creating httptest.Server: %v", err)
+	}
+
+	// Because the validator is created before the StoreLoader for most tests the following mechanism
+	// has been established to set the store loader and update the resource validator appropriately.
+	luaValidator, ok := validator.(*validators.LuaValidator)
+	if ok {
+		luaValidator.SetStoreLoader(storeLoader)
+		resource.SetValidator(luaValidator)
 	}
 
 	h := serverUtil.HandlerWithRecovery(serverUtil.HandlerWithLogger(handler, log.Logger), log.Logger)

@@ -1,4 +1,4 @@
-package resource
+package resource_test
 
 import (
 	"context"
@@ -6,33 +6,35 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
 	model "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
 	"github.com/kong/koko/internal/log"
 	internalModel "github.com/kong/koko/internal/model"
 	"github.com/kong/koko/internal/model/json/validation"
 	"github.com/kong/koko/internal/plugin"
 	"github.com/kong/koko/internal/plugin/validators"
+	"github.com/kong/koko/internal/resource"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
 func TestNewPlugin(t *testing.T) {
-	s := NewPlugin()
+	s := resource.NewPlugin()
 	require.NotNil(t, s)
 	require.NotNil(t, s.Plugin)
 }
 
 func TestPlugin_ID(t *testing.T) {
-	var s Plugin
+	var s resource.Plugin
 	id := s.ID()
 	require.Empty(t, id)
-	s = NewPlugin()
+	s = resource.NewPlugin()
 	id = s.ID()
 	require.Empty(t, id)
 }
 
 func TestPlugin_Type(t *testing.T) {
-	require.Equal(t, TypePlugin, NewPlugin().Type())
+	require.Equal(t, resource.TypePlugin, resource.NewPlugin().Type())
 }
 
 func setupLuaValidator(t *testing.T) {
@@ -40,17 +42,19 @@ func setupLuaValidator(t *testing.T) {
 	require.Nil(t, err)
 	err = validator.LoadSchemasFromEmbed(plugin.Schemas, "schemas")
 	require.Nil(t, err)
-	SetValidator(validator)
+	resource.SetValidator(validator)
 }
 
 func TestPlugin_ProcessDefaults(t *testing.T) {
 	setupLuaValidator(t)
 	t.Run("defaults are correctly injected", func(t *testing.T) {
-		r := NewPlugin()
+		r := resource.NewPlugin()
 		r.Plugin.Name = "basic-auth"
 		err := r.ProcessDefaults(context.Background())
 		require.Nil(t, err)
-		require.True(t, validUUID(r.ID()))
+		require.NotPanics(t, func() {
+			uuid.MustParse(r.ID())
+		})
 		require.LessOrEqual(t, r.Plugin.CreatedAt, int32(time.Now().Unix()))
 		require.LessOrEqual(t, r.Plugin.UpdatedAt, int32(time.Now().Unix()))
 		require.True(t, r.Plugin.Enabled.Value)
@@ -60,7 +64,7 @@ func TestPlugin_ProcessDefaults(t *testing.T) {
 		require.False(t, r.Plugin.Config.AsMap()["hide_credentials"].(bool))
 	})
 	t.Run("defaults do not override explicit values", func(t *testing.T) {
-		r := NewPlugin()
+		r := resource.NewPlugin()
 		r.Plugin.Name = "rate-limiting"
 		config, err := structpb.NewStruct(map[string]interface{}{
 			"redis_port": 4242,
@@ -79,14 +83,14 @@ func TestPlugin_Validate(t *testing.T) {
 	setupLuaValidator(t)
 	tests := []struct {
 		name    string
-		Plugin  func() Plugin
+		Plugin  func() resource.Plugin
 		wantErr bool
 		Errs    []*model.ErrorDetail
 	}{
 		{
 			name: "valid plugin returns no errors",
-			Plugin: func() Plugin {
-				res := NewPlugin()
+			Plugin: func() resource.Plugin {
+				res := resource.NewPlugin()
 				res.Plugin.Name = "http-log"
 				config, err := structpb.NewStruct(map[string]interface{}{
 					"http_endpoint": "https://log.example.com",
@@ -105,8 +109,8 @@ func TestPlugin_Validate(t *testing.T) {
 		},
 		{
 			name: "throws error when plugin doesn't exist",
-			Plugin: func() Plugin {
-				res := NewPlugin()
+			Plugin: func() resource.Plugin {
+				res := resource.NewPlugin()
 				res.Plugin.Name = "no-log"
 				return res
 			},
@@ -123,8 +127,8 @@ func TestPlugin_Validate(t *testing.T) {
 		},
 		{
 			name: "throws error with invalid plugin",
-			Plugin: func() Plugin {
-				res := NewPlugin()
+			Plugin: func() resource.Plugin {
+				res := resource.NewPlugin()
 				res.Plugin.Name = "proxy-cache"
 				config, err := structpb.NewStruct(map[string]interface{}{
 					"bad_field": "what if?",
@@ -160,8 +164,8 @@ func TestPlugin_Validate(t *testing.T) {
 		},
 		{
 			name: "throws error with invalid protocols for plugins",
-			Plugin: func() Plugin {
-				res := NewPlugin()
+			Plugin: func() resource.Plugin {
+				res := resource.NewPlugin()
 				res.Plugin.Name = "jwt"
 				res.Plugin.Protocols = []string{"tcp"}
 				err := res.ProcessDefaults(context.Background())
@@ -183,8 +187,8 @@ func TestPlugin_Validate(t *testing.T) {
 		},
 		{
 			name: "throws error with invalid protocols based on jsonschema",
-			Plugin: func() Plugin {
-				res := NewPlugin()
+			Plugin: func() resource.Plugin {
+				res := resource.NewPlugin()
 				res.Plugin.Name = "jwt"
 				res.Plugin.Protocols = []string{"smtp"}
 				err := res.ProcessDefaults(context.Background())
@@ -264,7 +268,7 @@ func TestPlugin_Indexes(t *testing.T) {
 					Name:        "service_id",
 					Type:        internalModel.IndexForeign,
 					FieldName:   "service.id",
-					ForeignType: TypeService,
+					ForeignType: resource.TypeService,
 					Value:       "a03e65a1-a2f8-4953-9fca-2995d6ff4f6aB",
 				},
 			},
@@ -289,7 +293,7 @@ func TestPlugin_Indexes(t *testing.T) {
 					Name:        "route_id",
 					Type:        internalModel.IndexForeign,
 					FieldName:   "route.id",
-					ForeignType: TypeRoute,
+					ForeignType: resource.TypeRoute,
 					Value:       "7ed5812a-1281-4af0-aaaa-0490c1144451",
 				},
 			},
@@ -314,7 +318,7 @@ func TestPlugin_Indexes(t *testing.T) {
 					Name:        "consumer_id",
 					Type:        internalModel.IndexForeign,
 					FieldName:   "consumer.id",
-					ForeignType: TypeConsumer,
+					ForeignType: resource.TypeConsumer,
 					Value:       "7ed5812a-1281-4af0-aaaa-0490c1144451",
 				},
 			},
@@ -342,14 +346,14 @@ func TestPlugin_Indexes(t *testing.T) {
 					Name:        "route_id",
 					Type:        internalModel.IndexForeign,
 					FieldName:   "route.id",
-					ForeignType: TypeRoute,
+					ForeignType: resource.TypeRoute,
 					Value:       "7ed5812a-1281-4af0-aaaa-0490c1144451",
 				},
 				{
 					Name:        "service_id",
 					Type:        internalModel.IndexForeign,
 					FieldName:   "service.id",
-					ForeignType: TypeService,
+					ForeignType: resource.TypeService,
 					Value:       "33c3e0cc-bd5f-44bb-b642-e8441eaa4c56",
 				},
 			},
@@ -381,21 +385,21 @@ func TestPlugin_Indexes(t *testing.T) {
 					Name:        "route_id",
 					Type:        internalModel.IndexForeign,
 					FieldName:   "route.id",
-					ForeignType: TypeRoute,
+					ForeignType: resource.TypeRoute,
 					Value:       "7ed5812a-1281-4af0-aaaa-0490c1144451",
 				},
 				{
 					Name:        "service_id",
 					Type:        internalModel.IndexForeign,
 					FieldName:   "service.id",
-					ForeignType: TypeService,
+					ForeignType: resource.TypeService,
 					Value:       "33c3e0cc-bd5f-44bb-b642-e8441eaa4c56",
 				},
 				{
 					Name:        "consumer_id",
 					Type:        internalModel.IndexForeign,
 					FieldName:   "consumer.id",
-					ForeignType: TypeConsumer,
+					ForeignType: resource.TypeConsumer,
 					Value:       "11267db4-6e48-471b-932c-ca8693e68376",
 				},
 			},
@@ -403,7 +407,7 @@ func TestPlugin_Indexes(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			r := Plugin{
+			r := resource.Plugin{
 				Plugin: tt.fields.Plugin,
 			}
 			if got := r.Indexes(); !reflect.DeepEqual(got, tt.want) {
