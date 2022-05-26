@@ -24,7 +24,7 @@ const pluginSchemaFormat = `return {
 		{ config = {
 				type = "record",
 				fields = {
-					{ field = { type = "string" } }
+					{ field = { type = "%s" } }
 				}
 			}
 		}
@@ -44,15 +44,15 @@ func init() {
 	resource.SetValidator(validator)
 }
 
-func goodPluginSchema(name string) *v1.PluginSchema {
+func goodPluginSchema(name, fieldType string) *v1.PluginSchema {
 	return &v1.PluginSchema{
-		LuaSchema: fmt.Sprintf(pluginSchemaFormat, name),
+		LuaSchema: fmt.Sprintf(pluginSchemaFormat, name, fieldType),
 	}
 }
 
-func validatePluginSchema(name string, body *httpexpect.Object) {
+func validatePluginSchema(name, fieldType string, body *httpexpect.Object) {
 	body.ValueEqual("name", name)
-	body.ValueEqual("lua_schema", fmt.Sprintf(pluginSchemaFormat, name))
+	body.ValueEqual("lua_schema", fmt.Sprintf(pluginSchemaFormat, name, fieldType))
 	body.ContainsKey("created_at")
 	body.ContainsKey("updated_at")
 }
@@ -62,23 +62,23 @@ func TestPluginSchema_Create(t *testing.T) {
 	defer cleanup()
 	c := httpexpect.New(t, s.URL)
 	t.Run("create a Lua plugin using the plugin-schemas endpoint", func(t *testing.T) {
-		pluginSchemaBytes, err := json.ProtoJSONMarshal(goodPluginSchema("new-lua-plugin"))
+		pluginSchemaBytes, err := json.ProtoJSONMarshal(goodPluginSchema("new-lua-plugin", "string"))
 		assert.NoError(t, err)
 		res := c.POST("/v1/plugin-schemas/lua").WithBytes(pluginSchemaBytes).Expect()
 		res.Status(http.StatusCreated)
 		res.Header("grpc-metadata-koko-status-code").Empty()
 		body := res.JSON().Path("$.item").Object()
-		validatePluginSchema("new-lua-plugin", body)
+		validatePluginSchema("new-lua-plugin", "string", body)
 	})
 
 	t.Run("recreating a Lua plugin using the plugin-schemas endpoint fails", func(t *testing.T) {
 		// Create first instance
-		pluginSchemaBytes, err := json.ProtoJSONMarshal(goodPluginSchema("recreate-new-lua-plugin"))
+		pluginSchemaBytes, err := json.ProtoJSONMarshal(goodPluginSchema("recreate-new-lua-plugin", "string"))
 		assert.NoError(t, err)
 		res := c.POST("/v1/plugin-schemas/lua").WithBytes(pluginSchemaBytes).Expect()
 		res.Status(http.StatusCreated)
 		body := res.JSON().Path("$.item").Object()
-		validatePluginSchema("recreate-new-lua-plugin", body)
+		validatePluginSchema("recreate-new-lua-plugin", "string", body)
 
 		// Recreate plugin schema instance
 		res = c.POST("/v1/plugin-schemas/lua").WithBytes(pluginSchemaBytes).Expect()
@@ -138,7 +138,7 @@ func TestPluginSchema_Get(t *testing.T) {
 	defer cleanup()
 	c := httpexpect.New(t, s.URL)
 
-	pluginSchemaBytes, err := json.ProtoJSONMarshal(goodPluginSchema("new-lua-plugin"))
+	pluginSchemaBytes, err := json.ProtoJSONMarshal(goodPluginSchema("new-lua-plugin", "string"))
 	assert.NoError(t, err)
 	res := c.POST("/v1/plugin-schemas/lua").WithBytes(pluginSchemaBytes).Expect()
 	res.Status(http.StatusCreated)
@@ -147,13 +147,13 @@ func TestPluginSchema_Get(t *testing.T) {
 	t.Run("valid plugin schema ID returns 200", func(t *testing.T) {
 		res := c.GET("/v1/plugin-schemas/lua/" + name).Expect().Status(http.StatusOK)
 		body := res.JSON().Path("$.item").Object()
-		validatePluginSchema("new-lua-plugin", body)
+		validatePluginSchema("new-lua-plugin", "string", body)
 	})
 
 	t.Run("valid plugin schema name returns 200", func(t *testing.T) {
 		res := c.GET("/v1/plugin-schemas/lua/new-lua-plugin").Expect().Status(http.StatusOK)
 		body := res.JSON().Path("$.item").Object()
-		validatePluginSchema("new-lua-plugin", body)
+		validatePluginSchema("new-lua-plugin", "string", body)
 	})
 
 	t.Run("non-existent plugin schema returns 404", func(t *testing.T) {
@@ -191,7 +191,7 @@ func TestPluginSchema_List(t *testing.T) {
 	var pluginSchemaNames []string
 	for i := 1; i <= 6; i++ {
 		pluginName := fmt.Sprintf("plugin-schema-%d", i)
-		pluginSchemaBytes, err := json.ProtoJSONMarshal(goodPluginSchema(pluginName))
+		pluginSchemaBytes, err := json.ProtoJSONMarshal(goodPluginSchema(pluginName, "string"))
 		assert.NoError(t, err)
 		res := c.POST("/v1/plugin-schemas/lua").WithBytes(pluginSchemaBytes).Expect()
 		res.Status(http.StatusCreated)
@@ -235,5 +235,45 @@ func TestPluginSchema_List(t *testing.T) {
 		body.Value("page").Object().Value("total_count").Number().Equal(6)
 		body.Value("page").Object().NotContainsKey("next_page_num")
 		require.ElementsMatch(t, pluginSchemaNames, gotPluginSchemaNames)
+	})
+}
+
+func TestPluginSchema_Put(t *testing.T) {
+	s, cleanup := setup(t)
+	defer cleanup()
+	c := httpexpect.New(t, s.URL)
+
+	t.Run("create new schema", func(t *testing.T) {
+		pluginSchemaBytes, err := json.ProtoJSONMarshal(goodPluginSchema("put-new-lua-plugin", "string"))
+		assert.NoError(t, err)
+
+		res := c.PUT("/v1/plugin-schemas/lua/" + "put-new-lua-plugin").WithBytes(pluginSchemaBytes).Expect()
+		res.Status(http.StatusOK)
+
+		res.Header("grpc-metadata-koko-status-code").Empty()
+		body := res.JSON().Path("$.item").Object()
+		validatePluginSchema("put-new-lua-plugin", "string", body)
+	})
+
+	t.Run("create and update", func(t *testing.T) {
+		// Create an instance
+		pluginSchemaBytes, err := json.ProtoJSONMarshal(goodPluginSchema("put-again-lua-plugin", "string"))
+		assert.NoError(t, err)
+
+		res := c.PUT("/v1/plugin-schemas/lua/" + "put-again-lua-plugin").WithBytes(pluginSchemaBytes).Expect()
+		res.Status(http.StatusOK)
+
+		body := res.JSON().Path("$.item").Object()
+		validatePluginSchema("put-again-lua-plugin", "string", body)
+
+		// PUT it again, but different type in the schema
+		changedSchemaBytes, err := json.ProtoJSONMarshal(goodPluginSchema("put-again-lua-plugin", "number"))
+		assert.NoError(t, err)
+		res = c.PUT("/v1/plugin-schemas/lua/" + "put-again-lua-plugin").WithBytes(changedSchemaBytes).Expect()
+		res.Status(http.StatusOK)
+
+		res.Header("grpc-metadata-koko-status-code").Empty()
+		body = res.JSON().Path("$.item").Object()
+		validatePluginSchema("put-again-lua-plugin", "number", body)
 	})
 }
