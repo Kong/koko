@@ -125,6 +125,8 @@ func (s *PluginSchemaService) UpsertLuaPluginSchema(ctx context.Context,
 	if !nameRegex.MatchString(req.Name) {
 		return nil, s.err(ctx, util.ErrClient{Message: "required name is invalid"})
 	}
+	// TODO(hbagdi): validate the ne plugin schema again all existing plugin instances
+	// in the database before allowing an update
 	db, err := s.CommonOpts.getDB(ctx, req.Cluster)
 	if err != nil {
 		return nil, err

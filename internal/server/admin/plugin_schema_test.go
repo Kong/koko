@@ -243,7 +243,7 @@ func TestPluginSchema_Put(t *testing.T) {
 	defer cleanup()
 	c := httpexpect.New(t, s.URL)
 
-	t.Run("create new schema", func(t *testing.T) {
+	t.Run("creating a new schema using PUT succeeds", func(t *testing.T) {
 		pluginSchemaBytes, err := json.ProtoJSONMarshal(goodPluginSchema("put-new-lua-plugin", "string"))
 		assert.NoError(t, err)
 
@@ -292,7 +292,7 @@ func TestPluginSchema_Put(t *testing.T) {
 		}
 	})
 
-	t.Run("create and update", func(t *testing.T) {
+	t.Run("updating an existing schema with a valid schema succeeds", func(t *testing.T) {
 		// Create an instance
 		pluginSchemaBytes, err := json.ProtoJSONMarshal(goodPluginSchema("put-again-lua-plugin", "string"))
 		assert.NoError(t, err)
