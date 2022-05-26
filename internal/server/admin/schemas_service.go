@@ -2,6 +2,7 @@ package admin
 
 import (
 	"context"
+	"errors"
 
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/service/v1"
 	"github.com/kong/koko/internal/json"
@@ -9,6 +10,7 @@ import (
 	"github.com/kong/koko/internal/model/json/extension"
 	"github.com/kong/koko/internal/model/json/schema"
 	"github.com/kong/koko/internal/plugin"
+	"github.com/kong/koko/internal/plugin/validators"
 	"github.com/kong/koko/internal/resource"
 	"github.com/kong/koko/internal/server/util"
 	"github.com/kong/koko/internal/store"
@@ -68,10 +70,17 @@ func (s *SchemasService) GetLuaSchemasPlugin(ctx context.Context,
 	s.logger(ctx).With(zap.String("name", req.Name)).Debug("reading Lua plugin schema by name")
 	rawLuaSchema, err := s.validator.GetRawLuaSchema(ctx, req.Name)
 	if err != nil {
-		// check if the plugin is a non-bundled one
-		rawLuaSchema, err = s.getNonBundledSchema(ctx, req)
+		// if it's not a 404 return immediately
+		if !errors.Is(err, validators.ErrSchemaNotFound) {
+			return nil, status.Errorf(codes.Internal, err.Error())
+		}
+		// otherwise check if the plugin is a non-bundled one
+		rawLuaSchema, err = s.getCustomPluginSchema(ctx, req)
 		if err != nil {
-			return nil, err
+			if errors.Is(err, store.ErrNotFound) || errors.Is(err, validators.ErrSchemaNotFound) {
+				return nil, status.Errorf(codes.NotFound, "no plugin named '%s'", req.Name)
+			}
+			return nil, status.Errorf(codes.Internal, err.Error())
 		}
 	}
 
@@ -85,7 +94,7 @@ func (s *SchemasService) GetLuaSchemasPlugin(ctx context.Context,
 	}, nil
 }
 
-func (s *SchemasService) getNonBundledSchema(
+func (s *SchemasService) getCustomPluginSchema(
 	ctx context.Context, req *v1.GetLuaSchemasPluginRequest,
 ) ([]byte, error) {
 	db, err := s.CommonOpts.getDB(ctx, req.Cluster)
@@ -95,9 +104,9 @@ func (s *SchemasService) getNonBundledSchema(
 	res := resource.NewPluginSchema()
 	ctx = context.WithValue(ctx, util.ContextKeyCluster, req.Cluster)
 	if err := db.Read(ctx, res, store.GetByID(req.Name)); err != nil {
-		return nil, status.Errorf(codes.NotFound, "no plugin named '%s'", req.Name)
+		return nil, err
 	}
-	return s.validator.GetNonBundledRawLuaSchema(ctx, req.Name)
+	return s.validator.GetRawLuaSchemaForCustomPlugin(ctx, req.Name)
 }
 
 func (s *SchemasService) ValidateLuaPlugin(

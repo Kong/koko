@@ -117,7 +117,9 @@ func TestSchemasGetPlugin(t *testing.T) {
 
 	t.Run("get non-bundled plugins schema", func(t *testing.T) {
 		nonBundledPlugin := "valid"
-		res := c.POST("/v1/plugin-schemas/lua").WithJSON(goodPluginSchema(nonBundledPlugin)).Expect()
+		res := c.POST("/v1/plugin-schemas").WithJSON(
+			goodPluginSchema(nonBundledPlugin, "string"),
+		).Expect()
 		res.Status(http.StatusCreated)
 
 		res = c.GET(fmt.Sprintf("/v1/schemas/lua/plugins/%s", nonBundledPlugin)).Expect()

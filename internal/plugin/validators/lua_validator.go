@@ -22,6 +22,8 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+var ErrSchemaNotFound = fmt.Errorf("not found")
+
 type Opts struct {
 	Logger      *zap.Logger
 	InjectFS    *embed.FS
@@ -284,24 +286,24 @@ func (v *LuaValidator) LoadSchemasFromEmbed(fs embed.FS, dirName string) error {
 func (v *LuaValidator) GetRawLuaSchema(ctx context.Context, name string) ([]byte, error) {
 	rawLuaSchema, ok := v.rawLuaSchemas[name]
 	if !ok {
-		return []byte{}, fmt.Errorf("raw Lua schema not found for plugin: '%s'", name)
+		return []byte{}, ErrSchemaNotFound
 	}
 	return rawLuaSchema, nil
 }
 
-// GetNonBundledRawLuaSchema implements the Validator.GetNonBundledRawLuaSchema interface.
-func (v *LuaValidator) GetNonBundledRawLuaSchema(ctx context.Context, name string) ([]byte, error) {
+// GetRawLuaSchemaForCustomPlugin implements the Validator.GetRawLuaSchemaForCustomPlugin interface.
+func (v *LuaValidator) GetRawLuaSchemaForCustomPlugin(ctx context.Context, name string) ([]byte, error) {
 	start := time.Now()
 	defer func() {
 		v.logger.With(zap.String("plugin", name),
-			zap.Duration("get-non-bundled-schema-time", time.Since(start))).
-			Debug("non-bundled schema retrieved via lua VM")
+			zap.Duration("get-custom-plugin-schema-time", time.Since(start))).
+			Debug("custom plugin schema retrieved via lua VM")
 	}()
 	unloadLuaPluginSchema := v.loadLuaPluginSchema(ctx, name)
 	defer unloadLuaPluginSchema()
 	pluginSchema, err := v.goksV.SchemaAsJSON(name)
 	if err != nil {
-		return []byte{}, fmt.Errorf("raw Lua schema not found for non-bundled plugin: '%s'", name)
+		return []byte{}, ErrSchemaNotFound
 	}
 	return []byte(pluginSchema), nil
 }
