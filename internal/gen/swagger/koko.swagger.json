@@ -1106,6 +1106,48 @@
         "tags": [
           "kong.admin.service.v1.PluginSchemaService"
         ]
+      },
+      "put": {
+        "operationId": "PluginSchemaService_UpsertLuaPluginSchema",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/kong.admin.service.v1.UpsertLuaPluginSchemaResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "item",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/kong.admin.model.v1.PluginSchema"
+            }
+          },
+          {
+            "name": "cluster.id",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "kong.admin.service.v1.PluginSchemaService"
+        ]
       }
     },
     "/v1/plugins": {
@@ -4372,6 +4414,14 @@
       "properties": {
         "item": {
           "$ref": "#/definitions/kong.admin.model.v1.Consumer"
+        }
+      }
+    },
+    "kong.admin.service.v1.UpsertLuaPluginSchemaResponse": {
+      "type": "object",
+      "properties": {
+        "item": {
+          "$ref": "#/definitions/kong.admin.model.v1.PluginSchema"
         }
       }
     },

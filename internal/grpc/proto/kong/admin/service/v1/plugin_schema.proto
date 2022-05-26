@@ -26,6 +26,12 @@ service PluginSchemaService {
       get: "/v1/plugin-schemas/lua"
     };
   }
+  rpc UpsertLuaPluginSchema(UpsertLuaPluginSchemaRequest) returns (UpsertLuaPluginSchemaResponse) {
+    option (google.api.http) = {
+      put: "/v1/plugin-schemas/lua/{name}"
+      body: "item"
+    };
+  }
 }
 
 message CreateLuaPluginSchemaRequest {
@@ -54,4 +60,14 @@ message ListLuaPluginSchemasRequest {
 message ListLuaPluginSchemasResponse {
   repeated model.v1.PluginSchema items = 1;
   model.v1.PaginationResponse page = 2;
+}
+
+message UpsertLuaPluginSchemaRequest {
+  string name = 1;
+  model.v1.PluginSchema item = 2;
+  model.v1.RequestCluster cluster = 3;
+}
+
+message UpsertLuaPluginSchemaResponse {
+  model.v1.PluginSchema item = 1;
 }

@@ -21,6 +21,8 @@ type PluginSchemaService struct {
 	validator plugin.Validator
 }
 
+const nameFieldName = "name"
+
 func (s *PluginSchemaService) CreateLuaPluginSchema(ctx context.Context,
 	req *v1.CreateLuaPluginSchemaRequest,
 ) (*v1.CreateLuaPluginSchemaResponse, error) {
@@ -33,8 +35,8 @@ func (s *PluginSchemaService) CreateLuaPluginSchema(ctx context.Context,
 	if err := db.Create(ctx, res); err != nil {
 		errConstraint, ok := err.(store.ErrConstraint)
 		if ok {
-			errConstraint.Index.FieldName = "name"
-			errConstraint.Index.Name = "name"
+			errConstraint.Index.FieldName = nameFieldName
+			errConstraint.Index.Name = nameFieldName
 			err = errConstraint
 		}
 		return nil, s.err(ctx, err)
@@ -112,4 +114,36 @@ func pluginSchemasFromObjects(objects []model.Object) []*pb.PluginSchema {
 		}
 	}
 	return res
+}
+
+func (s *PluginSchemaService) UpsertLuaPluginSchema(ctx context.Context,
+	req *v1.UpsertLuaPluginSchemaRequest,
+) (*v1.UpsertLuaPluginSchemaResponse, error) {
+	if req.Name == "" {
+		return nil, s.err(ctx, util.ErrClient{Message: "required name is missing"})
+	}
+	if !nameRegex.MatchString(req.Name) {
+		return nil, s.err(ctx, util.ErrClient{Message: "required name is invalid"})
+	}
+	// TODO(hbagdi): validate the ne plugin schema again all existing plugin instances
+	// in the database before allowing an update
+	db, err := s.CommonOpts.getDB(ctx, req.Cluster)
+	if err != nil {
+		return nil, err
+	}
+	res := resource.NewPluginSchema()
+	res.PluginSchema = req.Item
+	if err := db.Upsert(ctx, res); err != nil {
+		errConstraint, ok := err.(store.ErrConstraint)
+		if ok {
+			errConstraint.Index.FieldName = nameFieldName
+			errConstraint.Index.Name = nameFieldName
+			err = errConstraint
+		}
+		return nil, s.err(ctx, err)
+	}
+
+	return &v1.UpsertLuaPluginSchemaResponse{
+		Item: res.PluginSchema,
+	}, nil
 }
