@@ -288,7 +288,7 @@ func RegisterPluginSchemaServiceHandlerServer(ctx context.Context, mux *runtime.
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
-		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/kong.admin.service.v1.PluginSchemaService/CreateLuaPluginSchema", runtime.WithHTTPPathPattern("/v1/plugin-schemas/lua"))
+		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/kong.admin.service.v1.PluginSchemaService/CreateLuaPluginSchema", runtime.WithHTTPPathPattern("/v1/plugin-schemas"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -312,7 +312,7 @@ func RegisterPluginSchemaServiceHandlerServer(ctx context.Context, mux *runtime.
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
-		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/kong.admin.service.v1.PluginSchemaService/GetLuaPluginSchema", runtime.WithHTTPPathPattern("/v1/plugin-schemas/lua/{name}"))
+		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/kong.admin.service.v1.PluginSchemaService/GetLuaPluginSchema", runtime.WithHTTPPathPattern("/v1/plugin-schemas/{name}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -336,7 +336,7 @@ func RegisterPluginSchemaServiceHandlerServer(ctx context.Context, mux *runtime.
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
-		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/kong.admin.service.v1.PluginSchemaService/ListLuaPluginSchemas", runtime.WithHTTPPathPattern("/v1/plugin-schemas/lua"))
+		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/kong.admin.service.v1.PluginSchemaService/ListLuaPluginSchemas", runtime.WithHTTPPathPattern("/v1/plugin-schemas"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -360,7 +360,7 @@ func RegisterPluginSchemaServiceHandlerServer(ctx context.Context, mux *runtime.
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
-		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/kong.admin.service.v1.PluginSchemaService/UpsertLuaPluginSchema", runtime.WithHTTPPathPattern("/v1/plugin-schemas/lua/{name}"))
+		ctx, err = runtime.AnnotateIncomingContext(ctx, mux, req, "/kong.admin.service.v1.PluginSchemaService/UpsertLuaPluginSchema", runtime.WithHTTPPathPattern("/v1/plugin-schemas/{name}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -423,7 +423,7 @@ func RegisterPluginSchemaServiceHandlerClient(ctx context.Context, mux *runtime.
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
-		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/kong.admin.service.v1.PluginSchemaService/CreateLuaPluginSchema", runtime.WithHTTPPathPattern("/v1/plugin-schemas/lua"))
+		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/kong.admin.service.v1.PluginSchemaService/CreateLuaPluginSchema", runtime.WithHTTPPathPattern("/v1/plugin-schemas"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -444,7 +444,7 @@ func RegisterPluginSchemaServiceHandlerClient(ctx context.Context, mux *runtime.
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
-		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/kong.admin.service.v1.PluginSchemaService/GetLuaPluginSchema", runtime.WithHTTPPathPattern("/v1/plugin-schemas/lua/{name}"))
+		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/kong.admin.service.v1.PluginSchemaService/GetLuaPluginSchema", runtime.WithHTTPPathPattern("/v1/plugin-schemas/{name}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -465,7 +465,7 @@ func RegisterPluginSchemaServiceHandlerClient(ctx context.Context, mux *runtime.
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
-		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/kong.admin.service.v1.PluginSchemaService/ListLuaPluginSchemas", runtime.WithHTTPPathPattern("/v1/plugin-schemas/lua"))
+		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/kong.admin.service.v1.PluginSchemaService/ListLuaPluginSchemas", runtime.WithHTTPPathPattern("/v1/plugin-schemas"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -486,7 +486,7 @@ func RegisterPluginSchemaServiceHandlerClient(ctx context.Context, mux *runtime.
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
 		var err error
-		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/kong.admin.service.v1.PluginSchemaService/UpsertLuaPluginSchema", runtime.WithHTTPPathPattern("/v1/plugin-schemas/lua/{name}"))
+		ctx, err = runtime.AnnotateContext(ctx, mux, req, "/kong.admin.service.v1.PluginSchemaService/UpsertLuaPluginSchema", runtime.WithHTTPPathPattern("/v1/plugin-schemas/{name}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -506,13 +506,13 @@ func RegisterPluginSchemaServiceHandlerClient(ctx context.Context, mux *runtime.
 }
 
 var (
-	pattern_PluginSchemaService_CreateLuaPluginSchema_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "plugin-schemas", "lua"}, ""))
+	pattern_PluginSchemaService_CreateLuaPluginSchema_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "plugin-schemas"}, ""))
 
-	pattern_PluginSchemaService_GetLuaPluginSchema_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"v1", "plugin-schemas", "lua", "name"}, ""))
+	pattern_PluginSchemaService_GetLuaPluginSchema_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2}, []string{"v1", "plugin-schemas", "name"}, ""))
 
-	pattern_PluginSchemaService_ListLuaPluginSchemas_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "plugin-schemas", "lua"}, ""))
+	pattern_PluginSchemaService_ListLuaPluginSchemas_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "plugin-schemas"}, ""))
 
-	pattern_PluginSchemaService_UpsertLuaPluginSchema_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"v1", "plugin-schemas", "lua", "name"}, ""))
+	pattern_PluginSchemaService_UpsertLuaPluginSchema_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2}, []string{"v1", "plugin-schemas", "name"}, ""))
 )
 
 var (

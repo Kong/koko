@@ -12,23 +12,23 @@ option go_package = "github.com/kong/koko/internal/gen/kong/admin/service/v1;v1"
 service PluginSchemaService {
   rpc CreateLuaPluginSchema(CreateLuaPluginSchemaRequest) returns (CreateLuaPluginSchemaResponse) {
     option (google.api.http) = {
-      post: "/v1/plugin-schemas/lua"
+      post: "/v1/plugin-schemas"
       body: "item"
     };
   }
   rpc GetLuaPluginSchema(GetLuaPluginSchemaRequest) returns (GetLuaPluginSchemaResponse) {
     option (google.api.http) = {
-      get: "/v1/plugin-schemas/lua/{name}"
+      get: "/v1/plugin-schemas/{name}"
     };
   }
   rpc ListLuaPluginSchemas(ListLuaPluginSchemasRequest) returns (ListLuaPluginSchemasResponse) {
     option (google.api.http) = {
-      get: "/v1/plugin-schemas/lua"
+      get: "/v1/plugin-schemas"
     };
   }
   rpc UpsertLuaPluginSchema(UpsertLuaPluginSchemaRequest) returns (UpsertLuaPluginSchemaResponse) {
     option (google.api.http) = {
-      put: "/v1/plugin-schemas/lua/{name}"
+      put: "/v1/plugin-schemas/{name}"
       body: "item"
     };
   }
