@@ -992,7 +992,7 @@
         ]
       }
     },
-    "/v1/plugin-schemas/lua": {
+    "/v1/plugin-schemas": {
       "get": {
         "operationId": "PluginSchemaService_ListLuaPluginSchemas",
         "responses": {
@@ -1072,7 +1072,7 @@
         ]
       }
     },
-    "/v1/plugin-schemas/lua/{name}": {
+    "/v1/plugin-schemas/{name}": {
       "get": {
         "operationId": "PluginSchemaService_GetLuaPluginSchema",
         "responses": {
