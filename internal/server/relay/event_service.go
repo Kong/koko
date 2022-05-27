@@ -79,6 +79,8 @@ func (e *EventService) FetchReconfigureEvents(req *relay.FetchReconfigureEventsR
 	return nil
 }
 
+var refreshInterval = 5 * time.Second
+
 func (e *EventService) run(ctx context.Context) {
 	var latestID string
 	for {
@@ -96,7 +98,7 @@ func (e *EventService) run(ctx context.Context) {
 		case <-ctx.Done():
 			e.logger.Info("shutting down due to context cancellation")
 			return
-		case <-time.After(1 * time.Second):
+		case <-time.After(refreshInterval):
 		}
 	}
 }
