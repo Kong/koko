@@ -20,7 +20,7 @@ func (l *KongRouteLoader) Mutate(ctx context.Context,
 ) error {
 	ctx, cancel := context.WithTimeout(ctx, defaultRequestTimeout)
 	defer cancel()
-	var pageNum int32
+	var pageNum int32 = 1
 	var allRoutes []*v1.Route
 	for {
 		resp, err := l.Client.ListRoutes(ctx, &admin.ListRoutesRequest{
@@ -37,6 +37,7 @@ func (l *KongRouteLoader) Mutate(ctx context.Context,
 		if resp.Page == nil || resp.Page.NextPageNum == 0 {
 			break
 		}
+		pageNum = resp.Page.NextPageNum
 	}
 	res := make([]Map, 0, len(allRoutes))
 	for _, r := range allRoutes {
