@@ -229,7 +229,8 @@ func TestPluginCreate(t *testing.T) {
 	})
 
 	t.Run("create a valid plugin from a non bundled schema", func(t *testing.T) {
-		res := c.POST("/v1/plugin-schemas/lua").WithJSON(goodPluginSchema("valid")).Expect()
+		res := c.POST("/v1/plugin-schemas/lua").
+			WithJSON(goodPluginSchema("valid", "string")).Expect()
 		res.Status(http.StatusCreated)
 
 		var config structpb.Struct
@@ -249,7 +250,8 @@ func TestPluginCreate(t *testing.T) {
 	})
 
 	t.Run("fail to create a plugin from a non bundled schema", func(t *testing.T) {
-		res := c.POST("/v1/plugin-schemas/lua").WithJSON(goodPluginSchema("fail-validation")).Expect()
+		res := c.POST("/v1/plugin-schemas/lua").
+			WithJSON(goodPluginSchema("fail-validation", "string")).Expect()
 		res.Status(http.StatusCreated)
 
 		var config structpb.Struct
@@ -372,7 +374,8 @@ func TestPluginUpsert(t *testing.T) {
 		body.ValueEqual("message", " '' is not a valid uuid")
 	})
 	t.Run("upsert a valid plugin from a non bundled schema", func(t *testing.T) {
-		res := c.POST("/v1/plugin-schemas/lua").WithJSON(goodPluginSchema("valid-upsert")).Expect()
+		res := c.POST("/v1/plugin-schemas/lua").
+			WithJSON(goodPluginSchema("valid-upsert", "string")).Expect()
 		res.Status(http.StatusCreated)
 
 		var config structpb.Struct
@@ -390,7 +393,8 @@ func TestPluginUpsert(t *testing.T) {
 		cfg.Value("field").Equal("non-bundled-plugin-configuration")
 	})
 	t.Run("update a valid plugin from a non bundled schema", func(t *testing.T) {
-		res := c.POST("/v1/plugin-schemas/lua").WithJSON(goodPluginSchema("valid-update")).Expect()
+		res := c.POST("/v1/plugin-schemas/lua").
+			WithJSON(goodPluginSchema("valid-update", "string")).Expect()
 		res.Status(http.StatusCreated)
 
 		id := uuid.NewString()
