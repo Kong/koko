@@ -103,9 +103,20 @@ func local_request_PluginService_GetConfiguredPlugins_1(ctx context.Context, mar
 
 }
 
+var (
+	filter_PluginService_GetAvailablePlugins_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
+)
+
 func request_PluginService_GetAvailablePlugins_0(ctx context.Context, marshaler runtime.Marshaler, client PluginServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq GetAvailablePluginsRequest
 	var metadata runtime.ServerMetadata
+
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_PluginService_GetAvailablePlugins_0); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
 
 	msg, err := client.GetAvailablePlugins(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
@@ -115,6 +126,13 @@ func request_PluginService_GetAvailablePlugins_0(ctx context.Context, marshaler 
 func local_request_PluginService_GetAvailablePlugins_0(ctx context.Context, marshaler runtime.Marshaler, server PluginServiceServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq GetAvailablePluginsRequest
 	var metadata runtime.ServerMetadata
+
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_PluginService_GetAvailablePlugins_0); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
 
 	msg, err := server.GetAvailablePlugins(ctx, &protoReq)
 	return msg, metadata, err

@@ -201,10 +201,35 @@ func (s *PluginService) GetConfiguredPlugins(ctx context.Context,
 
 func (s *PluginService) GetAvailablePlugins(
 	ctx context.Context,
-	_ *v1.GetAvailablePluginsRequest,
+	req *v1.GetAvailablePluginsRequest,
 ) (*v1.GetAvailablePluginsResponse, error) {
+	db, err := s.CommonOpts.getDB(ctx, req.Cluster)
+	if err != nil {
+		return nil, err
+	}
+	pluginNames := map[string]struct{}{}
+	page := 1
+	for page != 0 {
+		pluginSchemas := resource.NewList(resource.TypePluginSchema)
+		if err := db.List(ctx, pluginSchemas, store.ListWithPageSize(store.MaxPageSize),
+			store.ListWithPageNum(page)); err != nil {
+			return nil, s.err(ctx, err)
+		}
+		for _, name := range getCustomPluginNames(pluginSchemas.GetAll()) {
+			pluginNames[name] = struct{}{}
+		}
+		page = pluginSchemas.GetNextPage()
+	}
+	bundledPlugins := s.validator.GetAvailablePluginNames(ctx)
+	names := make([]string, 0, len(pluginNames)+len(bundledPlugins))
+	for name := range pluginNames {
+		names = append(names, name)
+	}
+	names = append(names, bundledPlugins...)
+	sort.Strings(names)
+
 	return &v1.GetAvailablePluginsResponse{
-		Names: s.validator.GetAvailablePluginNames(ctx),
+		Names: names,
 	}, nil
 }
 
@@ -214,6 +239,16 @@ func (s *PluginService) err(ctx context.Context, err error) error {
 
 func (s *PluginService) logger(ctx context.Context) *zap.Logger {
 	return util.LoggerFromContext(ctx).With(s.loggerFields...)
+}
+
+func getCustomPluginNames(objects []model.Object) []string {
+	res := make([]string, len(objects))
+	for i, object := range objects {
+		if pluginSchema, ok := object.Resource().(*pbModel.PluginSchema); ok {
+			res[i] = pluginSchema.Name
+		}
+	}
+	return res
 }
 
 func getPluginNames(objects []model.Object) map[string]struct{} {

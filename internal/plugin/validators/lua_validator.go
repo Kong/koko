@@ -14,7 +14,6 @@ import (
 	goksPlugin "github.com/kong/goks/plugin"
 	grpcModel "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
 	"github.com/kong/koko/internal/json"
-	"github.com/kong/koko/internal/model"
 	"github.com/kong/koko/internal/model/json/validation"
 	"github.com/kong/koko/internal/resource"
 	"github.com/kong/koko/internal/server/util"
@@ -292,10 +291,7 @@ func (v *LuaValidator) GetRawLuaSchema(ctx context.Context, name string) ([]byte
 
 // GetAvailablePluginNames implements the Validator.GetAvailablePluginNames interface.
 func (v *LuaValidator) GetAvailablePluginNames(ctx context.Context) []string {
-	availablePlugins := v.getPluginSchemaNamesFromDB(ctx)
-	availablePlugins = append(availablePlugins, v.luaSchemaNames...)
-	sort.Strings(availablePlugins)
-	return availablePlugins
+	return v.luaSchemaNames
 }
 
 func addLuaSchema(name string, schema string, rawLuaSchemas map[string][]byte, luaSchemaNames *[]string) error {
@@ -358,39 +354,6 @@ func (v *LuaValidator) getPluginSchemaFromDB(ctx context.Context, pluginName str
 		v.logger.With(zap.String("name", pluginName)).With(zap.Error(err)).Warn("retrieving plugin schema")
 	}
 	return ps.PluginSchema.LuaSchema
-}
-
-func (v *LuaValidator) getPluginSchemaNamesFromDB(ctx context.Context) []string {
-	db, err := v.getDB(ctx)
-	if err != nil {
-		v.logger.With(zap.Any("context", ctx)).
-			With(zap.Error(err)).Warn("retrieving database")
-		return []string{}
-	}
-	list := resource.NewList(resource.TypePluginSchema)
-	pageNumOption := store.ListWithPageNum(0)
-	pageSizeOption := store.ListWithPageSize(store.MaxPageSize) // Assume max 1000 custom plugins for now
-
-	listOptFns := []store.ListOptsFunc{
-		pageNumOption,
-		pageSizeOption,
-	}
-	if err := db.List(ctx, list, listOptFns...); err != nil {
-		return []string{}
-	}
-	schemaList := list.GetAll()
-	pluginsNamesList := getCustomPluginNames(schemaList)
-	return pluginsNamesList
-}
-
-func getCustomPluginNames(objects []model.Object) []string {
-	res := make([]string, len(objects))
-	for i, object := range objects {
-		if pluginSchema, ok := object.Resource().(*grpcModel.PluginSchema); ok {
-			res[i] = pluginSchema.Name
-		}
-	}
-	return res
 }
 
 // loadLuaPluginSchema is used for non-bundled plugins. It will load a plugin schema from the StoreLoader

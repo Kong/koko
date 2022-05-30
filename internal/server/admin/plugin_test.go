@@ -960,7 +960,15 @@ func TestAvailablePlugins(t *testing.T) {
 	defer cleanup()
 
 	c := httpexpect.New(t, s.URL)
-	body := c.GET("/v1/available-plugins").Expect().Status(http.StatusOK).JSON().Object()
+	pluginSchemaBytes, err := json.ProtoJSONMarshal(goodPluginSchema("zoom-lua-plugin", "string"))
+	assert.NoError(t, err)
+	res := c.POST("/v1/plugin-schemas").WithBytes(pluginSchemaBytes).Expect()
+	res.Status(http.StatusCreated)
+	res.Header("grpc-metadata-koko-status-code").Empty()
+	body := res.JSON().Path("$.item").Object()
+	validatePluginSchema("zoom-lua-plugin", "string", body)
+
+	body = c.GET("/v1/available-plugins").Expect().Status(http.StatusOK).JSON().Object()
 	names := body.Value("names").Array().Iter()
 	actual := make([]string, 0, len(names))
 	for _, item := range names {
@@ -1003,5 +1011,6 @@ func TestAvailablePlugins(t *testing.T) {
 		"tcp-log",
 		"udp-log",
 		"zipkin",
+		"zoom-lua-plugin",
 	}, actual)
 }
