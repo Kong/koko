@@ -10,7 +10,6 @@ import (
 	"github.com/kong/koko/internal/model/json/extension"
 	"github.com/kong/koko/internal/model/json/schema"
 	"github.com/kong/koko/internal/plugin"
-	"github.com/kong/koko/internal/plugin/validators"
 	"github.com/kong/koko/internal/resource"
 	"github.com/kong/koko/internal/server/util"
 	"github.com/kong/koko/internal/store"
@@ -71,19 +70,20 @@ func (s *SchemasService) GetLuaSchemasPlugin(ctx context.Context,
 	rawLuaSchema, err := s.validator.GetRawLuaSchema(ctx, req.Name)
 	if err != nil {
 		// if it's not a 404 return immediately
-		if !errors.Is(err, validators.ErrSchemaNotFound) {
-			return nil, status.Errorf(codes.Internal, err.Error())
+		if !errors.Is(err, plugin.ErrSchemaNotFound) {
+			return nil, s.err(ctx, err)
 		}
 		// otherwise check if the plugin is a non-bundled one
 		rawLuaSchema, err = s.getCustomPluginSchema(ctx, req)
 		if err != nil {
-			if errors.Is(err, store.ErrNotFound) || errors.Is(err, validators.ErrSchemaNotFound) {
-				return nil, status.Errorf(codes.NotFound, "no plugin named '%s'", req.Name)
+			if errors.Is(err, store.ErrNotFound) || errors.Is(err, plugin.ErrSchemaNotFound) {
+				return nil, status.Errorf(codes.NotFound, "no plugin-schema for '%s'", req.Name)
 			}
-			return nil, status.Errorf(codes.Internal, err.Error())
+			return nil, s.err(ctx, err)
 		}
 	}
 
+	// Convert the raw Lua (JSON) into a map/struct and return response
 	luaSchema := &structpb.Struct{}
 	err = json.ProtoJSONUnmarshal(rawLuaSchema, luaSchema)
 	if err != nil {

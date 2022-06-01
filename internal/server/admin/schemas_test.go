@@ -104,7 +104,7 @@ func TestSchemasGetPlugin(t *testing.T) {
 			res := c.GET(fmt.Sprintf("/v1/schemas/lua/plugins/%s", p)).Expect()
 			res.Status(http.StatusNotFound)
 			message := res.JSON().Path("$.message").String()
-			message.Equal(fmt.Sprintf("no plugin named '%s'", p))
+			message.Equal(fmt.Sprintf("no plugin-schema for '%s'", p))
 		}
 	})
 

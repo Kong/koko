@@ -15,14 +15,13 @@ import (
 	grpcModel "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
 	"github.com/kong/koko/internal/json"
 	"github.com/kong/koko/internal/model/json/validation"
+	"github.com/kong/koko/internal/plugin"
 	"github.com/kong/koko/internal/resource"
 	"github.com/kong/koko/internal/server/util"
 	"github.com/kong/koko/internal/store"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/status"
 )
-
-var ErrSchemaNotFound = fmt.Errorf("not found")
 
 type Opts struct {
 	Logger      *zap.Logger
@@ -286,7 +285,7 @@ func (v *LuaValidator) LoadSchemasFromEmbed(fs embed.FS, dirName string) error {
 func (v *LuaValidator) GetRawLuaSchema(ctx context.Context, name string) ([]byte, error) {
 	rawLuaSchema, ok := v.rawLuaSchemas[name]
 	if !ok {
-		return []byte{}, ErrSchemaNotFound
+		return []byte{}, plugin.ErrSchemaNotFound
 	}
 	return rawLuaSchema, nil
 }
@@ -303,7 +302,7 @@ func (v *LuaValidator) GetRawLuaSchemaForCustomPlugin(ctx context.Context, name 
 	defer unloadLuaPluginSchema()
 	pluginSchema, err := v.goksV.SchemaAsJSON(name)
 	if err != nil {
-		return []byte{}, ErrSchemaNotFound
+		return []byte{}, plugin.ErrSchemaNotFound
 	}
 	return []byte(pluginSchema), nil
 }
