@@ -104,7 +104,7 @@ func TestSchemasGetPlugin(t *testing.T) {
 			res := c.GET(fmt.Sprintf("/v1/schemas/lua/plugins/%s", p)).Expect()
 			res.Status(http.StatusNotFound)
 			message := res.JSON().Path("$.message").String()
-			message.Equal(fmt.Sprintf("no plugin named '%s'", p))
+			message.Equal(fmt.Sprintf("no plugin-schema for '%s'", p))
 		}
 	})
 
@@ -113,6 +113,22 @@ func TestSchemasGetPlugin(t *testing.T) {
 		res.Status(http.StatusBadRequest)
 		message := res.JSON().Path("$.message").String()
 		message.Equal("required name is missing")
+	})
+
+	t.Run("get non-bundled plugins schema", func(t *testing.T) {
+		nonBundledPlugin := "valid"
+		res := c.POST("/v1/plugin-schemas").WithJSON(
+			goodPluginSchema(nonBundledPlugin, "string"),
+		).Expect()
+		res.Status(http.StatusCreated)
+
+		res = c.GET(fmt.Sprintf("/v1/schemas/lua/plugins/%s", nonBundledPlugin)).Expect()
+		res.Status(http.StatusOK)
+		value := res.JSON().Path("$..config.fields").Array()
+		value.Length().Equal(1)
+		value = res.JSON().Path("$..config.required").Array()
+		value.Length().Equal(1)
+		value.ContainsOnly(true)
 	})
 }
 

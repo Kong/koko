@@ -2,9 +2,12 @@ package plugin
 
 import (
 	"context"
+	"fmt"
 
 	model "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
 )
+
+var ErrSchemaNotFound = fmt.Errorf("not found")
 
 // Validator handles various needs for plugin validation.
 type Validator interface {
@@ -26,4 +29,8 @@ type Validator interface {
 	// GetRawLuaSchema returns the raw Lua schema for the given plugin. In the event the plugin
 	// does not exist, an error is returned. The returned slice must not be modified.
 	GetRawLuaSchema(ctx context.Context, name string) ([]byte, error)
+
+	// GetRawLuaSchemaForCustomPlugin returns the raw Lua schema for the given non-bundled plugin.
+	// In the event the plugin does not exist, an error is returned.
+	GetRawLuaSchemaForCustomPlugin(ctx context.Context, name string) ([]byte, error)
 }

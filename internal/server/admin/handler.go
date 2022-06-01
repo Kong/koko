@@ -124,8 +124,11 @@ func buildServices(opts HandlerOpts) services {
 			},
 		},
 		schemas: &SchemasService{
-			loggerFields: []zapcore.Field{
-				zap.String("admin-service", "schemas"),
+			CommonOpts: CommonOpts{
+				storeLoader: opts.StoreLoader,
+				loggerFields: []zapcore.Field{
+					zap.String("admin-service", "schemas"),
+				},
 			},
 			validator: opts.Validator,
 		},

@@ -15,6 +15,7 @@ import (
 	grpcModel "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
 	"github.com/kong/koko/internal/json"
 	"github.com/kong/koko/internal/model/json/validation"
+	"github.com/kong/koko/internal/plugin"
 	"github.com/kong/koko/internal/resource"
 	"github.com/kong/koko/internal/server/util"
 	"github.com/kong/koko/internal/store"
@@ -284,9 +285,26 @@ func (v *LuaValidator) LoadSchemasFromEmbed(fs embed.FS, dirName string) error {
 func (v *LuaValidator) GetRawLuaSchema(ctx context.Context, name string) ([]byte, error) {
 	rawLuaSchema, ok := v.rawLuaSchemas[name]
 	if !ok {
-		return []byte{}, fmt.Errorf("raw Lua schema not found for plugin: '%s'", name)
+		return []byte{}, plugin.ErrSchemaNotFound
 	}
 	return rawLuaSchema, nil
+}
+
+// GetRawLuaSchemaForCustomPlugin implements the Validator.GetRawLuaSchemaForCustomPlugin interface.
+func (v *LuaValidator) GetRawLuaSchemaForCustomPlugin(ctx context.Context, name string) ([]byte, error) {
+	start := time.Now()
+	defer func() {
+		v.logger.With(zap.String("plugin", name),
+			zap.Duration("get-custom-plugin-schema-time", time.Since(start))).
+			Debug("custom plugin schema retrieved via lua VM")
+	}()
+	unloadLuaPluginSchema := v.loadLuaPluginSchema(ctx, name)
+	defer unloadLuaPluginSchema()
+	pluginSchema, err := v.goksV.SchemaAsJSON(name)
+	if err != nil {
+		return []byte{}, plugin.ErrSchemaNotFound
+	}
+	return []byte(pluginSchema), nil
 }
 
 // GetAvailablePluginNames implements the Validator.GetAvailablePluginNames interface.
