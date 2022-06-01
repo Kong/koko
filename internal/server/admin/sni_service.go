@@ -106,7 +106,7 @@ func (s *SNIService) ListSNIs(ctx context.Context, req *v1.ListSNIsRequest) (*v1
 	list := resource.NewList(resource.TypeSNI)
 	listOptFns, err := listOptsFromReq(req.Page)
 	if err != nil {
-		return nil, s.err(ctx, util.ErrClient{Message: err.Error()})
+		return nil, s.err(ctx, err)
 	}
 
 	listFn = append(listFn, listOptFns...)

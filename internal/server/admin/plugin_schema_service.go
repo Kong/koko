@@ -79,7 +79,7 @@ func (s *PluginSchemaService) ListLuaPluginSchemas(ctx context.Context,
 	list := resource.NewList(resource.TypePluginSchema)
 	listOptFns, err := listOptsFromReq(req.Page)
 	if err != nil {
-		return nil, s.err(ctx, util.ErrClient{Message: err.Error()})
+		return nil, s.err(ctx, err)
 	}
 
 	listFn = append(listFn, listOptFns...)

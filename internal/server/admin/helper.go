@@ -19,10 +19,14 @@ var nameRegex = regexp.MustCompile(namePattern)
 
 func validateListOptions(listOpts *pbModel.PaginationRequest) error {
 	if listOpts.Number < 0 {
-		return fmt.Errorf("invalid page number '%d', page must be > 0", listOpts.Number)
+		return util.ErrClient{Message: fmt.Sprintf("invalid page number '%d', page must be > 0", listOpts.Number)}
 	}
 	if listOpts.Size < 0 || listOpts.Size > store.MaxPageSize {
-		return fmt.Errorf("invalid page_size '%d', must be within range [1 - %d]", listOpts.Size, store.MaxPageSize)
+		return util.ErrClient{Message: fmt.Sprintf(
+			"invalid page_size '%d', must be within range [1 - %d]",
+			listOpts.Size,
+			store.MaxPageSize,
+		)}
 	}
 	return nil
 }

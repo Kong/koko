@@ -1,7 +1,6 @@
 package admin
 
 import (
-	"fmt"
 	"testing"
 
 	pbModel "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
@@ -49,8 +48,7 @@ func Test_listOptsFromRequest(t *testing.T) {
 	t.Run("Page 1, Size 1001 fails with error", func(t *testing.T) {
 		p := &pbModel.PaginationRequest{Number: 1, Size: 1001}
 		_, err := listOptsFromReq(p)
-		expectedErr := fmt.Errorf("invalid page_size '%d', must be within range [1 - 1000]", 1001)
-		require.Equal(t, expectedErr, err)
+		require.EqualError(t, err, "invalid page_size '1001', must be within range [1 - 1000]")
 	})
 	t.Run("setting filter expression", func(t *testing.T) {
 		listOptFns, err := listOptsFromReq(&pbModel.PaginationRequest{Filter: `"tag1" in tags`})
