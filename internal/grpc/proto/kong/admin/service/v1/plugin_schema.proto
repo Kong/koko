@@ -32,6 +32,11 @@ service PluginSchemaService {
       body: "item"
     };
   }
+  rpc DeleteLuaPluginSchema(DeleteLuaPluginSchemaRequest) returns (DeleteLuaPluginSchemaResponse) {
+    option (google.api.http) = {
+      delete: "/v1/plugin-schemas/{name}"
+    };
+  }
 }
 
 message CreateLuaPluginSchemaRequest {
@@ -71,3 +76,10 @@ message UpsertLuaPluginSchemaRequest {
 message UpsertLuaPluginSchemaResponse {
   model.v1.PluginSchema item = 1;
 }
+
+message DeleteLuaPluginSchemaRequest {
+  string name = 1;
+  model.v1.RequestCluster cluster = 2;
+}
+
+message DeleteLuaPluginSchemaResponse {}

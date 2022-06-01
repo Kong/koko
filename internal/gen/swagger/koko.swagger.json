@@ -1107,6 +1107,40 @@
           "kong.admin.service.v1.PluginSchemaService"
         ]
       },
+      "delete": {
+        "operationId": "PluginSchemaService_DeleteLuaPluginSchema",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/kong.admin.service.v1.DeleteLuaPluginSchemaResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "cluster.id",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "kong.admin.service.v1.PluginSchemaService"
+        ]
+      },
       "put": {
         "operationId": "PluginSchemaService_UpsertLuaPluginSchema",
         "responses": {
@@ -4049,6 +4083,9 @@
       "type": "object"
     },
     "kong.admin.service.v1.DeleteConsumerResponse": {
+      "type": "object"
+    },
+    "kong.admin.service.v1.DeleteLuaPluginSchemaResponse": {
       "type": "object"
     },
     "kong.admin.service.v1.DeleteNodeResponse": {

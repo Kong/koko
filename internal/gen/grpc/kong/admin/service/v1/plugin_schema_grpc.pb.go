@@ -26,6 +26,7 @@ type PluginSchemaServiceClient interface {
 	GetLuaPluginSchema(ctx context.Context, in *GetLuaPluginSchemaRequest, opts ...grpc.CallOption) (*GetLuaPluginSchemaResponse, error)
 	ListLuaPluginSchemas(ctx context.Context, in *ListLuaPluginSchemasRequest, opts ...grpc.CallOption) (*ListLuaPluginSchemasResponse, error)
 	UpsertLuaPluginSchema(ctx context.Context, in *UpsertLuaPluginSchemaRequest, opts ...grpc.CallOption) (*UpsertLuaPluginSchemaResponse, error)
+	DeleteLuaPluginSchema(ctx context.Context, in *DeleteLuaPluginSchemaRequest, opts ...grpc.CallOption) (*DeleteLuaPluginSchemaResponse, error)
 }
 
 type pluginSchemaServiceClient struct {
@@ -72,6 +73,15 @@ func (c *pluginSchemaServiceClient) UpsertLuaPluginSchema(ctx context.Context, i
 	return out, nil
 }
 
+func (c *pluginSchemaServiceClient) DeleteLuaPluginSchema(ctx context.Context, in *DeleteLuaPluginSchemaRequest, opts ...grpc.CallOption) (*DeleteLuaPluginSchemaResponse, error) {
+	out := new(DeleteLuaPluginSchemaResponse)
+	err := c.cc.Invoke(ctx, "/kong.admin.service.v1.PluginSchemaService/DeleteLuaPluginSchema", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // PluginSchemaServiceServer is the server API for PluginSchemaService service.
 // All implementations must embed UnimplementedPluginSchemaServiceServer
 // for forward compatibility
@@ -80,6 +90,7 @@ type PluginSchemaServiceServer interface {
 	GetLuaPluginSchema(context.Context, *GetLuaPluginSchemaRequest) (*GetLuaPluginSchemaResponse, error)
 	ListLuaPluginSchemas(context.Context, *ListLuaPluginSchemasRequest) (*ListLuaPluginSchemasResponse, error)
 	UpsertLuaPluginSchema(context.Context, *UpsertLuaPluginSchemaRequest) (*UpsertLuaPluginSchemaResponse, error)
+	DeleteLuaPluginSchema(context.Context, *DeleteLuaPluginSchemaRequest) (*DeleteLuaPluginSchemaResponse, error)
 	mustEmbedUnimplementedPluginSchemaServiceServer()
 }
 
@@ -98,6 +109,9 @@ func (UnimplementedPluginSchemaServiceServer) ListLuaPluginSchemas(context.Conte
 }
 func (UnimplementedPluginSchemaServiceServer) UpsertLuaPluginSchema(context.Context, *UpsertLuaPluginSchemaRequest) (*UpsertLuaPluginSchemaResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpsertLuaPluginSchema not implemented")
+}
+func (UnimplementedPluginSchemaServiceServer) DeleteLuaPluginSchema(context.Context, *DeleteLuaPluginSchemaRequest) (*DeleteLuaPluginSchemaResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteLuaPluginSchema not implemented")
 }
 func (UnimplementedPluginSchemaServiceServer) mustEmbedUnimplementedPluginSchemaServiceServer() {}
 
@@ -184,6 +198,24 @@ func _PluginSchemaService_UpsertLuaPluginSchema_Handler(srv interface{}, ctx con
 	return interceptor(ctx, in, info, handler)
 }
 
+func _PluginSchemaService_DeleteLuaPluginSchema_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteLuaPluginSchemaRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PluginSchemaServiceServer).DeleteLuaPluginSchema(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/kong.admin.service.v1.PluginSchemaService/DeleteLuaPluginSchema",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PluginSchemaServiceServer).DeleteLuaPluginSchema(ctx, req.(*DeleteLuaPluginSchemaRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // PluginSchemaService_ServiceDesc is the grpc.ServiceDesc for PluginSchemaService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -206,6 +238,10 @@ var PluginSchemaService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UpsertLuaPluginSchema",
 			Handler:    _PluginSchemaService_UpsertLuaPluginSchema_Handler,
+		},
+		{
+			MethodName: "DeleteLuaPluginSchema",
+			Handler:    _PluginSchemaService_DeleteLuaPluginSchema_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

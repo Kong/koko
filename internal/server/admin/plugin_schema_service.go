@@ -8,6 +8,7 @@ import (
 	pb "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/service/v1"
 	"github.com/kong/koko/internal/model"
+	"github.com/kong/koko/internal/model/json/validation"
 	"github.com/kong/koko/internal/plugin"
 	"github.com/kong/koko/internal/resource"
 	"github.com/kong/koko/internal/server/util"
@@ -50,11 +51,8 @@ func (s *PluginSchemaService) CreateLuaPluginSchema(ctx context.Context,
 func (s *PluginSchemaService) GetLuaPluginSchema(ctx context.Context,
 	req *v1.GetLuaPluginSchemaRequest,
 ) (*v1.GetLuaPluginSchemaResponse, error) {
-	if req.Name == "" {
-		return nil, s.err(ctx, util.ErrClient{Message: "required name is missing"})
-	}
-	if !nameRegex.MatchString(req.Name) {
-		return nil, s.err(ctx, util.ErrClient{Message: "required name is invalid"})
+	if err := checkSchemaName(req.Name); err != nil {
+		return nil, s.err(ctx, err)
 	}
 	db, err := s.CommonOpts.getDB(ctx, req.Cluster)
 	if err != nil {
@@ -96,6 +94,76 @@ func (s *PluginSchemaService) ListLuaPluginSchemas(ctx context.Context,
 	}, nil
 }
 
+func (s *PluginSchemaService) DeleteLuaPluginSchema(ctx context.Context,
+	req *v1.DeleteLuaPluginSchemaRequest,
+) (*v1.DeleteLuaPluginSchemaResponse, error) {
+	if err := checkSchemaName(req.Name); err != nil {
+		return nil, s.err(ctx, err)
+	}
+	db, err := s.CommonOpts.getDB(ctx, req.Cluster)
+	if err != nil {
+		return nil, err
+	}
+
+	inUse, err := s.isPluginSchemaInUse(ctx, req.Name, db)
+	if err != nil {
+		return nil, err
+	}
+	if inUse {
+		errMsg := "plugin schema is currently in use, " +
+			"please delete existing plugins using the schema and try again"
+		return nil, s.err(ctx, util.ErrClient{Message: errMsg})
+	}
+
+	err = db.Delete(ctx, store.DeleteByID(req.Name),
+		store.DeleteByType(resource.TypePluginSchema))
+	if err != nil {
+		return nil, s.err(ctx, err)
+	}
+	util.SetHeader(ctx, http.StatusNoContent)
+	return &v1.DeleteLuaPluginSchemaResponse{}, nil
+}
+
+func (s *PluginSchemaService) isPluginSchemaInUse(
+	ctx context.Context, name string, db store.Store,
+) (bool, error) {
+	var page int32 = 1
+	for {
+		plugins, page, err := s.getPluginsPage(ctx, page, db)
+		if err != nil {
+			return false, err
+		}
+		for _, plugin := range plugins {
+			if plugin.Name == name {
+				return true, nil
+			}
+		}
+		if page == 0 {
+			break
+		}
+	}
+	return false, nil
+}
+
+func (s *PluginSchemaService) getPluginsPage(
+	ctx context.Context, page int32, db store.Store,
+) ([]*pb.Plugin, int, error) {
+	list := resource.NewList(resource.TypePlugin)
+	listOptFns, err := listOptsFromReq(&pb.PaginationRequest{
+		Number: page,
+		Size:   store.MaxPageSize,
+	})
+	if err != nil {
+		return nil, 0, err
+	}
+
+	if err := db.List(ctx, list, listOptFns...); err != nil {
+		return nil, 0, err
+	}
+
+	return pluginsFromObjects(list.GetAll()), list.GetNextPage(), nil
+}
+
 func (s *PluginSchemaService) err(ctx context.Context, err error) error {
 	return util.HandleErr(ctx, s.logger(ctx), err)
 }
@@ -119,11 +187,8 @@ func pluginSchemasFromObjects(objects []model.Object) []*pb.PluginSchema {
 func (s *PluginSchemaService) UpsertLuaPluginSchema(ctx context.Context,
 	req *v1.UpsertLuaPluginSchemaRequest,
 ) (*v1.UpsertLuaPluginSchemaResponse, error) {
-	if req.Name == "" {
-		return nil, s.err(ctx, util.ErrClient{Message: "required name is missing"})
-	}
-	if !nameRegex.MatchString(req.Name) {
-		return nil, s.err(ctx, util.ErrClient{Message: "required name is invalid"})
+	if err := checkSchemaName(req.Name); err != nil {
+		return nil, s.err(ctx, err)
 	}
 	// TODO(hbagdi): validate the ne plugin schema again all existing plugin instances
 	// in the database before allowing an update
@@ -146,4 +211,28 @@ func (s *PluginSchemaService) UpsertLuaPluginSchema(ctx context.Context,
 	return &v1.UpsertLuaPluginSchemaResponse{
 		Item: res.PluginSchema,
 	}, nil
+}
+
+func checkSchemaName(name string) error {
+	if name == "" {
+		return validation.Error{
+			Errs: []*pb.ErrorDetail{
+				{
+					Type:     pb.ErrorType_ERROR_TYPE_ENTITY,
+					Messages: []string{"required name is missing"},
+				},
+			},
+		}
+	}
+	if !nameRegex.MatchString(name) {
+		return validation.Error{
+			Errs: []*pb.ErrorDetail{
+				{
+					Type:     pb.ErrorType_ERROR_TYPE_ENTITY,
+					Messages: []string{fmt.Sprintf("must match pattern: '%s'", namePattern)},
+				},
+			},
+		}
+	}
+	return nil
 }
