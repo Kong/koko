@@ -1012,13 +1012,13 @@ func TestAvailableAndCustomPlugins(t *testing.T) {
 
 	c := httpexpect.New(t, s.URL)
 	// Add custom plugin
-	pluginSchemaBytes, err := json.ProtoJSONMarshal(goodPluginSchema("zoom-lua-plugin", "string"))
+	pluginSchemaBytes, err := json.ProtoJSONMarshal(goodPluginSchema("abc-lua-plugin", "string"))
 	assert.NoError(t, err)
 	res := c.POST("/v1/plugin-schemas").WithBytes(pluginSchemaBytes).Expect()
 	res.Status(http.StatusCreated)
 	res.Header("grpc-metadata-koko-status-code").Empty()
 	body := res.JSON().Path("$.item").Object()
-	validatePluginSchema("zoom-lua-plugin", "string", body)
+	validatePluginSchema("abc-lua-plugin", "string", body)
 
 	// get available-plugins
 	body = c.GET("/v1/available-plugins").Expect().Status(http.StatusOK).JSON().Object()
@@ -1029,6 +1029,7 @@ func TestAvailableAndCustomPlugins(t *testing.T) {
 	}
 
 	assert.Equal(t, []string{
+		"abc-lua-plugin",
 		"acl",
 		"acme",
 		"aws-lambda",
@@ -1064,6 +1065,5 @@ func TestAvailableAndCustomPlugins(t *testing.T) {
 		"tcp-log",
 		"udp-log",
 		"zipkin",
-		"zoom-lua-plugin",
 	}, actual)
 }
