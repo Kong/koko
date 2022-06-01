@@ -123,7 +123,7 @@ func (s *TargetService) ListTargets(ctx context.Context,
 
 	listOptFns, err := listOptsFromReq(req.Page)
 	if err != nil {
-		return nil, s.err(ctx, util.ErrClient{Message: err.Error()})
+		return nil, s.err(ctx, err)
 	}
 
 	listFn = append(listFn, listOptFns...)

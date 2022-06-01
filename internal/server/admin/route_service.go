@@ -117,7 +117,7 @@ func (s *RouteService) ListRoutes(ctx context.Context,
 	list := resource.NewList(resource.TypeRoute)
 	listOptFns, err := listOptsFromReq(req.Page)
 	if err != nil {
-		return nil, s.err(ctx, util.ErrClient{Message: err.Error()})
+		return nil, s.err(ctx, err)
 	}
 
 	listFn = append(listFn, listOptFns...)

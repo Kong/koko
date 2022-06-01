@@ -103,7 +103,7 @@ func (s *ServiceService) ListServices(ctx context.Context,
 	list := resource.NewList(resource.TypeService)
 	listOptFns, err := listOptsFromReq(req.Page)
 	if err != nil {
-		return nil, s.err(ctx, util.ErrClient{Message: err.Error()})
+		return nil, s.err(ctx, err)
 	}
 
 	if err := db.List(ctx, list, listOptFns...); err != nil {

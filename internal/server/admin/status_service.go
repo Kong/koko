@@ -95,7 +95,7 @@ func (s *StatusService) ListStatuses(ctx context.Context,
 	list := resource.NewList(resource.TypeStatus)
 	listOptFns, err := listOptsFromReq(req.Page)
 	if err != nil {
-		return nil, s.err(ctx, util.ErrClient{Message: err.Error()})
+		return nil, s.err(ctx, err)
 	}
 
 	if err := db.List(ctx, list, listOptFns...); err != nil {
