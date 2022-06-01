@@ -6,6 +6,10 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/kong/go-wrpc/wrpc"
+	config_service "github.com/kong/koko/internal/gen/wrpc/kong/services/config/v1"
+	"google.golang.org/protobuf/encoding/protojson"
+
 	"github.com/kong/koko/internal/server/kong/ws/config"
 	"go.uber.org/zap"
 )
@@ -15,6 +19,7 @@ const unversionedConfigKey = "unversioned"
 type Payload struct {
 	// configCache is a cache of configuration. It holds the originally fetched
 	// configuration as well as massaged configuration for each DP version.
+	configVersion int64
 	configCache     configCache
 	configCacheLock sync.Mutex
 	vc              config.VersionCompatibility
@@ -101,6 +106,30 @@ func (p *Payload) configForVersion(version string) (cacheEntry, error) {
 
 	// other errors
 	return cacheEntry{}, err
+}
+
+func (p *Payload) WrpcConfigPayload(versionStr string) (*wrpc.Request, string, error) {
+
+	// TODO: get an uncompressed, unencoded source.
+	c, err := p.Payload(versionStr)
+	if err != nil {
+		return nil, "", err
+	}
+
+	uncomp, err := UncompressPayload(c.CompressedPayload)
+	if err != nil {
+		return nil, "", fmt.Errorf("decompressing config payload: %w", err)
+	}
+
+	configTable := config_service.SyncConfigRequest{}
+	err = protojson.UnmarshalOptions{DiscardUnknown: true}.Unmarshal(uncomp, &configTable)
+	configTable.Version = uint64(p.configVersion)	// TODO: this should go on the same lock period as the content.
+	if err != nil {
+		return nil, "", err
+	}
+
+	req, err := config_service.PrepareConfigServiceSyncConfigRequest(&configTable)
+	return &req, c.Hash, err
 }
 
 func (p *Payload) UpdateBinary(_ context.Context, c config.Content) error {

@@ -15,7 +15,6 @@ import (
 	"github.com/kong/koko/internal/json"
 	"github.com/kong/koko/internal/server/kong/ws/config"
 	"go.uber.org/zap"
-	"google.golang.org/protobuf/encoding/protojson"
 )
 
 type sum [hashSize]byte
@@ -165,7 +164,7 @@ func (n *Node) readThread() error {
 // write sends the provided config payload to the DP, if the hash
 // is different from the last one reported.
 // Used only on WebSocket protocol.
-func (n *Node) write(payload []byte, hash sum, configVersion int64) error {
+func (n *Node) write(payload []byte, hash sum) error {
 	n.lock.RLock()
 	defer n.lock.RUnlock()
 
@@ -185,28 +184,64 @@ func (n *Node) write(payload []byte, hash sum, configVersion int64) error {
 		}
 	}
 
-	if n.peer != nil {
-		uncomp, err := config.UncompressPayload(payload)
-		if err != nil {
-			n.logger.With(zap.Error(err)).Error("decompressing config payload")
-			return err
-		}
-		n.logger.Debug("uncompressed config", zap.String("config", string(uncomp)))
-
-		configTable := config_service.SyncConfigRequest{}
-		err = protojson.UnmarshalOptions{DiscardUnknown: true}.Unmarshal(uncomp, &configTable)
-		configTable.Version = uint64(configVersion)
-		if err != nil {
-			n.logger.With((zap.Error(err))).Error("unmarshaling config")
-			return err
-		}
-
-		c := config_service.ConfigServiceClient{Peer: n.peer}
-		_, err = c.SyncConfig(context.Background(), &configTable)
-		if err != nil {
-			n.logger.With((zap.Error(err))).Error("calling SyncConfig")
-			return err
-		}
-	}
 	return nil
+}
+
+func (n *Node) sendConfig(ctx context.Context, payload *config.Payload) error {
+	if n.conn != nil {
+		return n.sendJsonConfig(payload)
+	}
+
+	if n.peer != nil {
+		return n.sendWrpcConfig(ctx, payload)
+	}
+
+	return fmt.Errorf("node unconnected")
+}
+
+func (n *Node) sendJsonConfig(payload *config.Payload) error {
+	content, err := payload.Payload(n.Version)
+	if err != nil {
+		return fmt.Errorf("unable to gather payload: %w", err)
+	}
+	n.logger.Info("broadcasting to node",
+		zap.String("hash", content.Hash))
+	// TODO(hbagdi): perf: use websocket.PreparedMessage
+	hash, err := truncateHash(content.Hash)
+	if err != nil {
+		n.logger.With(zap.Error(err)).Sugar().Errorf("invalid hash [%v]", hash)
+		return err
+	}
+	err = n.write(content.CompressedPayload, hash) // nolint: contextcheck
+	if err != nil {
+		n.logger.Error("broadcast to node failed", zap.Error(err))
+		// TODO(hbagdi: remove the node if connection has been closed?
+		return err
+	}
+	n.logger.Info("successfully sent payload to node")
+	return nil
+}
+
+
+func (n *Node) sendWrpcConfig(ctx context.Context, payload *config.Payload) error {
+	req, h, err := payload.WrpcConfigPayload(n.Version)
+	if err != nil {
+		n.logger.With(zap.Error(err)).Error("preparing wrpc config payload")
+		return err
+	}
+
+	hash, err := truncateHash(h)
+	if err != nil {
+		n.logger.With(zap.Error(err)).Sugar().Errorf("invalid hash [%v]", hash)
+		return err
+	}
+
+	if bytes.Equal(n.hash[:], hash[:]) {
+		n.logger.With(zap.String("config_hash",
+			hash.String())).Info("hash matched, skipping update")
+		return nil
+	}
+
+	var out config_service.SyncConfigResponse
+	return n.peer.DoRequest(ctx, *req, &out)
 }

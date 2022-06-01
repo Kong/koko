@@ -104,7 +104,6 @@ type Manager struct {
 	config   ManagerConfig
 	configMu sync.RWMutex
 
-	configVersion      int64
 	latestExpectedHash string
 	hashMu             sync.RWMutex
 
@@ -330,10 +329,9 @@ func (m *Manager) addWrpcNode(node *Node, pluginList []string) error {
 func (m *Manager) broadcast() {
 	m.broadcastMutex.Lock()
 	defer m.broadcastMutex.Unlock()
-	configVersion := m.getConfigVersion()
+	ctx := context.Background()		// should it be tied to the lock?
 	for _, node := range m.nodes.All() {
-		payload, err := m.payload.Payload(context.Background(), node.Version)
-		if err != nil {
+		if err := node.sendConfig(ctx, m.payload); err != nil {
 			m.logger.With(zap.Error(err)).Error("unable to gather payload, payload not sent to node")
 			// one node failure shouldn't result in no sync activity to all
 			// subsequent/nodes even though it is likely that all nodes are
@@ -341,21 +339,6 @@ func (m *Manager) broadcast() {
 			continue
 			// TODO(hbagdi) add a metric
 		}
-		loggerWithNode := nodeLogger(node, m.logger)
-		loggerWithNode.Info("broadcasting to node",
-			zap.String("config_hash", payload.Hash))
-		// TODO(hbagdi): perf: use websocket.PreparedMessage
-		hash, err := truncateHash(payload.Hash)
-		if err != nil {
-			m.logger.With(zap.Error(err)).Sugar().Errorf("invalid hash [%v]", hash[:])
-			continue
-		}
-		err = node.write(payload.CompressedPayload, hash, configVersion) // nolint: contextcheck
-		if err != nil {
-			loggerWithNode.Error("broadcast to node failed", zap.Error(err))
-			// TODO(hbagdi: remove the node if connection has been closed?
-		}
-		loggerWithNode.Info("successfully sent payload to node")
 	}
 }
 
@@ -382,21 +365,12 @@ func (m *Manager) reconcileKongPayload(ctx context.Context) error {
 	return nil
 }
 
-func (m *Manager) getConfigVersion() int64 {
-	m.hashMu.RLock()
-	defer m.hashMu.RUnlock()
-
-	return m.configVersion
-}
-
 func (m *Manager) updateExpectedHash(ctx context.Context, hash string) {
 	m.hashMu.Lock()
 	defer m.hashMu.Unlock()
 	if m.latestExpectedHash == hash {
 		return
 	}
-
-	m.configVersion++
 
 	// TODO(hbagdi): add retry with backoff, take a new hash during retry into account
 	ctx, cancel := context.WithTimeout(ctx, defaultRequestTimeout)
