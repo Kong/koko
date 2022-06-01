@@ -216,9 +216,8 @@ func (s *PluginService) GetAvailablePlugins(
 	}
 	if len(customPluginNames) > 0 {
 		pluginNames = append(pluginNames, customPluginNames...)
+		sort.Strings(pluginNames) // sort here since bundledPlugins are sorted
 	}
-	sort.Strings(pluginNames)
-
 	return &v1.GetAvailablePluginsResponse{
 		Names: pluginNames,
 	}, nil
