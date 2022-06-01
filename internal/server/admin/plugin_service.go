@@ -207,7 +207,7 @@ func (s *PluginService) GetAvailablePlugins(
 	if err != nil {
 		return nil, err
 	}
-	pluginNames := map[string]struct{}{}
+	pluginNames := []string{}
 	page := 1
 	for page != 0 {
 		pluginSchemas := resource.NewList(resource.TypePluginSchema)
@@ -215,21 +215,15 @@ func (s *PluginService) GetAvailablePlugins(
 			store.ListWithPageNum(page)); err != nil {
 			return nil, s.err(ctx, err)
 		}
-		for _, name := range getCustomPluginNames(pluginSchemas.GetAll()) {
-			pluginNames[name] = struct{}{}
-		}
+		pluginNames = append(pluginNames, getCustomPluginNames(pluginSchemas.GetAll())...)
 		page = pluginSchemas.GetNextPage()
 	}
 	bundledPlugins := s.validator.GetAvailablePluginNames(ctx)
-	names := make([]string, 0, len(pluginNames)+len(bundledPlugins))
-	for name := range pluginNames {
-		names = append(names, name)
-	}
-	names = append(names, bundledPlugins...)
-	sort.Strings(names)
+	pluginNames = append(pluginNames, bundledPlugins...)
+	sort.Strings(pluginNames)
 
 	return &v1.GetAvailablePluginsResponse{
-		Names: names,
+		Names: pluginNames,
 	}, nil
 }
 
