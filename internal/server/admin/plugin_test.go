@@ -1005,3 +1005,65 @@ func TestAvailablePlugins(t *testing.T) {
 		"zipkin",
 	}, actual)
 }
+
+func TestAvailableAndCustomPlugins(t *testing.T) {
+	s, cleanup := setup(t)
+	defer cleanup()
+
+	c := httpexpect.New(t, s.URL)
+	// Add custom plugin
+	pluginSchemaBytes, err := json.ProtoJSONMarshal(goodPluginSchema("abc-lua-plugin", "string"))
+	assert.NoError(t, err)
+	res := c.POST("/v1/plugin-schemas").WithBytes(pluginSchemaBytes).Expect()
+	res.Status(http.StatusCreated)
+	res.Header("grpc-metadata-koko-status-code").Empty()
+	body := res.JSON().Path("$.item").Object()
+	validatePluginSchema("abc-lua-plugin", "string", body)
+
+	// get available-plugins
+	body = c.GET("/v1/available-plugins").Expect().Status(http.StatusOK).JSON().Object()
+	names := body.Value("names").Array().Iter()
+	actual := make([]string, 0, len(names))
+	for _, item := range names {
+		actual = append(actual, item.String().Raw())
+	}
+
+	assert.Equal(t, []string{
+		"abc-lua-plugin",
+		"acl",
+		"acme",
+		"aws-lambda",
+		"azure-functions",
+		"basic-auth",
+		"bot-detection",
+		"correlation-id",
+		"cors",
+		"datadog",
+		"file-log",
+		"grpc-gateway",
+		"grpc-web",
+		"hmac-auth",
+		"http-log",
+		"ip-restriction",
+		"jwt",
+		"key-auth",
+		"ldap-auth",
+		"loggly",
+		"post-function",
+		"pre-function",
+		"prometheus",
+		"proxy-cache",
+		"rate-limiting",
+		"request-size-limiting",
+		"request-termination",
+		"request-transformer",
+		"response-ratelimiting",
+		"response-transformer",
+		"session",
+		"statsd",
+		"syslog",
+		"tcp-log",
+		"udp-log",
+		"zipkin",
+	}, actual)
+}

@@ -111,7 +111,9 @@ message GetConfiguredPluginsResponse {
   repeated string names = 1;
 }
 
-message GetAvailablePluginsRequest {}
+message GetAvailablePluginsRequest {
+  model.v1.RequestCluster cluster = 1;
+}
 
 message GetAvailablePluginsResponse {
   repeated string names = 1;

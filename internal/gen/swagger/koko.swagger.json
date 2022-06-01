@@ -78,6 +78,14 @@
             }
           }
         },
+        "parameters": [
+          {
+            "name": "cluster.id",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
         "tags": [
           "kong.admin.service.v1.PluginService"
         ]
