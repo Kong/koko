@@ -189,7 +189,7 @@ func (n *Node) write(payload []byte, hash sum) error {
 
 func (n *Node) sendConfig(ctx context.Context, payload *config.Payload) error {
 	if n.conn != nil {
-		return n.sendJsonConfig(payload)
+		return n.sendJSONConfig(payload)
 	}
 
 	if n.peer != nil {
@@ -199,7 +199,7 @@ func (n *Node) sendConfig(ctx context.Context, payload *config.Payload) error {
 	return fmt.Errorf("node unconnected")
 }
 
-func (n *Node) sendJsonConfig(payload *config.Payload) error {
+func (n *Node) sendJSONConfig(payload *config.Payload) error {
 	content, err := payload.Payload(n.Version)
 	if err != nil {
 		return fmt.Errorf("unable to gather payload: %w", err)
@@ -212,7 +212,7 @@ func (n *Node) sendJsonConfig(payload *config.Payload) error {
 		n.logger.With(zap.Error(err)).Sugar().Errorf("invalid hash [%v]", hash)
 		return err
 	}
-	err = n.write(content.CompressedPayload, hash) // nolint: contextcheck
+	err = n.write(content.CompressedPayload, hash)
 	if err != nil {
 		n.logger.Error("broadcast to node failed", zap.Error(err))
 		// TODO(hbagdi: remove the node if connection has been closed?
@@ -221,7 +221,6 @@ func (n *Node) sendJsonConfig(payload *config.Payload) error {
 	n.logger.Info("successfully sent payload to node")
 	return nil
 }
-
 
 func (n *Node) sendWrpcConfig(ctx context.Context, payload *config.Payload) error {
 	req, h, err := payload.WrpcConfigPayload(n.Version)
@@ -243,5 +242,11 @@ func (n *Node) sendWrpcConfig(ctx context.Context, payload *config.Payload) erro
 	}
 
 	var out config_service.SyncConfigResponse
-	return n.peer.DoRequest(ctx, *req, &out)
+	go func() {
+		err := n.peer.DoRequest(ctx, *req, &out)
+		if err != nil {
+			n.logger.With(zap.Error(err)).Error("sending config")
+		}
+	}()
+	return nil
 }

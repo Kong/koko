@@ -109,7 +109,6 @@ func (p *Payload) configForVersion(version string) (cacheEntry, error) {
 }
 
 func (p *Payload) WrpcConfigPayload(versionStr string) (*wrpc.Request, string, error) {
-
 	// TODO: get an uncompressed, unencoded source.
 	c, err := p.Payload(versionStr)
 	if err != nil {
@@ -123,7 +122,7 @@ func (p *Payload) WrpcConfigPayload(versionStr string) (*wrpc.Request, string, e
 
 	configTable := config_service.SyncConfigRequest{}
 	err = protojson.UnmarshalOptions{DiscardUnknown: true}.Unmarshal(uncomp, &configTable)
-	configTable.Version = uint64(p.configVersion)	// TODO: this should go on the same lock period as the content.
+	configTable.Version = uint64(p.configVersion) // TODO: this should go on the same lock period as the content.
 	if err != nil {
 		return nil, "", err
 	}
