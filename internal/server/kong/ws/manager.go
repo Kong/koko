@@ -326,7 +326,7 @@ func (m *Manager) addWrpcNode(node *Node, pluginList []string) error {
 func (m *Manager) broadcast() {
 	m.broadcastMutex.Lock()
 	defer m.broadcastMutex.Unlock()
-	ctx := context.Background()		// should it be tied to the lock?
+	ctx := context.Background() // should it be tied to the lock?
 	for _, node := range m.nodes.All() {
 		if err := node.sendConfig(ctx, m.payload); err != nil {
 			m.logger.With(zap.Error(err)).Error("unable to gather payload, payload not sent to node")
