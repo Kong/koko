@@ -15,3 +15,4 @@ database:
 control_server:
   tls_cert_path: cluster.crt
   tls_key_path: cluster.key
+disable_anonymous_reports: false
