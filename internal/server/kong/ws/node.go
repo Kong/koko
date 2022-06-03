@@ -223,13 +223,13 @@ func (n *Node) sendJSONConfig(payload *config.Payload) error {
 }
 
 func (n *Node) sendWrpcConfig(ctx context.Context, payload *config.Payload) error {
-	req, h, err := payload.WrpcConfigPayload(n.Version)
+	content, err := payload.WrpcConfigPayload(n.Version)
 	if err != nil {
 		n.logger.With(zap.Error(err)).Error("preparing wrpc config payload")
 		return err
 	}
 
-	hash, err := truncateHash(h)
+	hash, err := truncateHash(content.Hash)
 	if err != nil {
 		n.logger.With(zap.Error(err)).Sugar().Errorf("invalid hash [%v]", hash)
 		return err
@@ -243,7 +243,7 @@ func (n *Node) sendWrpcConfig(ctx context.Context, payload *config.Payload) erro
 
 	var out config_service.SyncConfigResponse
 	go func() {
-		err := n.peer.DoRequest(ctx, *req, &out)
+		err := n.peer.DoRequest(ctx, content.Req, &out)
 		if err != nil {
 			n.logger.With(zap.Error(err)).Error("sending config")
 		}
