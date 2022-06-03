@@ -16,12 +16,19 @@ import (
 
 const unversionedConfigKey = "unversioned"
 
+type CachedWrpcContent struct {
+	Req wrpc.Request
+	Error error
+	Hash string
+}
+
 type Payload struct {
 	// configCache is a cache of configuration. It holds the originally fetched
 	// configuration as well as massaged configuration for each DP version.
 	configVersion int64
 	configCache     configCache
 	configCacheLock sync.Mutex
+	wrpcCache     map[string]CachedWrpcContent
 	vc              config.VersionCompatibility
 	logger          *zap.Logger
 }
@@ -108,27 +115,43 @@ func (p *Payload) configForVersion(version string) (cacheEntry, error) {
 	return cacheEntry{}, err
 }
 
-func (p *Payload) WrpcConfigPayload(versionStr string) (*wrpc.Request, string, error) {
+func (p *Payload) WrpcConfigPayload(versionStr string) (CachedWrpcContent, error) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	if wc, found := p.wrpcCache[versionStr]; found {
+		if wc.Error != nil {
+			return CachedWrpcContent{}, fmt.Errorf("wrpc SyncConfig Request preparation: %w", wc.Error)
+		}
+		return wc, nil
+	}
+
 	// TODO: get an uncompressed, unencoded source.
 	c, err := p.Payload(versionStr)
 	if err != nil {
-		return nil, "", err
+		return CachedWrpcContent{}, err
 	}
 
 	uncomp, err := UncompressPayload(c.CompressedPayload)
 	if err != nil {
-		return nil, "", fmt.Errorf("decompressing config payload: %w", err)
+		return CachedWrpcContent{}, fmt.Errorf("decompressing config payload: %w", err)
 	}
 
 	configTable := config_service.SyncConfigRequest{}
 	err = protojson.UnmarshalOptions{DiscardUnknown: true}.Unmarshal(uncomp, &configTable)
 	configTable.Version = uint64(p.configVersion) // TODO: this should go on the same lock period as the content.
 	if err != nil {
-		return nil, "", err
+		return CachedWrpcContent{}, err
 	}
 
 	req, err := config_service.PrepareConfigServiceSyncConfigRequest(&configTable)
-	return &req, c.Hash, err
+	wc := CachedWrpcContent{
+		Req: req,
+		Error: err,
+		Hash: c.Hash,
+	}
+	p.wrpcCache[versionStr] = wc
+	return wc, nil
 }
 
 func (p *Payload) UpdateBinary(_ context.Context, c config.Content) error {
