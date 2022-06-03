@@ -20,7 +20,7 @@ func (l *KongServiceLoader) Mutate(ctx context.Context,
 ) error {
 	ctx, cancel := context.WithTimeout(ctx, defaultRequestTimeout)
 	defer cancel()
-	var pageNum int32
+	var pageNum int32 = 1
 	var allServices []*v1.Service
 	for {
 		resp, err := l.Client.ListServices(ctx, &admin.ListServicesRequest{
@@ -37,6 +37,7 @@ func (l *KongServiceLoader) Mutate(ctx context.Context,
 		if resp.Page == nil || resp.Page.NextPageNum == 0 {
 			break
 		}
+		pageNum = resp.Page.NextPageNum
 	}
 	res := make([]Map, 0)
 	for _, svc := range allServices {

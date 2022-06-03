@@ -23,7 +23,7 @@ func (l *KongConsumerLoader) Mutate(ctx context.Context,
 	ctx, cancel := context.WithTimeout(ctx, defaultRequestTimeout)
 	defer cancel()
 
-	var pageNum int32
+	var pageNum int32 = 1
 	var allConsumers []*v1.Consumer
 	for {
 		resp, err := l.Client.ListConsumers(ctx, &admin.ListConsumersRequest{
@@ -40,6 +40,7 @@ func (l *KongConsumerLoader) Mutate(ctx context.Context,
 		if resp.Page == nil || resp.Page.NextPageNum == 0 {
 			break
 		}
+		pageNum = resp.Page.NextPageNum
 	}
 	res := make([]Map, 0, len(allConsumers))
 	for _, r := range allConsumers {

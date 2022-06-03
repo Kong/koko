@@ -21,7 +21,7 @@ func (l *KongSNILoader) Mutate(ctx context.Context,
 	ctx, cancel := context.WithTimeout(ctx, defaultRequestTimeout)
 	defer cancel()
 
-	var pageNum int32
+	var pageNum int32 = 1
 	var allSNIs []*v1.SNI
 	for {
 		resp, err := l.Client.ListSNIs(ctx, &admin.ListSNIsRequest{
@@ -38,6 +38,7 @@ func (l *KongSNILoader) Mutate(ctx context.Context,
 		if resp.Page == nil || resp.Page.NextPageNum == 0 {
 			break
 		}
+		pageNum = resp.Page.NextPageNum
 	}
 	res := make([]Map, 0, len(allSNIs))
 	for _, r := range allSNIs {

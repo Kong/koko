@@ -20,7 +20,7 @@ func (l *KongUpstreamLoader) Mutate(ctx context.Context,
 ) error {
 	ctx, cancel := context.WithTimeout(ctx, defaultRequestTimeout)
 	defer cancel()
-	var pageNum int32
+	var pageNum int32 = 1
 	var allUpstreams []*v1.Upstream
 	for {
 		resp, err := l.Client.ListUpstreams(ctx, &admin.ListUpstreamsRequest{
@@ -37,6 +37,7 @@ func (l *KongUpstreamLoader) Mutate(ctx context.Context,
 		if resp.Page == nil || resp.Page.NextPageNum == 0 {
 			break
 		}
+		pageNum = resp.Page.NextPageNum
 	}
 	res := make([]Map, 0, len(allUpstreams))
 	for _, r := range allUpstreams {

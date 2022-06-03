@@ -21,7 +21,7 @@ func (l *KongCACertificateLoader) Mutate(ctx context.Context,
 	ctx, cancel := context.WithTimeout(ctx, defaultRequestTimeout)
 	defer cancel()
 
-	var pageNum int32
+	var pageNum int32 = 1
 	var allCertificates []*v1.CACertificate
 	for {
 		resp, err := l.Client.ListCACertificates(ctx, &admin.ListCACertificatesRequest{
@@ -38,6 +38,7 @@ func (l *KongCACertificateLoader) Mutate(ctx context.Context,
 		if resp.Page == nil || resp.Page.NextPageNum == 0 {
 			break
 		}
+		pageNum = resp.Page.NextPageNum
 	}
 	res := make([]Map, 0, len(allCertificates))
 	for _, r := range allCertificates {
