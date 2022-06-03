@@ -11,6 +11,49 @@ import (
 	"github.com/santhosh-tekuri/jsonschema/v5"
 )
 
+var (
+	defaultSchemaErrHandleFunc = func(schemaErr jsonschema.Detailed, _ *jsonschema.Schema) string {
+		return schemaErr.Error
+	}
+	descriptionOrErrHandleFunc = func(schemaErr jsonschema.Detailed, schema *jsonschema.Schema) string {
+		if schema != nil {
+			return schema.Description
+		}
+		return schemaErr.Error
+	}
+
+	// hintErrHandleFuncMap contains all supported JSON schema hints that are supported,
+	// and the relevant function to translate the schema error to a friendly error.
+	hintErrHandleFuncMap = map[string]func(schemaErr jsonschema.Detailed, schema *jsonschema.Schema) string{
+		"additionalProperties": defaultSchemaErrHandleFunc,
+		"dependencies":         defaultSchemaErrHandleFunc,
+		"enum":                 defaultSchemaErrHandleFunc,
+		"exclusiveMinimum":     defaultSchemaErrHandleFunc,
+		"format":               defaultSchemaErrHandleFunc,
+		"maxItems":             defaultSchemaErrHandleFunc,
+		"maxLength":            defaultSchemaErrHandleFunc,
+		"maximum":              defaultSchemaErrHandleFunc,
+		"minLength":            defaultSchemaErrHandleFunc,
+		"minimum":              defaultSchemaErrHandleFunc,
+		"required":             defaultSchemaErrHandleFunc,
+		"uniqueItems":          defaultSchemaErrHandleFunc,
+
+		"allOf":             descriptionOrErrHandleFunc,
+		"anyOf":             descriptionOrErrHandleFunc,
+		"if":                descriptionOrErrHandleFunc,
+		"items":             descriptionOrErrHandleFunc,
+		"not":               descriptionOrErrHandleFunc,
+		"oneOf":             descriptionOrErrHandleFunc,
+		"patternProperties": descriptionOrErrHandleFunc,
+		"properties":        descriptionOrErrHandleFunc,
+		"then":              descriptionOrErrHandleFunc,
+
+		"pattern": func(_ jsonschema.Detailed, schema *jsonschema.Schema) string {
+			return fmt.Sprintf("must match pattern '%v'", schema.Pattern.String())
+		},
+	}
+)
+
 // ErrorTranslator translates JSON Schema errors into Error.
 type ErrorTranslator struct {
 	errs map[string]*model.ErrorDetail
@@ -99,55 +142,9 @@ func (t ErrorTranslator) getErr(schemaErr jsonschema.Detailed,
 		hint string,
 	) bool {
 		var message string
-		switch hint {
-		case "properties":
-			fallthrough
-		case "if":
-			fallthrough
-		case "then":
-			fallthrough
-		case "not":
-			fallthrough
-		case "items":
-			fallthrough
-		case "allOf":
-			fallthrough
-		case "oneOf":
-			fallthrough
-		case "patternProperties":
-			fallthrough
-		case "anyOf":
-			if schema != nil {
-				message = schema.Description
-			} else {
-				message = schemaErr.Error
-			}
-		case "pattern":
-			message = fmt.Sprintf("must match pattern '%v'",
-				schema.Pattern.String())
-		case "required":
-			fallthrough
-		case "enum":
-			fallthrough
-		case "exclusiveMinimum":
-			fallthrough
-		case "minimum":
-			fallthrough
-		case "maximum":
-			fallthrough
-		case "maxItems":
-			fallthrough
-		case "additionalProperties":
-			fallthrough
-		case "minLength":
-			fallthrough
-		case "maxLength":
-			fallthrough
-		case "format":
-			fallthrough
-		case "dependencies":
-			message = schemaErr.Error
-		default:
+		if f := hintErrHandleFuncMap[hint]; f != nil {
+			message = f(schemaErr, schema)
+		} else {
 			panic("unexpected hint: " + hint)
 		}
 		if message != "" {

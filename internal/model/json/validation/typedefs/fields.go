@@ -102,9 +102,10 @@ var tag = &generator.Schema{
 }
 
 var Tags = &generator.Schema{
-	Type:     "array",
-	Items:    tag,
-	MaxItems: maxTags,
+	Type:        "array",
+	Items:       tag,
+	MaxItems:    maxTags,
+	UniqueItems: true,
 }
 
 var Header = &generator.Schema{
