@@ -303,7 +303,7 @@ func TestValidateJSONSchema(t *testing.T) {
 		messages.First().String().Equal("must match pattern '^[0-9a-zA-Z.\\-_~:]*$'")
 	})
 
-	t.Run("duplicate tags", func(t *testing.T) {
+	t.Run("duplicate tags returns an error", func(t *testing.T) {
 		res := c.POST(p).WithJSON(&v1.Consumer{
 			Id:       uuid.NewString(),
 			Username: "testConsumer",
