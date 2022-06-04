@@ -22,6 +22,7 @@
         "type": "string"
       },
       "maxItems": 8,
+      "uniqueItems": true,
       "type": "array"
     },
     "target": {

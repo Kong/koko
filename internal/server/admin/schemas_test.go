@@ -303,6 +303,27 @@ func TestValidateJSONSchema(t *testing.T) {
 		messages.First().String().Equal("must match pattern '^[0-9a-zA-Z.\\-_~:]*$'")
 	})
 
+	t.Run("duplicate tags returns an error", func(t *testing.T) {
+		res := c.POST(p).WithJSON(&v1.Consumer{
+			Id:       uuid.NewString(),
+			Username: "testConsumer",
+			Tags:     []string{"duplicate", "duplicate"},
+		}).Expect()
+		res.Status(http.StatusBadRequest)
+
+		body := res.JSON().Object()
+		body.Value("message").String().Equal("validation error")
+		body.Value("details").Array().Length().Equal(1)
+		errRes := body.Value("details").Array()
+
+		tagsErr := errRes.First().Object()
+		tagsErr.Value("type").String().Equal(v1.ErrorType_ERROR_TYPE_FIELD.String())
+		tagsErr.Value("field").String().Equal("tags")
+		messages := tagsErr.Value("messages").Array()
+		messages.Length().Equal(1)
+		messages.First().String().Equal("items at index 0 and 1 are equal")
+	})
+
 	t.Run("valid JSON schema", func(t *testing.T) {
 		res := c.POST(p).WithJSON(&v1.Consumer{
 			Id:       uuid.New().String(),
