@@ -30,7 +30,9 @@ func (c *Configer) GetCapabilities(
 	return nil, fmt.Errorf("not implemented")
 }
 
-// Got a ping RPC => record given hashes.
+// PingCP handles the incoming ping method from the CP.
+// (Different from a websocket Ping frame)
+// Records the given hashes from CP.
 func (c *Configer) PingCP(
 	ctx context.Context,
 	peer *wrpc.Peer,
@@ -58,8 +60,9 @@ func (c *Configer) PingCP(
 	return &config_service.PingCPResponse{}, nil
 }
 
-// Got the initial metadata (list of plugins)
-// then the manager can validate and promote the
+// ReportMetadata handles the initial information
+// from the CP (currently the list of plugins it has available).
+// Then the manager can validate and promote the
 // node from "pending" to fully working.
 func (c *Configer) ReportMetadata(
 	ctx context.Context,
@@ -81,7 +84,7 @@ func (c *Configer) ReportMetadata(
 
 	err = c.Manager.addWrpcNode(node, plugins) // nolint: contextcheck
 	if err != nil {
-		node.logger.Error("adding validated node")
+		node.logger.With(zap.Error(err)).Error("error when adding validated node")
 		node.Close()
 		return nil, err
 	}

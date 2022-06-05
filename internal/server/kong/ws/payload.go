@@ -17,9 +17,9 @@ import (
 const unversionedConfigKey = "unversioned"
 
 type CachedWrpcContent struct {
-	Req wrpc.Request
+	Req   wrpc.Request
 	Error error
-	Hash string
+	Hash  string
 }
 
 type Payload struct {
@@ -146,9 +146,9 @@ func (p *Payload) WrpcConfigPayload(versionStr string) (CachedWrpcContent, error
 
 	req, err := config_service.PrepareConfigServiceSyncConfigRequest(&configTable)
 	wc := CachedWrpcContent{
-		Req: req,
+		Req:   req,
 		Error: err,
-		Hash: c.Hash,
+		Hash:  c.Hash,
 	}
 	p.wrpcCache[versionStr] = wc
 	return wc, nil
