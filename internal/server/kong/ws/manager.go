@@ -293,6 +293,10 @@ func (m *Manager) FindNode(remoteAddress string) *Node {
 	return m.nodes.FindNode(remoteAddress)
 }
 
+// AddPendingNode registers a Node that hasn't been validated yet.
+// In particular, wrpc nodes have to be actively listening in order
+// to negotiate the services it will handle.  In the meantime,
+// the manager keeps them as "pending"
 // A wrpc node isn't directly added to the `m.nodes` list.
 // Instead, as soon as their connection is live, they're added to
 // the `m.pendingNodes` list until it finishes some initialization.
@@ -304,7 +308,9 @@ func (m *Manager) AddPendingNode(node *Node) {
 	}
 }
 
-// Only when a node gets the list of plugins, it's validated
+// addWrpcNode is called on behalf of a node when it is ready
+// to receive config updates.  The ReportMetadata RPC method handler
+// does this after getting the list of plugins.  Here it's validated
 // and, if successful, moved from the `m.pendingNodes` to the
 // final `m.nodes` list.
 func (m *Manager) addWrpcNode(node *Node, pluginList []string) error {
@@ -318,8 +324,7 @@ func (m *Manager) addWrpcNode(node *Node, pluginList []string) error {
 		return err
 	}
 
-	err = m.nodes.Add(node)
-	return err
+	return m.nodes.Add(node)
 }
 
 // broadcast sends the most recent configuration to all connected nodes.
