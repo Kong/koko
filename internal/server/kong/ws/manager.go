@@ -529,7 +529,7 @@ type nodeAttributes struct {
 func (m *Manager) validateNode(node *Node) error {
 	pluginList, err := node.GetPluginList()
 	if err != nil {
-		return err
+		return fmt.Errorf("(websocket) reading plugin list from DP: %w", err)
 	}
 	mConfig := m.ReadConfig()
 	conditions := checkPreReqs(nodeAttributes{

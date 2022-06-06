@@ -157,6 +157,7 @@ func (h WrpcHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	err = h.baseServices.Register(peer)
 	if err != nil {
 		h.logger.With(zap.Error(err)).Error("register base wRPC services")
+		return
 	}
 	err = peer.Upgrade(w, r)
 	if err != nil {
