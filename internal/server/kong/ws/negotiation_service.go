@@ -6,9 +6,11 @@ import (
 	"github.com/kong/go-wrpc/wrpc"
 	"github.com/kong/koko/internal/gen/wrpc/kong/model"
 	negotiation_service "github.com/kong/koko/internal/gen/wrpc/kong/services/negotiation/v1"
+	"go.uber.org/zap"
 )
 
 const (
+	invalidCPNodeType     = "Invalid CP Node Type"
 	unknownServiceMessage = "Unknown service."
 	noKnownVersionMessage = "No known version"
 )
@@ -40,6 +42,7 @@ type knownVersion struct {
 type Negotiator struct {
 	CpNodeID      string
 	KnownVersions map[string][]knownVersion
+	Logger        *zap.Logger
 }
 
 // Associates a service name and version with
@@ -99,7 +102,7 @@ func (n *Negotiator) chooseVersion(requestedServ *model.ServiceRequest) (ok bool
 //        - call the registerer object associated with that service/version
 //          to activate the right responses on this specific peer.
 //      - in the rejected list:
-//        - with a message relevant to the reason (unkown or disabled
+//        - with a message relevant to the reason (unknown or disabled
 //          service, bad versions).
 func (n *Negotiator) NegotiateServices(
 	ctx context.Context,
@@ -110,6 +113,25 @@ func (n *Negotiator) NegotiateServices(
 		Node:             &model.CPNodeDescription{Id: n.CpNodeID},
 		ServicesAccepted: []*model.AcceptedService{},
 		ServicesRejected: []*model.RejectedService{},
+	}
+
+	logger := n.Logger
+	if logger == nil {
+		logger = zap.L()
+	}
+
+	if req.Node == nil {
+		logger.Error("Missing Node information")
+		return &model.NegotiateServicesResponse{
+			ErrorMessage: invalidCPNodeType,
+		}, nil
+	}
+
+	if req.Node.Type != "KONG" {
+		logger.Error("Invalid Node type", zap.String("type", req.Node.Type))
+		return &model.NegotiateServicesResponse{
+			ErrorMessage: invalidCPNodeType,
+		}, nil
 	}
 
 	for _, requestedServ := range req.ServicesRequested {
@@ -124,6 +146,11 @@ func (n *Negotiator) NegotiateServices(
 			if err != nil {
 				return nil, err // TODO: should we mask the error?
 			}
+			logger.Info("Service accepted",
+				zap.String("service", requestedServ.Name),
+				zap.String("version", choice.version),
+				zap.String("message", choice.message),
+			)
 		} else {
 			resp.ServicesRejected = append(resp.ServicesRejected, &model.RejectedService{
 				Name:    requestedServ.Name,
