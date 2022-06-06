@@ -227,7 +227,6 @@ func TestNegotiationFirstVersion(t *testing.T) {
 	resp, err := negotiator.NegotiateServices(context.Background(), testPeer, req)
 	r.NoError(err)
 	r.Equal(&model.CPNodeDescription{Id: "00A"}, resp.Node)
-	// 	r.Empty(resp.ServicesAccepted)
 	r.Equal(1, len(resp.ServicesAccepted))
 	r.Equal(&model.AcceptedService{
 		Name:    "infundibulum",
