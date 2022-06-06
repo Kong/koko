@@ -6,12 +6,14 @@ import (
 	"crypto/x509"
 	"fmt"
 
+	"github.com/google/uuid"
 	"github.com/hbagdi/gang"
 	"github.com/kong/koko/internal/config"
 	"github.com/kong/koko/internal/db"
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/service/v1"
 	relay "github.com/kong/koko/internal/gen/grpc/kong/relay/service/v1"
 	grpcKongUtil "github.com/kong/koko/internal/gen/grpc/kong/util/v1"
+	"github.com/kong/koko/internal/info"
 	"github.com/kong/koko/internal/metrics"
 	"github.com/kong/koko/internal/persistence"
 	"github.com/kong/koko/internal/plugin"
@@ -39,9 +41,10 @@ type ServerConfig struct {
 
 	KongCPCert tls.Certificate
 
-	Logger   *zap.Logger
-	Metrics  config.Metrics
-	Database config.Database
+	Logger                  *zap.Logger
+	Metrics                 config.Metrics
+	Database                config.Database
+	DisableAnonymousReports bool
 }
 
 type DPAuthMode int
@@ -309,6 +312,20 @@ func Run(ctx context.Context, config ServerConfig) error {
 		return err
 	}
 	g.AddWithCtxE(s.Run)
+
+	// reports server
+	if !config.DisableAnonymousReports {
+		logger := logger.With(zap.String("component", "reporting-server"))
+		reporter := util.Reporter{
+			Info: util.Info{
+				KokoVersion: info.VERSION,
+				// TODO(hbagdi): replace this with cluster-id
+				ID: uuid.NewString(),
+			},
+			Logger: logger,
+		}
+		g.AddWithCtx(reporter.Run)
+	}
 
 	// run rabbit run
 	errCh := g.Run(ctx)

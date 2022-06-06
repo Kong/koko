@@ -47,9 +47,10 @@ type Metrics struct {
 }
 
 type Config struct {
-	Log      Log           `json:"log,omitempty"`
-	Admin    Admin         `json:"admin,omitempty"`
-	Control  ControlServer `json:"control_server,omitempty"`
-	Database Database      `json:"database,omitempty"`
-	Metrics  Metrics       `json:"metrics,omitempty"`
+	Log                     Log           `json:"log,omitempty"`
+	Admin                   Admin         `json:"admin,omitempty"`
+	Control                 ControlServer `json:"control_server,omitempty"`
+	Database                Database      `json:"database,omitempty"`
+	Metrics                 Metrics       `json:"metrics,omitempty"`
+	DisableAnonymousReports bool          `json:"disable_anonymous_reports"`
 }

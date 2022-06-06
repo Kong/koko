@@ -49,11 +49,12 @@ func serveMain(ctx context.Context) error {
 	}
 
 	return Run(ctx, ServerConfig{
-		DPAuthCert: cert,
-		KongCPCert: cert,
-		Logger:     logger,
-		Database:   opts.Config.Database,
-		Metrics:    opts.Config.Metrics,
+		DPAuthCert:              cert,
+		KongCPCert:              cert,
+		Logger:                  logger,
+		Database:                opts.Config.Database,
+		Metrics:                 opts.Config.Metrics,
+		DisableAnonymousReports: opts.Config.DisableAnonymousReports,
 	})
 }
 
