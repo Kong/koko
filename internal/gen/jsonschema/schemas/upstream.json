@@ -151,7 +151,9 @@
               "enum": [
                 "tcp",
                 "http",
-                "https"
+                "https",
+                "grpc",
+                "grpcs"
               ],
               "type": "string"
             },
@@ -221,7 +223,10 @@
             "type": {
               "enum": [
                 "tcp",
-                "http"
+                "http",
+                "https",
+                "grpc",
+                "grpcs"
               ],
               "type": "string"
             },

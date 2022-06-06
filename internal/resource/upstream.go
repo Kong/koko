@@ -108,6 +108,16 @@ var (
 		},
 		MaxItems: maxStatuses,
 	}
+	typedefHealthCheckTypes = &generator.Schema{
+		Type: "string",
+		Enum: []interface{}{
+			"tcp",
+			"http",
+			"https",
+			"grpc",
+			"grpcs",
+		},
+	}
 )
 
 func NewUpstream() Upstream {
@@ -253,14 +263,7 @@ func init() {
 							"https_verify_certificate": {
 								Type: "boolean",
 							},
-							"type": {
-								Type: "string",
-								Enum: []interface{}{
-									"tcp",
-									"http",
-									"https",
-								},
-							},
+							"type":    typedefHealthCheckTypes,
 							"timeout": typedefSeconds,
 							"healthy": {
 								Type: "object",
@@ -285,13 +288,7 @@ func init() {
 					"passive": {
 						Type: "object",
 						Properties: map[string]*generator.Schema{
-							"type": {
-								Type: "string",
-								Enum: []interface{}{
-									"tcp",
-									"http",
-								},
-							},
+							"type":    typedefHealthCheckTypes,
 							"timeout": typedefSeconds,
 							"healthy": {
 								Type: "object",
