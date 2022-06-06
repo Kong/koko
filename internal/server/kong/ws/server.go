@@ -21,7 +21,7 @@ var upgrader = websocket.Upgrader{}
 type HandlerOpts struct {
 	Logger        *zap.Logger
 	Authenticator Authenticator
-	BaseServices  HandleRegisterer
+	BaseServices  Registerer
 }
 
 func NewHandler(opts HandlerOpts) (http.Handler, error) {
@@ -136,7 +136,7 @@ func (h Handler) respondWithErr(w http.ResponseWriter, _ *http.Request,
 type WrpcHandler struct {
 	logger        *zap.Logger
 	authenticator Authenticator
-	baseServices  HandleRegisterer
+	baseServices  Registerer
 }
 
 func (h WrpcHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {

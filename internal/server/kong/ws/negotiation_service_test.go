@@ -7,39 +7,15 @@ import (
 
 	"github.com/kong/go-wrpc/wrpc"
 	"github.com/kong/koko/internal/gen/wrpc/kong/model"
-	negotiation_service "github.com/kong/koko/internal/gen/wrpc/kong/services/negotiation/v1"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
-
-type MockPeer struct {
-	mock.Mock
-}
-
-func (m *MockPeer) Register(s wrpc.Service) error {
-	args := m.Called(s)
-	return args.Error(0)
-}
-
-func TestRegisterNegotiationService(t *testing.T) {
-	negotiator := &Negotiator{}
-
-	testPeer := new(MockPeer)
-	testPeer.On("Register", mock.MatchedBy(
-		func(s *negotiation_service.NegotiationServiceServer) bool {
-			return s.NegotiationService != nil
-		})).Return(nil)
-
-	negotiator.Register(testPeer)
-
-	testPeer.AssertExpectations(t)
-}
 
 type MockRegisterer struct {
 	mock.Mock
 }
 
-func (m *MockRegisterer) Register(peer registerer) error {
+func (m *MockRegisterer) Register(peer *wrpc.Peer) error {
 	args := m.Called(peer)
 	return args.Error(0)
 }

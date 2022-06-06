@@ -15,25 +15,18 @@ const (
 	noKnownVersionMessage = "No known version"
 )
 
-// a registerer is any object which can receive (or register)
-// a wrpc.Service.  Basically a wrpc.Peer, but in theory
-// it could also be a shared registry if we ever make one.
-type registerer interface {
-	Register(s wrpc.Service) error
-}
-
-// HandleRegisterer is the object that handles registering
-// a service to a registerer (a wrpc.Peer)
+// Registerer is the object that handles registering
+// a service to a wrpc.Peer
 // A concrete implementation of this interface should hold
 // any extra information the service will need.
-type HandleRegisterer interface {
-	Register(peer registerer) error
+type Registerer interface {
+	Register(peer *wrpc.Peer) error
 }
 
 type knownVersion struct {
 	version  string
 	message  string
-	register HandleRegisterer
+	register Registerer
 }
 
 // The Negotiation type handles service negotiation.
@@ -49,7 +42,7 @@ type Negotiator struct {
 // a registerer object and a descriptive message.
 func (n *Negotiator) AddService(
 	serviceName, version, message string,
-	register HandleRegisterer,
+	register Registerer,
 ) {
 	if n.KnownVersions == nil {
 		n.KnownVersions = map[string][]knownVersion{}
@@ -68,7 +61,7 @@ func (n *Negotiator) AddService(
 }
 
 // Register adds the version negotiation service to the peer.
-func (n *Negotiator) Register(peer registerer) error {
+func (n *Negotiator) Register(peer *wrpc.Peer) error {
 	return peer.Register(
 		&negotiation_service.NegotiationServiceServer{
 			NegotiationService: n,
