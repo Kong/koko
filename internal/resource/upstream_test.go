@@ -347,6 +347,179 @@ func TestUpstream_Validate(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "healthchecks types can be set to http",
+			Upstream: func() Upstream {
+				u := NewUpstream()
+				u.Upstream.Id = uuid.NewString()
+				u.Upstream.Name = "foo"
+				u.Upstream.HashFallback = "ip"
+				u.Upstream.Healthchecks = &model.Healthchecks{
+					Active: &model.ActiveHealthcheck{
+						Type:        "http",
+						Concurrency: wrapperspb.Int32(32),
+						Healthy: &model.ActiveHealthyCondition{
+							Interval:  wrapperspb.Int32(1),
+							Successes: wrapperspb.Int32(5),
+						},
+					},
+					Passive: &model.PassiveHealthcheck{
+						Type: "http",
+						Healthy: &model.PassiveHealthyCondition{
+							Successes: wrapperspb.Int32(5),
+						},
+					},
+				}
+				return u
+			},
+		},
+		{
+			name: "healthchecks types can be set to https",
+			Upstream: func() Upstream {
+				u := NewUpstream()
+				u.Upstream.Id = uuid.NewString()
+				u.Upstream.Name = "foo"
+				u.Upstream.HashFallback = "ip"
+				u.Upstream.Healthchecks = &model.Healthchecks{
+					Active: &model.ActiveHealthcheck{
+						Type:        "https",
+						Concurrency: wrapperspb.Int32(32),
+						Healthy: &model.ActiveHealthyCondition{
+							Interval:  wrapperspb.Int32(1),
+							Successes: wrapperspb.Int32(5),
+						},
+					},
+					Passive: &model.PassiveHealthcheck{
+						Type: "https",
+						Healthy: &model.PassiveHealthyCondition{
+							Successes: wrapperspb.Int32(5),
+						},
+					},
+				}
+				return u
+			},
+		},
+		{
+			name: "healthchecks types can be set to tcp",
+			Upstream: func() Upstream {
+				u := NewUpstream()
+				u.Upstream.Id = uuid.NewString()
+				u.Upstream.Name = "foo"
+				u.Upstream.HashFallback = "ip"
+				u.Upstream.Healthchecks = &model.Healthchecks{
+					Active: &model.ActiveHealthcheck{
+						Type:        "tcp",
+						Concurrency: wrapperspb.Int32(32),
+						Healthy: &model.ActiveHealthyCondition{
+							Interval:  wrapperspb.Int32(1),
+							Successes: wrapperspb.Int32(5),
+						},
+					},
+					Passive: &model.PassiveHealthcheck{
+						Type: "tcp",
+						Healthy: &model.PassiveHealthyCondition{
+							Successes: wrapperspb.Int32(5),
+						},
+					},
+				}
+				return u
+			},
+		},
+		{
+			name: "healthchecks types can be set to grpc",
+			Upstream: func() Upstream {
+				u := NewUpstream()
+				u.Upstream.Id = uuid.NewString()
+				u.Upstream.Name = "foo"
+				u.Upstream.HashFallback = "ip"
+				u.Upstream.Healthchecks = &model.Healthchecks{
+					Active: &model.ActiveHealthcheck{
+						Type:        "grpc",
+						Concurrency: wrapperspb.Int32(32),
+						Healthy: &model.ActiveHealthyCondition{
+							Interval:  wrapperspb.Int32(1),
+							Successes: wrapperspb.Int32(5),
+						},
+					},
+					Passive: &model.PassiveHealthcheck{
+						Type: "grpc",
+						Healthy: &model.PassiveHealthyCondition{
+							Successes: wrapperspb.Int32(5),
+						},
+					},
+				}
+				return u
+			},
+		},
+		{
+			name: "healthchecks types can be set to grpcs",
+			Upstream: func() Upstream {
+				u := NewUpstream()
+				u.Upstream.Id = uuid.NewString()
+				u.Upstream.Name = "foo"
+				u.Upstream.HashFallback = "ip"
+				u.Upstream.Healthchecks = &model.Healthchecks{
+					Active: &model.ActiveHealthcheck{
+						Type:        "grpcs",
+						Concurrency: wrapperspb.Int32(32),
+						Healthy: &model.ActiveHealthyCondition{
+							Interval:  wrapperspb.Int32(1),
+							Successes: wrapperspb.Int32(5),
+						},
+					},
+					Passive: &model.PassiveHealthcheck{
+						Type: "grpcs",
+						Healthy: &model.PassiveHealthyCondition{
+							Successes: wrapperspb.Int32(5),
+						},
+					},
+				}
+				return u
+			},
+		},
+		{
+			name: "set wrong types for healthchecks",
+			Upstream: func() Upstream {
+				u := NewUpstream()
+				u.Upstream.Id = uuid.NewString()
+				u.Upstream.Name = "foo"
+				u.Upstream.HashFallback = "ip"
+				u.Upstream.Healthchecks = &model.Healthchecks{
+					Active: &model.ActiveHealthcheck{
+						Type:        "bar",
+						Concurrency: wrapperspb.Int32(32),
+						Healthy: &model.ActiveHealthyCondition{
+							Interval:  wrapperspb.Int32(1),
+							Successes: wrapperspb.Int32(5),
+						},
+					},
+					Passive: &model.PassiveHealthcheck{
+						Type: "baz",
+						Healthy: &model.PassiveHealthyCondition{
+							Successes: wrapperspb.Int32(5),
+						},
+					},
+				}
+				return u
+			},
+			wantErr: true,
+			Errs: []*model.ErrorDetail{
+				{
+					Type:  model.ErrorType_ERROR_TYPE_FIELD,
+					Field: "healthchecks.active.type",
+					Messages: []string{
+						`value must be one of "tcp", "http", "https", "grpc", "grpcs"`,
+					},
+				},
+				{
+					Type:  model.ErrorType_ERROR_TYPE_FIELD,
+					Field: "healthchecks.passive.type",
+					Messages: []string{
+						`value must be one of "tcp", "http", "https", "grpc", "grpcs"`,
+					},
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
