@@ -50,6 +50,8 @@ func TestUpstream_ProcessDefaults(t *testing.T) {
 		r.Upstream.HashFallback = "ip"
 		r.Upstream.Healthchecks = &model.Healthchecks{
 			Active: &model.ActiveHealthcheck{
+				Type:        "https",
+				HttpsSni:    "*test.com",
 				Concurrency: wrapperspb.Int32(32),
 				Healthy: &model.ActiveHealthyCondition{
 					Interval:  wrapperspb.Int32(1),
@@ -80,7 +82,8 @@ func TestUpstream_ProcessDefaults(t *testing.T) {
 					},
 					HttpPath:               "/",
 					HttpsVerifyCertificate: wrapperspb.Bool(true),
-					Type:                   "http",
+					HttpsSni:               "*test.com",
+					Type:                   "https",
 					Timeout:                wrapperspb.Int32(1),
 					Unhealthy: &model.ActiveUnhealthyCondition{
 						HttpFailures: wrapperspb.Int32(0),

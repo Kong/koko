@@ -3258,7 +3258,7 @@
         "http_path": {
           "type": "string"
         },
-        "http_sni": {
+        "https_sni": {
           "type": "string"
         },
         "https_verify_certificate": {
