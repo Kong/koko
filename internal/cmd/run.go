@@ -277,6 +277,10 @@ func Run(ctx context.Context, config ServerConfig) error {
 
 	negotiator := &ws.Negotiator{
 		CpNodeID: m.Cluster.Get(),
+		Logger: controlLogger.With(
+			zap.String("protocol", "wRPC"),
+			zap.String("service", "negotiation"),
+		),
 	}
 
 	handler, err := ws.NewHandler(ws.HandlerOpts{

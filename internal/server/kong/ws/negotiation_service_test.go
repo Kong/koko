@@ -112,7 +112,7 @@ func TestChooseServiceVersionFirst(t *testing.T) {
 	r.Same(choice.register, testRegisterer)
 }
 
-func TestNegotiationEmpty(t *testing.T) {
+func TestNegotiationInvalid(t *testing.T) {
 	r := require.New(t)
 	testPeer := &wrpc.Peer{}
 
@@ -125,113 +125,276 @@ func TestNegotiationEmpty(t *testing.T) {
 	req := &model.NegotiateServicesRequest{
 		Node: &model.DPNodeDescription{
 			Id:      "001",
-			Type:    "KONG",
+			Type:    "notKONG",
 			Version: "0.00t",
 		},
 	}
 	resp, err := negotiator.NegotiateServices(context.Background(), testPeer, req)
+	r.Equal(&model.NegotiateServicesResponse{
+		ErrorMessage: "Invalid CP Node Type",
+	}, resp)
 	r.NoError(err)
-	r.Equal(&model.CPNodeDescription{Id: "00A"}, resp.Node)
-	r.Empty(resp.ServicesAccepted)
-	r.Empty(resp.ServicesRejected)
 }
 
-func TestNegotiationEmptyUnknown(t *testing.T) {
-	r := require.New(t)
-	testPeer := &wrpc.Peer{}
+func TestNegotiation(t *testing.T) {
+	t.Run("Empty request", func(t *testing.T) {
+		testPeer := &wrpc.Peer{}
 
-	testRegisterer := new(MockRegisterer)
-	testRegisterer.On("Register", testPeer)
+		testRegisterer := new(MockRegisterer)
+		testRegisterer.On("Register", testPeer)
 
-	negotiator := &Negotiator{CpNodeID: "00A"}
-	negotiator.AddService("infundibulum", "chrono-synclastic", "So it goes", testRegisterer)
+		negotiator := &Negotiator{CpNodeID: "00A"}
+		negotiator.AddService("infundibulum", "chrono-synclastic", "So it goes", testRegisterer)
 
-	req := &model.NegotiateServicesRequest{
-		Node: &model.DPNodeDescription{
-			Id:      "001",
-			Type:    "KONG",
-			Version: "0.00t",
-		},
-		ServicesRequested: []*model.ServiceRequest{
-			{Name: "gizmo"},
-		},
-	}
-	resp, err := negotiator.NegotiateServices(context.Background(), testPeer, req)
-	r.NoError(err)
-	r.Equal(&model.CPNodeDescription{Id: "00A"}, resp.Node)
-	r.Empty(resp.ServicesAccepted)
-	r.Equal(1, len(resp.ServicesRejected))
-	r.Equal(&model.RejectedService{
-		Name:    "gizmo",
-		Message: "Unknown service.",
-	}, resp.ServicesRejected[0])
-}
-
-func TestNegotiationVersionMismatch(t *testing.T) {
-	r := require.New(t)
-	testPeer := &wrpc.Peer{}
-
-	testRegisterer := new(MockRegisterer)
-	testRegisterer.On("Register", testPeer)
-
-	negotiator := &Negotiator{CpNodeID: "00A"}
-	negotiator.AddService("infundibulum", "chrono-synclastic", "So it goes", testRegisterer)
-
-	req := &model.NegotiateServicesRequest{
-		Node: &model.DPNodeDescription{
-			Id:      "001",
-			Type:    "KONG",
-			Version: "0.00t",
-		},
-		ServicesRequested: []*model.ServiceRequest{
-			{
-				Name:     "infundibulum",
-				Versions: []string{"hypothalamus"},
+		req := &model.NegotiateServicesRequest{
+			Node: &model.DPNodeDescription{
+				Id:      "001",
+				Type:    "KONG",
+				Version: "0.00t",
 			},
-		},
-	}
-	resp, err := negotiator.NegotiateServices(context.Background(), testPeer, req)
-	r.NoError(err)
-	r.Equal(&model.CPNodeDescription{Id: "00A"}, resp.Node)
-	r.Empty(resp.ServicesAccepted)
-	r.Equal(1, len(resp.ServicesRejected))
-	r.Equal(&model.RejectedService{
-		Name:    "infundibulum",
-		Message: "No known version",
-	}, resp.ServicesRejected[0])
-}
+		}
+		resp, err := negotiator.NegotiateServices(context.Background(), testPeer, req)
+		require.NoError(t, err)
+		require.Equal(t, &model.CPNodeDescription{Id: "00A"}, resp.Node)
+		require.Empty(t, resp.ServicesAccepted)
+		require.Empty(t, resp.ServicesRejected)
+	})
 
-func TestNegotiationFirstVersion(t *testing.T) {
-	r := require.New(t)
-	testPeer := &wrpc.Peer{}
+	t.Run("Unknown empty service requested", func(t *testing.T) {
+		testPeer := &wrpc.Peer{}
 
-	testRegisterer := new(MockRegisterer)
-	testRegisterer.On("Register", testPeer).Return(nil)
+		testRegisterer := new(MockRegisterer)
+		testRegisterer.On("Register", testPeer)
 
-	negotiator := &Negotiator{CpNodeID: "00A"}
-	negotiator.AddService("infundibulum", "chrono-synclastic", "So it goes", testRegisterer)
+		negotiator := &Negotiator{CpNodeID: "00A"}
+		negotiator.AddService("infundibulum", "chrono-synclastic", "So it goes", testRegisterer)
 
-	req := &model.NegotiateServicesRequest{
-		Node: &model.DPNodeDescription{
-			Id:      "001",
-			Type:    "KONG",
-			Version: "0.00t",
-		},
-		ServicesRequested: []*model.ServiceRequest{
-			{
-				Name:     "infundibulum",
-				Versions: []string{"chrono-synclastic"},
+		req := &model.NegotiateServicesRequest{
+			Node: &model.DPNodeDescription{
+				Id:      "001",
+				Type:    "KONG",
+				Version: "0.00t",
 			},
-		},
-	}
-	resp, err := negotiator.NegotiateServices(context.Background(), testPeer, req)
-	r.NoError(err)
-	r.Equal(&model.CPNodeDescription{Id: "00A"}, resp.Node)
-	r.Equal(1, len(resp.ServicesAccepted))
-	r.Equal(&model.AcceptedService{
-		Name:    "infundibulum",
-		Version: "chrono-synclastic",
-		Message: "So it goes",
-	}, resp.ServicesAccepted[0])
-	r.Empty(resp.ServicesRejected)
+			ServicesRequested: []*model.ServiceRequest{
+				{Name: "gizmo"},
+			},
+		}
+		resp, err := negotiator.NegotiateServices(context.Background(), testPeer, req)
+		require.NoError(t, err)
+		require.Equal(t, &model.CPNodeDescription{Id: "00A"}, resp.Node)
+		require.Empty(t, resp.ServicesAccepted)
+		require.Equal(t, 1, len(resp.ServicesRejected))
+		require.Equal(t, &model.RejectedService{
+			Name:    "gizmo",
+			Message: "Unknown service.",
+		}, resp.ServicesRejected[0])
+	})
+
+	t.Run("Known service, no version match", func(t *testing.T) {
+		testPeer := &wrpc.Peer{}
+
+		testRegisterer := new(MockRegisterer)
+		testRegisterer.On("Register", testPeer)
+
+		negotiator := &Negotiator{CpNodeID: "00A"}
+		negotiator.AddService("infundibulum", "chrono-synclastic", "So it goes", testRegisterer)
+
+		req := &model.NegotiateServicesRequest{
+			Node: &model.DPNodeDescription{
+				Id:      "001",
+				Type:    "KONG",
+				Version: "0.00t",
+			},
+			ServicesRequested: []*model.ServiceRequest{
+				{
+					Name:     "infundibulum",
+					Versions: []string{"hypothalamus"},
+				},
+			},
+		}
+		resp, err := negotiator.NegotiateServices(context.Background(), testPeer, req)
+		require.NoError(t, err)
+		require.Equal(t, &model.CPNodeDescription{Id: "00A"}, resp.Node)
+		require.Empty(t, resp.ServicesAccepted)
+		require.Equal(t, 1, len(resp.ServicesRejected))
+		require.Equal(t, &model.RejectedService{
+			Name:    "infundibulum",
+			Message: "No known version",
+		}, resp.ServicesRejected[0])
+	})
+
+	t.Run("One version known, same as requested", func(t *testing.T) {
+		testPeer := &wrpc.Peer{}
+
+		testRegisterer := new(MockRegisterer)
+		testRegisterer.On("Register", testPeer).Return(nil)
+
+		negotiator := &Negotiator{CpNodeID: "00A"}
+		negotiator.AddService("infundibulum", "chrono-synclastic", "So it goes", testRegisterer)
+
+		req := &model.NegotiateServicesRequest{
+			Node: &model.DPNodeDescription{
+				Id:      "001",
+				Type:    "KONG",
+				Version: "0.00t",
+			},
+			ServicesRequested: []*model.ServiceRequest{
+				{
+					Name:     "infundibulum",
+					Versions: []string{"chrono-synclastic"},
+				},
+			},
+		}
+		resp, err := negotiator.NegotiateServices(context.Background(), testPeer, req)
+		require.NoError(t, err)
+		require.Equal(t, &model.CPNodeDescription{Id: "00A"}, resp.Node)
+		require.Equal(t, 1, len(resp.ServicesAccepted))
+		require.Equal(t, &model.AcceptedService{
+			Name:    "infundibulum",
+			Version: "chrono-synclastic",
+			Message: "So it goes",
+		}, resp.ServicesAccepted[0])
+		require.Empty(t, resp.ServicesRejected)
+	})
+
+	t.Run("Multiple versions requested, one known", func(t *testing.T) {
+		testPeer := &wrpc.Peer{}
+
+		testRegisterer := new(MockRegisterer)
+		testRegisterer.On("Register", testPeer).Return(nil)
+
+		negotiator := &Negotiator{CpNodeID: "00A"}
+		negotiator.AddService("infundibulum", "chrono-synclastic", "So it goes", testRegisterer)
+
+		req := &model.NegotiateServicesRequest{
+			Node: &model.DPNodeDescription{
+				Id:      "001",
+				Type:    "KONG",
+				Version: "0.00t",
+			},
+			ServicesRequested: []*model.ServiceRequest{
+				{
+					Name:     "infundibulum",
+					Versions: []string{"chrono-synclastic", "coquina"},
+				},
+			},
+		}
+		resp, err := negotiator.NegotiateServices(context.Background(), testPeer, req)
+		require.NoError(t, err)
+		require.Equal(t, &model.CPNodeDescription{Id: "00A"}, resp.Node)
+		require.Equal(t, 1, len(resp.ServicesAccepted))
+		require.Equal(t, &model.AcceptedService{
+			Name:    "infundibulum",
+			Version: "chrono-synclastic",
+			Message: "So it goes",
+		}, resp.ServicesAccepted[0])
+		require.Empty(t, resp.ServicesRejected)
+	})
+
+	t.Run("Multiple matchs, CP chooses which", func(t *testing.T) {
+		t.Run("Same order, choose first", func(t *testing.T) {
+			testPeer := &wrpc.Peer{}
+
+			testRegisterer := new(MockRegisterer)
+			testRegisterer.On("Register", testPeer).Return(nil)
+
+			negotiator := &Negotiator{CpNodeID: "00A"}
+			negotiator.AddService("infundibulum", "chrono-synclastic", "So it goes", testRegisterer)
+			negotiator.AddService("infundibulum", "coquina", "arbitrii mihi jura mei", testRegisterer)
+
+			req := &model.NegotiateServicesRequest{
+				Node: &model.DPNodeDescription{
+					Id:      "001",
+					Type:    "KONG",
+					Version: "0.00t",
+				},
+				ServicesRequested: []*model.ServiceRequest{
+					{
+						Name:     "infundibulum",
+						Versions: []string{"chrono-synclastic", "coquina"},
+					},
+				},
+			}
+			resp, err := negotiator.NegotiateServices(context.Background(), testPeer, req)
+			require.NoError(t, err)
+			require.Equal(t, &model.CPNodeDescription{Id: "00A"}, resp.Node)
+			require.Equal(t, 1, len(resp.ServicesAccepted))
+			require.Equal(t, &model.AcceptedService{
+				Name:    "infundibulum",
+				Version: "chrono-synclastic",
+				Message: "So it goes",
+			}, resp.ServicesAccepted[0])
+			require.Empty(t, resp.ServicesRejected)
+		})
+
+		t.Run("Change request, same response", func(t *testing.T) {
+			testPeer := &wrpc.Peer{}
+
+			testRegisterer := new(MockRegisterer)
+			testRegisterer.On("Register", testPeer).Return(nil)
+
+			negotiator := &Negotiator{CpNodeID: "00A"}
+			negotiator.AddService("infundibulum", "chrono-synclastic", "So it goes", testRegisterer)
+			negotiator.AddService("infundibulum", "coquina", "arbitrii mihi jura mei", testRegisterer)
+
+			req := &model.NegotiateServicesRequest{
+				Node: &model.DPNodeDescription{
+					Id:      "001",
+					Type:    "KONG",
+					Version: "0.00t",
+				},
+				ServicesRequested: []*model.ServiceRequest{
+					{
+						Name:     "infundibulum",
+						Versions: []string{"coquina", "chrono-synclastic"},
+					},
+				},
+			}
+			resp, err := negotiator.NegotiateServices(context.Background(), testPeer, req)
+			require.NoError(t, err)
+			require.Equal(t, &model.CPNodeDescription{Id: "00A"}, resp.Node)
+			require.Equal(t, 1, len(resp.ServicesAccepted))
+			require.Equal(t, &model.AcceptedService{
+				Name:    "infundibulum",
+				Version: "chrono-synclastic",
+				Message: "So it goes",
+			}, resp.ServicesAccepted[0])
+			require.Empty(t, resp.ServicesRejected)
+		})
+
+		t.Run("Change priotity, change choice", func(t *testing.T) {
+			testPeer := &wrpc.Peer{}
+
+			testRegisterer := new(MockRegisterer)
+			testRegisterer.On("Register", testPeer).Return(nil)
+
+			negotiator := &Negotiator{CpNodeID: "00A"}
+			negotiator.AddService("infundibulum", "coquina", "arbitrii mihi jura mei", testRegisterer)
+			negotiator.AddService("infundibulum", "chrono-synclastic", "So it goes", testRegisterer)
+
+			req := &model.NegotiateServicesRequest{
+				Node: &model.DPNodeDescription{
+					Id:      "001",
+					Type:    "KONG",
+					Version: "0.00t",
+				},
+				ServicesRequested: []*model.ServiceRequest{
+					{
+						Name:     "infundibulum",
+						Versions: []string{"chrono-synclastic", "coquina"},
+					},
+				},
+			}
+			resp, err := negotiator.NegotiateServices(context.Background(), testPeer, req)
+			require.NoError(t, err)
+			require.Equal(t, &model.CPNodeDescription{Id: "00A"}, resp.Node)
+			require.Equal(t, 1, len(resp.ServicesAccepted))
+			require.Equal(t, &model.AcceptedService{
+				Name:    "infundibulum",
+				Version: "coquina",
+				Message: "arbitrii mihi jura mei",
+			}, resp.ServicesAccepted[0])
+			require.Empty(t, resp.ServicesRejected)
+		})
+	})
 }
