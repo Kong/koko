@@ -36,7 +36,7 @@ message ActiveHealthcheck {
   google.protobuf.Int32Value concurrency = 1;
   ActiveHealthyCondition healthy = 2;
   string http_path = 3;
-  string http_sni = 4;
+  string https_sni = 4;
   google.protobuf.BoolValue https_verify_certificate = 5;
   string type = 6;
   google.protobuf.Int32Value timeout = 7;

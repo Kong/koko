@@ -258,7 +258,7 @@ func init() {
 								Minimum: intP(1),
 								Maximum: maxConcurrency,
 							},
-							"http_sni":  typedefs.Host,
+							"https_sni": typedefs.Host,
 							"http_path": typedefs.Path,
 							"https_verify_certificate": {
 								Type: "boolean",
