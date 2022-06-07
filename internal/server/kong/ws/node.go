@@ -79,7 +79,8 @@ func (n *Node) RemoteAddr() net.Addr {
 	if n.peer != nil {
 		return n.peer.RemoteAddr()
 	}
-	return nil
+	var nip *net.IPAddr
+	return nip
 }
 
 func (n *Node) GetPluginList() ([]string, error) {

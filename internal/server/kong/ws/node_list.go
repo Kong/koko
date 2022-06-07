@@ -10,7 +10,7 @@ type NodeList struct {
 }
 
 func (l *NodeList) Add(node *Node) error {
-	remoteAddr := node.conn.RemoteAddr().String()
+	remoteAddr := node.RemoteAddr().String()
 	_, loaded := l.nodes.LoadOrStore(remoteAddr, node)
 	if loaded {
 		return fmt.Errorf("node(ip: %v) already present", remoteAddr)
@@ -19,7 +19,7 @@ func (l *NodeList) Add(node *Node) error {
 }
 
 func (l *NodeList) Remove(node *Node) error {
-	remoteAddr := node.conn.RemoteAddr().String()
+	remoteAddr := node.RemoteAddr().String()
 	_, loaded := l.nodes.LoadAndDelete(remoteAddr)
 	if !loaded {
 		return fmt.Errorf("node(ip: %v) not found", remoteAddr)
