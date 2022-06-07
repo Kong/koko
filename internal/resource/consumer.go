@@ -15,6 +15,7 @@ const (
 	TypeConsumer = model.Type("consumer")
 
 	maxCustomIDLength = 128
+	maxUsernameLength = 128
 )
 
 var customID = &generator.Schema{
@@ -99,8 +100,13 @@ func init() {
 	consumerSchema := &generator.Schema{
 		Type: "object",
 		Properties: map[string]*generator.Schema{
-			"id":         typedefs.ID,
-			"username":   typedefs.Name,
+			"id": typedefs.ID,
+			"username": {
+				Type:      "string",
+				Pattern:   `^[0-9a-zA-Z.\-_~+@]*$`,
+				MinLength: 1,
+				MaxLength: maxUsernameLength,
+			},
 			"created_at": typedefs.UnixEpoch,
 			"updated_at": typedefs.UnixEpoch,
 			"custom_id":  customID,

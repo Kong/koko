@@ -75,7 +75,7 @@ func TestConsumer_Validate(t *testing.T) {
 	t.Run("good consumer with username and no custom_id must pass", func(t *testing.T) {
 		c := NewConsumer()
 		_ = c.ProcessDefaults(context.Background())
-		c.Consumer.Username = "my-company-name"
+		c.Consumer.Username = "john.doe+koko@example.org"
 		err := c.Validate(context.Background())
 		require.NoError(t, err)
 	})
