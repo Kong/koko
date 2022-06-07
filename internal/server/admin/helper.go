@@ -8,14 +8,21 @@ import (
 	"github.com/google/uuid"
 	pbModel "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
 	"github.com/kong/koko/internal/model"
+	"github.com/kong/koko/internal/resource"
 	"github.com/kong/koko/internal/server/util"
 	"github.com/kong/koko/internal/store"
 	"go.uber.org/zap"
 )
 
-const namePattern = `^[0-9a-zA-Z.\-_~]{1,128}$`
+const (
+	namePattern             = `^[0-9a-zA-Z.\-_~]{1,128}$`
+	wildcardHostnamePattern = `^[0-9a-zA-Z.\-_~*]{1,256}$`
+)
 
-var nameRegex = regexp.MustCompile(namePattern)
+var (
+	nameRegex             = regexp.MustCompile(namePattern)
+	wildcardHostnameRegex = regexp.MustCompile(wildcardHostnamePattern)
+)
 
 func validateListOptions(listOpts *pbModel.PaginationRequest) error {
 	if listOpts.Number < 0 {
@@ -75,6 +82,11 @@ func getPaginationResponse(totalCount int, nextPage int) *pbModel.PaginationResp
 	}
 }
 
+func matchesPattern(idOrName string, entity model.Object) bool {
+	return nameRegex.MatchString(idOrName) ||
+		(entity.Type() == resource.TypeSNI && wildcardHostnameRegex.MatchString(idOrName))
+}
+
 func getEntityByIDOrName(ctx context.Context, idOrName string, entity model.Object, nameOpt store.ReadOptsFunc,
 	s store.Store, logger *zap.Logger,
 ) error {
@@ -89,7 +101,7 @@ func getEntityByIDOrName(ctx context.Context, idOrName string, entity model.Obje
 		}
 		return nil
 	}
-	if nameRegex.MatchString(idOrName) {
+	if matchesPattern(idOrName, entity) {
 		logger.With(zap.String("name", idOrName)).Debug(fmt.Sprintf("attempting reading %v by name",
 			entity.Type()))
 		err := s.Read(ctx, entity, nameOpt)
