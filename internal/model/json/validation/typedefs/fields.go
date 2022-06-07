@@ -15,7 +15,7 @@ const (
 	tagPattern        = `^[0-9a-zA-Z.\-_~:]*$`
 	maxHostnameLength = 256
 	maxPathLength     = 1024
-	hostnamePattern   = "[a-z0-9]([-a-z0-9]*[a-z0-9])?(.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$"
+	hostnamePattern   = "[a-zA-Z0-9]([-a-zA-Z0-9]*[a-zA-Z0-9])?(.[a-zA-Z0-9]([-a-zA-Z0-9]*[a-zA-Z0-9])?)*$"
 
 	HTTPHeaderNamePattern = "^[A-Za-z0-9!#$%&'*+-.^_|~]{1,64}$"
 )
