@@ -135,7 +135,7 @@
             },
             "https_sni": {
               "maxLength": 256,
-              "pattern": "^[a-z0-9]([-a-z0-9]*[a-z0-9])?(.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$",
+              "pattern": "^[a-zA-Z0-9]([-a-zA-Z0-9]*[a-zA-Z0-9])?(.[a-zA-Z0-9]([-a-zA-Z0-9]*[a-zA-Z0-9])?)*$",
               "type": "string",
               "description": "must be a valid hostname"
             },
@@ -272,7 +272,7 @@
     },
     "host_header": {
       "maxLength": 256,
-      "pattern": "^[a-z0-9]([-a-z0-9]*[a-z0-9])?(.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$",
+      "pattern": "^[a-zA-Z0-9]([-a-zA-Z0-9]*[a-zA-Z0-9])?(.[a-zA-Z0-9]([-a-zA-Z0-9]*[a-zA-Z0-9])?)*$",
       "type": "string",
       "description": "must be a valid hostname"
     },

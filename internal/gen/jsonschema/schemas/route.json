@@ -77,7 +77,7 @@
     "hosts": {
       "items": {
         "maxLength": 256,
-        "pattern": "^[a-z0-9]([-a-z0-9]*[a-z0-9])?(.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$",
+        "pattern": "^[a-zA-Z0-9]([-a-zA-Z0-9]*[a-zA-Z0-9])?(.[a-zA-Z0-9]([-a-zA-Z0-9]*[a-zA-Z0-9])?)*$",
         "type": "string",
         "description": "must be a valid hostname"
       },
@@ -231,7 +231,7 @@
     "snis": {
       "items": {
         "maxLength": 256,
-        "pattern": "^[a-z0-9]([-a-z0-9]*[a-z0-9])?(.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$",
+        "pattern": "^[a-zA-Z0-9]([-a-zA-Z0-9]*[a-zA-Z0-9])?(.[a-zA-Z0-9]([-a-zA-Z0-9]*[a-zA-Z0-9])?)*$",
         "type": "string",
         "description": "must be a valid hostname"
       },

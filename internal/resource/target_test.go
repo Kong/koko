@@ -119,6 +119,16 @@ func TestTarget_Validate(t *testing.T) {
 			Errs:    []*model.ErrorDetail{},
 		},
 		{
+			name: "good target with Uppercase domain doesn't throw any error",
+			Target: func() Target {
+				t := goodTarget()
+				t.Target.Target = "WWW.Goo-gle.Com"
+				return t
+			},
+			wantErr: false,
+			Errs:    []*model.ErrorDetail{},
+		},
+		{
 			name: "target with target longer than 1024 errors",
 			Target: func() Target {
 				t := goodTarget()
