@@ -2,6 +2,7 @@ package ws
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/kong/go-wrpc/wrpc"
 	"github.com/kong/koko/internal/gen/wrpc/kong/model"
@@ -23,7 +24,7 @@ type Registerer interface {
 	Register(peer *wrpc.Peer) error
 }
 
-type knownVersion struct {
+type serviceVersion struct {
 	version  string
 	message  string
 	register Registerer
@@ -33,8 +34,8 @@ type knownVersion struct {
 // It holds a map of services, each with a list of
 // known versions and respective registerers.
 type Negotiator struct {
-	CpNodeID      string
-	KnownVersions map[string][]knownVersion
+	Cluster       Cluster
+	KnownVersions map[string][]serviceVersion
 	Logger        *zap.Logger
 }
 
@@ -43,21 +44,30 @@ type Negotiator struct {
 func (n *Negotiator) AddService(
 	serviceName, version, message string,
 	register Registerer,
-) {
+) error {
 	if n.KnownVersions == nil {
-		n.KnownVersions = map[string][]knownVersion{}
+		n.KnownVersions = map[string][]serviceVersion{}
 	}
 
 	knownServ, ok := n.KnownVersions[serviceName]
 	if !ok {
-		knownServ = []knownVersion{}
+		knownServ = []serviceVersion{}
 	}
-	knownServ = append(knownServ, knownVersion{
+
+	for _, knownVersion := range knownServ {
+		if knownVersion.version == version {
+			return fmt.Errorf("%s.%s already registered", serviceName, version)
+		}
+	}
+
+	knownServ = append(knownServ, serviceVersion{
 		version:  version,
 		message:  message,
 		register: register,
 	})
 	n.KnownVersions[serviceName] = knownServ
+
+	return nil
 }
 
 // Register adds the version negotiation service to the peer.
@@ -69,10 +79,10 @@ func (n *Negotiator) Register(peer *wrpc.Peer) error {
 }
 
 // Choose the best version for a requested service.
-func (n *Negotiator) chooseVersion(requestedServ *model.ServiceRequest) (ok bool, choice knownVersion) {
+func (n *Negotiator) chooseVersion(requestedServ *model.ServiceRequest) (ok bool, choice serviceVersion) {
 	known, ok := n.KnownVersions[requestedServ.Name]
 	if !ok {
-		return false, knownVersion{message: unknownServiceMessage}
+		return false, serviceVersion{message: unknownServiceMessage}
 	}
 
 	for _, knownVers := range known {
@@ -83,7 +93,7 @@ func (n *Negotiator) chooseVersion(requestedServ *model.ServiceRequest) (ok bool
 		}
 	}
 
-	return false, knownVersion{message: noKnownVersionMessage}
+	return false, serviceVersion{message: noKnownVersionMessage}
 }
 
 // NegotiateServices is the method handler for the only RPC in this service.
@@ -103,7 +113,7 @@ func (n *Negotiator) NegotiateServices(
 	req *model.NegotiateServicesRequest,
 ) (resp *model.NegotiateServicesResponse, err error) {
 	resp = &model.NegotiateServicesResponse{
-		Node:             &model.CPNodeDescription{Id: n.CpNodeID},
+		Node:             &model.CPNodeDescription{Id: n.Cluster.Get()},
 		ServicesAccepted: []*model.AcceptedService{},
 		ServicesRejected: []*model.RejectedService{},
 	}
