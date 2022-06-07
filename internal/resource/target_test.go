@@ -122,7 +122,7 @@ func TestTarget_Validate(t *testing.T) {
 			name: "good target with Uppercase domain doesn't throw any error",
 			Target: func() Target {
 				t := goodTarget()
-				t.Target.Target = "WWW.Google.Com"
+				t.Target.Target = "WWW.Goo-gle.Com"
 				return t
 			},
 			wantErr: false,
