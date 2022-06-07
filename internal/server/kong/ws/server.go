@@ -26,11 +26,11 @@ type HandlerOpts struct {
 
 func NewHandler(opts HandlerOpts) (http.Handler, error) {
 	mux := &http.ServeMux{}
-	mux.Handle("/v1/outlet", Handler{
+	mux.Handle("/v1/outlet", handler{
 		logger:        opts.Logger,
 		authenticator: opts.Authenticator,
 	})
-	mux.Handle("/v1/wrpc", WrpcHandler{
+	mux.Handle("/v1/wrpc", wrpcHandler{
 		logger:        opts.Logger,
 		authenticator: opts.Authenticator,
 		baseServices:  opts.BaseServices,
@@ -44,7 +44,7 @@ func NewHandler(opts HandlerOpts) (http.Handler, error) {
 	return mux, nil
 }
 
-type Handler struct {
+type handler struct {
 	logger        *zap.Logger
 	authenticator Authenticator
 }
@@ -65,7 +65,7 @@ func validateRequest(r *http.Request) error {
 	return nil
 }
 
-func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if err := validateRequest(r); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		_, err := w.Write([]byte(err.Error()))
@@ -110,7 +110,7 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	m.AddNode(node)
 }
 
-func (h Handler) respondWithErr(w http.ResponseWriter, _ *http.Request,
+func (h handler) respondWithErr(w http.ResponseWriter, _ *http.Request,
 	err error,
 ) {
 	authErr, ok := err.(ErrAuth)
@@ -133,13 +133,13 @@ func (h Handler) respondWithErr(w http.ResponseWriter, _ *http.Request,
 	w.WriteHeader(http.StatusInternalServerError)
 }
 
-type WrpcHandler struct {
+type wrpcHandler struct {
 	logger        *zap.Logger
 	authenticator Authenticator
 	baseServices  Registerer
 }
 
-func (h WrpcHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (h wrpcHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if err := validateRequest(r); err != nil {
 		h.closeWithErr(w, http.StatusBadRequest, err)
 		return
@@ -173,10 +173,13 @@ func (h WrpcHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		peer:     peer,
 		logger:   h.logger.With(zap.String("wrpc-client-ip", r.RemoteAddr)),
 	}
-	m.AddNode(node)
+
+	// TODO: add the node somewhere until it's completed by some service
+	_ = m
+	_ = node
 }
 
-func (h WrpcHandler) closeWithErr(w http.ResponseWriter, statusCode int, errmsg error) {
+func (h wrpcHandler) closeWithErr(w http.ResponseWriter, statusCode int, errmsg error) {
 	w.WriteHeader(statusCode)
 	_, err := w.Write([]byte(errmsg.Error()))
 	if err != nil {

@@ -20,6 +20,14 @@ func (m *MockRegisterer) Register(peer *wrpc.Peer) error {
 	return args.Error(0)
 }
 
+type MockCluster struct {
+	id string
+}
+
+func (c MockCluster) Get() string {
+	return c.id
+}
+
 func TestChooseServiceVersionUnknown(t *testing.T) {
 	r := require.New(t)
 	testPeer := &wrpc.Peer{}
@@ -95,7 +103,7 @@ func TestNegotiationInvalid(t *testing.T) {
 	testRegisterer := new(MockRegisterer)
 	testRegisterer.On("Register", testPeer)
 
-	negotiator := &Negotiator{CpNodeID: "00A"}
+	negotiator := &Negotiator{Cluster: MockCluster{id: "00A"}}
 	negotiator.AddService("infundibulum", "chrono-synclastic", "So it goes", testRegisterer)
 
 	req := &model.NegotiateServicesRequest{
@@ -119,7 +127,7 @@ func TestNegotiation(t *testing.T) {
 		testRegisterer := new(MockRegisterer)
 		testRegisterer.On("Register", testPeer)
 
-		negotiator := &Negotiator{CpNodeID: "00A"}
+		negotiator := &Negotiator{Cluster: MockCluster{id: "00A"}}
 		negotiator.AddService("infundibulum", "chrono-synclastic", "So it goes", testRegisterer)
 
 		req := &model.NegotiateServicesRequest{
@@ -142,7 +150,7 @@ func TestNegotiation(t *testing.T) {
 		testRegisterer := new(MockRegisterer)
 		testRegisterer.On("Register", testPeer)
 
-		negotiator := &Negotiator{CpNodeID: "00A"}
+		negotiator := &Negotiator{Cluster: MockCluster{id: "00A"}}
 		negotiator.AddService("infundibulum", "chrono-synclastic", "So it goes", testRegisterer)
 
 		req := &model.NegotiateServicesRequest{
@@ -172,7 +180,7 @@ func TestNegotiation(t *testing.T) {
 		testRegisterer := new(MockRegisterer)
 		testRegisterer.On("Register", testPeer)
 
-		negotiator := &Negotiator{CpNodeID: "00A"}
+		negotiator := &Negotiator{Cluster: MockCluster{id: "00A"}}
 		negotiator.AddService("infundibulum", "chrono-synclastic", "So it goes", testRegisterer)
 
 		req := &model.NegotiateServicesRequest{
@@ -205,7 +213,7 @@ func TestNegotiation(t *testing.T) {
 		testRegisterer := new(MockRegisterer)
 		testRegisterer.On("Register", testPeer).Return(nil)
 
-		negotiator := &Negotiator{CpNodeID: "00A"}
+		negotiator := &Negotiator{Cluster: MockCluster{id: "00A"}}
 		negotiator.AddService("infundibulum", "chrono-synclastic", "So it goes", testRegisterer)
 
 		req := &model.NegotiateServicesRequest{
@@ -239,7 +247,7 @@ func TestNegotiation(t *testing.T) {
 		testRegisterer := new(MockRegisterer)
 		testRegisterer.On("Register", testPeer).Return(nil)
 
-		negotiator := &Negotiator{CpNodeID: "00A"}
+		negotiator := &Negotiator{Cluster: MockCluster{id: "00A"}}
 		negotiator.AddService("infundibulum", "chrono-synclastic", "So it goes", testRegisterer)
 
 		req := &model.NegotiateServicesRequest{
@@ -274,7 +282,7 @@ func TestNegotiation(t *testing.T) {
 			testRegisterer := new(MockRegisterer)
 			testRegisterer.On("Register", testPeer).Return(nil)
 
-			negotiator := &Negotiator{CpNodeID: "00A"}
+			negotiator := &Negotiator{Cluster: MockCluster{id: "00A"}}
 			negotiator.AddService("infundibulum", "chrono-synclastic", "So it goes", testRegisterer)
 			negotiator.AddService("infundibulum", "coquina", "arbitrii mihi jura mei", testRegisterer)
 
@@ -309,7 +317,7 @@ func TestNegotiation(t *testing.T) {
 			testRegisterer := new(MockRegisterer)
 			testRegisterer.On("Register", testPeer).Return(nil)
 
-			negotiator := &Negotiator{CpNodeID: "00A"}
+			negotiator := &Negotiator{Cluster: MockCluster{id: "00A"}}
 			negotiator.AddService("infundibulum", "chrono-synclastic", "So it goes", testRegisterer)
 			negotiator.AddService("infundibulum", "coquina", "arbitrii mihi jura mei", testRegisterer)
 
@@ -344,7 +352,7 @@ func TestNegotiation(t *testing.T) {
 			testRegisterer := new(MockRegisterer)
 			testRegisterer.On("Register", testPeer).Return(nil)
 
-			negotiator := &Negotiator{CpNodeID: "00A"}
+			negotiator := &Negotiator{Cluster: MockCluster{id: "00A"}}
 			negotiator.AddService("infundibulum", "coquina", "arbitrii mihi jura mei", testRegisterer)
 			negotiator.AddService("infundibulum", "chrono-synclastic", "So it goes", testRegisterer)
 
