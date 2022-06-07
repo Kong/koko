@@ -116,7 +116,7 @@ func TestSNI_Validate(t *testing.T) {
 			SNI: func() SNI {
 				res := NewSNI()
 				_ = res.ProcessDefaults(context.Background())
-				res.SNI.Name = "TeST"
+				res.SNI.Name = "TeST_"
 				res.SNI.Certificate = &v1.Certificate{
 					Id: uuid.NewString(),
 				}
