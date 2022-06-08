@@ -18,7 +18,7 @@ type Configer struct {
 }
 
 // Register the "v1" config service.
-func (c *Configer) Register(peer registerer) error {
+func (c *Configer) Register(peer *wrpc.Peer) error {
 	return peer.Register(&config_service.ConfigServiceServer{ConfigService: c})
 }
 
@@ -27,7 +27,7 @@ func (c *Configer) GetCapabilities(
 	peer *wrpc.Peer,
 	req *config_service.GetCapabilitiesRequest,
 ) (resp *config_service.GetCapabilitiesResponse, err error) {
-	return nil, fmt.Errorf("not implemented")
+	return nil, fmt.Errorf("Not implemented")
 }
 
 // PingCP handles the incoming ping method from the CP.
@@ -56,7 +56,7 @@ func (c *Configer) PingCP(
 		return nil, err
 	}
 
-	c.Manager.updateNodeStatus(node) // nolint: contextcheck
+	c.Manager.updateNodeStatus(node)
 	return &config_service.PingCPResponse{}, nil
 }
 
@@ -82,7 +82,7 @@ func (c *Configer) ReportMetadata(
 	}
 	node.logger.Debug("plugin list", zap.Strings("plugins", plugins))
 
-	err = c.Manager.addWrpcNode(node, plugins) // nolint: contextcheck
+	err = c.Manager.addWrpcNode(node, plugins)
 	if err != nil {
 		node.logger.With(zap.Error(err)).Error("error when adding validated node")
 		node.Close()
@@ -103,5 +103,5 @@ func (c *Configer) SyncConfig(
 	req *config_service.SyncConfigRequest,
 ) (resp *config_service.SyncConfigResponse, err error) {
 	// this is a CP->DP method
-	return nil, fmt.Errorf("wrong direction")
+	return nil, fmt.Errorf("Not implemented")
 }

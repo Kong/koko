@@ -287,9 +287,12 @@ func Run(ctx context.Context, config ServerConfig) error {
 			),
 		}
 	}
-	negotiator.AddService("config", "v1", "wRPC configuration", &ws.Configer{
+	err = negotiator.AddService("config", "v1", "wRPC configuration", &ws.Configer{
 		Manager: m,
 	})
+	if err != nil {
+		return err
+	}
 
 	handler, err := ws.NewHandler(ws.HandlerOpts{
 		Logger:        controlLogger,
