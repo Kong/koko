@@ -2,6 +2,7 @@ package store
 
 import (
 	"github.com/kong/koko/internal/model"
+	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 )
 
 type CreateOpts struct{}
@@ -76,6 +77,10 @@ type ListOpts struct {
 	ReferenceID   string
 	PageSize      int
 	Page          int
+
+	// CEL expression used for filtering.
+	// Read more: https://github.com/google/cel-spec
+	Filter *exprpb.Expr
 }
 
 type ListOptsFunc func(*ListOpts)
@@ -118,5 +123,12 @@ func ListWithPageSize(pageSize int) ListOptsFunc {
 		} else {
 			opt.PageSize = pageSize
 		}
+	}
+}
+
+// ListWithFilter associates the passed in CEL expression with the current list pagination options.
+func ListWithFilter(expr *exprpb.Expr) ListOptsFunc {
+	return func(opt *ListOpts) {
+		opt.Filter = expr
 	}
 }

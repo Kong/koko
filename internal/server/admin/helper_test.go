@@ -5,7 +5,9 @@ import (
 	"testing"
 
 	pbModel "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
+	"github.com/kong/koko/internal/model/json/validation"
 	"github.com/kong/koko/internal/store"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -49,5 +51,24 @@ func Test_listOptsFromRequest(t *testing.T) {
 		_, err := listOptsFromReq(p)
 		expectedErr := fmt.Errorf("invalid page_size '%d', must be within range [1 - 1000]", 1001)
 		require.Equal(t, expectedErr, err)
+	})
+	t.Run("setting filter expression", func(t *testing.T) {
+		listOptFns, err := listOptsFromReq(&pbModel.PaginationRequest{Filter: `"tag1" in tags`})
+		require.NoError(t, err)
+		listOpts := &store.ListOpts{}
+		for _, fn := range listOptFns {
+			fn(listOpts)
+		}
+		require.NotNil(t, listOpts.Filter)
+	})
+	t.Run("setting invalid expression", func(t *testing.T) {
+		_, err := listOptsFromReq(&pbModel.PaginationRequest{Filter: `"tag1" in undefined`})
+		assert.Equal(t, validation.Error{
+			Errs: []*pbModel.ErrorDetail{{
+				Type:     pbModel.ErrorType_ERROR_TYPE_FIELD,
+				Field:    "page.filter",
+				Messages: []string{"invalid filter expression: undeclared reference to 'undefined'"},
+			}},
+		}, err)
 	})
 }
