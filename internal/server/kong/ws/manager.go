@@ -317,7 +317,7 @@ func (m *Manager) AddPendingNode(node *Node) {
 // and, if successful, moved from the `m.pendingNodes` to the
 // final `m.nodes` list.
 func (m *Manager) addWrpcNode(node *Node, pluginList []string) error {
-	err := m.doNodeValidation(node, pluginList) // nolint: contextcheck
+	err := m.doNodeValidation(node, pluginList)
 	if err != nil {
 		return err
 	}
