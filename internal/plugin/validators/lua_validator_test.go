@@ -157,7 +157,7 @@ func TestProcessAutoFields(t *testing.T) {
 		require.NotPanics(t, func() {
 			uuid.MustParse(plugin.Id)
 		})
-		require.LessOrEqual(t, int32(time.Now().Unix()), plugin.CreatedAt)
+		require.LessOrEqual(t, plugin.CreatedAt, int32(time.Now().Unix()))
 		require.True(t, plugin.Enabled.Value)
 		require.ElementsMatch(t, plugin.Protocols,
 			[]string{"http", "https", "grpc", "grpcs"},
