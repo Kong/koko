@@ -935,12 +935,32 @@ func TestValidate(t *testing.T) {
 				},
 			},
 			{
-				// test typedefs.lua_code
+				// test valid typedefs.lua_code
 				name: "loggly",
 				config: `{
 					"key": "KEY",
 					"custom_fields_by_lua": {
 						"header": "return nil"
+					}
+				}`,
+			},
+			{
+				// test valid but unsafe typedefs.lua_code
+				name: "loggly",
+				config: `{
+					"key": "KEY",
+					"custom_fields_by_lua": {
+						"header": "os.execute('echo hello')"
+					}
+				}`,
+			},
+			{
+				// test invalid typedefs.lua_code
+				name: "loggly",
+				config: `{
+					"key": "KEY",
+					"custom_fields_by_lua": {
+						"header": "hello"
 					}
 				}`,
 				wantsErr: true,
@@ -949,8 +969,8 @@ func TestValidate(t *testing.T) {
 						Type:  grpcModel.ErrorType_ERROR_TYPE_FIELD,
 						Field: "config.custom_fields_by_lua",
 						Messages: []string{
-							`Error parsing function: lua-tree/share/lua/5.1/kong/tools/sandbox.lua:119:` +
-								` loading of untrusted Lua code disabled because 'untrusted_lua' config option is set to 'off'`,
+							"Error parsing function: lua-tree/share/lua/5.1/kong/tools/kong-lua-sandbox.lua:146: " +
+								"<string> at EOF:   parse error\n",
 						},
 					},
 				},
