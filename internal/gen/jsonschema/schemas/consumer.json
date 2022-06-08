@@ -10,7 +10,7 @@
     "custom_id": {
       "maxLength": 128,
       "minLength": 1,
-      "pattern": "^[0-9a-zA-Z.\\-_~]+(?: [0-9a-zA-Z.\\-_~]+)*$",
+      "pattern": "^[0-9a-zA-Z.\\-_~\\(\\)#%@|]+(?: [0-9a-zA-Z.\\-_~\\(\\)#%@|]+)*$",
       "type": "string"
     },
     "id": {

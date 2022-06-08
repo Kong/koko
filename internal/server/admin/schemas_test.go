@@ -265,7 +265,7 @@ func TestValidateJSONSchema(t *testing.T) {
 	t.Run("invalid JSON schema", func(t *testing.T) {
 		res := c.POST(p).WithJSON(&v1.Consumer{
 			CreatedAt: -1,
-			CustomId:  "#invalid",
+			CustomId:  "invalid!",
 			Tags:      []string{"some-tag", "some tag"},
 		}).Expect()
 		res.Status(http.StatusBadRequest)
@@ -293,7 +293,9 @@ func TestValidateJSONSchema(t *testing.T) {
 		customIDErr.Value("field").String().Equal("custom_id")
 		messages = customIDErr.Value("messages").Array()
 		messages.Length().Equal(1)
-		messages.First().String().Equal("must match pattern '^[0-9a-zA-Z.\\-_~]+(?: [0-9a-zA-Z.\\-_~]+)*$'")
+		messages.First().String().Equal(
+			`must match pattern '^[0-9a-zA-Z.\-_~\(\)#%@|]+(?: [0-9a-zA-Z.\-_~\(\)#%@|]+)*$'`,
+		)
 
 		tagsErr := errRes.Element(3).Object()
 		tagsErr.Value("type").String().Equal(v1.ErrorType_ERROR_TYPE_FIELD.String())

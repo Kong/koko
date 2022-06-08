@@ -20,7 +20,7 @@ const (
 
 var customID = &generator.Schema{
 	Type:      "string",
-	Pattern:   `^[0-9a-zA-Z.\-_~]+(?: [0-9a-zA-Z.\-_~]+)*$`,
+	Pattern:   `^[0-9a-zA-Z.\-_~\(\)#%@|]+(?: [0-9a-zA-Z.\-_~\(\)#%@|]+)*$`,
 	MinLength: 1,
 	MaxLength: maxCustomIDLength,
 }
