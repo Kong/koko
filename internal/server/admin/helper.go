@@ -14,14 +14,9 @@ import (
 	"go.uber.org/zap"
 )
 
-const (
-	namePattern             = `^[0-9a-zA-Z.\-_~]{1,128}$`
-	wildcardHostnamePattern = `^[0-9a-zA-Z.\-_~*]{1,256}$`
-)
-
 var (
-	nameRegex             = regexp.MustCompile(namePattern)
-	wildcardHostnameRegex = regexp.MustCompile(wildcardHostnamePattern)
+	nameRegex             = regexp.MustCompile(`^[0-9a-zA-Z.\-_~]{1,128}$`)
+	wildcardHostnameRegex = regexp.MustCompile(`^[0-9a-zA-Z.\-_~*]{1,256}$`)
 )
 
 func validateListOptions(listOpts *pbModel.PaginationRequest) error {

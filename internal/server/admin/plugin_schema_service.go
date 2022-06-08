@@ -229,7 +229,7 @@ func checkSchemaName(name string) error {
 			Errs: []*pb.ErrorDetail{
 				{
 					Type:     pb.ErrorType_ERROR_TYPE_ENTITY,
-					Messages: []string{fmt.Sprintf("must match pattern: '%s'", namePattern)},
+					Messages: []string{fmt.Sprintf("must match pattern: '%s'", nameRegex.String())},
 				},
 			},
 		}
