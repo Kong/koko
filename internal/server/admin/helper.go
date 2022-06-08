@@ -35,22 +35,30 @@ func validUUID(id string) error {
 }
 
 func listOptsFromReq(listOpts *pbModel.PaginationRequest) ([]store.ListOptsFunc, error) {
+	// No pagination request message, so we'll no-op.
 	if listOpts == nil {
-		return []store.ListOptsFunc{}, nil
+		return nil, nil
 	}
-	err := validateListOptions(listOpts)
-	if err != nil {
+
+	if err := validateListOptions(listOpts); err != nil {
 		return nil, err
 	}
-	pageNumOption := store.ListWithPageNum(int(listOpts.Number))
 
-	pageSizeOption := store.ListWithPageSize(int(listOpts.Size))
-
-	listOptFns := []store.ListOptsFunc{
-		pageNumOption,
-		pageSizeOption,
+	opts := []store.ListOptsFunc{
+		store.ListWithPageNum(int(listOpts.Number)),
+		store.ListWithPageSize(int(listOpts.Size)),
 	}
-	return listOptFns, nil
+
+	// Parse the pagination CEL expression filter when provided.
+	if listOpts.Filter != "" {
+		expr, err := validateFilter(celEnv, listOpts.Filter)
+		if err != nil {
+			return nil, err
+		}
+		opts = append(opts, store.ListWithFilter(expr))
+	}
+
+	return opts, nil
 }
 
 func getPaginationResponse(totalCount int, nextPage int) *pbModel.PaginationResponse {
