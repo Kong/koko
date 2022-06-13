@@ -8,17 +8,16 @@ import (
 	"github.com/google/uuid"
 	pbModel "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
 	"github.com/kong/koko/internal/model"
+	"github.com/kong/koko/internal/model/json/validation/typedefs"
 	"github.com/kong/koko/internal/resource"
 	"github.com/kong/koko/internal/server/util"
 	"github.com/kong/koko/internal/store"
 	"go.uber.org/zap"
 )
 
-const namePattern = `0-9a-zA-Z.\-_~`
-
 var (
-	nameRegex             = regexp.MustCompile(fmt.Sprintf(`^[%s]{1,128}$`, namePattern))
-	wildcardHostnameRegex = regexp.MustCompile(fmt.Sprintf(`^[%s*]{1,256}$`, namePattern))
+	nameRegex             = regexp.MustCompile(`^[0-9a-zA-Z.\-_~]{1,128}$`)
+	wildcardHostnameRegex = regexp.MustCompile(fmt.Sprintf(`%s{1,256}$`, typedefs.WilcardHostnamePattern))
 )
 
 func validateListOptions(listOpts *pbModel.PaginationRequest) error {
