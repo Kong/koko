@@ -463,6 +463,17 @@ func TestRoute_Validate(t *testing.T) {
 			},
 		},
 		{
+			name: "header with regex works",
+			Route: func() Route {
+				r := goodRoute()
+				r.Route.Headers = map[string]*model.HeaderValues{
+					"foo": {Values: []string{"~*^(([Tt])([Ee])([Ss])([Tt]))$"}},
+				}
+				return r
+			},
+			wantErr: false,
+		},
+		{
 			name: "invalid headers throws an error",
 			Route: func() Route {
 				r := goodRoute()
