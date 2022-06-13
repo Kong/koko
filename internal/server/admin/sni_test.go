@@ -256,6 +256,20 @@ func TestSNIRead(t *testing.T) {
 		body.Value("id").String().Equal(sniID)
 		body.Path("$.certificate.id").String().Equal(certID)
 	})
+	t.Run("reading with existing SNI name with wildcard returns 200", func(t *testing.T) {
+		res := c.POST("/v1/snis").WithJSON(&v1.SNI{
+			Name: "*.example.com",
+			Certificate: &v1.Certificate{
+				Id: certID,
+			},
+		}).Expect().Status(http.StatusCreated)
+		sniID := res.JSON().Path("$.item.id").String().Raw()
+		res = c.GET("/v1/snis/" + "*.example.com").
+			Expect().Status(http.StatusOK)
+		body := res.JSON().Path("$.item").Object()
+		body.Value("id").String().Equal(sniID)
+		body.Path("$.certificate.id").String().Equal(certID)
+	})
 	t.Run("read with an empty id returns 400", func(t *testing.T) {
 		res := c.GET("/v1/snis/").Expect().Status(http.StatusBadRequest)
 		body := res.JSON().Object()

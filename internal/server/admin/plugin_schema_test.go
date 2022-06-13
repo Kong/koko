@@ -181,7 +181,7 @@ func TestPluginSchema_Get(t *testing.T) {
 			"lua+plugin",
 			"lua!plugin",
 		}
-		expectedErrMsg := fmt.Sprintf("must match pattern: '%s'", namePattern)
+		expectedErrMsg := fmt.Sprintf("must match pattern: '%s'", nameRegex.String())
 		for _, pluginName := range pluginNames {
 			fmt.Fprintf(os.Stderr, "\n\n%s\n", pluginName)
 			res := c.GET(fmt.Sprintf("/v1/plugin-schemas/%s", pluginName)).Expect().Status(http.StatusBadRequest)
