@@ -357,8 +357,15 @@ type grpcClients struct {
 }
 
 func setupGRPCClients() (grpcClients, error) {
-	cc, err := grpc.Dial("localhost:3001",
-		grpc.WithTransportCredentials(insecure.NewCredentials()))
+	const grpcMaxSendMsgSize = 1024 * 1024 * 8
+	dialOpts := []grpc.DialOption{
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithDefaultCallOptions(
+			grpc.MaxCallSendMsgSize(grpcMaxSendMsgSize),
+			grpc.MaxCallRecvMsgSize(grpcMaxSendMsgSize),
+		),
+	}
+	cc, err := grpc.Dial("localhost:3001", dialOpts...)
 	if err != nil {
 		return grpcClients{}, err
 	}
