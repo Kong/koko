@@ -230,6 +230,7 @@ func Run(ctx context.Context, config ServerConfig) error {
 	// setup control server
 	controlLogger := logger.With(zap.String("component", "control-server"))
 	m := ws.NewManager(ws.ManagerOpts{
+		Ctx:                    ctx,
 		Logger:                 controlLogger,
 		DPConfigLoader:         loader,
 		DPVersionCompatibility: vc,

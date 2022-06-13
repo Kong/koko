@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"sync"
 	"time"
 )
 
@@ -47,7 +46,6 @@ type Authenticator interface {
 }
 
 type DefaultAuthenticator struct {
-	once    sync.Once
 	Manager *Manager
 	// Context is passed on the Manager.Run.
 	// Use this context to shut down the manager.
@@ -60,9 +58,6 @@ func (d *DefaultAuthenticator) Authenticate(r *http.Request) (*Manager, error) {
 	if err := d.AuthFn(r); err != nil {
 		return nil, err
 	}
-	d.once.Do(func() {
-		go d.Manager.Run(d.Context)
-	})
 	return d.Manager, nil
 }
 
