@@ -11,6 +11,8 @@ import (
 )
 
 const (
+	nodeTypeKong = "KONG"
+
 	invalidCPNodeType     = "Invalid CP Node Type"
 	unknownServiceMessage = "Unknown service."
 	noKnownVersionMessage = "No known version"
@@ -35,8 +37,8 @@ type serviceVersion struct {
 // known versions and respective registerers.
 type Negotiator struct {
 	Cluster       Cluster
-	KnownVersions map[string][]serviceVersion
 	Logger        *zap.Logger
+	knownVersions map[string][]serviceVersion
 }
 
 // Associates a service name and version with
@@ -45,11 +47,11 @@ func (n *Negotiator) AddService(
 	serviceName, version, message string,
 	register Registerer,
 ) error {
-	if n.KnownVersions == nil {
-		n.KnownVersions = map[string][]serviceVersion{}
+	if n.knownVersions == nil {
+		n.knownVersions = map[string][]serviceVersion{}
 	}
 
-	knownServ, ok := n.KnownVersions[serviceName]
+	knownServ, ok := n.knownVersions[serviceName]
 	if !ok {
 		knownServ = []serviceVersion{}
 	}
@@ -65,7 +67,7 @@ func (n *Negotiator) AddService(
 		message:  message,
 		register: register,
 	})
-	n.KnownVersions[serviceName] = knownServ
+	n.knownVersions[serviceName] = knownServ
 
 	return nil
 }
@@ -80,7 +82,7 @@ func (n *Negotiator) Register(peer *wrpc.Peer) error {
 
 // Choose the best version for a requested service.
 func (n *Negotiator) chooseVersion(requestedServ *model.ServiceRequest) (ok bool, choice serviceVersion) {
-	known, ok := n.KnownVersions[requestedServ.Name]
+	known, ok := n.knownVersions[requestedServ.Name]
 	if !ok {
 		return false, serviceVersion{message: unknownServiceMessage}
 	}
@@ -130,7 +132,7 @@ func (n *Negotiator) NegotiateServices(
 		}, nil
 	}
 
-	if req.Node.Type != "KONG" {
+	if req.Node.Type != nodeTypeKong {
 		logger.Error("Invalid Node type", zap.String("type", req.Node.Type))
 		return &model.NegotiateServicesResponse{
 			ErrorMessage: invalidCPNodeType,
@@ -147,7 +149,8 @@ func (n *Negotiator) NegotiateServices(
 			})
 			err := choice.register.Register(peer)
 			if err != nil {
-				return nil, err // TODO: should we mask the error?
+				return nil, fmt.Errorf("Error registering service %s, version %s: %w",
+					requestedServ.Name, choice.version, err)
 			}
 			logger.Info("Service accepted",
 				zap.String("service", requestedServ.Name),
