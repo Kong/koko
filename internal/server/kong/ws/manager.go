@@ -23,6 +23,7 @@ import (
 )
 
 type ManagerOpts struct {
+	Ctx     context.Context
 	Client  ConfigClient
 	Cluster Cluster
 	Logger  *zap.Logger
@@ -51,6 +52,7 @@ func NewManager(opts ManagerOpts) *Manager {
 	}
 
 	return &Manager{
+		ctx:          opts.Ctx,
 		Cluster:      opts.Cluster,
 		configClient: opts.Client,
 		logger:       opts.Logger,
@@ -66,6 +68,8 @@ type ManagerConfig struct {
 }
 
 type Manager struct {
+	ctx          context.Context
+	init         sync.Once
 	configClient ConfigClient
 	Cluster      Cluster
 	logger       *zap.Logger
@@ -186,6 +190,9 @@ func nodeLogger(node *Node, logger *zap.Logger) *zap.Logger {
 }
 
 func (m *Manager) AddNode(node *Node) {
+	m.init.Do(func() {
+		go m.run(m.ctx)
+	})
 	loggerWithNode := nodeLogger(node, m.logger)
 	// track each authenticated node
 	m.writeNode(node)
@@ -308,7 +315,7 @@ func (m *Manager) updateExpectedHash(ctx context.Context, hash string) {
 
 var defaultRequestTimeout = 5 * time.Second
 
-func (m *Manager) Run(ctx context.Context) {
+func (m *Manager) run(ctx context.Context) {
 	go m.nodeCleanThread(ctx)
 	for {
 		stream, err := m.setupStream(ctx)
