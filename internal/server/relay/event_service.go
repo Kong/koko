@@ -14,6 +14,8 @@ import (
 	"google.golang.org/grpc/peer"
 )
 
+const maxIdleTime = 24 * time.Hour
+
 type EventService struct {
 	relay.UnimplementedEventServiceServer
 
@@ -42,6 +44,7 @@ type client struct {
 	stream     relay.EventService_FetchReconfigureEventsServer
 	seenID     string
 	remoteAddr string
+	lastPush   time.Time
 }
 
 func (e *EventService) FetchReconfigureEvents(req *relay.FetchReconfigureEventsRequest,
@@ -123,7 +126,7 @@ func (e *EventService) updateClients(eventID string) {
 				value, client{}))
 		}
 		clientLogger := e.logger.With(zap.String("client", node.remoteAddr))
-		if node.seenID == eventID {
+		if node.seenID == eventID && time.Since(node.lastPush) < maxIdleTime {
 			clientLogger.Debug("skipping re-configure as seenID is up-to-date")
 			return true
 		}
@@ -135,6 +138,7 @@ func (e *EventService) updateClients(eventID string) {
 			close(node.done)
 		} else {
 			node.seenID = eventID
+			node.lastPush = time.Now()
 		}
 		return true
 	})
