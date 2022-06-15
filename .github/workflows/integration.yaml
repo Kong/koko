@@ -8,8 +8,6 @@ jobs:
       matrix:
         experimental: [false]
         kong_image:
-        - 'kong:2.3.3'
-        - 'kong:2.4.1'
         - 'kong:2.5.1'
         - 'kong:2.6.0'
         - 'kong:2.7.0'
