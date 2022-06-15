@@ -231,6 +231,7 @@ func (m *Manager) AddNode(node *Node) {
 				Error("remove node")
 		}
 	}()
+	go m.broadcast()
 }
 
 // broadcast sends the most recent configuration to all connected nodes.
