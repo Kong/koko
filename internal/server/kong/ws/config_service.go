@@ -27,6 +27,9 @@ func (c *Configer) GetCapabilities(
 	peer *wrpc.Peer,
 	req *config_service.GetCapabilitiesRequest,
 ) (resp *config_service.GetCapabilitiesResponse, err error) {
+	c.Manager.logger.Warn("Received a GetCapabilities rpc call from DP",
+		zap.String("nodeAddr", peer.RemoteAddr().String()))
+
 	return nil, fmt.Errorf("Not implemented")
 }
 
@@ -40,18 +43,17 @@ func (c *Configer) PingCP(
 ) (resp *config_service.PingCPResponse, err error) {
 	// find out the Node
 	// update the reported hash
-	c.Manager.logger.Debug("received PingCP method",
-		zap.String("nodeAddr", peer.RemoteAddr().String()),
-		zap.String("hash", req.Hash))
 	node, ok := c.Manager.FindNode(peer.RemoteAddr().String())
 	if !ok {
 		return nil, fmt.Errorf("can't find node from %v", peer.RemoteAddr())
 	}
+	node.logger.Debug("received PingCP method", zap.String("hash", req.Hash))
 
 	node.lock.Lock()
 	node.hash, err = truncateHash(req.Hash)
 	node.lock.Unlock()
 	if err != nil {
+		node.logger.Error("Invalid hash in PingCP method", zap.Error(err))
 		peer.ErrLogger(fmt.Errorf("PingCP: Received invalid hash from kong data-plane: %w", err))
 		return nil, err
 	}
@@ -71,6 +73,7 @@ func (c *Configer) ReportMetadata(
 ) (resp *config_service.ReportMetadataResponse, err error) {
 	c.Manager.logger.Debug("received ReportMetadata method",
 		zap.String("nodeAddr", peer.RemoteAddr().String()))
+
 	node, ok := c.Manager.pendingNodes.FindNode(peer.RemoteAddr().String())
 	if !ok {
 		return nil, fmt.Errorf("can't find node from %v", peer.RemoteAddr())
@@ -103,5 +106,8 @@ func (c *Configer) SyncConfig(
 	req *config_service.SyncConfigRequest,
 ) (resp *config_service.SyncConfigResponse, err error) {
 	// this is a CP->DP method
-	return nil, fmt.Errorf("Not implemented")
+	c.Manager.logger.Warn("Received a SyncConfig rpc call from DP",
+		zap.String("nodeAddr", peer.RemoteAddr().String()))
+
+	return nil, fmt.Errorf("Control plane nodes don't implement this method.")
 }
