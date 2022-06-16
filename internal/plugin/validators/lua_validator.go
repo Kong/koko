@@ -115,7 +115,12 @@ func validationErr(name string, e error) error {
 	var errMap map[string]interface{}
 	err := json.ProtoJSONUnmarshal([]byte(e.Error()), &errMap)
 	if err != nil {
-		return fmt.Errorf("unmarshal kong plugin validation error: %v", err)
+		return validation.Error{Errs: []*grpcModel.ErrorDetail{{
+			Type: grpcModel.ErrorType_ERROR_TYPE_ENTITY,
+			Messages: []string{
+				fmt.Sprintf("unmarshal kong plugin validation error: %v", err),
+			},
+		}}}
 	}
 	res := validation.Error{}
 	// name error happens when plugin doesn't exist
