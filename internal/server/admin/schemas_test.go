@@ -294,7 +294,7 @@ func TestValidateJSONSchema(t *testing.T) {
 		messages = customIDErr.Value("messages").Array()
 		messages.Length().Equal(1)
 		messages.First().String().Equal(
-			`must match pattern '^[0-9a-zA-Z.\-_~\(\)#%@|]+(?: [0-9a-zA-Z.\-_~\(\)#%@|]+)*$'`,
+			`must match pattern '^[0-9a-zA-Z.\-_~\(\)#%@|+]+(?: [0-9a-zA-Z.\-_~\(\)#%@|+]+)*$'`,
 		)
 
 		tagsErr := errRes.Element(3).Object()
