@@ -14,7 +14,7 @@ type NegotiationService interface {
 }
 
 func PrepareNegotiationServiceNegotiateServicesRequest(in *model.NegotiateServicesRequest) (wrpc.Request, error) {
-	return wrpc.CreateRequest(5, 1, in)
+	return wrpc.CreateRequest(5, 4, in)
 }
 
 type NegotiationServiceClient struct {
@@ -22,7 +22,7 @@ type NegotiationServiceClient struct {
 }
 
 func (c *NegotiationServiceClient) NegotiateServices(ctx context.Context, in *model.NegotiateServicesRequest) (*model.NegotiateServicesResponse, error) {
-	err := c.Peer.VerifyRPC(5, 1)
+	err := c.Peer.VerifyRPC(5, 4)
 	if err != nil {
 		return nil, err
 	}
@@ -51,7 +51,7 @@ func (s *NegotiationServiceServer) ID() wrpc.ID {
 
 func (s *NegotiationServiceServer) RPC(rpc wrpc.ID) wrpc.RPC {
 	switch rpc {
-	case 1:
+	case 4:
 		return wrpc.RPCImpl{
 			HandlerFunc: func(ctx context.Context, peer *wrpc.Peer, decode func(interface{}) error) (interface{}, error) {
 				var in model.NegotiateServicesRequest
