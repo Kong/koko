@@ -79,6 +79,13 @@ func TestConsumer_Validate(t *testing.T) {
 		err := c.Validate(context.Background())
 		require.NoError(t, err)
 	})
+	t.Run("good consumer with username containing whitespaces must pass", func(t *testing.T) {
+		c := NewConsumer()
+		_ = c.ProcessDefaults(context.Background())
+		c.Consumer.Username = "John Doe 09/02"
+		err := c.Validate(context.Background())
+		require.NoError(t, err)
+	})
 	t.Run("good consumer with custom_id and no username must pass", func(t *testing.T) {
 		c := NewConsumer()
 		_ = c.ProcessDefaults(context.Background())
@@ -99,7 +106,7 @@ func TestConsumer_Validate(t *testing.T) {
 	})
 	t.Run("good consumer with custom_id containing allowed special characters must pass", func(t *testing.T) {
 		c := goodConsumer()
-		c.Consumer.CustomId = "my company ID #%@|.-_~()"
+		c.Consumer.CustomId = "my company ID #%@|.-_~()+"
 		err := c.Validate(context.Background())
 		require.NoError(t, err)
 	})
@@ -115,7 +122,7 @@ func TestConsumer_Validate(t *testing.T) {
 				Type:  model.ErrorType_ERROR_TYPE_FIELD,
 				Field: "custom_id",
 				Messages: []string{
-					`must match pattern '^[0-9a-zA-Z.\-_~\(\)#%@|]+(?: [0-9a-zA-Z.\-_~\(\)#%@|]+)*$'`,
+					`must match pattern '^[0-9a-zA-Z.\-_~\(\)#%@|+]+(?: [0-9a-zA-Z.\-_~\(\)#%@|+]+)*$'`,
 				},
 			},
 		}
@@ -133,7 +140,7 @@ func TestConsumer_Validate(t *testing.T) {
 				Type:  model.ErrorType_ERROR_TYPE_FIELD,
 				Field: "custom_id",
 				Messages: []string{
-					`must match pattern '^[0-9a-zA-Z.\-_~\(\)#%@|]+(?: [0-9a-zA-Z.\-_~\(\)#%@|]+)*$'`,
+					`must match pattern '^[0-9a-zA-Z.\-_~\(\)#%@|+]+(?: [0-9a-zA-Z.\-_~\(\)#%@|+]+)*$'`,
 				},
 			},
 		}
@@ -151,7 +158,7 @@ func TestConsumer_Validate(t *testing.T) {
 				Type:  model.ErrorType_ERROR_TYPE_FIELD,
 				Field: "custom_id",
 				Messages: []string{
-					`must match pattern '^[0-9a-zA-Z.\-_~\(\)#%@|]+(?: [0-9a-zA-Z.\-_~\(\)#%@|]+)*$'`,
+					`must match pattern '^[0-9a-zA-Z.\-_~\(\)#%@|+]+(?: [0-9a-zA-Z.\-_~\(\)#%@|+]+)*$'`,
 				},
 			},
 		}
