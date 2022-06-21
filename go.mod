@@ -35,6 +35,7 @@ require (
 	github.com/tidwall/gjson v1.14.1
 	github.com/tidwall/sjson v1.2.4
 	github.com/yuin/gopher-lua v0.0.0-20210529063254-f4c35e4016d9
+	go.uber.org/atomic v1.9.0
 	go.uber.org/zap v1.21.0
 	google.golang.org/genproto v0.0.0-20220525015930-6ca3db687a9d
 	google.golang.org/grpc v1.47.0
@@ -100,7 +101,6 @@ require (
 	github.com/yuin/gluare v0.0.0-20170607022532-d7c94f1a80ed // indirect
 	github.com/yusufpapurcu/wmi v1.2.2 // indirect
 	go.opencensus.io v0.23.0 // indirect
-	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/multierr v1.8.0 // indirect
 	golang.org/x/exp v0.0.0-20220303212507-bbda1eaf7a17 // indirect
 	golang.org/x/net v0.0.0-20220526153639-5463443f8c37 // indirect
