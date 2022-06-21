@@ -108,7 +108,6 @@ func TestNegotiationInvalid(t *testing.T) {
 
 	req := &model.NegotiateServicesRequest{
 		Node: &model.DPNodeDescription{
-			Id:      "001",
 			Type:    "notKONG",
 			Version: "0.00t",
 		},
@@ -132,7 +131,6 @@ func TestNegotiation(t *testing.T) {
 
 		req := &model.NegotiateServicesRequest{
 			Node: &model.DPNodeDescription{
-				Id:      "001",
 				Type:    "KONG",
 				Version: "0.00t",
 			},
@@ -155,7 +153,6 @@ func TestNegotiation(t *testing.T) {
 
 		req := &model.NegotiateServicesRequest{
 			Node: &model.DPNodeDescription{
-				Id:      "001",
 				Type:    "KONG",
 				Version: "0.00t",
 			},
@@ -185,7 +182,6 @@ func TestNegotiation(t *testing.T) {
 
 		req := &model.NegotiateServicesRequest{
 			Node: &model.DPNodeDescription{
-				Id:      "001",
 				Type:    "KONG",
 				Version: "0.00t",
 			},
@@ -218,7 +214,6 @@ func TestNegotiation(t *testing.T) {
 
 		req := &model.NegotiateServicesRequest{
 			Node: &model.DPNodeDescription{
-				Id:      "001",
 				Type:    "KONG",
 				Version: "0.00t",
 			},
@@ -252,7 +247,6 @@ func TestNegotiation(t *testing.T) {
 
 		req := &model.NegotiateServicesRequest{
 			Node: &model.DPNodeDescription{
-				Id:      "001",
 				Type:    "KONG",
 				Version: "0.00t",
 			},
@@ -288,7 +282,6 @@ func TestNegotiation(t *testing.T) {
 
 			req := &model.NegotiateServicesRequest{
 				Node: &model.DPNodeDescription{
-					Id:      "001",
 					Type:    "KONG",
 					Version: "0.00t",
 				},
@@ -323,7 +316,6 @@ func TestNegotiation(t *testing.T) {
 
 			req := &model.NegotiateServicesRequest{
 				Node: &model.DPNodeDescription{
-					Id:      "001",
 					Type:    "KONG",
 					Version: "0.00t",
 				},
@@ -358,7 +350,6 @@ func TestNegotiation(t *testing.T) {
 
 			req := &model.NegotiateServicesRequest{
 				Node: &model.DPNodeDescription{
-					Id:      "001",
 					Type:    "KONG",
 					Version: "0.00t",
 				},

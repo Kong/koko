@@ -6,7 +6,7 @@ import (
 
 	"github.com/kong/go-wrpc/wrpc"
 	"github.com/kong/koko/internal/gen/wrpc/kong/model"
-	negotiation_service "github.com/kong/koko/internal/gen/wrpc/kong/services/negotiation/v1"
+	nego "github.com/kong/koko/internal/gen/wrpc/kong/services/negotiation/v1"
 	"go.uber.org/zap"
 )
 
@@ -75,7 +75,7 @@ func (n *Negotiator) AddService(
 // Register adds the version negotiation service to the peer.
 func (n *Negotiator) Register(peer *wrpc.Peer) error {
 	return peer.Register(
-		&negotiation_service.NegotiationServiceServer{
+		&nego.NegotiationServiceServer{
 			NegotiationService: n,
 		})
 }
