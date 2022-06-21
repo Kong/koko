@@ -19,6 +19,7 @@ import (
 	"github.com/kong/koko/internal/resource"
 	"github.com/kong/koko/internal/server/kong/ws/config"
 	"github.com/kong/koko/internal/store"
+	"go.uber.org/atomic"
 	"go.uber.org/zap"
 )
 
@@ -78,6 +79,8 @@ type Manager struct {
 	nodes   *NodeList
 
 	broadcastMutex sync.Mutex
+
+	updateEventCount atomic.Uint32
 
 	configLoader config.Loader
 
@@ -192,6 +195,7 @@ func nodeLogger(node *Node, logger *zap.Logger) *zap.Logger {
 func (m *Manager) AddNode(node *Node) {
 	m.init.Do(func() {
 		go m.run(m.ctx)
+		go m.eventHandlerThread(m.ctx)
 	})
 	loggerWithNode := nodeLogger(node, m.logger)
 	// track each authenticated node
@@ -455,33 +459,59 @@ func (m *Manager) streamUpdateEvents(ctx context.Context, stream relay.
 			// return on any error, caller will re-establish a stream if needed
 			return
 		}
-		// TODO(hbagdi): make this concurrent, events can pile up and thrash
-		// caches unnecessarily
 		if up != nil {
 			m.logger.Info("reconfigure event received")
-			// TODO(hbagdi): add a rate-limiter to de-duplicate events in case
-			// of a short write burst
-			m.logger.Debug("reconcile payload")
-			backoffer := newBackOff(ctx, 1*time.Minute) // retry for a minute
-			err := backoff.RetryNotify(func() error {
-				return m.reconcileKongPayload(ctx)
-			}, backoffer, func(err error, duration time.Duration) {
-				m.logger.With(
-					zap.Error(err),
-					zap.Duration("retry-in", duration)).
-					Error("configuration reconciliation failed, retrying")
-			})
-			if err != nil {
-				m.logger.With(
-					zap.Error(err)).
-					Error("failed to reconcile configuration")
-				// skip broadcasting if configuration could not be updated
-				continue
-			}
-			m.logger.Info("broadcast configuration to all nodes")
-			go m.broadcast()
+			m.updateEventCount.Add(1)
 		}
 	}
+}
+
+// eventHandlerThread 'watches' updateEventCount and reconciles as well as
+// refreshes payload. The code ensures that events are coalesced to ensure
+// that events are not processed wastefully and also ensures that the events
+// are consumed once per second at the most.
+func (m *Manager) eventHandlerThread(ctx context.Context) {
+	ticker := time.NewTicker(time.Second)
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			eventCount := m.updateEventCount.Swap(0)
+			if eventCount == 0 {
+				continue
+			}
+			if eventCount > 1 {
+				m.logger.Info("coalesced update events",
+					zap.Uint32("coalesce-count", eventCount))
+			}
+			m.updateEventHandler(ctx)
+		}
+	}
+}
+
+func (m *Manager) updateEventHandler(ctx context.Context) {
+	m.logger.Info("reconciling payload")
+	backoffer := newBackOff(ctx, 1*time.Minute) // retry for a minute
+	err := backoff.RetryNotify(func() error {
+		return m.reconcileKongPayload(ctx)
+	}, backoffer, func(err error, duration time.Duration) {
+		m.logger.With(
+			zap.Error(err),
+			zap.Duration("retry-in", duration)).
+			Error("configuration reconciliation failed, retrying")
+	})
+	if err != nil {
+		// TODO(hbagdi): retry again in some time
+		// TODO(hbagdi): add a metric to track total reconciliation failures
+		m.logger.With(
+			zap.Error(err)).
+			Error("failed to reconcile configuration")
+		// skip broadcasting if configuration could not be updated
+		return
+	}
+	m.logger.Info("broadcast configuration to all nodes")
+	m.broadcast()
 }
 
 type basicInfoPlugin struct {
