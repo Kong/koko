@@ -216,6 +216,47 @@ func TestRouteUpsert(t *testing.T) {
 		paths.Length().Equal(1)
 		paths.Element(0).String().Equal("/new-value")
 	})
+	t.Run("route's service can be updated correctly", func(t *testing.T) {
+		svc0 := goodService()
+		svc0.Name = "s0"
+		sid0 := uuid.NewString()
+
+		res := c.PUT("/v1/services/" + sid0).WithJSON(svc0).Expect()
+		res.Status(http.StatusOK)
+
+		svc1 := goodService()
+		svc1.Name = "s1"
+		sid1 := uuid.NewString()
+
+		res = c.PUT("/v1/services/" + sid1).WithJSON(svc1).Expect()
+		res.Status(http.StatusOK)
+
+		rid := uuid.NewString()
+		route := &v1.Route{
+			Id:    rid,
+			Name:  "route-for-update",
+			Paths: []string{"/"},
+			Service: &v1.Service{
+				Id: sid0,
+			},
+		}
+		res = c.POST("/v1/routes").
+			WithJSON(route).
+			Expect()
+		res.Status(http.StatusCreated)
+
+		// update the route to point to new service
+		route.Service.Id = sid1
+		res = c.PUT("/v1/routes/" + rid).
+			WithJSON(route).
+			Expect()
+		res.Status(http.StatusOK)
+
+		res = c.GET("/v1/routes/" + rid).Expect()
+		res.Status(http.StatusOK)
+		newServiceID := res.JSON().Path("$.item.service.id").String().Raw()
+		require.Equal(t, sid1, newServiceID)
+	})
 	t.Run("upsert route without id fails", func(t *testing.T) {
 		route := goodRoute()
 		res := c.PUT("/v1/routes/").
