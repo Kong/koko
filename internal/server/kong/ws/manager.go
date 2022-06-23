@@ -196,6 +196,10 @@ func (m *Manager) AddNode(node *Node) {
 	m.init.Do(func() {
 		go m.run(m.ctx)
 		go m.eventHandlerThread(m.ctx)
+		// initial load of config data,
+		// done synchronously to ensure it's ready
+		// for the first push.
+		_ = m.reconcileKongPayload(m.ctx)
 	})
 	loggerWithNode := nodeLogger(node, m.logger)
 	// track each authenticated node
@@ -254,7 +258,8 @@ func (m *Manager) broadcast() {
 		// TODO(hbagdi): perf: use websocket.PreparedMessage
 		hash, err := truncateHash(payload.Hash)
 		if err != nil {
-			m.logger.With(zap.Error(err)).Sugar().Errorf("invalid hash [%v]", hash)
+			m.logger.With(zap.Error(err)).Sugar().Errorf("invalid hash [%v]", hash[:])
+			continue
 		}
 		err = node.write(payload.CompressedPayload, hash)
 		if err != nil {
