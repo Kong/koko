@@ -32,7 +32,7 @@ type serviceVersion struct {
 	register Registerer
 }
 
-// The Negotiation type handles service negotiation.
+// Negotiator handles service negotiation.
 // It holds a map of services, each with a list of
 // known versions and respective registerers.
 type Negotiator struct {
@@ -43,6 +43,8 @@ type Negotiator struct {
 
 // Associates a service name and version with
 // a registerer object and a descriptive message.
+// To be used during startup to define which
+// services are available on a server.
 func (n *Negotiator) AddService(
 	serviceName, version, message string,
 	register Registerer,
@@ -62,12 +64,11 @@ func (n *Negotiator) AddService(
 		}
 	}
 
-	knownServ = append(knownServ, serviceVersion{
+	n.knownVersions[serviceName] = append(knownServ, serviceVersion{
 		version:  version,
 		message:  message,
 		register: register,
 	})
-	n.knownVersions[serviceName] = knownServ
 
 	return nil
 }
@@ -81,21 +82,21 @@ func (n *Negotiator) Register(peer *wrpc.Peer) error {
 }
 
 // Choose the best version for a requested service.
-func (n *Negotiator) chooseVersion(requestedServ *model.ServiceRequest) (ok bool, choice serviceVersion) {
+func (n *Negotiator) chooseVersion(requestedServ *model.ServiceRequest) (choice serviceVersion, ok bool) {
 	known, ok := n.knownVersions[requestedServ.Name]
 	if !ok {
-		return false, serviceVersion{message: unknownServiceMessage}
+		return serviceVersion{message: unknownServiceMessage}, false
 	}
 
 	for _, knownVers := range known {
 		for _, reqVers := range requestedServ.Versions {
 			if reqVers == knownVers.version {
-				return true, knownVers
+				return knownVers, true
 			}
 		}
 	}
 
-	return false, serviceVersion{message: noKnownVersionMessage}
+	return serviceVersion{message: noKnownVersionMessage}, false
 }
 
 // NegotiateServices is the method handler for the only RPC in this service.
@@ -110,7 +111,7 @@ func (n *Negotiator) chooseVersion(requestedServ *model.ServiceRequest) (ok bool
 //        - with a message relevant to the reason (unknown or disabled
 //          service, bad versions).
 func (n *Negotiator) NegotiateServices(
-	ctx context.Context,
+	_ context.Context,
 	peer *wrpc.Peer,
 	req *model.NegotiateServicesRequest,
 ) (resp *model.NegotiateServicesResponse, err error) {
@@ -122,7 +123,7 @@ func (n *Negotiator) NegotiateServices(
 
 	logger := n.Logger
 	if logger == nil {
-		logger = zap.L()
+		logger = zap.L().With(zap.String("cluster-id", n.Cluster.Get()))
 	}
 
 	if req.Node == nil {
@@ -140,7 +141,7 @@ func (n *Negotiator) NegotiateServices(
 	}
 
 	for _, requestedServ := range req.ServicesRequested {
-		ok, choice := n.chooseVersion(requestedServ)
+		choice, ok := n.chooseVersion(requestedServ)
 		if ok {
 			resp.ServicesAccepted = append(resp.ServicesAccepted, &model.AcceptedService{
 				Name:    requestedServ.Name,
@@ -149,7 +150,7 @@ func (n *Negotiator) NegotiateServices(
 			})
 			err := choice.register.Register(peer)
 			if err != nil {
-				return nil, fmt.Errorf("Error registering service %s, version %s: %w",
+				return nil, fmt.Errorf("error registering service %s, version %s: %w",
 					requestedServ.Name, choice.version, err)
 			}
 			logger.Info("Service accepted",

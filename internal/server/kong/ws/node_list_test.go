@@ -24,7 +24,7 @@ func TestNodeList(t *testing.T) {
 
 		require.Equal(t, []*Node{&n1}, nl.All())
 
-		n2, ok := nl.FindNode("<nil>")
+		n2, ok := nl.FindNode("")
 		require.True(t, ok)
 		require.Equal(t, n2, &n1)
 

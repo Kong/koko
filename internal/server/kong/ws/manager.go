@@ -275,12 +275,18 @@ func (m *Manager) removeNode(node *Node) {
 		nodeLogger(node, m.logger).With(zap.Error(err)).
 			Error("remove node")
 	}
+	err = node.Close()
+	if err != nil {
+		loggerWithNode.Error("close node", zap.Error(err))
+	}
 	if len(m.nodes.All()) == 0 {
 		m.logger.Info("no nodes connected, disabling stream")
 		m.streamer.Disable()
 	}
 }
 
+// FindNode returns a pointer to the node given a remote address
+// and a boolean indicating success.
 func (m *Manager) FindNode(remoteAddress string) (*Node, bool) {
 	return m.nodes.FindNode(remoteAddress)
 }
@@ -529,7 +535,7 @@ type nodeAttributes struct {
 func (m *Manager) validateNode(node *Node) error {
 	pluginList, err := node.GetPluginList()
 	if err != nil {
-		return fmt.Errorf("(websocket) reading plugin list from DP: %w", err)
+		return fmt.Errorf("(websocket) unable to read plugin list from DP: %w", err)
 	}
 	mConfig := m.ReadConfig()
 	conditions := checkPreReqs(nodeAttributes{
