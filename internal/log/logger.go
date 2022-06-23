@@ -17,8 +17,9 @@ func init() {
 }
 
 // SetupLogging configure parent logger with logLevel.
-func SetupLogging(logLevel string) (*zap.Logger, error) {
+func SetupLogging(logLevel string, encoding string) (*zap.Logger, error) {
 	zapConfig = zap.NewProductionConfig()
+	zapConfig.Encoding = encoding
 	zapConfig.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
 	level, err := zapcore.ParseLevel(logLevel)
 	if err != nil {

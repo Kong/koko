@@ -1,7 +1,8 @@
 package config
 
 type Log struct {
-	Level string `json:"level,omitempty"`
+	Level  string `json:"level,omitempty"`
+	Format string `json:"format,omitempty"`
 }
 
 type Listener struct {

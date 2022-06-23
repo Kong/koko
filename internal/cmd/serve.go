@@ -64,7 +64,7 @@ func setup() (initOpts, error) {
 		return initOpts{}, err
 	}
 
-	logger, err := log.SetupLogging(cfg.Log.Level)
+	logger, err := log.SetupLogging(cfg.Log.Level, cfg.Log.Format)
 	if err != nil {
 		return initOpts{}, err
 	}
