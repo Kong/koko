@@ -38,7 +38,7 @@ func TestChooseServiceVersionUnknown(t *testing.T) {
 	negotiator := &Negotiator{}
 	negotiator.AddService("infundibulum", "chrono-synclastic", "So it goes", testRegisterer)
 
-	ok, choice := negotiator.chooseVersion(&model.ServiceRequest{Name: "gizmo"})
+	choice, ok := negotiator.chooseVersion(&model.ServiceRequest{Name: "gizmo"})
 	r.False(ok, "should not find")
 	r.Contains(strings.ToLower(choice.message), "unknown")
 }
@@ -53,7 +53,7 @@ func TestChooseServiceVersionEmpty(t *testing.T) {
 	negotiator := &Negotiator{}
 	negotiator.AddService("infundibulum", "chrono-synclastic", "So it goes", testRegisterer)
 
-	ok, choice := negotiator.chooseVersion(&model.ServiceRequest{Name: "infundibulum"})
+	choice, ok := negotiator.chooseVersion(&model.ServiceRequest{Name: "infundibulum"})
 	r.False(ok, "should not find")
 	r.Contains(strings.ToLower(choice.message), "no known version")
 }
@@ -68,7 +68,7 @@ func TestChooseServiceVersionMismatch(t *testing.T) {
 	negotiator := &Negotiator{}
 	negotiator.AddService("infundibulum", "chrono-synclastic", "So it goes", testRegisterer)
 
-	ok, choice := negotiator.chooseVersion(&model.ServiceRequest{
+	choice, ok := negotiator.chooseVersion(&model.ServiceRequest{
 		Name:     "infundibulum",
 		Versions: []string{"hypothalamus"},
 	})
@@ -86,7 +86,7 @@ func TestChooseServiceVersionFirst(t *testing.T) {
 	negotiator := &Negotiator{}
 	negotiator.AddService("infundibulum", "chrono-synclastic", "So it goes", testRegisterer)
 
-	ok, choice := negotiator.chooseVersion(&model.ServiceRequest{
+	choice, ok := negotiator.chooseVersion(&model.ServiceRequest{
 		Name:     "infundibulum",
 		Versions: []string{"chrono-synclastic"},
 	})

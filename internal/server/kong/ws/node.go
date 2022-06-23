@@ -60,6 +60,7 @@ func (e ErrConnClosed) Error() string {
 	return fmt.Sprintf("websocket connection closed (code: %v)", e.Code)
 }
 
+// Close ends the Node's lifetime and of its connection.
 func (n *Node) Close() error {
 	if n.conn != nil {
 		return n.conn.Close()
@@ -79,8 +80,7 @@ func (n *Node) RemoteAddr() net.Addr {
 	if n.peer != nil {
 		return n.peer.RemoteAddr()
 	}
-	var nip *net.IPAddr
-	return nip
+	return &net.IPAddr{}
 }
 
 func (n *Node) GetPluginList() ([]string, error) {
@@ -90,7 +90,7 @@ func (n *Node) GetPluginList() ([]string, error) {
 
 	messageType, message, err := n.conn.ReadMessage()
 	if err != nil {
-		return nil, fmt.Errorf("read websocket message: %v", err)
+		return nil, fmt.Errorf("read websocket message: %w", err)
 	}
 	if messageType != websocket.BinaryMessage {
 		return nil, fmt.Errorf("kong data-plane sent a message of type %v, "+
@@ -99,11 +99,11 @@ func (n *Node) GetPluginList() ([]string, error) {
 	var info basicInfo
 	err = json.Unmarshal(message, &info)
 	if err != nil {
-		return nil, fmt.Errorf("unmarshal basic-info json message: %v", err)
+		return nil, fmt.Errorf("unmarshal basic-info json message: %w", err)
 	}
-	plugins := make([]string, 0, len(info.Plugins))
-	for _, p := range info.Plugins {
-		plugins = append(plugins, p.Name)
+	plugins := make([]string, len(info.Plugins))
+	for i, p := range info.Plugins {
+		plugins[i] = p.Name
 	}
 	return plugins, nil
 }
