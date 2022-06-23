@@ -1,6 +1,7 @@
 package ws
 
 import (
+	"context"
 	"fmt"
 	"sync"
 
@@ -39,7 +40,7 @@ func NewPayload(opts PayloadOpts) (*Payload, error) {
 	}, nil
 }
 
-func (p *Payload) Payload(versionStr string) (config.Content, error) {
+func (p *Payload) Payload(_ context.Context, versionStr string) (config.Content, error) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
@@ -61,7 +62,7 @@ func (p *Payload) Payload(versionStr string) (config.Content, error) {
 	}, nil
 }
 
-func (p *Payload) UpdateBinary(c config.Content) error {
+func (p *Payload) UpdateBinary(_ context.Context, c config.Content) error {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	p.content = c
