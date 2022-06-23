@@ -1,5 +1,6 @@
 log:
   level: debug
+  format: console
 database:
   dialect: sqlite3
   query_timeout: 5s

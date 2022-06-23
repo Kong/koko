@@ -17,6 +17,7 @@ var (
 	defaultConfigYAML = []byte(`
 log:
   level: info
+  format: json
 admin:
   listeners:
   - address: ":3000"

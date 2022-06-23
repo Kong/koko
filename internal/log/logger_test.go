@@ -9,7 +9,7 @@ import (
 )
 
 func TestLogger(t *testing.T) {
-	logger, err := SetupLogging("debug")
+	logger, err := SetupLogging("debug", "json")
 	require.Nil(t, err)
 	require.True(t, zapConfig.Level.Enabled(zap.DebugLevel))
 	require.True(t, logger.Core().Enabled(zapcore.DebugLevel))
