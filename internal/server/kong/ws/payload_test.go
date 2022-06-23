@@ -1,6 +1,7 @@
 package ws
 
 import (
+	"context"
 	"testing"
 
 	"github.com/kong/koko/internal/log"
@@ -74,14 +75,14 @@ func TestConfigPayload_Cache(t *testing.T) {
 			VersionCompatibilityProcessor: wsvc,
 		})
 		require.Nil(t, err)
-		err = payload.UpdateBinary(config.Content{
+		err = payload.UpdateBinary(context.Background(), config.Content{
 			CompressedPayload: compressedPayload,
 			Hash:              "1133ae8be08017e5460160635daa22f2",
 		})
 		require.Nil(t, err)
 		require.Equal(t, len(payload.cache), 0)
 
-		updatedPayload, err := payload.Payload("2.8.0")
+		updatedPayload, err := payload.Payload(context.Background(), "2.8.0")
 		require.Nil(t, err)
 		require.Equal(t, compressedPayload, updatedPayload.CompressedPayload)
 		_, found := payload.cache["2.8.0"]
@@ -94,14 +95,14 @@ func TestConfigPayload_Cache(t *testing.T) {
 			VersionCompatibilityProcessor: wsvc,
 		})
 		require.Nil(t, err)
-		err = payload.UpdateBinary(config.Content{
+		err = payload.UpdateBinary(context.Background(), config.Content{
 			CompressedPayload: compressedPayload,
 			Hash:              "1133ae8be08017e5460160635daa22f2",
 		})
 		require.Nil(t, err)
 		require.Equal(t, len(payload.cache), 0)
 
-		updatedPayload, err := payload.Payload("2.8.0")
+		updatedPayload, err := payload.Payload(context.Background(), "2.8.0")
 		require.Nil(t, err)
 		require.Equal(t, compressedPayload, updatedPayload.CompressedPayload)
 		_, found := payload.cache["2.8.0"]
@@ -109,7 +110,7 @@ func TestConfigPayload_Cache(t *testing.T) {
 		require.Greater(t, len(payload.cache["2.8.0"].CompressedPayload), 0)
 		require.Nil(t, payload.cache["2.8.0"].Error)
 
-		updatedPayload, err = payload.Payload("2.7.0")
+		updatedPayload, err = payload.Payload(context.Background(), "2.7.0")
 		require.Nil(t, err)
 		require.Equal(t, expectedPayload270, updatedPayload.CompressedPayload)
 		_, found = payload.cache["2.7.0"]
@@ -123,14 +124,14 @@ func TestConfigPayload_Cache(t *testing.T) {
 			VersionCompatibilityProcessor: wsvc,
 		})
 		require.Nil(t, err)
-		err = payload.UpdateBinary(config.Content{
+		err = payload.UpdateBinary(context.Background(), config.Content{
 			CompressedPayload: compressedPayload,
 			Hash:              "1133ae8be08017e5460160635daa22f2",
 		})
 		require.Nil(t, err)
 		require.Equal(t, len(payload.cache), 0)
 
-		updatedPayload, err := payload.Payload("2.8.0")
+		updatedPayload, err := payload.Payload(context.Background(), "2.8.0")
 		require.Nil(t, err)
 		require.Equal(t, compressedPayload, updatedPayload.CompressedPayload)
 		_, found := payload.cache["2.8.0"]
@@ -138,7 +139,7 @@ func TestConfigPayload_Cache(t *testing.T) {
 		require.Greater(t, len(payload.cache["2.8.0"].CompressedPayload), 0)
 		require.Nil(t, payload.cache["2.8.0"].Error)
 
-		err = payload.UpdateBinary(config.Content{
+		err = payload.UpdateBinary(context.Background(), config.Content{
 			CompressedPayload: compressedPayload,
 			Hash:              "1133ae8be08017e5460160635daa22f2",
 		})

@@ -234,7 +234,7 @@ func (m *Manager) broadcast() {
 	m.broadcastMutex.Lock()
 	defer m.broadcastMutex.Unlock()
 	for _, node := range m.nodes.All() {
-		payload, err := m.payload.Payload(node.Version)
+		payload, err := m.payload.Payload(context.Background(), node.Version)
 		if err != nil {
 			m.logger.With(zap.Error(err)).Error("unable to gather payload")
 			return
@@ -270,7 +270,7 @@ func (m *Manager) reconcileKongPayload(ctx context.Context) error {
 	}
 
 	m.updateExpectedHash(ctx, config.Hash)
-	err = m.payload.UpdateBinary(config)
+	err = m.payload.UpdateBinary(context.Background(), config)
 	if err != nil {
 		return err
 	}
