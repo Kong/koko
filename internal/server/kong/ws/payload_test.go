@@ -1,23 +1,24 @@
-package config
+package ws
 
 import (
 	"testing"
 
 	"github.com/kong/koko/internal/log"
+	"github.com/kong/koko/internal/server/kong/ws/config"
 	"github.com/stretchr/testify/require"
 )
 
 func TestConfigPayload_Cache(t *testing.T) {
-	wsvc, err := NewVersionCompatibilityProcessor(VersionCompatibilityOpts{
+	wsvc, err := config.NewVersionCompatibilityProcessor(config.VersionCompatibilityOpts{
 		Logger:        log.Logger,
 		KongCPVersion: "2.8.0",
 	})
 	require.Nil(t, err)
-	err = wsvc.AddConfigTableUpdates(map[uint64][]ConfigTableUpdates{
+	err = wsvc.AddConfigTableUpdates(map[uint64][]config.ConfigTableUpdates{
 		2007999999: {
 			{
 				Name: "plugin_1",
-				Type: Plugin,
+				Type: config.Plugin,
 				RemoveFields: []string{
 					"plugin_1_field_1",
 				},
@@ -45,7 +46,7 @@ func TestConfigPayload_Cache(t *testing.T) {
 			]
 		}
 	}`)
-	compressedPayload, err := CompressPayload(payloadBytes)
+	compressedPayload, err := config.CompressPayload(payloadBytes)
 	require.Nil(t, err)
 	expectedPayloadBytes270 := []byte(`{
 		"config_table": {
@@ -65,7 +66,7 @@ func TestConfigPayload_Cache(t *testing.T) {
 			]
 		}
 	}`)
-	expectedPayload270, err := CompressPayload(expectedPayloadBytes270)
+	expectedPayload270, err := config.CompressPayload(expectedPayloadBytes270)
 	require.Nil(t, err)
 
 	t.Run("ensure payload can be retrieved for single version", func(t *testing.T) {
@@ -73,7 +74,7 @@ func TestConfigPayload_Cache(t *testing.T) {
 			VersionCompatibilityProcessor: wsvc,
 		})
 		require.Nil(t, err)
-		err = payload.UpdateBinary(Content{
+		err = payload.UpdateBinary(config.Content{
 			CompressedPayload: compressedPayload,
 			Hash:              "1133ae8be08017e5460160635daa22f2",
 		})
@@ -93,7 +94,7 @@ func TestConfigPayload_Cache(t *testing.T) {
 			VersionCompatibilityProcessor: wsvc,
 		})
 		require.Nil(t, err)
-		err = payload.UpdateBinary(Content{
+		err = payload.UpdateBinary(config.Content{
 			CompressedPayload: compressedPayload,
 			Hash:              "1133ae8be08017e5460160635daa22f2",
 		})
@@ -122,7 +123,7 @@ func TestConfigPayload_Cache(t *testing.T) {
 			VersionCompatibilityProcessor: wsvc,
 		})
 		require.Nil(t, err)
-		err = payload.UpdateBinary(Content{
+		err = payload.UpdateBinary(config.Content{
 			CompressedPayload: compressedPayload,
 			Hash:              "1133ae8be08017e5460160635daa22f2",
 		})
@@ -137,7 +138,7 @@ func TestConfigPayload_Cache(t *testing.T) {
 		require.Greater(t, len(payload.cache["2.8.0"].CompressedPayload), 0)
 		require.Nil(t, payload.cache["2.8.0"].Error)
 
-		err = payload.UpdateBinary(Content{
+		err = payload.UpdateBinary(config.Content{
 			CompressedPayload: compressedPayload,
 			Hash:              "1133ae8be08017e5460160635daa22f2",
 		})
