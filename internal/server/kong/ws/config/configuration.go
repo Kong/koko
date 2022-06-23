@@ -10,6 +10,13 @@ import (
 	"github.com/kong/koko/internal/json"
 )
 
+type Map map[string]interface{}
+
+type Content struct {
+	CompressedPayload []byte
+	Hash              string
+}
+
 type MutatorOpts struct {
 	ClusterID string
 }
@@ -39,9 +46,7 @@ func (l *KongConfigurationLoader) Register(mutator Mutator) error {
 	return nil
 }
 
-func (l *KongConfigurationLoader) Load(ctx context.Context,
-	clusterID string,
-) (Content, error) {
+func (l *KongConfigurationLoader) Load(ctx context.Context, clusterID string) (Content, error) {
 	var configTable DataPlaneConfig = map[string]interface{}{}
 	for _, m := range l.mutators {
 		err := m.Mutate(ctx, MutatorOpts{ClusterID: clusterID},

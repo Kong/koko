@@ -45,7 +45,7 @@ func (d DefaultCluster) Get() string {
 }
 
 func NewManager(opts ManagerOpts) *Manager {
-	payload, err := config.NewPayload(config.PayloadOpts{
+	payload, err := NewPayload(PayloadOpts{
 		VersionCompatibilityProcessor: opts.DPVersionCompatibility,
 	})
 	if err != nil {
@@ -75,7 +75,7 @@ type Manager struct {
 	Cluster      Cluster
 	logger       *zap.Logger
 
-	payload *config.Payload
+	payload *Payload
 	nodes   *NodeList
 
 	broadcastMutex sync.Mutex

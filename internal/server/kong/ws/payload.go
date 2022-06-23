@@ -1,16 +1,11 @@
-package config
+package ws
 
 import (
 	"fmt"
 	"sync"
+
+	"github.com/kong/koko/internal/server/kong/ws/config"
 )
-
-type Map map[string]interface{}
-
-type Content struct {
-	CompressedPayload []byte
-	Hash              string
-}
 
 // CachedContent holds the processed payload for a particular data plane
 // version. This content may be different than the actual Conent container as
@@ -23,14 +18,14 @@ type CachedContent struct {
 }
 
 type Payload struct {
-	content Content
+	content config.Content
 	cache   map[string]CachedContent
 	mu      sync.Mutex
-	vc      VersionCompatibility
+	vc      config.VersionCompatibility
 }
 
 type PayloadOpts struct {
-	VersionCompatibilityProcessor VersionCompatibility
+	VersionCompatibilityProcessor config.VersionCompatibility
 }
 
 func NewPayload(opts PayloadOpts) (*Payload, error) {
@@ -44,7 +39,7 @@ func NewPayload(opts PayloadOpts) (*Payload, error) {
 	}, nil
 }
 
-func (p *Payload) Payload(versionStr string) (Content, error) {
+func (p *Payload) Payload(versionStr string) (config.Content, error) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
@@ -58,15 +53,15 @@ func (p *Payload) Payload(versionStr string) (Content, error) {
 	}
 
 	if p.cache[versionStr].Error != nil {
-		return Content{}, fmt.Errorf("downgrade config: %v", p.cache[versionStr].Error)
+		return config.Content{}, fmt.Errorf("downgrade config: %v", p.cache[versionStr].Error)
 	}
-	return Content{
+	return config.Content{
 		CompressedPayload: p.cache[versionStr].CompressedPayload,
 		Hash:              p.cache[versionStr].Hash,
 	}, nil
 }
 
-func (p *Payload) UpdateBinary(c Content) error {
+func (p *Payload) UpdateBinary(c config.Content) error {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	p.content = c
