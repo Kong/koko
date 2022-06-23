@@ -290,10 +290,6 @@ func (m *Manager) FindNode(remoteAddress string) *Node {
 	return m.nodes.FindNode(remoteAddress)
 }
 
-func (m *Manager) FindNode(remoteAddress string) (*Node, bool) {
-	return m.nodes.FindNode(remoteAddress)
-}
-
 // broadcast sends the most recent configuration to all connected nodes.
 func (m *Manager) broadcast() {
 	m.broadcastMutex.Lock()
