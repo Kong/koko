@@ -62,8 +62,7 @@ enum Capability {
   // CAPABILITY_INCREMENTAL = 2;
 }
 
-message GetCapabilitiesRequest {
-}
+message GetCapabilitiesRequest {}
 
 message GetCapabilitiesResponse {
   repeated Capability capabilities = 1;
@@ -100,7 +99,7 @@ message SyncConfigRequest {
   //
   // DP MUST NOT combine configuration from two SyncConfigRequest. Config in
   // each request is self-contained.
-  bytes config = 1;
+  kong.model.Config config = 1 [json_name = "config_table"];
 
   // On every configuration change, CP MUST increment the version field
   // in the request.
@@ -142,5 +141,4 @@ message PingCPRequest {
   string hash = 1;
 }
 
-message PingCPResponse {
-}
+message PingCPResponse {}
