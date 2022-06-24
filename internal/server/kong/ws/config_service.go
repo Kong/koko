@@ -76,6 +76,7 @@ func (c *Configer) ReportMetadata(
 
 	node, ok := c.Manager.pendingNodes.FindNode(peer.RemoteAddr().String())
 	if !ok {
+		c.Manager.logger.Error("can't find pending node", zap.String("addr", peer.RemoteAddr().String()))
 		return nil, fmt.Errorf("can't find node from %v", peer.RemoteAddr())
 	}
 

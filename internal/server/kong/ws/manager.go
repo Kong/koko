@@ -225,28 +225,29 @@ func (m *Manager) AddNode(node *Node) {
 	loggerWithNode := nodeLogger(node, m.logger)
 	// track each authenticated node
 	m.writeNode(node)
-	// check if node is compatible
-	err := m.validateNode(node)
-	if err != nil {
-		// node has failed to meet the pre-requisites, close the connection
-		// TODO(hbagdi): send an error to Kong DP once wRPC is supported
-		m.logger.With(
-			zap.Error(err),
-			zap.String("node-id", node.ID),
-		).Info("kong DP node rejected")
-		err := node.Close()
+	if node.conn != nil {
+		// check if node is compatible
+		err := m.validateNode(node)
 		if err != nil {
-			m.logger.With(zap.Error(err)).Error(
-				"failed to close websocket connection")
+			// node has failed to meet the pre-requisites, close the connection
+			// TODO(hbagdi): send an error to Kong DP once wRPC is supported
+			m.logger.With(
+				zap.Error(err),
+				zap.String("node-id", node.ID),
+			).Info("kong DP node rejected")
+			err := node.Close()
+			if err != nil {
+				m.logger.With(zap.Error(err)).Error(
+					"failed to close websocket connection")
+			}
+			return
 		}
-		return
-	}
-	m.setupPingHandler(node)
+		m.setupPingHandler(node)
 	m.addNode(node)
-	// spawn a goroutine for each data-plane node that connects.
-	go func() {
-		err := node.readThread()
-		if err != nil {
+		// spawn a goroutine for each data-plane node that connects.
+		go func() {
+			err := node.readThread()
+			if err != nil {
 			wsErr, ok := err.(ErrConnClosed)
 			if ok {
 				increaseMetricCounter(wsErr.Code)
@@ -258,8 +259,8 @@ func (m *Manager) AddNode(node *Node) {
 			} else {
 				loggerWithNode.With(zap.Error(err)).Error("read thread")
 			}
-		}
-		// if there are any ws errors, remove the node
+			}
+			// if there are any ws errors, remove the node
 		m.removeNode(node)
 	}()
 	go m.broadcast()
@@ -288,6 +289,12 @@ func (m *Manager) removeNode(node *Node) {
 		m.logger.Info("no nodes connected, disabling stream")
 		m.streamer.Disable()
 	}
+
+	} else {
+		if err := m.nodes.Add(node); err != nil {
+			m.logger.With(zap.Error(err)).Error("track node")
+		}
+	}
 }
 
 // FindNode returns a pointer to the node given a remote address
@@ -304,11 +311,12 @@ func (m *Manager) FindNode(remoteAddress string) *Node {
 // Instead, as soon as their connection is live, they're added to
 // the `m.pendingNodes` list until it finishes some initialization.
 func (m *Manager) AddPendingNode(node *Node) {
-	m.writeNode(node)
+	node.logger.Debug("adding as pending node", zap.String("addr", node.RemoteAddr().String()))
 	if err := m.pendingNodes.Add(node); err != nil {
 		m.logger.With(zap.Error(err)).Error("adding to pending node list")
 		node.Close()
 	}
+	m.writeNode(node)
 }
 
 // addWrpcNode is called on behalf of a node when it is ready
@@ -327,7 +335,8 @@ func (m *Manager) addWrpcNode(node *Node, pluginList []string) error {
 		return err
 	}
 
-	return m.nodes.Add(node)
+	m.AddNode(node)
+	return nil
 }
 
 // broadcast sends the most recent configuration to all connected nodes.

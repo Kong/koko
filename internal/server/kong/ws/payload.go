@@ -8,7 +8,6 @@ import (
 
 	"github.com/kong/go-wrpc/wrpc"
 	config_service "github.com/kong/koko/internal/gen/wrpc/kong/services/config/v1"
-	"google.golang.org/protobuf/encoding/protojson"
 
 	"github.com/kong/koko/internal/server/kong/ws/config"
 	"go.uber.org/zap"
@@ -25,7 +24,7 @@ type CachedWrpcContent struct {
 type Payload struct {
 	// configCache is a cache of configuration. It holds the originally fetched
 	// configuration as well as massaged configuration for each DP version.
-	configVersion int64
+	configVersion uint64
 	configCache     configCache
 	configCacheLock sync.Mutex
 	wrpcCache     map[string]CachedWrpcContent
@@ -47,6 +46,7 @@ func NewPayload(opts PayloadOpts) (*Payload, error) {
 		vc:          opts.VersionCompatibilityProcessor,
 		configCache: configCache{},
 		logger:      opts.Logger,
+		wrpcCache: map[string]CachedWrpcContent{},
 	}, nil
 }
 
@@ -116,8 +116,8 @@ func (p *Payload) configForVersion(version string) (cacheEntry, error) {
 }
 
 func (p *Payload) WrpcConfigPayload(versionStr string) (CachedWrpcContent, error) {
-	p.mu.Lock()
-	defer p.mu.Unlock()
+// 	p.mu.Lock()
+// 	defer p.mu.Unlock()
 
 	if wc, found := p.wrpcCache[versionStr]; found {
 		if wc.Error != nil {
@@ -132,17 +132,14 @@ func (p *Payload) WrpcConfigPayload(versionStr string) (CachedWrpcContent, error
 		return CachedWrpcContent{}, err
 	}
 
-	uncomp, err := UncompressPayload(c.CompressedPayload)
-	if err != nil {
-		return CachedWrpcContent{}, fmt.Errorf("decompressing config payload: %w", err)
+	configTable := config_service.SyncConfigRequest{
+		Config: c.CompressedPayload,
+		Version: p.configVersion,
+		ConfigHash: c.Hash,
 	}
 
-	configTable := config_service.SyncConfigRequest{}
-	err = protojson.UnmarshalOptions{DiscardUnknown: true}.Unmarshal(uncomp, &configTable)
-	configTable.Version = uint64(p.configVersion) // TODO: this should go on the same lock period as the content.
-	if err != nil {
-		return CachedWrpcContent{}, err
-	}
+	p.mu.Lock()
+	defer p.mu.Unlock()
 
 	req, err := config_service.PrepareConfigServiceSyncConfigRequest(&configTable)
 	wc := CachedWrpcContent{

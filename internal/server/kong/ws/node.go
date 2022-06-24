@@ -196,7 +196,7 @@ func (n *Node) sendConfig(ctx context.Context, payload *config.Payload) error {
 		return n.sendWrpcConfig(ctx, payload)
 	}
 
-	return fmt.Errorf("node unconnected")
+	return fmt.Errorf("node disconnected")
 }
 
 func (n *Node) sendJSONConfig(payload *config.Payload) error {
@@ -231,7 +231,7 @@ func (n *Node) sendWrpcConfig(ctx context.Context, payload *config.Payload) erro
 
 	hash, err := truncateHash(content.Hash)
 	if err != nil {
-		n.logger.With(zap.Error(err)).Sugar().Errorf("invalid hash [%v]", hash)
+		n.logger.With(zap.Error(err)).Sugar().Errorf("invalid hash [%s]", hash[:])
 		return err
 	}
 
