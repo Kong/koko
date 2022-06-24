@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"time"
 
+	_ "github.com/jackc/pgx/v4/stdlib"
 	"github.com/kong/koko/internal/persistence"
-	_ "github.com/lib/pq"
 	"go.uber.org/zap"
 )
 
@@ -78,7 +78,11 @@ func NewSQLClient(opts Opts, logger *zap.Logger) (*sql.DB, error) {
 	}
 
 	open := func(driver persistence.Driver, dsn string) (*sql.DB, error) {
-		return sql.Open(driver.String(), dsn)
+		driverName := driver.String()
+		if driver == persistence.Postgres {
+			driverName = "pgx"
+		}
+		return sql.Open(driverName, dsn)
 	}
 	if opts.SQLOpen != nil {
 		open = opts.SQLOpen
