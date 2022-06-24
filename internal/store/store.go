@@ -268,23 +268,17 @@ func (s *ObjectStore) Read(ctx context.Context, object model.Object,
 	opt := NewReadOpts(opts...)
 	switch {
 	case opt.id != "":
-		return s.withTx(ctx, func(tx persistence.Tx) error {
-			return s.readByTypeID(ctx, tx, object.Type(), opt.id, object)
-		})
+		return s.readByTypeID(ctx, s.store, object.Type(), opt.id, object)
 	case opt.name != "":
-		return s.withTx(ctx, func(tx persistence.Tx) error {
-			return s.readByName(ctx, tx, opt.name, object)
-		})
+		return s.readByName(ctx, s.store, opt.name, object)
 	case opt.idxName != "" && opt.idxValue != "":
-		return s.withTx(ctx, func(tx persistence.Tx) error {
-			return s.readByIdx(ctx, tx, opt.idxName, opt.idxValue, object)
-		})
+		return s.readByIdx(ctx, s.store, opt.idxName, opt.idxValue, object)
 	default:
 		return fmt.Errorf("invalid opt")
 	}
 }
 
-func (s *ObjectStore) readByIdx(ctx context.Context, tx persistence.Tx,
+func (s *ObjectStore) readByIdx(ctx context.Context, tx persistence.CRUD,
 	idxName, idxValue string, object model.Object,
 ) error {
 	key := s.uniqueIndexKey(object.Type(), idxName, idxValue)
@@ -306,13 +300,13 @@ func (s *ObjectStore) readByIdx(ctx context.Context, tx persistence.Tx,
 	return nil
 }
 
-func (s *ObjectStore) readByName(ctx context.Context, tx persistence.Tx,
+func (s *ObjectStore) readByName(ctx context.Context, tx persistence.CRUD,
 	name string, object model.Object,
 ) error {
 	return s.readByIdx(ctx, tx, "name", name, object)
 }
 
-func (s *ObjectStore) readByTypeID(ctx context.Context, tx persistence.Tx,
+func (s *ObjectStore) readByTypeID(ctx context.Context, tx persistence.CRUD,
 	typ model.Type, id string, object model.Object,
 ) error {
 	typeID, err := s.genID(typ, id)
@@ -412,40 +406,37 @@ func (s *ObjectStore) List(ctx context.Context, list model.ObjectList, opts ...L
 
 func (s *ObjectStore) referencedList(ctx context.Context, list model.ObjectList, opt *ListOpts) error {
 	typ := list.Type()
-	err := s.withTx(ctx, func(tx persistence.Tx) error {
-		keyPrefix := s.referencedListKey(typ, opt)
-		persistenceOpts := getPersistenceListOptions(opt)
-		listResult, err := tx.List(ctx, keyPrefix, persistenceOpts)
+	keyPrefix := s.referencedListKey(typ, opt)
+	persistenceOpts := getPersistenceListOptions(opt)
+	listResult, err := s.store.List(ctx, keyPrefix, persistenceOpts)
+	if err != nil {
+		return err
+	}
+
+	keyPrefixLen := len(keyPrefix)
+	for _, kv := range listResult.KVList {
+		key := string(kv.Key)
+		value := kv.Value
+		if err := verifyForeignValue(value); err != nil {
+			panic(err)
+		}
+
+		object, err := model.NewObject(typ)
 		if err != nil {
 			return err
 		}
-
-		keyPrefixLen := len(keyPrefix)
-		for _, kv := range listResult.KVList {
-			key := string(kv.Key)
-			value := kv.Value
-			if err := verifyForeignValue(value); err != nil {
-				panic(err)
-			}
-
-			object, err := model.NewObject(typ)
-			if err != nil {
-				return err
-			}
-			err = s.readByTypeID(ctx, tx, typ, key[keyPrefixLen:], object)
-			if err != nil {
-				return err
-			}
-			list.Add(object)
+		err = s.readByTypeID(ctx, s.store, typ, key[keyPrefixLen:], object)
+		if err != nil {
+			return err
 		}
-		list.SetTotalCount(listResult.TotalCount)
-		lastPage := toLastPage(opt.PageSize, list.GetTotalCount())
-		if lastPage > opt.Page {
-			list.SetNextPage(opt.Page + 1)
-		}
-		return nil
-	})
-	return err
+		list.Add(object)
+	}
+	list.SetTotalCount(listResult.TotalCount)
+	lastPage := toLastPage(opt.PageSize, list.GetTotalCount())
+	if lastPage > opt.Page {
+		list.SetNextPage(opt.Page + 1)
+	}
+	return nil
 }
 
 func (s *ObjectStore) referencedListKey(typ model.Type, opt *ListOpts) string {
