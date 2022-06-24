@@ -109,19 +109,6 @@ func (m *Manager) ReadConfig() ManagerConfig {
 
 func (m *Manager) updateNodeStatus(node *Node) {
 	m.writeNode(node)
-	ctx, cancel := context.WithTimeout(context.Background(), defaultRequestTimeout)
-	defer cancel()
-	_, err := m.configClient.Status.ClearStatus(ctx, &relay.ClearStatusRequest{
-		ContextReference: &model.EntityReference{
-			Id:   node.ID,
-			Type: string(resource.TypeNode),
-		},
-		Cluster: m.reqCluster(),
-	})
-	if err != nil {
-		m.logger.Error("failed to clear status", zap.Error(err),
-			zap.String("node-id", node.ID))
-	}
 }
 
 var emptySum sum
