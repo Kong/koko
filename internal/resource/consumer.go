@@ -6,6 +6,7 @@ import (
 
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
 	"github.com/kong/koko/internal/model"
+	"github.com/kong/koko/internal/model/json/extension"
 	"github.com/kong/koko/internal/model/json/generator"
 	"github.com/kong/koko/internal/model/json/validation"
 	"github.com/kong/koko/internal/model/json/validation/typedefs"
@@ -123,6 +124,9 @@ func init() {
 				Description: "at least one of custom_id or username must be set",
 				Required:    []string{"username"},
 			},
+		},
+		XKokoConfig: &extension.Config{
+			ResourceAPIPath: "consumers",
 		},
 	}
 	err = generator.Register(string(TypeConsumer), consumerSchema)

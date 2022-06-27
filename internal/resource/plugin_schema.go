@@ -118,7 +118,10 @@ func init() {
 		Required: []string{
 			"lua_schema",
 		},
-		XKokoConfig: &extension.Config{DisableValidateEndpoint: true},
+		XKokoConfig: &extension.Config{
+			DisableValidateEndpoint: true,
+			ResourceAPIPath:         "plugin-schemas",
+		},
 	}
 	err = generator.Register(string(TypePluginSchema), pluginSchema)
 	if err != nil {

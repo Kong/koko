@@ -36,5 +36,9 @@
       "minimum": 1,
       "type": "integer"
     }
+  },
+  "x-koko-config": {
+    "disableValidateEndpoint": false,
+    "resourceAPIPath": "ca-certificates"
   }
 }

@@ -121,7 +121,10 @@ func init() {
 			"last_ping",
 			"version",
 		},
-		XKokoConfig: &extension.Config{DisableValidateEndpoint: true},
+		XKokoConfig: &extension.Config{
+			DisableValidateEndpoint: true,
+			ResourceAPIPath:         "nodes",
+		},
 	}
 	err = generator.Register(string(TypeNode), nodeSchema)
 	if err != nil {

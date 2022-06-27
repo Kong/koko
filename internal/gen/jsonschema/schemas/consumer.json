@@ -55,5 +55,9 @@
       ],
       "description": "at least one of custom_id or username must be set"
     }
-  ]
+  ],
+  "x-koko-config": {
+    "disableValidateEndpoint": false,
+    "resourceAPIPath": "consumers"
+  }
 }

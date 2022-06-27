@@ -50,5 +50,9 @@
       "type": "integer"
     }
   },
-  "type": "object"
+  "type": "object",
+  "x-koko-config": {
+    "disableValidateEndpoint": false,
+    "resourceAPIPath": "snis"
+  }
 }

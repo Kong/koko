@@ -101,5 +101,9 @@
     }
   },
   "additionalProperties": false,
-  "type": "object"
+  "type": "object",
+  "x-koko-config": {
+    "disableValidateEndpoint": false,
+    "resourceAPIPath": "plugins"
+  }
 }

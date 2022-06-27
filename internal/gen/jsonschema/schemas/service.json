@@ -263,5 +263,9 @@
       },
       "description": "url should not be set"
     }
-  ]
+  ],
+  "x-koko-config": {
+    "disableValidateEndpoint": false,
+    "resourceAPIPath": "services"
+  }
 }
