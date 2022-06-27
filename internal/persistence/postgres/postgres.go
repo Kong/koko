@@ -16,8 +16,10 @@ const (
 	insertQuery = `insert into store(key,value) values($1,$2) on conflict (key) do update set value=$2;`
 	deleteQuery = `delete from store where key=$1`
 
-	defaultMaxConn = 50
-	DefaultPort    = 5432
+	defaultMaxConn         = 50
+	defaultMaxIdleConn     = 20
+	defaultMaxConnLifetime = time.Hour
+	DefaultPort            = 5432
 )
 
 var listQueryPaging = `SELECT key, value, COUNT(*) OVER() AS full_count FROM store WHERE key
@@ -93,6 +95,12 @@ func NewSQLClient(opts Opts, logger *zap.Logger) (*sql.DB, error) {
 		return nil, err
 	}
 	db.SetMaxOpenConns(defaultMaxConn)
+	// Without this setting, default by library is 2 which is very less
+	db.SetMaxIdleConns(defaultMaxIdleConn)
+	// Set the maximum lifetime of a connection to 1 hour. Setting it to 0
+	// means that there is no maximum lifetime and the connection is reused
+	// forever (which is the default behavior).
+	db.SetConnMaxLifetime(defaultMaxConnLifetime)
 	return db, err
 }
 
