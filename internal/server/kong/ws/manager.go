@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io"
 	"net"
 	"sync"
 	"time"
@@ -52,7 +51,7 @@ func NewManager(opts ManagerOpts) *Manager {
 		panic(err)
 	}
 
-	return &Manager{
+	m := &Manager{
 		ctx:          opts.Ctx,
 		Cluster:      opts.Cluster,
 		configClient: opts.Client,
@@ -62,6 +61,16 @@ func NewManager(opts ManagerOpts) *Manager {
 		nodes:        &NodeList{},
 		config:       opts.Config,
 	}
+	m.streamer = &streamer{
+		Logger:      opts.Logger.With(zap.String("component", "manager-streamer")),
+		EventClient: opts.Client.Event,
+		OnRecvFunc: func() {
+			m.updateEventCount.Add(1)
+		},
+		Cluster: opts.Cluster,
+		Ctx:     opts.Ctx,
+	}
+	return m
 }
 
 type ManagerConfig struct {
@@ -89,6 +98,11 @@ type Manager struct {
 
 	latestExpectedHash string
 	hashMu             sync.RWMutex
+
+	// nodeTrackingMu protects the critical section of node admission and
+	// removal.
+	nodeTrackingMu sync.Mutex
+	streamer       *streamer
 }
 
 func (m *Manager) reqCluster() *model.RequestCluster {
@@ -181,7 +195,7 @@ func nodeLogger(node *Node, logger *zap.Logger) *zap.Logger {
 
 func (m *Manager) AddNode(node *Node) {
 	m.init.Do(func() {
-		go m.run(m.ctx)
+		go m.nodeCleanThread(m.ctx)
 		go m.eventHandlerThread(m.ctx)
 		// initial load of config data,
 		// done synchronously to ensure it's ready
@@ -208,9 +222,7 @@ func (m *Manager) AddNode(node *Node) {
 		return
 	}
 	m.setupPingHandler(node)
-	if err := m.nodes.Add(node); err != nil {
-		m.logger.With(zap.Error(err)).Error("track node")
-	}
+	m.addNode(node)
 	// spawn a goroutine for each data-plane node that connects.
 	go func() {
 		err := node.readThread()
@@ -219,14 +231,32 @@ func (m *Manager) AddNode(node *Node) {
 				Error("read thread")
 		}
 		// if there are any ws errors, remove the node
-		// TODO(hbagdi): may need more graceful error handling
-		err = m.nodes.Remove(node)
-		if err != nil {
-			loggerWithNode.With(zap.Error(err)).
-				Error("remove node")
-		}
+		m.removeNode(node)
 	}()
 	go m.broadcast()
+}
+
+func (m *Manager) addNode(node *Node) {
+	m.nodeTrackingMu.Lock()
+	defer m.nodeTrackingMu.Unlock()
+	if err := m.nodes.Add(node); err != nil {
+		m.logger.With(zap.Error(err)).Error("track node")
+	}
+	m.streamer.Enable()
+}
+
+func (m *Manager) removeNode(node *Node) {
+	m.nodeTrackingMu.Lock()
+	defer m.nodeTrackingMu.Unlock()
+	// TODO(hbagdi): may need more graceful error handling
+	if err := m.nodes.Remove(node); err != nil {
+		nodeLogger(node, m.logger).With(zap.Error(err)).
+			Error("remove node")
+	}
+	if len(m.nodes.All()) == 0 {
+		m.logger.Info("no nodes connected, disabling stream")
+		m.streamer.Disable()
+	}
 }
 
 // broadcast sends the most recent configuration to all connected nodes.
@@ -301,22 +331,6 @@ func (m *Manager) updateExpectedHash(ctx context.Context, hash string) {
 }
 
 var defaultRequestTimeout = 5 * time.Second
-
-func (m *Manager) run(ctx context.Context) {
-	go m.nodeCleanThread(ctx)
-	for {
-		stream, err := m.setupStream(ctx)
-		if err != nil {
-			m.logger.With(zap.Error(err)).Error("event stream setup failure")
-			return
-		}
-		m.streamUpdateEvents(ctx, stream)
-		if err := ctx.Err(); err != nil {
-			m.logger.Sugar().Errorf("shutting down manager: %v", err)
-			return
-		}
-	}
-}
 
 func (m *Manager) nodeCleanThread(ctx context.Context) {
 	ticker := time.NewTicker(1 * time.Hour)
@@ -409,53 +423,6 @@ func (m *Manager) listNodes(ctx context.Context) ([]*model.Node, error) {
 		page = resp.Page.NextPageNum
 	}
 	return nodes, nil
-}
-
-func (m *Manager) setupStream(ctx context.Context) (relay.
-	EventService_FetchReconfigureEventsClient, error,
-) {
-	var stream relay.EventService_FetchReconfigureEventsClient
-
-	backoffer := newBackOff(ctx, 0) // retry forever
-	err := backoff.RetryNotify(func() error {
-		var err error
-		stream, err = m.configClient.Event.FetchReconfigureEvents(ctx,
-			&relay.FetchReconfigureEventsRequest{
-				Cluster: m.reqCluster(),
-			})
-		// triggers backoff if err != nil
-		return err
-	}, backoffer, func(err error, duration time.Duration) {
-		if err != nil {
-			m.logger.With(
-				zap.Error(err),
-				zap.Duration("retry-in", duration)).
-				Error("failed to setup a stream with relay server, retrying")
-		}
-	})
-	return stream, err
-}
-
-func (m *Manager) streamUpdateEvents(ctx context.Context, stream relay.
-	EventService_FetchReconfigureEventsClient,
-) {
-	m.logger.Debug("start read from event stream")
-	for {
-		up, err := stream.Recv()
-		if err != nil {
-			if err == io.EOF {
-				m.logger.Info("event stream closed")
-			} else {
-				m.logger.With(zap.Error(err)).Error("receive event")
-			}
-			// return on any error, caller will re-establish a stream if needed
-			return
-		}
-		if up != nil {
-			m.logger.Info("reconfigure event received")
-			m.updateEventCount.Add(1)
-		}
-	}
 }
 
 // eventHandlerThread 'watches' updateEventCount and reconciles as well as
