@@ -30,7 +30,7 @@ func (c *Configer) GetCapabilities(
 	c.Manager.logger.Warn("Received a GetCapabilities rpc call from DP",
 		zap.String("nodeAddr", peer.RemoteAddr().String()))
 
-	return nil, fmt.Errorf("Not implemented")
+	return nil, fmt.Errorf("not implemented")
 }
 
 // PingCP handles the incoming ping method from the CP.
@@ -110,5 +110,5 @@ func (c *Configer) SyncConfig(
 	c.Manager.logger.Warn("Received a SyncConfig rpc call from DP",
 		zap.String("nodeAddr", peer.RemoteAddr().String()))
 
-	return nil, fmt.Errorf("Control plane nodes don't implement this method.")
+	return nil, fmt.Errorf("control plane nodes don't implement the SyncConfig method")
 }

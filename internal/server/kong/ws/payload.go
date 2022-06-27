@@ -8,7 +8,6 @@ import (
 
 	"github.com/kong/go-wrpc/wrpc"
 	config_service "github.com/kong/koko/internal/gen/wrpc/kong/services/config/v1"
-
 	"github.com/kong/koko/internal/server/kong/ws/config"
 	"go.uber.org/zap"
 )
@@ -116,8 +115,8 @@ func (p *Payload) configForVersion(version string) (cacheEntry, error) {
 }
 
 func (p *Payload) WrpcConfigPayload(versionStr string) (CachedWrpcContent, error) {
-// 	p.mu.Lock()
-// 	defer p.mu.Unlock()
+	// 	p.mu.Lock()
+	// 	defer p.mu.Unlock()
 
 	if wc, found := p.wrpcCache[versionStr]; found {
 		if wc.Error != nil {
@@ -127,14 +126,14 @@ func (p *Payload) WrpcConfigPayload(versionStr string) (CachedWrpcContent, error
 	}
 
 	// TODO: get an uncompressed, unencoded source.
-	c, err := p.Payload(versionStr)
+	c, err := p.Payload(context.Background(), versionStr)
 	if err != nil {
 		return CachedWrpcContent{}, err
 	}
 
 	configTable := config_service.SyncConfigRequest{
-		Config: c.CompressedPayload,
-		Version: p.configVersion,
+		Config:     c.CompressedPayload,
+		Version:    p.configVersion,
 		ConfigHash: c.Hash,
 	}
 

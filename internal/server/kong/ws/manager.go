@@ -239,7 +239,7 @@ func (m *Manager) AddNode(node *Node) {
 			return
 		}
 		m.setupPingHandler(node)
-	m.addNode(node)
+		m.addNode(node)
 		// spawn a goroutine for each data-plane node that connects.
 		go func() {
 			err := node.readThread()
@@ -257,8 +257,13 @@ func (m *Manager) AddNode(node *Node) {
 			}
 			}
 			// if there are any ws errors, remove the node
-		m.removeNode(node)
-	}()
+			m.removeNode(node)
+		}()
+	} else {
+		if err := m.nodes.Add(node); err != nil {
+			m.logger.Error("track node", zap.Error(err))
+		}
+	}
 	go m.broadcast()
 }
 
@@ -285,12 +290,6 @@ func (m *Manager) removeNode(node *Node) {
 	if len(m.nodes.All()) == 0 {
 		m.logger.Info("no nodes connected, disabling stream")
 		m.streamer.Disable()
-	}
-
-	} else {
-		if err := m.nodes.Add(node); err != nil {
-			m.logger.With(zap.Error(err)).Error("track node")
-		}
 	}
 }
 
