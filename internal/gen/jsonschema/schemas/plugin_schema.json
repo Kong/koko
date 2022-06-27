@@ -25,6 +25,7 @@
   "additionalProperties": false,
   "type": "object",
   "x-koko-config": {
-    "disableValidateEndpoint": true
+    "disableValidateEndpoint": true,
+    "resourceAPIPath": "plugin-schemas"
   }
 }

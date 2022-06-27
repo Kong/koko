@@ -7,6 +7,7 @@ import (
 	"github.com/imdario/mergo"
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
 	"github.com/kong/koko/internal/model"
+	"github.com/kong/koko/internal/model/json/extension"
 	"github.com/kong/koko/internal/model/json/generator"
 	"github.com/kong/koko/internal/model/json/validation"
 	"github.com/kong/koko/internal/model/json/validation/typedefs"
@@ -279,6 +280,9 @@ func init() {
 					Required: []string{"url"},
 				},
 			},
+		},
+		XKokoConfig: &extension.Config{
+			ResourceAPIPath: "services",
 		},
 	}
 	err = generator.Register(string(TypeService), serviceSchema)

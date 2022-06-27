@@ -28,6 +28,12 @@ type Config struct {
 	// entity, it is expected that the below HTTP endpoint exists:
 	// POST /v1/schemas/json/consumer/validate
 	DisableValidateEndpoint bool `json:"disableValidateEndpoint"`
+
+	// The resource's object name used in the REST API path. For example, for our `Consumer`
+	// entity, this should be set to "consumers" as the REST path is `/v1/consumers`.
+	//
+	// This should be left empty in the event the resource is not exposed in the REST API.
+	ResourceAPIPath string `json:"resourceAPIPath,omitempty"`
 }
 
 // Name implements the Extension interface.

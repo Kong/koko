@@ -509,5 +509,9 @@
         }
       }
     }
-  ]
+  ],
+  "x-koko-config": {
+    "disableValidateEndpoint": false,
+    "resourceAPIPath": "upstreams"
+  }
 }

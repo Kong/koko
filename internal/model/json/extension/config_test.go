@@ -15,14 +15,20 @@ func TestConfig_Compile(t *testing.T) {
 	c.RegisterExtension(ext.Name(), ext.Schema(), ext)
 
 	require.NoError(t, c.AddResource("schema.json", strings.NewReader(`{
-		"x-koko-config": {"disableValidateEndpoint": true}
+		"x-koko-config": {
+			"disableValidateEndpoint": true,
+			"resourceAPIPath": "something"
+		}
 	}`)))
 
 	sch, err := c.Compile("schema.json")
 	require.NoError(t, err)
 
 	assert.Equal(t, map[string]jsonschema.ExtSchema{
-		ext.Name(): &Config{DisableValidateEndpoint: true},
+		ext.Name(): &Config{
+			DisableValidateEndpoint: true,
+			ResourceAPIPath:         "something",
+		},
 	}, sch.Extensions)
 }
 

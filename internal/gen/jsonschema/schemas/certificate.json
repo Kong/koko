@@ -57,5 +57,9 @@
         "cert_alt"
       ]
     }
+  },
+  "x-koko-config": {
+    "disableValidateEndpoint": false,
+    "resourceAPIPath": "certificates"
   }
 }

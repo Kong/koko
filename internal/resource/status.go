@@ -139,7 +139,10 @@ func init() {
 			"context_reference",
 			"conditions",
 		},
-		XKokoConfig: &extension.Config{DisableValidateEndpoint: true},
+		XKokoConfig: &extension.Config{
+			DisableValidateEndpoint: true,
+			ResourceAPIPath:         "statuses",
+		},
 	}
 	err = generator.Register(string(TypeStatus), statusSchema)
 	if err != nil {

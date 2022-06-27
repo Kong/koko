@@ -6,6 +6,7 @@ import (
 
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
 	"github.com/kong/koko/internal/model"
+	"github.com/kong/koko/internal/model/json/extension"
 	"github.com/kong/koko/internal/model/json/generator"
 	"github.com/kong/koko/internal/model/json/validation"
 	"github.com/kong/koko/internal/model/json/validation/typedefs"
@@ -162,6 +163,9 @@ func init() {
 		AdditionalProperties: &falsy,
 		Required: []string{
 			"name",
+		},
+		XKokoConfig: &extension.Config{
+			ResourceAPIPath: "plugins",
 		},
 	}
 	err = generator.Register(string(TypePlugin), pluginSchema)
