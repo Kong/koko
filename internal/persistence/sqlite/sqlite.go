@@ -80,56 +80,24 @@ func New(opts Opts, queryTimeout time.Duration, logger *zap.Logger) (persistence
 	return res, nil
 }
 
-func (s *SQLite) withinTx(ctx context.Context,
-	fn func(tx persistence.Tx) error,
-) error {
-	ctx, cancel := context.WithTimeout(ctx, s.queryTimeout)
-	defer cancel()
-	tx, err := s.Tx(ctx)
-	if err != nil {
-		return err
-	}
-	err = fn(tx)
-	if err != nil {
-		rollbackErr := tx.Rollback()
-		if rollbackErr != nil {
-			return err
-		}
-		return err
-	}
-	return tx.Commit()
-}
-
 func (s *SQLite) Get(ctx context.Context, key string) ([]byte, error) {
-	var res []byte
-	err := s.withinTx(ctx, func(tx persistence.Tx) error {
-		var err error
-		res, err = tx.Get(ctx, key)
-		return err
-	})
-	return res, err
+	q := sqliteQuery{query: s.db, queryTimeout: s.queryTimeout}
+	return q.Get(ctx, key)
 }
 
 func (s *SQLite) Put(ctx context.Context, key string, value []byte) error {
-	return s.withinTx(ctx, func(tx persistence.Tx) error {
-		return tx.Put(ctx, key, value)
-	})
+	q := sqliteQuery{query: s.db, queryTimeout: s.queryTimeout}
+	return q.Put(ctx, key, value)
 }
 
 func (s *SQLite) Delete(ctx context.Context, key string) error {
-	return s.withinTx(ctx, func(tx persistence.Tx) error {
-		return tx.Delete(ctx, key)
-	})
+	q := sqliteQuery{query: s.db, queryTimeout: s.queryTimeout}
+	return q.Delete(ctx, key)
 }
 
 func (s *SQLite) List(ctx context.Context, prefix string, opts *persistence.ListOpts) (persistence.ListResult, error) {
-	var res persistence.ListResult
-	err := s.withinTx(ctx, func(tx persistence.Tx) error {
-		var err error
-		res, err = tx.List(ctx, prefix, opts)
-		return err
-	})
-	return res, err
+	q := sqliteQuery{query: s.db, queryTimeout: s.queryTimeout}
+	return q.List(ctx, prefix, opts)
 }
 
 func (s *SQLite) Tx(ctx context.Context) (persistence.Tx, error) {
@@ -137,7 +105,13 @@ func (s *SQLite) Tx(ctx context.Context) (persistence.Tx, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &sqliteTx{tx: tx, queryTimeout: s.queryTimeout}, nil
+	return &sqliteTx{
+		tx: tx,
+		query: sqliteQuery{
+			query:        tx,
+			queryTimeout: s.queryTimeout,
+		},
+	}, nil
 }
 
 func (s *SQLite) Close() error {
@@ -145,8 +119,8 @@ func (s *SQLite) Close() error {
 }
 
 type sqliteTx struct {
-	tx           *sql.Tx
-	queryTimeout time.Duration
+	tx    *sql.Tx
+	query sqliteQuery
 }
 
 func (t *sqliteTx) Commit() error {
@@ -158,9 +132,40 @@ func (t *sqliteTx) Rollback() error {
 }
 
 func (t *sqliteTx) Get(ctx context.Context, key string) ([]byte, error) {
+	return t.query.Get(ctx, key)
+}
+
+func (t *sqliteTx) Put(ctx context.Context, key string, value []byte) error {
+	return t.query.Put(ctx, key, value)
+}
+
+func (t *sqliteTx) Delete(ctx context.Context, key string) error {
+	return t.query.Delete(ctx, key)
+}
+
+func (t *sqliteTx) List(
+	ctx context.Context,
+	prefix string,
+	opts *persistence.ListOpts,
+) (persistence.ListResult, error) {
+	return t.query.List(ctx, prefix, opts)
+}
+
+type query interface {
+	ExecContext(context.Context, string, ...any) (sql.Result, error)
+	QueryContext(context.Context, string, ...any) (*sql.Rows, error)
+	QueryRowContext(context.Context, string, ...any) *sql.Row
+}
+
+type sqliteQuery struct {
+	query        query
+	queryTimeout time.Duration
+}
+
+func (t *sqliteQuery) Get(ctx context.Context, key string) ([]byte, error) {
 	ctx, cancel := context.WithTimeout(ctx, t.queryTimeout)
 	defer cancel()
-	row := t.tx.QueryRowContext(ctx, getQuery, key)
+	row := t.query.QueryRowContext(ctx, getQuery, key)
 	var resKey string
 	var value []byte
 	err := row.Scan(&resKey, &value)
@@ -173,10 +178,10 @@ func (t *sqliteTx) Get(ctx context.Context, key string) ([]byte, error) {
 	return value, err
 }
 
-func (t *sqliteTx) Put(ctx context.Context, key string, value []byte) error {
+func (t *sqliteQuery) Put(ctx context.Context, key string, value []byte) error {
 	ctx, cancel := context.WithTimeout(ctx, t.queryTimeout)
 	defer cancel()
-	res, err := t.tx.ExecContext(ctx, insertQuery, key, value)
+	res, err := t.query.ExecContext(ctx, insertQuery, key, value)
 	if err != nil {
 		return err
 	}
@@ -190,10 +195,10 @@ func (t *sqliteTx) Put(ctx context.Context, key string, value []byte) error {
 	return nil
 }
 
-func (t *sqliteTx) Delete(ctx context.Context, key string) error {
+func (t *sqliteQuery) Delete(ctx context.Context, key string) error {
 	ctx, cancel := context.WithTimeout(ctx, t.queryTimeout)
 	defer cancel()
-	res, err := t.tx.ExecContext(ctx, deleteQuery, key)
+	res, err := t.query.ExecContext(ctx, deleteQuery, key)
 	if err != nil {
 		return err
 	}
@@ -210,12 +215,12 @@ func (t *sqliteTx) Delete(ctx context.Context, key string) error {
 	return nil
 }
 
-func (t *sqliteTx) List(ctx context.Context, prefix string,
+func (t *sqliteQuery) List(ctx context.Context, prefix string,
 	opts *persistence.ListOpts,
 ) (persistence.ListResult, error) {
 	ctx, cancel := context.WithTimeout(ctx, t.queryTimeout)
 	defer cancel()
-	rows, err := t.tx.QueryContext(ctx, listQueryPaging, prefix, opts.Limit, opts.Offset)
+	rows, err := t.query.QueryContext(ctx, listQueryPaging, prefix, opts.Limit, opts.Offset)
 	if err != nil {
 		return persistence.ListResult{}, err
 	}
