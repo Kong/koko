@@ -13,7 +13,6 @@ import (
 	"github.com/kong/go-wrpc/wrpc"
 	config_service "github.com/kong/koko/internal/gen/wrpc/kong/services/config/v1"
 	"github.com/kong/koko/internal/json"
-	"github.com/kong/koko/internal/server/kong/ws/config"
 	"go.uber.org/zap"
 )
 
@@ -187,9 +186,9 @@ func (n *Node) write(payload []byte, hash sum) error {
 	return nil
 }
 
-func (n *Node) sendConfig(ctx context.Context, payload *config.Payload) error {
+func (n *Node) sendConfig(ctx context.Context, payload *Payload) error {
 	if n.conn != nil {
-		return n.sendJSONConfig(payload)
+		return n.sendJSONConfig(ctx, payload)
 	}
 
 	if n.peer != nil {
@@ -199,8 +198,8 @@ func (n *Node) sendConfig(ctx context.Context, payload *config.Payload) error {
 	return fmt.Errorf("node disconnected")
 }
 
-func (n *Node) sendJSONConfig(payload *config.Payload) error {
-	content, err := payload.Payload(n.Version)
+func (n *Node) sendJSONConfig(ctx context.Context, payload *Payload) error {
+	content, err := payload.Payload(ctx, n.Version)
 	if err != nil {
 		return fmt.Errorf("unable to gather payload: %w", err)
 	}
@@ -222,7 +221,7 @@ func (n *Node) sendJSONConfig(payload *config.Payload) error {
 	return nil
 }
 
-func (n *Node) sendWrpcConfig(ctx context.Context, payload *config.Payload) error {
+func (n *Node) sendWrpcConfig(ctx context.Context, payload *Payload) error {
 	content, err := payload.WrpcConfigPayload(n.Version)
 	if err != nil {
 		n.logger.With(zap.Error(err)).Error("preparing wrpc config payload")

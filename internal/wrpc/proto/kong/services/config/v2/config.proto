@@ -1,10 +1,10 @@
 syntax = "proto3";
 
-package kong.services.config.v1;
+package kong.services.config.v2;
 
 import "kong/model/config.proto";
 
-option go_package = "github.com/kong/koko/internal/gen/wrpc/kong/service/config/v1;v1";
+option go_package = "github.com/kong/koko/internal/gen/wrpc/kong/service/config/v2;v2";
 
 // ConfigService enables CP and DP to get configuration from CP down to a DP.
 // +wrpc:service-id=1
