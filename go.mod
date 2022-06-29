@@ -4,6 +4,7 @@ go 1.18
 
 require (
 	github.com/DataDog/datadog-go/v5 v5.1.1
+	github.com/Masterminds/squirrel v1.5.3
 	github.com/blang/semver/v4 v4.0.0
 	github.com/bufbuild/buf v1.6.0
 	github.com/cenkalti/backoff/v4 v4.1.3
@@ -80,6 +81,8 @@ require (
 	github.com/klauspost/compress v1.15.6 // indirect
 	github.com/klauspost/pgzip v1.2.5 // indirect
 	github.com/kr/pretty v0.3.0 // indirect
+	github.com/lann/builder v0.0.0-20180802200727-47ae307949d0 // indirect
+	github.com/lann/ps v0.0.0-20150810152359-62de8c46ede0 // indirect
 	github.com/layeh/gopher-json v0.0.0-20201124131017-552bb3c4c3bf // indirect
 	github.com/lib/pq v1.10.6 // indirect
 	github.com/lufia/plan9stats v0.0.0-20211012122336-39d0f177ccd0 // indirect

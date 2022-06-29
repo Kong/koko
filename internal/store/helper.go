@@ -26,11 +26,13 @@ func getFullList(ctx context.Context, tx persistence.Tx, keyPrefix string) (pers
 	return listResult, nil
 }
 
-// getPersistenceListOptions Converts store Page and Page Size to Limit and Offset.
+// getPersistenceListOptions converts store list options (page, page size, and filter) to
+// its persistence list options counterpart. The provided list options must not be nil.
 func getPersistenceListOptions(opts *ListOpts) *persistence.ListOpts {
 	return &persistence.ListOpts{
 		Limit:  opts.PageSize,
 		Offset: toOffset(opts),
+		Filter: opts.Filter,
 	}
 }
 
