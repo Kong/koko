@@ -19,6 +19,78 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+const (
+	certChain = `
+-----BEGIN CERTIFICATE-----
+MIIC+DCCAeACAQIwDQYJKoZIhvcNAQEFBQAwQjELMAkGA1UEBhMCVVMxCzAJBgNV
+BAgMAkNBMRUwEwYDVQQKDAxZb2xvNDIsIEluYy4xDzANBgNVBAMMBllvbG80MjAe
+Fw0yMjA2MjMwODMzNDNaFw0zMjA2MjAwODMzNDNaMEIxCzAJBgNVBAYTAlVTMQsw
+CQYDVQQIDAJDQTEVMBMGA1UECgwMWW9sbzQyLCBJbmMuMQ8wDQYDVQQDDAZZb2xv
+NDIwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDRe6zuZYrcNisP429l
+aTdUxSKXigd8Hdkje2jDCvlaVg72DeBj5VarYLRkuL/aeBNxfDbtBBAPh2oOw0dO
+6cSLET9opHZxJefwzaSVa4vU6pSKQIT7MT5dTvH4FVDwVxUhD/LV6WB1LZMnNJcF
+hokK4+lvyVFB+UIED2uRMB/H2Ilf4L+5hwM7PSxZebNye/34Qd4R3BhTrPnBosk9
+WbXO+/jYoCaFOzzLCxPnGUlPxQlfyPU1lTQUQP9LL/t7hxLNn+SuKIarb5XAOb8a
+i8Wgw7eORcTx2wlSr5ZsP/Q3ldlxgfSVl0F78Ra8b2Lne7jM9gRW5cG31xHRF7FR
+3t+xAgMBAAEwDQYJKoZIhvcNAQEFBQADggEBAFWZkvzJq+Ha9fLntB/2hU/UxWBf
+OofxKSrgVR7snAnLbVpxj3bJESec/+3ZEFvYpi8aJm0KSmxh9QP6sLZ7P+xNJs2q
+sPeAihr3dGDAtcv7CmgGeaiSjxHILUX54VUKr4O/ff0Vi01m243rOngJIfRnI7Kw
+vX6bdM/Kws5v8rVSA6uWzSDAXMmS9Klhd5fEtdENfk1w7maoy+z51PW3I10EkOOl
+aebFAjlBquLeDkO3Ym6Y6GS8g5AG6CGXOwipncS2Q80Z2lFbdWl/3vbis08+YJtx
++nujRQ37xtrwgaXi+fgmSyIC+Rk+ItJUa8JObEOBfZoAkgoknyT+ftWicrA=
+-----END CERTIFICATE-----
+-----BEGIN CERTIFICATE-----
+MIIDDzCCAfegAwIBAgIBATANBgkqhkiG9w0BAQUFADBCMQswCQYDVQQGEwJVUzEL
+MAkGA1UECAwCQ0ExFTATBgNVBAoMDFlvbG80MiwgSW5jLjEPMA0GA1UEAwwGWW9s
+bzQyMB4XDTIyMDYyMzA4MzMyMVoXDTMyMDYyMDA4MzMyMVowQjELMAkGA1UEBhMC
+VVMxCzAJBgNVBAgMAkNBMRUwEwYDVQQKDAxZb2xvNDIsIEluYy4xDzANBgNVBAMM
+BllvbG80MjCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAOhpaXd1lFdf
+ja3mqL9r8Ktz3hZYbniPKB65PMlEO3BLJj+HdaPNgZCErEdOrshSIEQBnkK3Im1t
+SQmIlEJyIDpqS+k/ODkNGCNYmgCxNnK+jNt8LsLZsq0DkTMM1slqokrhdEwQ38Za
+6JlwHmdJLPWerl2RtvNwXVRbCka38PmM7LbqmqR/238otcQSNuYEnBSAik+vy9XR
+F5G+l5709tPexHSI09jUM54tVtsdFVHhlSwp/qlXhkOuY15NWTAx7POCXd/hiC9f
+Ygg8bNuHzBXk1bvs6ANLpGY10qFk3JMz2N1kuxgRJ6kW6b54CTAvjY3LpWH2I+On
+ms+m0X6zTEcCAwEAAaMQMA4wDAYDVR0TBAUwAwEB/zANBgkqhkiG9w0BAQUFAAOC
+AQEAFMzEqZzqtZJKqpeCZvxXMRWbj7eV8UfdHSXUBOxvz7tONoSzXM1P/Hfkkciu
+biYMrtLhxlivsZPY+M/6wAxD77QfWAWWG/ZdwQCtCRl3We6OSs6+b0M/7ity35A+
+lPqHL18SEAK8yHXH6+iGfTOg4+W2hu28PywSmYJgWf8BIB2i1myORtnTFgH32R2P
+WJ2EUfUqb9+ZKjtNrDrqPtX068AC6hTcFkc8t02EPvJ2TuXyXjSPKA+1DgnXPN9+
+BqjK5V2VnCSO8KV9h0DvmWqijbqQyFLuJ5no342jaRyeZThpl0vtdH8Wa3qHbljb
+2VpYsrrm/y9fk89fmVi0jd0oGQ==
+-----END CERTIFICATE-----
+`
+	key = `
+-----BEGIN PRIVATE KEY-----
+MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDRe6zuZYrcNisP
+429laTdUxSKXigd8Hdkje2jDCvlaVg72DeBj5VarYLRkuL/aeBNxfDbtBBAPh2oO
+w0dO6cSLET9opHZxJefwzaSVa4vU6pSKQIT7MT5dTvH4FVDwVxUhD/LV6WB1LZMn
+NJcFhokK4+lvyVFB+UIED2uRMB/H2Ilf4L+5hwM7PSxZebNye/34Qd4R3BhTrPnB
+osk9WbXO+/jYoCaFOzzLCxPnGUlPxQlfyPU1lTQUQP9LL/t7hxLNn+SuKIarb5XA
+Ob8ai8Wgw7eORcTx2wlSr5ZsP/Q3ldlxgfSVl0F78Ra8b2Lne7jM9gRW5cG31xHR
+F7FR3t+xAgMBAAECggEBAKfp7rAZDLl/Yf0WXVB4ijWU3ymBJobCli7u2QaeYUmb
++doZPWhViKdOmMqznHVOEqfA3XYW75jC/qxes2X50+V1KdKDIb2ImOZYsDhlQGym
+q/I1zWJcEpVQlnw4+evsoa8izY/RxdOneHDQos13DZqBHbjRMiUj21rN0XdLj+3r
+nNF55or8VAFF4oeNy01dBuSJ2L+eO/kcEyge5ywhmn1Dwp6DYGORGdrnJzaWu2Pa
+DzYwc6SJ7svGBsjL5t+4BhoeljpWm0STmZVkL5TUscGoHfNn2jzYyJYQrASbMLGz
+QD72XQtrJI7G99B2lAXnf5fecB4wHcXTHvVE7YqUaQECgYEA5/zdoJ64GmkB58S9
+fT84g9aTyVDk316LrchnC0wENkG7Fitp6RbhmAA6q01dPppilnknhinTMlBQHpZj
+GlrWpkFXhfoaj5jKqbr/ZPT8HUHM6LzHhRWHvN2+9g+4t34iejMdxnLSmMjuvpoD
++MmaBD+wNhVn047Oz1H9SqfxPgkCgYEA5yp9NI/jUsvUIcx2uaUUtmBdkbcqbqnj
+JvSkeww/9yBp6yUaVN3clwe+cgHRKZeXpkNwFp8TzWE0mmG1ZGAG4rQQdnDvvktG
+zL+/JwMOsx6b5R7aA5DVkAZUykjOKluXvHyjjTGj7jiToa8RjMrOKoadnwWC3Llk
+ZhauKbFEfmkCgYEAnzPSKHsj3sP3UcWbQIuVTiyAiSRhnMS2WJFx3bfSICXlrSYn
+7ZUNRhHKMWrLNb4fMCJ+tDyZuiqRgRw1cI2sRrYKyV/EwIzbb7VrtS3GopFYfNOo
+nLUUzNDkTtqlKg9+u5u+sER2L/GcneL2HNLFRmsqk0MHWJDlbjNW/tfX33kCgYAx
+I2QIB0oQMInAQYE/RysW9XcOYXwgl/ZUMo7AJUN3malKNdHaFmsso5XFEEPQ7otq
+6UzrUhdYggA3jOuNEaiFCjexpaIgtkmvflb4yPqX8rq6wosfVOtAuUfO1BkXAe9I
+PspZWiL5oYcoSFmXrwiSG5ln0zkVCEeiN9H/xNHFeQKBgBfCRd5Hso0iAgiwUS/T
+OSSGmeqEIC8Krk/G0V9iw4i9OQoBTFeFrja/3JGqUzvoXHJW012MiJ5ErY1bK8du
+Z2uSW/FjsT7HM69XuC0ibPNJ+5Cw7iQJ6QIXTjID3dhv4NywmENhJW71nSyg/RPT
+xV73bGApHGnNU8lCGx/9s1dL
+-----END PRIVATE KEY-----
+`
+)
+
 var certTemplate = x509.Certificate{
 	SerialNumber: big.NewInt(1),
 	Subject: pkix.Name{
@@ -312,6 +384,17 @@ func TestCertificate_Validate(t *testing.T) {
 				cert.Certificate.Key = string(keyPEM)
 				cert.Certificate.CertAlt = string(certAltPEM)
 				cert.Certificate.KeyAlt = string(keyAltPEM)
+				return cert
+			},
+			wantErr: false,
+		},
+		{
+			name: "valid cert chain and valid key passes",
+			Certificate: func() Certificate {
+				cert := NewCertificate()
+				_ = cert.ProcessDefaults(context.Background())
+				cert.Certificate.Cert = certChain
+				cert.Certificate.Key = key
 				return cert
 			},
 			wantErr: false,
