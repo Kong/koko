@@ -1,8 +1,15 @@
 package util
 
 import (
+	"bytes"
 	"context"
+	"crypto/rand"
+	"crypto/rsa"
+	"crypto/x509"
+	"crypto/x509/pkix"
+	"encoding/pem"
 	"fmt"
+	"math/big"
 	"net/http"
 	"strings"
 	"testing"
@@ -117,4 +124,45 @@ func WaitForAdminAPI(t *testing.T) error {
 		fmt.Sprintf("admin-%d", defaultAdminPort),
 		http.StatusOK,
 	)
+}
+
+// GenerateCertificate creates a random certificate with the given
+// amount of bits, and returns the PEM encoded public & private keys.
+func GenerateCertificate(bits int) (publicKey string, privateKey string, err error) {
+	caCert := &x509.Certificate{
+		SerialNumber:          big.NewInt(1),
+		Subject:               pkix.Name{Organization: []string{"Test"}},
+		NotBefore:             time.Now(),
+		NotAfter:              time.Now().Add(24 * time.Hour), //nolint:gomnd
+		KeyUsage:              x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
+		BasicConstraintsValid: true,
+	}
+
+	pk, err := rsa.GenerateKey(rand.Reader, bits)
+	if err != nil {
+		return "", "", err
+	}
+
+	certBytes, err := x509.CreateCertificate(rand.Reader, caCert, caCert, &pk.PublicKey, pk)
+	if err != nil {
+		return "", "", err
+	}
+
+	certPEM := &bytes.Buffer{}
+	if err := pem.Encode(certPEM, &pem.Block{
+		Type:  "CERTIFICATE",
+		Bytes: certBytes,
+	}); err != nil {
+		return "", "", err
+	}
+
+	pkPEM := &bytes.Buffer{}
+	if err := pem.Encode(pkPEM, &pem.Block{
+		Type:  "PRIVATE KEY",
+		Bytes: x509.MarshalPKCS1PrivateKey(pk),
+	}); err != nil {
+		return "", "", err
+	}
+
+	return certPEM.String(), pkPEM.String(), nil
 }
