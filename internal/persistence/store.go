@@ -3,6 +3,8 @@ package persistence
 import (
 	"context"
 	"fmt"
+
+	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 )
 
 // Persister is an interface to a KV store.
@@ -51,9 +53,23 @@ func NewDefaultListOpts() *ListOpts {
 	return &ListOpts{Offset: DefaultOffset, Limit: DefaultLimit}
 }
 
+// ListOpts defines various options that affect the results returned by a `CRUD.List()` call.
 type ListOpts struct {
-	Limit  int
+	// Limit is used to set the amount of results returned. Must be between zero & MaxLimit.
+	Limit int
+
+	// Offset is used for purposes of pagination. Must be a positive
+	// number and zero is used to indicate the first page.
 	Offset int
+
+	// CEL expression used for filtering.
+	//
+	// When nil, no filtering of any kind will be done. When provided, the filter is
+	// expected to be pre-validated for correctness. More specific validations can
+	// occur later, e.g.: such validations that are specific to a particular resource.
+	//
+	// Read more: https://github.com/google/cel-spec
+	Filter *exprpb.Expr
 }
 
 type Tx interface {

@@ -459,8 +459,8 @@ func (s *seeder) getRandForType(typ model.Type) (*rand.Rand, error) {
 
 	// We're okay with the additional cost of acquiring a write-lock, as this will only be done once for each type.
 	s.randByTypeMu.Lock()
+	defer s.randByTypeMu.Unlock()
 	s.randByType[typ] = rand.New(randSrc) //nolint:gosec
-	s.randByTypeMu.Unlock()
 
 	return s.randByType[typ], nil
 }

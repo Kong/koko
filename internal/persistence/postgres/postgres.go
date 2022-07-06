@@ -6,9 +6,12 @@ import (
 	"fmt"
 	"time"
 
+	sq "github.com/Masterminds/squirrel"
+	"github.com/google/cel-go/common/operators"
 	_ "github.com/jackc/pgx/v4/stdlib"
 	"github.com/kong/koko/internal/persistence"
 	"go.uber.org/zap"
+	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 )
 
 const (
@@ -21,9 +24,6 @@ const (
 	defaultMaxConnLifetime = time.Hour
 	DefaultPort            = 5432
 )
-
-var listQueryPaging = `SELECT key, value, COUNT(*) OVER() AS full_count FROM store WHERE key
-                       LIKE $1 || '%%' ORDER BY key LIMIT $2 OFFSET $3;`
 
 type Postgres struct {
 	db           *sql.DB
@@ -261,8 +261,27 @@ func (t *postgresQuery) List(
 	ctx, cancel := context.WithTimeout(ctx, t.queryTimeout)
 	defer cancel()
 	kvlist := make([]persistence.KVResult, 0, opts.Limit)
-	rows, err := t.query.QueryContext(ctx, listQueryPaging, prefix, opts.Limit,
-		opts.Offset)
+
+	query := sq.StatementBuilder.
+		PlaceholderFormat(sq.Dollar).
+		Select("key", "value", "COUNT(*) OVER() AS full_count").
+		From("store").
+		Where("key LIKE ? || '%%'", prefix).
+		OrderBy("key").
+		Limit(uint64(opts.Limit)).
+		Offset(uint64(opts.Offset))
+
+	// Parse out any provided, pre-validated CEL expression & add the proper clauses to the query.
+	var err error
+	if query, err = addFilterToQuery(query, opts.Filter); err != nil {
+		return persistence.ListResult{}, fmt.Errorf("unable to add filter CEL expression to query: %w", err)
+	}
+
+	sql, placeholders, err := query.ToSql()
+	if err != nil {
+		return persistence.ListResult{}, err
+	}
+	rows, err := t.query.QueryContext(ctx, sql, placeholders...)
 	if err != nil {
 		return persistence.ListResult{}, err
 	}
@@ -284,4 +303,39 @@ func (t *postgresQuery) List(
 	}
 	res.KVList = kvlist
 	return res, nil
+}
+
+func addFilterToQuery(query sq.SelectBuilder, expr *exprpb.Expr) (sq.SelectBuilder, error) {
+	// No-op when no expression is provided.
+	if expr == nil {
+		return query, nil
+	}
+
+	tags, exprFunction, err := persistence.GetTagsFromExpression(expr)
+	if err != nil {
+		return query, err
+	}
+
+	queryArgs, err := persistence.GetQueryArgsFromExprConstants(tags)
+	if err != nil {
+		return query, nil
+	}
+
+	// No-op when there are no tags to filter against, to treat it as if there is no filter at all.
+	if len(queryArgs) == 0 {
+		return query, nil
+	}
+
+	// The double question mark is how the SQL builder handles escaping a literal question mark.
+	operator := "??&"
+	if exprFunction == operators.LogicalOr {
+		operator = "??|"
+	}
+	placeholders := sq.Placeholders(len(queryArgs))
+
+	// As the only supported field name to filter on are tags, we can simply hard-code the predicate.
+	return query.Where(
+		fmt.Sprintf("value->'object'->'tags' %s array[%s]", operator, placeholders),
+		queryArgs...,
+	), nil
 }

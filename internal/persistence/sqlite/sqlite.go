@@ -6,9 +6,12 @@ import (
 	"fmt"
 	"time"
 
+	sq "github.com/Masterminds/squirrel"
+	"github.com/google/cel-go/common/operators"
 	"github.com/kong/koko/internal/persistence"
 	_ "github.com/mattn/go-sqlite3"
 	"go.uber.org/zap"
+	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 )
 
 const (
@@ -16,9 +19,6 @@ const (
 	insertQuery = `replace into store(key,value) values($1,$2);`
 	deleteQuery = `delete from store where key=$1`
 )
-
-var listQueryPaging = `SELECT key, value, COUNT(*) OVER() AS full_count FROM 
-                        store WHERE key GLOB $1 || '*' ORDER BY key LIMIT $2 OFFSET $3;`
 
 type SQLite struct {
 	db           *sql.DB
@@ -218,9 +218,28 @@ func (t *sqliteQuery) Delete(ctx context.Context, key string) error {
 func (t *sqliteQuery) List(ctx context.Context, prefix string,
 	opts *persistence.ListOpts,
 ) (persistence.ListResult, error) {
+	query := sq.StatementBuilder.
+		PlaceholderFormat(sq.Dollar).
+		Select("s.key", "s.value", "COUNT(*) OVER() AS full_count").
+		From("store s").
+		Where("s.key GLOB ? || '*'", prefix).
+		OrderBy("s.key").
+		Limit(uint64(opts.Limit)).
+		Offset(uint64(opts.Offset))
+
+	// Parse out any provided, pre-validated CEL expression & add the proper clauses to the query.
+	var err error
+	if query, err = addFilterToQuery(query, opts.Filter); err != nil {
+		return persistence.ListResult{}, fmt.Errorf("unable to add filter CEL expression to query: %w", err)
+	}
+
 	ctx, cancel := context.WithTimeout(ctx, t.queryTimeout)
 	defer cancel()
-	rows, err := t.query.QueryContext(ctx, listQueryPaging, prefix, opts.Limit, opts.Offset)
+	sql, placeholders, err := query.ToSql()
+	if err != nil {
+		return persistence.ListResult{}, err
+	}
+	rows, err := t.query.QueryContext(ctx, sql, placeholders...)
 	if err != nil {
 		return persistence.ListResult{}, err
 	}
@@ -243,4 +262,44 @@ func (t *sqliteQuery) List(ctx context.Context, prefix string,
 	}
 	res.KVList = kvlist
 	return res, nil
+}
+
+func addFilterToQuery(query sq.SelectBuilder, expr *exprpb.Expr) (sq.SelectBuilder, error) {
+	// No-op when no expression is provided.
+	if expr == nil {
+		return query, nil
+	}
+
+	tags, exprFunction, err := persistence.GetTagsFromExpression(expr)
+	if err != nil {
+		return query, err
+	}
+
+	queryArgs, err := persistence.GetQueryArgsFromExprConstants(tags)
+	if err != nil {
+		return query, err
+	}
+
+	// No-op when there are no tags to filter against, to treat it as if there is no filter at all.
+	if len(queryArgs) == 0 {
+		return query, nil
+	}
+
+	// As the only supported field name to filter on are tags, we can simply hard-code the predicate.
+	query = query.
+		// Output a row for each tag value.
+		Join("json_each(s.value, '$.object.tags') t").
+		// The `atom` column contains the result of the `json_each()` function.
+		// Read more: https://www.sqlite.org/json1.html#the_json_each_and_json_tree_table_valued_functions
+		Where(sq.Eq{"t.atom": queryArgs}).
+		GroupBy("s.key")
+
+	// In the event we need to assert that the resource has all provided tags, we'll simply check
+	// the number of tags returned. This works as we're assuming duplicates in the DB are not
+	// allowed, and any duplicate tags in the expression have already been filtered out.
+	if exprFunction == operators.LogicalAnd {
+		query = query.Having("COUNT(DISTINCT t.atom) = ?", len(queryArgs))
+	}
+
+	return query, nil
 }
