@@ -26,24 +26,23 @@ func TestListFiltering(t *testing.T) {
 	server, cleanup := setup(t)
 	defer cleanup()
 
-	// Seed all test resources with random tags, so that we can test filtering resources by tag with a CEL expression.
-	seeder, err := seed.New(seed.Config{URL: server.URL})
+	seeder, err := seed.New(seed.NewSeederOpts{URL: server.URL})
 	require.NoError(t, err)
-	_, err = seeder.SeedAllTypes(
-		context.Background(),
 
+	seedOpts, err := seed.NewOptionsBuilder().
 		// Create 25 resources for each resource type, which is a sane amount for these tests. However,
 		// this can be anything, as the tests will automatically adapt to the number of resources created.
-		seed.WithResourceCount(25),
-
+		WithResourceCount(25).
 		// The test cases are hard-coded to expect no more than two tags on a resource.
-		seed.WithRandomTagCount(2, true),
+		WithRandomTagCount(2, true).
+		// For resources that do not have the tags field, we'll skip testing
+		// that resource & log it on the test output as skipped.
+		WithIgnoredErrors(seed.ErrRequiredFieldMissing).
+		Build()
+	require.NoError(t, err)
 
-		// We don't want to seed resources that aren't exposed over the REST
-		// API. For resources that do not have the tags field, we'll skip
-		// testing that resource & log it on the test output as skipped.
-		seed.WithIgnoredErrors(seed.ErrRequiredFieldMissing, seed.ErrNoResourcePath),
-	)
+	// Seed all test resources with random tags, so that we can test filtering resources by tag with a CEL expression.
+	_, err = seeder.SeedAllTypes(context.Background(), seedOpts)
 	require.NoError(t, err)
 
 	results := seeder.Results()
@@ -57,8 +56,8 @@ func TestListFiltering(t *testing.T) {
 		// multiple tags will be duplicated for each tag.
 		//
 		// The "all" key contains all resources with a tag. Additionally, each
-		// combination of tags will have its own key, e.g.: `tag1, tag2` is a
-		// valid key defining resources that contain both `tag1` and `tag2.
+		// combination of tags will have its own key, e.g.: `tag-1, tag-2` is a
+		// valid key defining resources that contain both `tag-1` and `tag-2.
 		resourceIDsByTag := map[string][]string{"all": make([]string, 0)}
 		for _, r := range expectedResources.All() {
 			// Keep track of resources by each tag.
@@ -94,7 +93,7 @@ func TestListFiltering(t *testing.T) {
 			},
 			{
 				name:        "invalid expression",
-				pageRequest: &v1.PaginationRequest{Filter: `"tag1" in something`},
+				pageRequest: &v1.PaginationRequest{Filter: `"tag-1" in something`},
 				expectedErr: &validation.Error{
 					Errs: []*v1.ErrorDetail{{
 						Type:     v1.ErrorType_ERROR_TYPE_FIELD,
@@ -105,45 +104,45 @@ func TestListFiltering(t *testing.T) {
 			},
 			{
 				name:             "single tag: single result",
-				pageRequest:      &v1.PaginationRequest{Filter: `"tag2" in tags`},
-				expectedPagedIDs: [][]string{resourceIDsByTag["tag2"]},
+				pageRequest:      &v1.PaginationRequest{Filter: `"tag-2" in tags`},
+				expectedPagedIDs: [][]string{resourceIDsByTag["tag-2"]},
 			},
 			{
 				name:             "single tag: multiple results",
-				pageRequest:      &v1.PaginationRequest{Filter: `"tag1" in tags`},
-				expectedPagedIDs: [][]string{resourceIDsByTag["tag1"]},
+				pageRequest:      &v1.PaginationRequest{Filter: `"tag-1" in tags`},
+				expectedPagedIDs: [][]string{resourceIDsByTag["tag-1"]},
 			},
 			{
 				name:        "single tag: no results",
-				pageRequest: &v1.PaginationRequest{Filter: `"tag3" in tags`},
+				pageRequest: &v1.PaginationRequest{Filter: `"tag-3" in tags`},
 			},
 			{
 				name:             "logical or",
-				pageRequest:      &v1.PaginationRequest{Filter: `"tag1" in tags || "tag2" in tags`},
+				pageRequest:      &v1.PaginationRequest{Filter: `"tag-1" in tags || "tag-2" in tags`},
 				expectedPagedIDs: [][]string{resourceIDsByTag["all"]},
 			},
 			{
 				name:             "logical and",
-				pageRequest:      &v1.PaginationRequest{Filter: `"tag1" in tags && "tag2" in tags`},
-				expectedPagedIDs: [][]string{resourceIDsByTag["tag1, tag2"]},
+				pageRequest:      &v1.PaginationRequest{Filter: `"tag-1" in tags && "tag-2" in tags`},
+				expectedPagedIDs: [][]string{resourceIDsByTag["tag-1, tag-2"]},
 			},
 			{
 				name:             "exists() macro: with results",
-				pageRequest:      &v1.PaginationRequest{Filter: `["tag1", "tag2"].exists(x, x in tags)`},
+				pageRequest:      &v1.PaginationRequest{Filter: `["tag-1", "tag-2"].exists(x, x in tags)`},
 				expectedPagedIDs: [][]string{resourceIDsByTag["all"]},
 			},
 			{
 				name:             "all() macro: with results",
-				pageRequest:      &v1.PaginationRequest{Filter: `["tag1", "tag2"].all(x, x in tags)`},
-				expectedPagedIDs: [][]string{resourceIDsByTag["tag1, tag2"]},
+				pageRequest:      &v1.PaginationRequest{Filter: `["tag-1", "tag-2"].all(x, x in tags)`},
+				expectedPagedIDs: [][]string{resourceIDsByTag["tag-1, tag-2"]},
 			},
 			{
 				name:        "exists() macro: no results",
-				pageRequest: &v1.PaginationRequest{Filter: `["tag3", "tag4"].exists(x, x in tags)`},
+				pageRequest: &v1.PaginationRequest{Filter: `["tag-3", "tag-4"].exists(x, x in tags)`},
 			},
 			{
 				name:        "all() macro: no results",
-				pageRequest: &v1.PaginationRequest{Filter: `["tag1", "tag3"].all(x, x in tags)`},
+				pageRequest: &v1.PaginationRequest{Filter: `["tag-1", "tag-3"].all(x, x in tags)`},
 			},
 			{
 				name:             "empty slice with macro",
@@ -152,13 +151,13 @@ func TestListFiltering(t *testing.T) {
 			},
 			{
 				name:             "duplicate tags",
-				pageRequest:      &v1.PaginationRequest{Filter: `["tag1", "tag1"].exists(x, x in tags)`},
-				expectedPagedIDs: [][]string{resourceIDsByTag["tag1"]},
+				pageRequest:      &v1.PaginationRequest{Filter: `["tag-1", "tag-1"].exists(x, x in tags)`},
+				expectedPagedIDs: [][]string{resourceIDsByTag["tag-1"]},
 			},
 			{
 				name:             "pagination",
-				pageRequest:      &v1.PaginationRequest{Size: 1, Filter: `"tag1" in tags`},
-				expectedPagedIDs: lo.Chunk(resourceIDsByTag["tag1"], 1),
+				pageRequest:      &v1.PaginationRequest{Size: 1, Filter: `"tag-1" in tags`},
+				expectedPagedIDs: lo.Chunk(resourceIDsByTag["tag-1"], 1),
 			},
 		}
 
