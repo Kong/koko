@@ -23,7 +23,7 @@ require (
 	github.com/kong/go-kong v0.29.0
 	github.com/kong/go-wrpc v0.0.0-20210914213024-d4348db6b815
 	github.com/kong/goks v0.4.7
-	github.com/mattn/go-sqlite3 v1.14.13
+	github.com/mattn/go-sqlite3 v1.14.14
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/prometheus/client_golang v1.12.2
 	github.com/prometheus/client_model v0.2.0
