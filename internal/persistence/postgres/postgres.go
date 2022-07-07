@@ -27,18 +27,20 @@ const (
 
 type Postgres struct {
 	db           *sql.DB
+	readOnlyDB   *sql.DB
 	queryTimeout time.Duration
 }
 
 type Opts struct {
-	DBName         string
-	Hostname       string
-	Port           int
-	User           string
-	Password       string
-	EnableTLS      bool
-	CABundleFSPath string
-	SQLOpen        func(driver persistence.Driver, dataSourceName string) (*sql.DB, error)
+	DBName           string
+	Hostname         string
+	ReadOnlyHostname string
+	Port             int
+	User             string
+	Password         string
+	EnableTLS        bool
+	CABundleFSPath   string
+	SQLOpen          func(driver persistence.Driver, dataSourceName string) (*sql.DB, error)
 }
 
 func getDSN(opts Opts, logger *zap.Logger) (string, error) {
@@ -107,17 +109,28 @@ func NewSQLClient(opts Opts, logger *zap.Logger) (*sql.DB, error) {
 func New(opts Opts, queryTimeout time.Duration, logger *zap.Logger) (persistence.Persister, error) {
 	db, err := NewSQLClient(opts, logger)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("unable to set up DB client: %w", err)
+	}
+	// by default, fallback to primary host for read operations
+	readOnlyDB := db
+	if opts.ReadOnlyHostname != "" {
+		readOnlyOpts := opts
+		readOnlyOpts.Hostname = opts.ReadOnlyHostname
+		readOnlyDB, err = NewSQLClient(readOnlyOpts, logger)
+		if err != nil {
+			return nil, fmt.Errorf("unable to set up read-only DB client: %w", err)
+		}
 	}
 	res := &Postgres{
 		db:           db,
+		readOnlyDB:   readOnlyDB,
 		queryTimeout: queryTimeout,
 	}
 	return res, nil
 }
 
 func (s *Postgres) Get(ctx context.Context, key string) ([]byte, error) {
-	q := postgresQuery{query: s.db, queryTimeout: s.queryTimeout}
+	q := postgresQuery{query: s.readOnlyDB, queryTimeout: s.queryTimeout}
 	return q.Get(ctx, key)
 }
 
@@ -134,7 +147,7 @@ func (s *Postgres) Delete(ctx context.Context, key string) error {
 func (s *Postgres) List(ctx context.Context, prefix string, opts *persistence.ListOpts) (persistence.ListResult,
 	error,
 ) {
-	q := postgresQuery{query: s.db, queryTimeout: s.queryTimeout}
+	q := postgresQuery{query: s.readOnlyDB, queryTimeout: s.queryTimeout}
 	return q.List(ctx, prefix, opts)
 }
 
