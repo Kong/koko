@@ -25,13 +25,18 @@ type SQLite struct {
 }
 
 type Postgres struct {
-	DBName         string `json:"db_name,omitempty"`
-	Hostname       string `json:"hostname,omitempty"`
-	Port           int    `json:"port,omitempty"`
-	User           string `json:"user,omitempty"`
-	Password       string `json:"password,omitempty"`
-	EnableTLS      bool   `json:"enable_tls"`
-	CABundleFSPath string `json:"ca_bundle_fs_path"`
+	DBName         string              `json:"db_name,omitempty"`
+	Hostname       string              `json:"hostname,omitempty"`
+	ReadReplica    PostgresReadReplica `json:"read_replica,omitempty"`
+	Port           int                 `json:"port,omitempty"`
+	User           string              `json:"user,omitempty"`
+	Password       string              `json:"password,omitempty"`
+	EnableTLS      bool                `json:"enable_tls"`
+	CABundleFSPath string              `json:"ca_bundle_fs_path"`
+}
+
+type PostgresReadReplica struct {
+	Hostname string `json:"hostname,omitempty"`
 }
 
 type Database struct {
