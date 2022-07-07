@@ -80,14 +80,14 @@ func TestConfigPayload_Cache(t *testing.T) {
 			Hash:              "1133ae8be08017e5460160635daa22f2",
 		})
 		require.Nil(t, err)
-		require.Equal(t, len(payload.cache), 0)
 
 		updatedPayload, err := payload.Payload(context.Background(), "2.8.0")
 		require.Nil(t, err)
 		require.Equal(t, compressedPayload, updatedPayload.CompressedPayload)
-		_, found := payload.cache["2.8.0"]
-		require.True(t, found)
-		require.Greater(t, len(payload.cache["2.8.0"].CompressedPayload), 0)
+		entry, err := payload.configCache.load("2.8.0")
+		require.NoError(t, err)
+		require.Greater(t, len(entry.CompressedPayload), 0)
+		require.NoError(t, entry.Error)
 	})
 
 	t.Run("ensure payload can be retrieved using multiple versions", func(t *testing.T) {
@@ -100,26 +100,25 @@ func TestConfigPayload_Cache(t *testing.T) {
 			Hash:              "1133ae8be08017e5460160635daa22f2",
 		})
 		require.Nil(t, err)
-		require.Equal(t, len(payload.cache), 0)
 
 		updatedPayload, err := payload.Payload(context.Background(), "2.8.0")
 		require.Nil(t, err)
 		require.Equal(t, compressedPayload, updatedPayload.CompressedPayload)
-		_, found := payload.cache["2.8.0"]
+		_, found := payload.configCache["2.8.0"]
 		require.True(t, found)
-		require.Greater(t, len(payload.cache["2.8.0"].CompressedPayload), 0)
-		require.Nil(t, payload.cache["2.8.0"].Error)
+		require.Greater(t, len(payload.configCache["2.8.0"].CompressedPayload), 0)
+		require.Nil(t, payload.configCache["2.8.0"].Error)
 
 		updatedPayload, err = payload.Payload(context.Background(), "2.7.0")
 		require.Nil(t, err)
 		require.Equal(t, expectedPayload270, updatedPayload.CompressedPayload)
-		_, found = payload.cache["2.7.0"]
-		require.True(t, found)
-		require.Greater(t, len(payload.cache["2.7.0"].CompressedPayload), 0)
-		require.Nil(t, payload.cache["2.7.0"].Error)
+		entry, err := payload.configCache.load("2.7.0")
+		require.NoError(t, err)
+		require.Greater(t, len(entry.CompressedPayload), 0)
+		require.NoError(t, entry.Error)
 	})
 
-	t.Run("ensure payload cache is cleared when updated", func(t *testing.T) {
+	t.Run("ensure payload configCache is cleared when updated", func(t *testing.T) {
 		payload, err := NewPayload(PayloadOpts{
 			VersionCompatibilityProcessor: wsvc,
 		})
@@ -129,23 +128,20 @@ func TestConfigPayload_Cache(t *testing.T) {
 			Hash:              "1133ae8be08017e5460160635daa22f2",
 		})
 		require.Nil(t, err)
-		require.Equal(t, len(payload.cache), 0)
 
 		updatedPayload, err := payload.Payload(context.Background(), "2.8.0")
 		require.Nil(t, err)
 		require.Equal(t, compressedPayload, updatedPayload.CompressedPayload)
-		_, found := payload.cache["2.8.0"]
-		require.True(t, found)
-		require.Greater(t, len(payload.cache["2.8.0"].CompressedPayload), 0)
-		require.Nil(t, payload.cache["2.8.0"].Error)
+		entry, err := payload.configCache.load("2.8.0")
+		require.NoError(t, err)
+		require.Greater(t, len(entry.CompressedPayload), 0)
+		require.NoError(t, entry.Error)
 
 		err = payload.UpdateBinary(context.Background(), config.Content{
 			CompressedPayload: compressedPayload,
 			Hash:              "1133ae8be08017e5460160635daa22f2",
 		})
-		require.Nil(t, err)
-		require.Equal(t, len(payload.cache), 0)
-		_, found = payload.cache["2.8.0"]
-		require.False(t, found)
+		_, err = payload.configCache.load("2.8.0")
+		require.ErrorIs(t, err, errNotFound)
 	})
 }

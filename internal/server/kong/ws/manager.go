@@ -47,6 +47,7 @@ func (d DefaultCluster) Get() string {
 func NewManager(opts ManagerOpts) *Manager {
 	payload, err := NewPayload(PayloadOpts{
 		VersionCompatibilityProcessor: opts.DPVersionCompatibility,
+		Logger:                        opts.Logger,
 	})
 	if err != nil {
 		panic(err)
@@ -236,8 +237,12 @@ func (m *Manager) broadcast() {
 	for _, node := range m.nodes.All() {
 		payload, err := m.payload.Payload(context.Background(), node.Version)
 		if err != nil {
-			m.logger.With(zap.Error(err)).Error("unable to gather payload")
-			return
+			m.logger.With(zap.Error(err)).Error("unable to gather payload, payload not sent to node")
+			// one node failure shouldn't result in no sync activity to all
+			// subsequent/nodes even though it is likely that all nodes are
+			// of same version
+			continue
+			// TODO(hbagdi) add a metric
 		}
 		loggerWithNode := nodeLogger(node, m.logger)
 		loggerWithNode.Info("broadcasting to node",
