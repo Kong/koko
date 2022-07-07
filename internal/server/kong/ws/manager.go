@@ -285,7 +285,7 @@ func (m *Manager) removeNode(node *Node) {
 			Error("remove node")
 	}
 	if err := node.Close(); err != nil {
-		nodeLogger(node, m.logger).Error("close node", zap.Error(err))
+		nodeLogger(node, m.logger).Info("close node", zap.Error(err))
 	}
 	if len(m.nodes.All()) == 0 {
 		m.logger.Info("no nodes connected, disabling stream")

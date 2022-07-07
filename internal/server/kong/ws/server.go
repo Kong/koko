@@ -166,9 +166,13 @@ func (h wrpcHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		h.respondWithErr(w, r, err)
 		return
 	}
+	var node *Node
 	peer := &wrpc.Peer{
 		ErrLogger: func(err error) {
 			h.logger.With(zap.Error(err), zap.String("wrpc-client-ip", r.RemoteAddr)).Error("peer object")
+		},
+		ClosedCallbackFunc: func(p *wrpc.Peer) {
+			m.removeNode(node)
 		},
 	}
 	err = h.baseServices.Register(peer)
@@ -183,7 +187,7 @@ func (h wrpcHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	queryParams := r.URL.Query()
-	node, err := NewNode(nodeOpts{
+	node, err = NewNode(nodeOpts{
 		id:       queryParams.Get(nodeIDKey),
 		hostname: queryParams.Get(nodeHostnameKey),
 		version:  queryParams.Get(nodeVersionKey),
