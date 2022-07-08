@@ -2,31 +2,28 @@ package ws
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sync"
 
 	"github.com/kong/koko/internal/server/kong/ws/config"
+	"go.uber.org/zap"
 )
 
-// CachedContent holds the processed payload for a particular data plane
-// version. This content may be different than the actual Conent container as
-// the CompressedPayload could be updated for version compatibility.
-type CachedContent struct {
-	CompressedPayload []byte
-	// Error is stored to return the original error when accessing the cache
-	Error error
-	Hash  string
-}
+const unversionedConfigKey = "unversioned"
 
 type Payload struct {
-	content config.Content
-	cache   map[string]CachedContent
-	mu      sync.Mutex
-	vc      config.VersionCompatibility
+	// configCache is a cache of configuration. It holds the originally fetched
+	// configuration as well as massaged configuration for each DP version.
+	configCache     configCache
+	configCacheLock sync.Mutex
+	vc              config.VersionCompatibility
+	logger          *zap.Logger
 }
 
 type PayloadOpts struct {
 	VersionCompatibilityProcessor config.VersionCompatibility
+	Logger                        *zap.Logger
 }
 
 func NewPayload(opts PayloadOpts) (*Payload, error) {
@@ -35,37 +32,88 @@ func NewPayload(opts PayloadOpts) (*Payload, error) {
 	}
 
 	return &Payload{
-		vc:    opts.VersionCompatibilityProcessor,
-		cache: map[string]CachedContent{},
+		vc:          opts.VersionCompatibilityProcessor,
+		configCache: configCache{},
+		logger:      opts.Logger,
 	}, nil
 }
 
-func (p *Payload) Payload(_ context.Context, versionStr string) (config.Content, error) {
-	p.mu.Lock()
-	defer p.mu.Unlock()
+func (p *Payload) Payload(_ context.Context, version string) (config.Content, error) {
+	p.configCacheLock.Lock()
+	defer p.configCacheLock.Unlock()
 
-	if _, found := p.cache[versionStr]; !found {
-		updatedPayload, err := p.vc.ProcessConfigTableUpdates(versionStr, p.content.CompressedPayload)
-		p.cache[versionStr] = CachedContent{
-			CompressedPayload: updatedPayload,
-			Error:             err,
-			Hash:              p.content.Hash,
-		}
+	entry, err := p.configForVersion(version)
+	if err != nil {
+		return config.Content{}, err
 	}
 
-	if p.cache[versionStr].Error != nil {
-		return config.Content{}, fmt.Errorf("downgrade config: %v", p.cache[versionStr].Error)
+	if entry.Error != nil {
+		return config.Content{}, fmt.Errorf("downgrade config: %v", entry.Error)
 	}
+
 	return config.Content{
-		CompressedPayload: p.cache[versionStr].CompressedPayload,
-		Hash:              p.cache[versionStr].Hash,
+		CompressedPayload: entry.CompressedPayload,
+		Hash:              entry.Hash,
 	}, nil
+}
+
+func (p *Payload) configForVersion(version string) (cacheEntry, error) {
+	contentCacheEntry, err := p.configCache.load(version)
+	if err == nil {
+		// fast path
+		return contentCacheEntry, nil
+	}
+
+	// cache-miss, slow path
+	if errors.Is(err, errNotFound) {
+		unversionedConfig, err := p.configCache.load(unversionedConfigKey)
+		if err != nil {
+			return cacheEntry{}, err
+		}
+		// build the config for version
+		updatedPayload, err := p.vc.ProcessConfigTableUpdates(version, unversionedConfig.CompressedPayload)
+		entry := cacheEntry{
+			Content: config.Content{
+				CompressedPayload: updatedPayload,
+				// Hash must remain stable across version.
+				Hash: unversionedConfig.Hash,
+			},
+			Error: err,
+		}
+		if err != nil {
+			p.logger.Error("failed to process config table update",
+				zap.Error(err),
+				zap.String("kong-dp-version", version),
+			)
+		}
+		// cache it
+		err = p.configCache.store(version, entry)
+		if err != nil {
+			p.logger.Error("failed to store configuration from cache",
+				zap.Error(err),
+				zap.String("kong-dp-version", version),
+			)
+			// on cache store failures, still serve the config
+			return entry, nil
+		}
+		return entry, nil
+	}
+
+	// other errors
+	return cacheEntry{}, err
 }
 
 func (p *Payload) UpdateBinary(_ context.Context, c config.Content) error {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-	p.content = c
-	p.cache = make(map[string]CachedContent)
+	p.configCacheLock.Lock()
+	defer p.configCacheLock.Unlock()
+	err := p.configCache.reset()
+	if err != nil {
+		return err
+	}
+	err = p.configCache.store(unversionedConfigKey, cacheEntry{Content: c})
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
