@@ -19,7 +19,7 @@ service ConfigService {
   // +wrpc:rpc-id=1
   rpc GetCapabilities(GetCapabilitiesRequest) returns (GetCapabilitiesResponse);
 
-  // ReportBasicInfo informs the software installed in the DP.  Currently
+  // ReportMetadata informs the software installed in the DP.  Currently
   // this is the list of plugins with respective version.  It's required
   // that the DP send this information in order to receive configuration
   // updates.
