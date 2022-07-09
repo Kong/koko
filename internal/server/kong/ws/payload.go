@@ -114,11 +114,16 @@ func (p *Payload) configForVersion(version string) (cacheEntry, error) {
 	return cacheEntry{}, err
 }
 
-func (p *Payload) WrpcConfigPayload(versionStr string) (CachedWrpcContent, error) {
-	// 	p.mu.Lock()
-	// 	defer p.mu.Unlock()
+func (p *Payload) readWRPCCache(versionStr string) (wc CachedWrpcContent, found bool) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
 
-	if wc, found := p.wrpcCache[versionStr]; found {
+	wc, found = p.wrpcCache[versionStr]
+	return
+}
+
+func (p *Payload) WrpcConfigPayload(ctx context.Context, versionStr string) (CachedWrpcContent, error) {
+	if wc, found := p.readWRPCCache(versionStr); found {
 		if wc.Error != nil {
 			return CachedWrpcContent{}, fmt.Errorf("wrpc SyncConfig Request preparation: %w", wc.Error)
 		}
@@ -126,7 +131,7 @@ func (p *Payload) WrpcConfigPayload(versionStr string) (CachedWrpcContent, error
 	}
 
 	// TODO: get an uncompressed, unencoded source.
-	c, err := p.Payload(context.Background(), versionStr)
+	c, err := p.Payload(ctx, versionStr)
 	if err != nil {
 		return CachedWrpcContent{}, err
 	}

@@ -309,13 +309,12 @@ func (m *Manager) FindNode(remoteAddress string) *Node {
 // A wrpc node isn't directly added to the `m.nodes` list.
 // Instead, as soon as their connection is live, they're added to
 // the `m.pendingNodes` list until it finishes some initialization.
-func (m *Manager) AddPendingNode(node *Node) {
-	node.logger.Debug("adding as pending node", zap.String("addr", node.RemoteAddr().String()))
+func (m *Manager) AddPendingNode(node *Node) error {
 	if err := m.pendingNodes.Add(node); err != nil {
-		m.logger.With(zap.Error(err)).Error("adding to pending node list")
-		node.Close()
+		return err
 	}
 	m.writeNode(node)
+	return nil
 }
 
 // addWrpcNode is called on behalf of a node when it is ready
@@ -331,20 +330,25 @@ func (m *Manager) addWrpcNode(node *Node, pluginList []string) error {
 
 	err = m.pendingNodes.Remove(node)
 	if err != nil {
-		return err
+		return fmt.Errorf("taking node from pending list: %w", err)
 	}
 
 	m.AddNode(node)
 	return nil
 }
 
+const defaultBroadcastTimeout = 1 * time.Minute // should this be configurable?
+
 // broadcast sends the most recent configuration to all connected nodes.
 func (m *Manager) broadcast() {
 	m.broadcastMutex.Lock()
 	defer m.broadcastMutex.Unlock()
-	ctx := context.Background() // should it be tied to the lock?
+	// NOTE: since wRPC syncs are done in goroutines, they continue after
+	// this loop has finished and the lock has been released.
+	// Avoid overlaps by either cancelling the passed context, or
+	// by only releasing the lock after all configs have been acked.
 	for _, node := range m.nodes.All() {
-		if err := node.sendConfig(ctx, m.payload); err != nil {
+		if err := node.sendConfig(m.ctx, m.payload); err != nil {
 			m.logger.With(zap.Error(err)).Error("unable to gather payload, payload not sent to node")
 			// one node failure shouldn't result in no sync activity to all
 			// subsequent/nodes even though it is likely that all nodes are

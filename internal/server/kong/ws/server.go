@@ -196,5 +196,8 @@ func (h wrpcHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		h.respondWithErr(w, r, err)
 		return
 	}
-	m.AddPendingNode(node)
+	if err = m.AddPendingNode(node); err != nil {
+		m.logger.Error("adding to pending node list", zap.Error(err))
+		node.Close()
+	}
 }

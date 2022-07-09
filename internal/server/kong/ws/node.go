@@ -192,13 +192,16 @@ func (n *Node) sendConfig(ctx context.Context, payload *Payload) error {
 	}
 
 	if n.peer != nil {
-		return n.sendWrpcConfig(ctx, payload)
+		return n.sendWRPCConfig(ctx, payload)
 	}
 
 	return fmt.Errorf("node disconnected")
 }
 
 func (n *Node) sendJSONConfig(ctx context.Context, payload *Payload) error {
+	ctx, cancel := context.WithTimeout(ctx, defaultBroadcastTimeout)
+	defer cancel()
+
 	content, err := payload.Payload(ctx, n.Version)
 	if err != nil {
 		return fmt.Errorf("unable to gather payload: %w", err)
@@ -221,8 +224,8 @@ func (n *Node) sendJSONConfig(ctx context.Context, payload *Payload) error {
 	return nil
 }
 
-func (n *Node) sendWrpcConfig(ctx context.Context, payload *Payload) error {
-	content, err := payload.WrpcConfigPayload(n.Version)
+func (n *Node) sendWRPCConfig(ctx context.Context, payload *Payload) error {
+	content, err := payload.WrpcConfigPayload(ctx, n.Version)
 	if err != nil {
 		n.logger.With(zap.Error(err)).Error("preparing wrpc config payload")
 		return err
@@ -230,7 +233,7 @@ func (n *Node) sendWrpcConfig(ctx context.Context, payload *Payload) error {
 
 	hash, err := truncateHash(content.Hash)
 	if err != nil {
-		n.logger.With(zap.Error(err)).Sugar().Errorf("invalid hash [%s]", hash[:])
+		n.logger.Error("invalid hash", zap.Error(err), zap.String("hash", hash.String()))
 		return err
 	}
 
@@ -242,6 +245,9 @@ func (n *Node) sendWrpcConfig(ctx context.Context, payload *Payload) error {
 
 	var out config_service.SyncConfigResponse
 	go func() {
+		ctx, cancel := context.WithTimeout(ctx, defaultBroadcastTimeout)
+		defer cancel()
+
 		err := n.peer.DoRequest(ctx, content.Req, &out)
 		if err != nil {
 			n.logger.With(zap.Error(err)).Error("sending config")

@@ -304,9 +304,7 @@ func Run(ctx context.Context, config ServerConfig) error {
 			zap.String("wrpc-service", "negotiation"),
 		),
 	}
-	err = negotiator.AddService("config", "v1", "wRPC configuration", &ws.Configer{
-		Manager: m,
-	})
+	err = negotiator.AddService("config", "v1", "wRPC configuration", ws.NewConfigurer(m))
 	if err != nil {
 		return err
 	}
