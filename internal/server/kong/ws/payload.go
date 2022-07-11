@@ -23,10 +23,10 @@ type CachedWrpcContent struct {
 type Payload struct {
 	// configCache is a cache of configuration. It holds the originally fetched
 	// configuration as well as massaged configuration for each DP version.
-	configVersion uint64
+	configVersion   uint64
 	configCache     configCache
 	configCacheLock sync.Mutex
-	wrpcCache     map[string]CachedWrpcContent
+	wrpcCache       map[string]CachedWrpcContent
 	vc              config.VersionCompatibility
 	logger          *zap.Logger
 }
@@ -45,7 +45,7 @@ func NewPayload(opts PayloadOpts) (*Payload, error) {
 		vc:          opts.VersionCompatibilityProcessor,
 		configCache: configCache{},
 		logger:      opts.Logger,
-		wrpcCache: map[string]CachedWrpcContent{},
+		wrpcCache:   map[string]CachedWrpcContent{},
 	}, nil
 }
 
@@ -115,8 +115,8 @@ func (p *Payload) configForVersion(version string) (cacheEntry, error) {
 }
 
 func (p *Payload) readWRPCCache(versionStr string) (wc CachedWrpcContent, found bool) {
-	p.mu.Lock()
-	defer p.mu.Unlock()
+	p.configCacheLock.Lock()
+	defer p.configCacheLock.Unlock()
 
 	wc, found = p.wrpcCache[versionStr]
 	return
@@ -142,8 +142,8 @@ func (p *Payload) WrpcConfigPayload(ctx context.Context, versionStr string) (Cac
 		ConfigHash: c.Hash,
 	}
 
-	p.mu.Lock()
-	defer p.mu.Unlock()
+	p.configCacheLock.Lock()
+	defer p.configCacheLock.Unlock()
 
 	req, err := config_service.PrepareConfigServiceSyncConfigRequest(&configTable)
 	wc := CachedWrpcContent{
@@ -158,6 +158,8 @@ func (p *Payload) WrpcConfigPayload(ctx context.Context, versionStr string) (Cac
 func (p *Payload) UpdateBinary(_ context.Context, c config.Content) error {
 	p.configCacheLock.Lock()
 	defer p.configCacheLock.Unlock()
+
+	p.configVersion++
 	err := p.configCache.reset()
 	if err != nil {
 		return err
