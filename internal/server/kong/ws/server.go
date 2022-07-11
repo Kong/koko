@@ -31,9 +31,11 @@ func NewHandler(opts HandlerOpts) (http.Handler, error) {
 		authenticator: opts.Authenticator,
 	})
 	mux.Handle("/v1/wrpc", wrpcHandler{
-		logger:        opts.Logger,
-		authenticator: opts.Authenticator,
-		baseServices:  opts.BaseServices,
+		handler: handler{
+			logger:        opts.Logger,
+			authenticator: opts.Authenticator,
+		},
+		baseServices: opts.BaseServices,
 	})
 	mux.HandleFunc("/health", func(w http.ResponseWriter,
 		_ *http.Request,
@@ -100,11 +102,16 @@ func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	node := &Node{
-		ID:       nodeID,
-		Hostname: nodeHostname,
-		Version:  nodeVersion,
-		conn:     c,
+	node, err := NewNode(nodeOpts{
+		id:         nodeID,
+		hostname:   nodeHostname,
+		version:    nodeVersion,
+		connection: c,
+	})
+	if err != nil {
+		h.logger.Error("Create wRPC Node failed", zap.Error(err), zap.String("wrpc-client-ip", r.RemoteAddr))
+		h.respondWithErr(w, r, err)
+		return
 	}
 	node.logger = nodeLogger(node, m.logger)
 	m.AddNode(node)
@@ -134,19 +141,25 @@ func (h handler) respondWithErr(w http.ResponseWriter, _ *http.Request,
 }
 
 type wrpcHandler struct {
-	logger        *zap.Logger
-	authenticator Authenticator
-	baseServices  Registerer
+	handler
+	baseServices Registerer
 }
 
 func (h wrpcHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if err := validateRequest(r); err != nil {
-		h.closeWithErr(w, http.StatusBadRequest, err)
+		w.WriteHeader(http.StatusBadRequest)
+		_, err := w.Write([]byte(err.Error()))
+		if err != nil {
+			h.logger.With(zap.Error(err)).Error(
+				"write bad request response for websocket upgrade")
+		}
+		h.logger.Info("received invalid websocket upgrade request from DP",
+			zap.Error(err))
 		return
 	}
 	m, err := h.authenticator.Authenticate(r)
 	if err != nil {
-		h.closeWithErr(w, http.StatusBadRequest, err)
+		h.respondWithErr(w, r, err)
 		return
 	}
 	peer := &wrpc.Peer{
@@ -166,23 +179,20 @@ func (h wrpcHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	queryParams := r.URL.Query()
-	node := &Node{
-		ID:       queryParams.Get(nodeIDKey),
-		Hostname: queryParams.Get(nodeHostnameKey),
-		Version:  queryParams.Get(nodeVersionKey),
+	node, err := NewNode(nodeOpts{
+		id:       queryParams.Get(nodeIDKey),
+		hostname: queryParams.Get(nodeHostnameKey),
+		version:  queryParams.Get(nodeVersionKey),
 		peer:     peer,
 		logger:   h.logger.With(zap.String("wrpc-client-ip", r.RemoteAddr)),
+	})
+	if err != nil {
+		h.logger.Error("Create wRPC Node failed", zap.Error(err), zap.String("wrpc-client-ip", r.RemoteAddr))
+		h.respondWithErr(w, r, err)
+		return
 	}
 
 	// TODO: add the node somewhere until it's completed by some service
 	_ = m
 	_ = node
-}
-
-func (h wrpcHandler) closeWithErr(w http.ResponseWriter, statusCode int, errmsg error) {
-	w.WriteHeader(statusCode)
-	_, err := w.Write([]byte(errmsg.Error()))
-	if err != nil {
-		h.logger.With(zap.Error(err)).Error("Writing error to WebSocket")
-	}
 }

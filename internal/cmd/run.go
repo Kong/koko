@@ -279,7 +279,7 @@ func Run(ctx context.Context, config ServerConfig) error {
 		Cluster: m.Cluster,
 		Logger: controlLogger.With(
 			zap.String("protocol", "wRPC"),
-			zap.String("service", "negotiation"),
+			zap.String("wrpc-service", "negotiation"),
 		),
 	}
 

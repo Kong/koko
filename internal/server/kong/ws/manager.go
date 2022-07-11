@@ -285,8 +285,8 @@ func (m *Manager) removeNode(node *Node) {
 }
 
 // FindNode returns a pointer to the node given a remote address
-// and a boolean indicating success.
-func (m *Manager) FindNode(remoteAddress string) (*Node, bool) {
+// or nil if it none found.
+func (m *Manager) FindNode(remoteAddress string) *Node {
 	return m.nodes.FindNode(remoteAddress)
 }
 

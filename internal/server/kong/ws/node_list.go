@@ -27,14 +27,17 @@ func (l *NodeList) Remove(node *Node) error {
 	return nil
 }
 
-func (l *NodeList) FindNode(remoteAddress string) (node *Node, ok bool) {
+func (l *NodeList) FindNode(remoteAddress string) *Node {
 	value, ok := l.nodes.Load(remoteAddress)
 	if !ok {
-		return
+		return nil
 	}
 
-	node, ok = value.(*Node)
-	return
+	node, ok := value.(*Node)
+	if !ok {
+		panic(fmt.Sprintf("expected type %T but got %T", Node{}, value))
+	}
+	return node
 }
 
 func (l *NodeList) All() []*Node {

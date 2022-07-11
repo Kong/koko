@@ -52,12 +52,38 @@ type Node struct {
 	hash     sum
 }
 
+type nodeOpts struct {
+	id         string
+	version    string
+	hostname   string
+	connection *websocket.Conn
+	peer       *wrpc.Peer
+	logger     *zap.Logger
+}
+
 type ErrConnClosed struct {
 	Code int
 }
 
 func (e ErrConnClosed) Error() string {
 	return fmt.Sprintf("websocket connection closed (code: %v)", e.Code)
+}
+
+func NewNode(opts nodeOpts) (*Node, error) {
+	if opts.connection == nil && opts.peer == nil {
+		return nil, fmt.Errorf("a Node requires either a WebSocket connection or a wRPC peer")
+	}
+	if opts.connection != nil && opts.peer != nil {
+		return nil, fmt.Errorf("a Node can't have both a WebSocket connection and a wRPC peer")
+	}
+	return &Node{
+		ID:       opts.id,
+		Version:  opts.version,
+		Hostname: opts.hostname,
+		conn:     opts.connection,
+		peer:     opts.peer,
+		logger:   opts.logger,
+	}, nil
 }
 
 // Close ends the Node's lifetime and of its connection.
