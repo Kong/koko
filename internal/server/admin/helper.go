@@ -20,28 +20,10 @@ var (
 	wildcardHostnameRegex = regexp.MustCompile(fmt.Sprintf(`%s{1,256}$`, typedefs.WilcardHostnamePattern))
 )
 
-func validateListOptions(listOpts *pbModel.PaginationRequest) error {
-	if listOpts.Number < 0 {
-		return util.ErrClient{Message: fmt.Sprintf("invalid page number '%d', page must be > 0", listOpts.Number)}
-	}
-	if listOpts.Size < 0 || listOpts.Size > store.MaxPageSize {
-		return util.ErrClient{Message: fmt.Sprintf(
-			"invalid page_size '%d', must be within range [1 - %d]",
-			listOpts.Size,
-			store.MaxPageSize,
-		)}
-	}
-	return nil
-}
-
-func validUUID(id string) error {
-	if _, err := uuid.Parse(id); err != nil {
-		return util.ErrClient{Message: fmt.Sprintf(" '%v' is not a valid uuid", id)}
-	}
-	return nil
-}
-
-func listOptsFromReq(listOpts *pbModel.PaginationRequest) ([]store.ListOptsFunc, error) {
+// ListOptsFromReq validates & transforms a Protobuf pagination request message to
+// a list of persistence store options. When a nil Protobuf pagination request is
+// passed in, an empty slice of persistence store options and no error is returned.
+func ListOptsFromReq(listOpts *pbModel.PaginationRequest) ([]store.ListOptsFunc, error) {
 	// No pagination request message, so we'll no-op.
 	if listOpts == nil {
 		return nil, nil
@@ -66,6 +48,27 @@ func listOptsFromReq(listOpts *pbModel.PaginationRequest) ([]store.ListOptsFunc,
 	}
 
 	return opts, nil
+}
+
+func validateListOptions(listOpts *pbModel.PaginationRequest) error {
+	if listOpts.Number < 0 {
+		return util.ErrClient{Message: fmt.Sprintf("invalid page number '%d', page must be > 0", listOpts.Number)}
+	}
+	if listOpts.Size < 0 || listOpts.Size > store.MaxPageSize {
+		return util.ErrClient{Message: fmt.Sprintf(
+			"invalid page_size '%d', must be within range [1 - %d]",
+			listOpts.Size,
+			store.MaxPageSize,
+		)}
+	}
+	return nil
+}
+
+func validUUID(id string) error {
+	if _, err := uuid.Parse(id); err != nil {
+		return util.ErrClient{Message: fmt.Sprintf(" '%v' is not a valid uuid", id)}
+	}
+	return nil
 }
 
 func getPaginationResponse(totalCount int, nextPage int) *pbModel.PaginationResponse {

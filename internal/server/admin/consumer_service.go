@@ -117,7 +117,7 @@ func (s *ConsumerService) ListConsumers(ctx context.Context,
 		return nil, err
 	}
 	list := resource.NewList(resource.TypeConsumer)
-	listOptFns, err := listOptsFromReq(req.Page)
+	listOptFns, err := ListOptsFromReq(req.Page)
 	if err != nil {
 		return nil, s.err(ctx, err)
 	}
