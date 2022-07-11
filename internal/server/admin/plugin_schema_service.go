@@ -77,7 +77,7 @@ func (s *PluginSchemaService) ListLuaPluginSchemas(ctx context.Context,
 
 	listFn := []store.ListOptsFunc{}
 	list := resource.NewList(resource.TypePluginSchema)
-	listOptFns, err := listOptsFromReq(req.Page)
+	listOptFns, err := ListOptsFromReq(req.Page)
 	if err != nil {
 		return nil, s.err(ctx, err)
 	}
@@ -149,7 +149,7 @@ func (s *PluginSchemaService) getPluginsPage(
 	ctx context.Context, page int32, db store.Store,
 ) ([]*pb.Plugin, int, error) {
 	list := resource.NewList(resource.TypePlugin)
-	listOptFns, err := listOptsFromReq(&pb.PaginationRequest{
+	listOptFns, err := ListOptsFromReq(&pb.PaginationRequest{
 		Number: page,
 		Size:   store.MaxPageSize,
 	})

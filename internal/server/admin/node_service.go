@@ -102,7 +102,7 @@ func (s *NodeService) ListNodes(ctx context.Context,
 		return nil, err
 	}
 	list := resource.NewList(resource.TypeNode)
-	listOptFns, err := listOptsFromReq(req.Page)
+	listOptFns, err := ListOptsFromReq(req.Page)
 	if err != nil {
 		return nil, s.err(ctx, err)
 	}

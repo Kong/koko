@@ -93,7 +93,7 @@ func (s *StatusService) ListStatuses(ctx context.Context,
 	}
 
 	list := resource.NewList(resource.TypeStatus)
-	listOptFns, err := listOptsFromReq(req.Page)
+	listOptFns, err := ListOptsFromReq(req.Page)
 	if err != nil {
 		return nil, s.err(ctx, err)
 	}

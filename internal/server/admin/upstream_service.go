@@ -101,7 +101,7 @@ func (s *UpstreamService) ListUpstreams(ctx context.Context,
 		return nil, err
 	}
 	list := resource.NewList(resource.TypeUpstream)
-	listOptFns, err := listOptsFromReq(req.Page)
+	listOptFns, err := ListOptsFromReq(req.Page)
 	if err != nil {
 		return nil, s.err(ctx, err)
 	}

@@ -152,7 +152,7 @@ func (s *PluginService) ListPlugins(ctx context.Context,
 	}
 
 	list := resource.NewList(resource.TypePlugin)
-	listOptFns, err := listOptsFromReq(req.Page)
+	listOptFns, err := ListOptsFromReq(req.Page)
 	if err != nil {
 		return nil, s.err(ctx, err)
 	}

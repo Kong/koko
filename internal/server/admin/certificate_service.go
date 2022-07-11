@@ -105,7 +105,7 @@ func (s *CertificateService) ListCertificates(ctx context.Context,
 		return nil, err
 	}
 	list := resource.NewList(resource.TypeCertificate)
-	listOptFns, err := listOptsFromReq(req.Page)
+	listOptFns, err := ListOptsFromReq(req.Page)
 	if err != nil {
 		return nil, s.err(ctx, err)
 	}
