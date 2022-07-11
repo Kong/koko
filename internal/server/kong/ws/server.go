@@ -26,15 +26,21 @@ type HandlerOpts struct {
 
 func NewHandler(opts HandlerOpts) (http.Handler, error) {
 	mux := &http.ServeMux{}
-	mux.Handle("/v1/outlet", handler{
+	mux.Handle("/v1/outlet", websocketHandler{
 		logger:        opts.Logger,
 		authenticator: opts.Authenticator,
 	})
-	mux.Handle("/v1/wrpc", wrpcHandler{
-		logger:        opts.Logger,
-		authenticator: opts.Authenticator,
-		baseServices:  opts.BaseServices,
-	})
+
+	if opts.BaseServices != nil {
+		mux.Handle("/v1/wrpc", wrpcHandler{
+			websocketHandler: websocketHandler{
+				logger:        opts.Logger,
+				authenticator: opts.Authenticator,
+			},
+			baseServices: opts.BaseServices,
+		})
+	}
+
 	mux.HandleFunc("/health", func(w http.ResponseWriter,
 		_ *http.Request,
 	) {
@@ -44,7 +50,7 @@ func NewHandler(opts HandlerOpts) (http.Handler, error) {
 	return mux, nil
 }
 
-type handler struct {
+type websocketHandler struct {
 	logger        *zap.Logger
 	authenticator Authenticator
 }
@@ -65,7 +71,7 @@ func validateRequest(r *http.Request) error {
 	return nil
 }
 
-func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (h websocketHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if err := validateRequest(r); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		_, err := w.Write([]byte(err.Error()))
@@ -100,17 +106,23 @@ func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	node := &Node{
-		ID:       nodeID,
-		Hostname: nodeHostname,
-		Version:  nodeVersion,
-		conn:     c,
+	node, err := NewNode(nodeOpts{
+		id:         nodeID,
+		hostname:   nodeHostname,
+		version:    nodeVersion,
+		connection: c,
+	})
+	if err != nil {
+		h.logger.Error("Create wRPC Node failed", zap.Error(err), zap.String("wrpc-client-ip", r.RemoteAddr))
+		h.respondWithErr(w, r, err)
+		return
 	}
 	node.logger = nodeLogger(node, m.logger)
 	m.AddNode(node)
 }
 
-func (h handler) respondWithErr(w http.ResponseWriter, _ *http.Request,
+// respondWithErr sends an error HTTP response, with a json message.
+func (h websocketHandler) respondWithErr(w http.ResponseWriter, _ *http.Request,
 	err error,
 ) {
 	authErr, ok := err.(ErrAuth)
@@ -134,19 +146,23 @@ func (h handler) respondWithErr(w http.ResponseWriter, _ *http.Request,
 }
 
 type wrpcHandler struct {
-	logger        *zap.Logger
-	authenticator Authenticator
-	baseServices  Registerer
+	websocketHandler
+	baseServices Registerer
 }
 
 func (h wrpcHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if err := validateRequest(r); err != nil {
-		h.closeWithErr(w, http.StatusBadRequest, err)
+		w.WriteHeader(http.StatusBadRequest)
+		_, err := w.Write([]byte(err.Error()))
+		if err != nil {
+			h.logger.Error("write bad request response for websocket upgrade", zap.Error(err))
+		}
+		h.logger.Info("received invalid websocket upgrade request from DP", zap.Error(err))
 		return
 	}
 	m, err := h.authenticator.Authenticate(r)
 	if err != nil {
-		h.closeWithErr(w, http.StatusBadRequest, err)
+		h.respondWithErr(w, r, err)
 		return
 	}
 	peer := &wrpc.Peer{
@@ -156,33 +172,30 @@ func (h wrpcHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	err = h.baseServices.Register(peer)
 	if err != nil {
-		h.logger.With(zap.Error(err)).Error("register base wRPC services")
+		h.logger.Error("register base wRPC services", zap.Error(err))
 		return
 	}
 	err = peer.Upgrade(w, r)
 	if err != nil {
-		h.logger.With(zap.Error(err)).Error("upgrade to wRPC connection failed")
+		h.logger.Error("upgrade to wRPC connection failed", zap.Error(err))
 		return
 	}
 
 	queryParams := r.URL.Query()
-	node := &Node{
-		ID:       queryParams.Get(nodeIDKey),
-		Hostname: queryParams.Get(nodeHostnameKey),
-		Version:  queryParams.Get(nodeVersionKey),
+	node, err := NewNode(nodeOpts{
+		id:       queryParams.Get(nodeIDKey),
+		hostname: queryParams.Get(nodeHostnameKey),
+		version:  queryParams.Get(nodeVersionKey),
 		peer:     peer,
 		logger:   h.logger.With(zap.String("wrpc-client-ip", r.RemoteAddr)),
+	})
+	if err != nil {
+		h.logger.Error("Create wRPC Node failed", zap.Error(err), zap.String("wrpc-client-ip", r.RemoteAddr))
+		h.respondWithErr(w, r, err)
+		return
 	}
 
 	// TODO: add the node somewhere until it's completed by some service
 	_ = m
 	_ = node
-}
-
-func (h wrpcHandler) closeWithErr(w http.ResponseWriter, statusCode int, errmsg error) {
-	w.WriteHeader(statusCode)
-	_, err := w.Write([]byte(errmsg.Error()))
-	if err != nil {
-		h.logger.With(zap.Error(err)).Error("Writing error to WebSocket")
-	}
 }

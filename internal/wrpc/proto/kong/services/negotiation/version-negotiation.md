@@ -144,15 +144,15 @@ which then can be iterated on in semi-independent fashion.
 
 ### HTTP Protocol
 
-Version negotiating could use an HTTP requests and not a wRPC request.
+Version negotiating could use an HTTP request and not a wRPC request.
 This gives flexibility to change the RPC protocol in future iterations.
-It is expected that the all layers below and including HTTP will not change,
+It is expected that all the layers below and including HTTP will not change,
 but layers above HTTP (like wRPC) may change in future.
 
 ### ALPN in TLS for protocol negotiation
 
 This was avoided to guard against cases where an L7 proxy is being used between
-the DP and CP. The proxy could drop the ALPN as part of connections setup.
+the DP and CP. The proxy could drop the ALPN as part of connection setup.
 
 ## Questions raised and answered
 
@@ -161,7 +161,7 @@ when mTLS is being used for authentication purposes?
 
 Answer:
 - Yes, TLS is required for integrity and confidentiality.
-- Sine authentication happens before negotiation, mTLS or any other auth schem
+- Since authentication happens before negotiation, mTLS or any other auth scheme
   will be compatible. Details are noted in [authentication.md](authentication.md).
 
 Are there security concerns since this could be used to leak version information?

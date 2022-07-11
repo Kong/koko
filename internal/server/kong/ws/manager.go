@@ -174,7 +174,7 @@ func (m *Manager) setupPingHandler(node *Node) {
 		}
 		loggerWithNode := nodeLogger(node, m.logger)
 		loggerWithNode.Info("websocket ping handler received hash",
-			zap.String("hash", appData))
+			zap.String("config_hash", appData))
 
 		node.lock.Lock()
 		node.hash, err = truncateHash(appData)
@@ -272,11 +272,10 @@ func (m *Manager) removeNode(node *Node) {
 	defer m.nodeTrackingMu.Unlock()
 	// TODO(hbagdi): may need more graceful error handling
 	if err := m.nodes.Remove(node); err != nil {
-		nodeLogger(node, m.logger).With(zap.Error(err)).
-			Error("remove node")
+		nodeLogger(node, m.logger).Error("failed to remove node", zap.Error(err))
 	}
 	if err := node.Close(); err != nil {
-		nodeLogger(node, m.logger).Error("close node", zap.Error(err))
+		nodeLogger(node, m.logger).Error("error closing node", zap.Error(err))
 	}
 	if len(m.nodes.All()) == 0 {
 		m.logger.Info("no nodes connected, disabling stream")
@@ -285,8 +284,8 @@ func (m *Manager) removeNode(node *Node) {
 }
 
 // FindNode returns a pointer to the node given a remote address
-// and a boolean indicating success.
-func (m *Manager) FindNode(remoteAddress string) (*Node, bool) {
+// or nil if it none found.
+func (m *Manager) FindNode(remoteAddress string) *Node {
 	return m.nodes.FindNode(remoteAddress)
 }
 
@@ -306,7 +305,7 @@ func (m *Manager) broadcast() {
 		}
 		loggerWithNode := nodeLogger(node, m.logger)
 		loggerWithNode.Info("broadcasting to node",
-			zap.String("hash", payload.Hash))
+			zap.String("config_hash", payload.Hash))
 		// TODO(hbagdi): perf: use websocket.PreparedMessage
 		hash, err := truncateHash(payload.Hash)
 		if err != nil {
@@ -340,7 +339,7 @@ func (m *Manager) reconcileKongPayload(ctx context.Context) error {
 		return err
 	}
 	m.logger.Info("payload reconciled successfully",
-		zap.String("hash", config.Hash))
+		zap.String("config_hash", config.Hash))
 
 	return nil
 }
@@ -354,7 +353,7 @@ func (m *Manager) updateExpectedHash(ctx context.Context, hash string) {
 	// TODO(hbagdi): add retry with backoff, take a new hash during retry into account
 	ctx, cancel := context.WithTimeout(ctx, defaultRequestTimeout)
 	defer cancel()
-	m.logger.Info("update expected hash in database", zap.String("hash", hash))
+	m.logger.Info("update expected hash in database", zap.String("config_hash", hash))
 	_, err := m.configClient.Status.UpdateExpectedHash(ctx, &relay.UpdateExpectedHashRequest{
 		Cluster: m.reqCluster(),
 		Hash:    hash,

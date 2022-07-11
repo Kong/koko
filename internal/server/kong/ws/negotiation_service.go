@@ -41,8 +41,8 @@ type Negotiator struct {
 	knownVersions map[string][]serviceVersion
 }
 
-// Associates a service name and version with
-// a registerer object and a descriptive message.
+// AddService associates a service name and version
+// with a registerer object and a descriptive message.
 // To be used during startup to define which
 // services are available on a server.
 func (n *Negotiator) AddService(
@@ -81,7 +81,7 @@ func (n *Negotiator) Register(peer *wrpc.Peer) error {
 		})
 }
 
-// Choose the best version for a requested service.
+// chooseVersion selects the best version for a requested service.
 func (n *Negotiator) chooseVersion(requestedServ *model.ServiceRequest) (choice serviceVersion, ok bool) {
 	known, ok := n.knownVersions[requestedServ.Name]
 	if !ok {
