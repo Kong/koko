@@ -3,6 +3,7 @@ package ws
 import (
 	"fmt"
 
+	"github.com/kong/go-wrpc/wrpc"
 	"github.com/kong/koko/internal/server/kong/ws/config"
 )
 
@@ -35,6 +36,36 @@ func (c configCache) load(key string) (cacheEntry, error) {
 }
 
 func (c configCache) reset() error {
+	for k := range c {
+		delete(c, k)
+	}
+	return nil
+}
+
+// CachedWrpcContent holds a prepared wRPC sync request.
+type CachedWrpcContent struct {
+	Req   wrpc.Request
+	Error error
+	Hash  string
+}
+
+// configWRPCCache keeps config requests parallel to configCache.
+type configWRPCCache map[string]CachedWrpcContent
+
+func (c configWRPCCache) store(key string, value CachedWrpcContent) error {
+	c[key] = value
+	return nil
+}
+
+func (c configWRPCCache) load(key string) (CachedWrpcContent, error) {
+	value, found := c[key]
+	if !found {
+		return CachedWrpcContent{}, errNotFound
+	}
+	return value, nil
+}
+
+func (c configWRPCCache) reset() error {
 	for k := range c {
 		delete(c, k)
 	}
