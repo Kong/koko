@@ -33,6 +33,7 @@ var (
 		"maxItems":             defaultSchemaErrHandleFunc,
 		"maxLength":            defaultSchemaErrHandleFunc,
 		"maximum":              defaultSchemaErrHandleFunc,
+		"maxProperties":        defaultSchemaErrHandleFunc,
 		"minLength":            defaultSchemaErrHandleFunc,
 		"minimum":              defaultSchemaErrHandleFunc,
 		"required":             defaultSchemaErrHandleFunc,

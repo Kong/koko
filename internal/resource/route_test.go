@@ -483,10 +483,51 @@ func TestRoute_Validate(t *testing.T) {
 				return r
 			},
 			wantErr: true,
-			// TODO(hbagdi): cant get this to throw an error
-			// requires a deeper understanding of patternProperties
-			// in JSON-schema
-			Skip: true,
+			Errs: []*model.ErrorDetail{
+				{
+					Type:  model.ErrorType_ERROR_TYPE_FIELD,
+					Field: "headers",
+					Messages: []string{
+						"additionalProperties 'f[]oo@bar.com' not allowed",
+					},
+				},
+			},
+		},
+		{
+			name: "more than 16 headers throws an error",
+			Route: func() Route {
+				r := goodRoute()
+				r.Route.Headers = map[string]*model.HeaderValues{
+					"header1":  {Values: []string{"one"}},
+					"header2":  {Values: []string{"two"}},
+					"header3":  {Values: []string{"three"}},
+					"header4":  {Values: []string{"four"}},
+					"header5":  {Values: []string{"five"}},
+					"header6":  {Values: []string{"six"}},
+					"header7":  {Values: []string{"seven"}},
+					"header8":  {Values: []string{"eight"}},
+					"header9":  {Values: []string{"nine"}},
+					"header10": {Values: []string{"ten"}},
+					"header11": {Values: []string{"eleven"}},
+					"header12": {Values: []string{"twelve"}},
+					"header13": {Values: []string{"thirteen"}},
+					"header14": {Values: []string{"fourteen"}},
+					"header15": {Values: []string{"fifteen"}},
+					"header16": {Values: []string{"sixteen"}},
+					"header17": {Values: []string{"seventeen"}},
+				}
+				return r
+			},
+			wantErr: true,
+			Errs: []*model.ErrorDetail{
+				{
+					Type:  model.ErrorType_ERROR_TYPE_FIELD,
+					Field: "headers",
+					Messages: []string{
+						"maximum 16 properties allowed, but found 17 properties",
+					},
+				},
+			},
 		},
 		{
 			name: "negative regex priority throws an error",
