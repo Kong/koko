@@ -2,6 +2,7 @@ package ws
 
 import (
 	"context"
+	"errors"
 	"io"
 	"sync"
 	"time"
@@ -10,6 +11,8 @@ import (
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
 	relay "github.com/kong/koko/internal/gen/grpc/kong/relay/service/v1"
 	"go.uber.org/zap"
+	"google.golang.org/grpc/codes"
+	grpcStatus "google.golang.org/grpc/status"
 )
 
 // streamer streams events and invokes a callback.
@@ -71,7 +74,7 @@ func (s *streamer) streamUpdateEvents(_ context.Context, stream relay.
 	for {
 		updateEvent, err := stream.Recv()
 		if err != nil {
-			if err == io.EOF {
+			if err == io.EOF || grpcStatus.Code(err) == codes.Canceled {
 				s.Logger.Info("event stream closed")
 				return
 			}
@@ -103,6 +106,10 @@ func (s *streamer) Enable() {
 	go func() {
 		for {
 			if err := ctx.Err(); err != nil {
+				if errors.Is(err, context.Canceled) {
+					s.Logger.Sugar().Info("shutting down streamer")
+					return
+				}
 				s.Logger.Sugar().Errorf("shutting down streamer: %v", err)
 				return
 			}

@@ -231,8 +231,12 @@ func (m *Manager) AddNode(node *Node) {
 	go func() {
 		err := node.readThread()
 		if err != nil {
-			loggerWithNode.With(zap.Error(err)).
-				Error("read thread")
+			wsErr, ok := err.(ErrConnClosed)
+			if ok && wsErr.Code == websocket.CloseAbnormalClosure {
+				loggerWithNode.Info("node disconnected")
+			} else {
+				loggerWithNode.With(zap.Error(err)).Error("read thread")
+			}
 		}
 		// if there are any ws errors, remove the node
 		m.removeNode(node)
