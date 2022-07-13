@@ -50,8 +50,8 @@ func (c *Configurer) PingCP(
 ) (*config_service.PingCPResponse, error) {
 	// find out the Node
 	// update the reported hash
-	node, ok := c.manager.FindNode(peer.RemoteAddr().String())
-	if !ok {
+	node := c.manager.FindNode(peer.RemoteAddr().String())
+	if node == nil {
 		return nil, fmt.Errorf("can't find node from %v", peer.RemoteAddr())
 	}
 	node.logger.Debug("received PingCP method", zap.String("hash", req.Hash))
@@ -82,9 +82,10 @@ func (c *Configurer) ReportMetadata(
 	c.manager.logger.Debug("received ReportMetadata method",
 		zap.String("nodeAddr", peer.RemoteAddr().String()))
 
-	node, ok := c.manager.pendingNodes.FindNode(peer.RemoteAddr().String())
-	if !ok {
-		c.manager.logger.Error("can't find pending node", zap.String("addr", peer.RemoteAddr().String()))
+	node := c.manager.pendingNodes.FindNode(peer.RemoteAddr().String())
+	if node == nil {
+		c.manager.logger.Error("can't find pending node",
+			zap.String("wrpc-client-ip", peer.RemoteAddr().String()))
 		return nil, fmt.Errorf("can't find node from %v", peer.RemoteAddr())
 	}
 
