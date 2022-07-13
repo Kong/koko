@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package kong.nonpublic.v1;
+
+option go_package = "github.com/kong/koko/internal/gen/grpc/kong/nonpublic/v1";
+
+message Installation {
+  string id = 1;
+  string value = 2;
+  int32 created_at = 3;
+  int32 updated_at = 4;
+}
