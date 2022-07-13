@@ -242,7 +242,6 @@ func (m *Manager) AddNode(node *Node) {
 		err := node.readThread()
 		if err != nil {
 			wsErr, ok := err.(ErrConnClosed)
-			metrics.Count("websocket_connection_closed_count", 1)
 			if ok {
 				increaseMetricCounter(wsErr.Code)
 				if wsErr.Code == websocket.CloseAbnormalClosure {
