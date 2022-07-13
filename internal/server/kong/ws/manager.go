@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"strings"
 	"sync"
 	"time"
 
@@ -20,6 +21,8 @@ import (
 	"github.com/kong/koko/internal/store"
 	"go.uber.org/atomic"
 	"go.uber.org/zap"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type ManagerOpts struct {
@@ -360,6 +363,14 @@ func (m *Manager) cleanupNodesWithRetry(ctx context.Context) {
 		}
 		if ctx.Err() != nil {
 			return
+		}
+		// abort clean up thread if the cluster was deleted for any reason
+		if s, ok := status.FromError(err); ok {
+			if s.Code() == codes.InvalidArgument &&
+				strings.Contains(s.Message(), "cluster not found") {
+				m.logger.Info("cluster not found, aborting node clean up thread")
+				return
+			}
 		}
 		waitDuration := backoffer.NextBackOff()
 		if waitDuration == backoff.Stop {
