@@ -75,7 +75,7 @@ func wrapObject(object model.Object) ([]byte, error) {
 		Object: jsonObject,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("json marshal object: %v", err)
+		return nil, fmt.Errorf("json marshal object: %w", err)
 	}
 	return value, nil
 }
@@ -85,11 +85,11 @@ func unwrapObject(value []byte, object model.Object) error {
 
 	err := json.Unmarshal(value, &wrappedValue)
 	if err != nil {
-		return fmt.Errorf("json unmarshal wrapperValue: %v", err)
+		return fmt.Errorf("json unmarshal wrapperValue: %w", err)
 	}
 	err = json.ProtoJSONUnmarshal(wrappedValue.Object, object.Resource())
 	if err != nil {
-		return fmt.Errorf("json unmarshal object: %v", err)
+		return fmt.Errorf("json unmarshal object: %w", err)
 	}
 	return nil
 }
