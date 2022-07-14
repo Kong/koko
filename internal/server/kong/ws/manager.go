@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -16,6 +17,7 @@ import (
 	relay "github.com/kong/koko/internal/gen/grpc/kong/relay/service/v1"
 	grpcKongUtil "github.com/kong/koko/internal/gen/grpc/kong/util/v1"
 	"github.com/kong/koko/internal/json"
+	"github.com/kong/koko/internal/metrics"
 	"github.com/kong/koko/internal/resource"
 	"github.com/kong/koko/internal/server/kong/ws/config"
 	"github.com/kong/koko/internal/store"
@@ -197,6 +199,14 @@ func nodeLogger(node *Node, logger *zap.Logger) *zap.Logger {
 		zap.String("client-ip", node.conn.RemoteAddr().String()))
 }
 
+func increaseMetricCounter(code int) {
+	tags := metrics.Tag{
+		Key:   "ws_close_code",
+		Value: strconv.Itoa(code),
+	}
+	metrics.Count("websocket_connection_closed_count", 1, tags)
+}
+
 func (m *Manager) AddNode(node *Node) {
 	m.init.Do(func() {
 		go m.nodeCleanThread(m.ctx)
@@ -231,8 +241,17 @@ func (m *Manager) AddNode(node *Node) {
 	go func() {
 		err := node.readThread()
 		if err != nil {
-			loggerWithNode.With(zap.Error(err)).
-				Error("read thread")
+			wsErr, ok := err.(ErrConnClosed)
+			if ok {
+				increaseMetricCounter(wsErr.Code)
+				if wsErr.Code == websocket.CloseAbnormalClosure {
+					loggerWithNode.Info("node disconnected")
+				} else {
+					loggerWithNode.With(zap.Error(err)).Error("read thread: connection closed")
+				}
+			} else {
+				loggerWithNode.With(zap.Error(err)).Error("read thread")
+			}
 		}
 		// if there are any ws errors, remove the node
 		m.removeNode(node)
