@@ -9,48 +9,33 @@ import (
 
 const emptyHash = "00000000000000000000000000000000"
 
-type granularHashes struct {
-	config    string
-	routes    string
-	services  string
-	plugins   string
-	upstreams string
-	targets   string
-}
-
-func hashPart(config DataPlaneConfig, name string) string {
-	part, ok := config[name]
-	if !ok {
-		return emptyHash
-	}
-
+func hashPart(v any) string {
 	h := md5.New() // nolint: gosec
 	e := json.NewEncoder(h)
-
-	if e.Encode(part) != nil {
+	if e.Encode(v) != nil {
 		return emptyHash
 	}
-
 	return fmt.Sprintf("%x", h.Sum(nil))
 }
 
-func getGranularHashes(c DataPlaneConfig) granularHashes {
-	out := granularHashes{
-		config:    emptyHash,
-		routes:    hashPart(c, "routes"),
-		services:  hashPart(c, "services"),
-		plugins:   hashPart(c, "plugins"),
-		upstreams: hashPart(c, "upstreams"),
-		targets:   hashPart(c, "targets"),
+func getGranularHashes(c DataPlaneConfig) (string, map[string]string) {
+	out := map[string]string{
+		"routes":    emptyHash,
+		"services":  emptyHash,
+		"plugins":   emptyHash,
+		"upstreams": emptyHash,
+		"targets":   emptyHash,
+	}
+	h := md5.New() // nolint: gosec
+
+	for k, v := range c {
+		hp := hashPart(v)
+		h.Write([]byte(k))
+		h.Write([]byte(hp))
+		if _, known := out[k]; known {
+			out[k] = hp
+		}
 	}
 
-	h := md5.New() // nolint: gosec
-	h.Write([]byte(out.routes))
-	h.Write([]byte(out.services))
-	h.Write([]byte(out.plugins))
-	h.Write([]byte(out.upstreams))
-	h.Write([]byte(out.targets))
-	out.config = fmt.Sprintf("%x", h.Sum(nil))
-
-	return out
+	return fmt.Sprintf("%x", h.Sum(nil)), out
 }
