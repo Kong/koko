@@ -201,7 +201,7 @@ func nodeLogger(node *Node, logger *zap.Logger) *zap.Logger {
 
 func increaseMetricCounter(code int) {
 	tags := metrics.Tag{
-		Key:   "code",
+		Key:   "ws_close_code",
 		Value: strconv.Itoa(code),
 	}
 	metrics.Count("websocket_connection_closed_count", 1, tags)

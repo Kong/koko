@@ -107,7 +107,7 @@ func (s *streamer) Enable() {
 		for {
 			if err := ctx.Err(); err != nil {
 				if errors.Is(err, context.Canceled) {
-					s.Logger.Sugar().Info("shutting down streamer")
+					s.Logger.Info("shutting down streamer due to context cancellation")
 					return
 				}
 				s.Logger.Sugar().Errorf("shutting down streamer: %v", err)
