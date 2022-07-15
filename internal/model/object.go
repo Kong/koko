@@ -27,6 +27,29 @@ type Object interface {
 	SetResource(Resource) error
 }
 
+// ObjectWithResourceDTO defines a model object that may not store the exact JSON-encoded representation of the
+// underlining Protobuf resource in the persistence store. All callers will still work with the underlining Protobuf
+// resource returned by Object.Resource(), however, when it comes time to store/fetch the resource from the persistence
+// store, it will be translated to/from automatically.
+//
+// A practical use-case of this interface is to ensure commonality across JSON keys, in the event such key needs to be
+// indexed. For example, there could be `$.name` key that is an indexed value in the datastore, however on one resource,
+// instead of calling it `name`, it's called `description`. These (un)marhsal methods can then be used to re-write that
+// key to `name` only within the datastore, in order to prevent the need of creating another index.
+//
+// Given the above example, another use-case is such key may be called the same, however, it may be within a nested
+// object, e.g.: `$.metadata.name`. In that case, these (un)marhsal methods can then be used to rewrite that nested
+// `name` field to be stored at the root of the JSON object, in order to take advantage of an already existing index.
+type ObjectWithResourceDTO interface {
+	// MarshalResourceJSON is just like json.Marshaler, but specifically
+	// for marshalling the resource for use in the persistence store.
+	MarshalResourceJSON() ([]byte, error)
+
+	// UnmarshalResourceJSON is just like json.Unmarshaler, but specifically for unmarshalling
+	// a resource's JSON representation outputted by MarshalResourceJSON().
+	UnmarshalResourceJSON([]byte) error
+}
+
 type TypeIndex string
 
 const (
