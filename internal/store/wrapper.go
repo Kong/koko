@@ -66,7 +66,15 @@ func verifyForeignValue(value []byte) error {
 }
 
 func wrapObject(object model.Object) ([]byte, error) {
-	jsonObject, err := json.ProtoJSONMarshal(object.Resource())
+	var jsonObject []byte
+	var err error
+	if r, ok := object.(model.ObjectWithResourceDTO); ok {
+		// The object has implemented its own resource JSON marshaller.
+		jsonObject, err = r.MarshalResourceJSON()
+	} else {
+		// The object is being stored as a JSON-encoded representation of the underlining Protobuf resource.
+		jsonObject, err = json.ProtoJSONMarshal(object.Resource())
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -87,7 +95,13 @@ func unwrapObject(value []byte, object model.Object) error {
 	if err != nil {
 		return fmt.Errorf("json unmarshal wrapperValue: %w", err)
 	}
-	err = json.ProtoJSONUnmarshal(wrappedValue.Object, object.Resource())
+	if r, ok := object.(model.ObjectWithResourceDTO); ok {
+		// The object has implemented its own resource JSON unmarshaller.
+		err = r.UnmarshalResourceJSON(wrappedValue.Object)
+	} else {
+		// The object is being unmarshalled from its JSON-encoded representation of the underlining Protobuf resource.
+		err = json.ProtoJSONUnmarshal(wrappedValue.Object, object.Resource())
+	}
 	if err != nil {
 		return fmt.Errorf("json unmarshal object: %w", err)
 	}
