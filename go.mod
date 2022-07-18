@@ -21,7 +21,7 @@ require (
 	github.com/imdario/mergo v0.3.13
 	github.com/jackc/pgx/v4 v4.16.1
 	github.com/jeremywohl/flatten v1.0.1
-	github.com/kong/go-kong v0.29.0
+	github.com/kong/go-kong v0.30.0
 	github.com/kong/go-wrpc v0.0.0-20210914213024-d4348db6b815
 	github.com/kong/goks v0.4.7
 	github.com/mattn/go-sqlite3 v1.14.14
