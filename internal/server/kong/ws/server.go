@@ -30,13 +30,17 @@ func NewHandler(opts HandlerOpts) (http.Handler, error) {
 		logger:        opts.Logger,
 		authenticator: opts.Authenticator,
 	})
-	mux.Handle("/v1/wrpc", wrpcHandler{
-		handler: handler{
-			logger:        opts.Logger,
-			authenticator: opts.Authenticator,
-		},
-		baseServices: opts.BaseServices,
-	})
+
+	if opts.BaseServices != nil {
+		mux.Handle("/v1/wrpc", wrpcHandler{
+			handler: handler{
+				logger:        opts.Logger,
+				authenticator: opts.Authenticator,
+			},
+			baseServices: opts.BaseServices,
+		})
+	}
+
 	mux.HandleFunc("/health", func(w http.ResponseWriter,
 		_ *http.Request,
 	) {

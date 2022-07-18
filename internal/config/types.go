@@ -17,6 +17,7 @@ type Admin struct {
 type ControlServer struct {
 	TLSCertPath string `json:"tls_cert_path,omitempty"`
 	TLSKeyPath  string `json:"tls_key_path,omitempty"`
+	EnableWRPC  bool   `json:"enable_wrpc,omitempty"`
 }
 
 type SQLite struct {

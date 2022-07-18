@@ -44,6 +44,7 @@ type ServerConfig struct {
 	Logger                  *zap.Logger
 	Metrics                 config.Metrics
 	Database                config.Database
+	ControlServer           config.ControlServer
 	DisableAnonymousReports bool
 }
 
@@ -275,12 +276,16 @@ func Run(ctx context.Context, config ServerConfig) error {
 		AuthFn:  authFn,
 	}
 
-	negotiator := &ws.Negotiator{
-		Cluster: m.Cluster,
-		Logger: controlLogger.With(
-			zap.String("protocol", "wRPC"),
-			zap.String("wrpc-service", "negotiation"),
-		),
+	var negotiator *ws.Negotiator
+
+	if config.ControlServer.EnableWRPC {
+		negotiator = &ws.Negotiator{
+			Cluster: m.Cluster,
+			Logger: controlLogger.With(
+				zap.String("protocol", "wRPC"),
+				zap.String("wrpc-service", "negotiation"),
+			),
+		}
 	}
 
 	handler, err := ws.NewHandler(ws.HandlerOpts{

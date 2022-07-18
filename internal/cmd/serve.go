@@ -54,6 +54,7 @@ func serveMain(ctx context.Context) error {
 		Logger:                  logger,
 		Database:                opts.Config.Database,
 		Metrics:                 opts.Config.Metrics,
+		ControlServer:           opts.Config.Control,
 		DisableAnonymousReports: opts.Config.DisableAnonymousReports,
 	})
 }
