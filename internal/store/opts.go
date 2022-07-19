@@ -1,7 +1,7 @@
 package store
 
 import (
-	"fmt"
+	"errors"
 
 	"github.com/kong/koko/internal/model"
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
@@ -88,11 +88,8 @@ type ListOpts struct {
 func (o *ListOpts) validate() error {
 	// TODO(tjasko): Implement proper support for combining both ListFor() & ListWithFilter().
 	if o.Filter != nil && o.ReferenceType != "" && o.ReferenceID != "" {
-		return ErrUnsupportedListOpts(fmt.Errorf(
-			"listing results with a pagination filter is currently unsupported "+
-				"when results are scoped to the %q (ID: %q) resource",
-			o.ReferenceType,
-			o.ReferenceID,
+		return ErrUnsupportedListOpts(errors.New(
+			"listing resources scoped to a resource while applying a filter are not yet supported",
 		))
 	}
 

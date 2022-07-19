@@ -61,8 +61,7 @@ func TestNewListOpts(t *testing.T) {
 		assert.EqualError(
 			t,
 			err,
-			`listing results with a pagination filter is currently unsupported `+
-				`when results are scoped to the "consumer" (ID: "ref-id") resource`,
+			"listing resources scoped to a resource while applying a filter are not yet supported",
 		)
 	})
 }

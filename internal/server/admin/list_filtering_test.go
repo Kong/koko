@@ -2,7 +2,6 @@ package admin
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"strings"
 	"testing"
@@ -226,12 +225,10 @@ func TestListFilteringWithReferenceListing(t *testing.T) {
 					res.Status(http.StatusBadRequest)
 					body := res.JSON().Object()
 					body.Value("code").Number().Equal(codes.FailedPrecondition)
-					body.Value("message").String().Equal(fmt.Sprintf(
-						`listing results with a pagination filter is currently unsupported `+
-							`when results are scoped to the %q (ID: %q) resource`,
-						refField,
-						refID,
-					))
+					body.Value("message").String().Equal(
+						"listing resources scoped to a resource while " +
+							"applying a filter are not yet supported",
+					)
 				})
 			}
 		})
