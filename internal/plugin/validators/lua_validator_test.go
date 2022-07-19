@@ -778,6 +778,94 @@ func TestValidate(t *testing.T) {
 			}
 		}
 	})
+
+	t.Run("validate opentelemetry configuration", func(t *testing.T) {
+		tt := []struct {
+			name         string
+			config       string
+			wantsErr     bool
+			expectedErrs []*grpcModel.ErrorDetail
+		}{
+			{
+				name: "good config validates",
+				config: `{
+					"endpoint": "http://example.dev",
+					"resource_attributes": {
+						"service.name": "kong_oss",
+						"os.version": "debian"
+					}
+				}`,
+			},
+			{
+				name: "bad value type doesn't validates",
+				config: `{
+					"endpoint": "http://example.dev",
+					"resource_attributes": {
+						"service.name": "kong_oss",
+						"os.version": 10
+					}
+				}`,
+				wantsErr: true,
+				expectedErrs: []*grpcModel.ErrorDetail{
+					{
+						Type:  grpcModel.ErrorType_ERROR_TYPE_FIELD,
+						Field: "config.resource_attributes",
+						Messages: []string{
+							"expected a string",
+						},
+					},
+				},
+			},
+			{
+				name: "empty value doesn't validates",
+				config: `{
+					"endpoint": "http://example.dev",
+					"resource_attributes": {
+						"service.name": "kong_oss",
+						"os.version": ""
+					}
+				}`,
+				wantsErr: true,
+				expectedErrs: []*grpcModel.ErrorDetail{
+					{
+						Type:  grpcModel.ErrorType_ERROR_TYPE_FIELD,
+						Field: "config.resource_attributes",
+						Messages: []string{
+							"length must be at least 1",
+						},
+					},
+				},
+			},
+			{
+				name: "no resource_attributes validates",
+				config: `{
+					"endpoint": "http://example.dev"
+				}`,
+				wantsErr: false,
+			},
+		}
+		for _, plugin := range tt {
+			var config structpb.Struct
+			require.Nil(t, json.ProtoJSONUnmarshal([]byte(plugin.config), &config))
+			p := &grpcModel.Plugin{
+				Name:      "opentelemetry",
+				Protocols: []string{"http", "https"},
+				Enabled:   wrapperspb.Bool(true),
+				Config:    &config,
+			}
+			err := validator.Validate(context.Background(), p)
+			if plugin.wantsErr {
+				require.NotNil(t, err)
+				validationErr, ok := err.(validation.Error)
+				require.True(t, ok)
+				require.ElementsMatch(t, plugin.expectedErrs, validationErr.Errs)
+			} else {
+				require.Nil(t, err)
+			}
+		}
+
+	})
+
 	t.Run("test plugins' typedefs validators", func(t *testing.T) {
 		tt := []struct {
 			name         string
