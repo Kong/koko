@@ -1,6 +1,8 @@
 package store
 
 import (
+	"errors"
+
 	"github.com/kong/koko/internal/model"
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 )
@@ -83,7 +85,21 @@ type ListOpts struct {
 	Filter *exprpb.Expr
 }
 
+func (o *ListOpts) validate() error {
+	// TODO(tjasko): Implement proper support for combining both ListFor() & ListWithFilter().
+	if o.Filter != nil && o.ReferenceType != "" && o.ReferenceID != "" {
+		return ErrUnsupportedListOpts(errors.New(
+			"listing resources scoped to a resource while applying a filter are not yet supported",
+		))
+	}
+
+	return nil
+}
+
 type ListOptsFunc func(*ListOpts)
+
+// ErrUnsupportedListOpts is used when the provided combination of list options is not supported.
+type ErrUnsupportedListOpts error
 
 const (
 	DefaultPage     = 1
@@ -91,12 +107,19 @@ const (
 	MaxPageSize     = 1000
 )
 
-func NewListOpts(fns ...ListOptsFunc) *ListOpts {
+// NewListOpts executes the provided list option functions, validates that all set
+// options are compatible with each other, and returns the generated ListOpts.
+func NewListOpts(fns ...ListOptsFunc) (*ListOpts, error) {
 	res := &ListOpts{PageSize: DefaultPageSize, Page: DefaultPage}
 	for _, fn := range fns {
 		fn(res)
 	}
-	return res
+
+	if err := res.validate(); err != nil {
+		return nil, err
+	}
+
+	return res, nil
 }
 
 func ListFor(typ model.Type, id string) ListOptsFunc {

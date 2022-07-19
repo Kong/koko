@@ -374,7 +374,10 @@ func (s *ObjectStore) List(ctx context.Context, list model.ObjectList, opts ...L
 	ctx, cancel := context.WithTimeout(ctx, DefaultOperationTimeout)
 	defer cancel()
 	typ := list.Type()
-	opt := NewListOpts(opts...)
+	opt, err := NewListOpts(opts...)
+	if err != nil {
+		return err
+	}
 	if opt != nil && opt.ReferenceType != "" && opt.ReferenceID != "" {
 		return s.referencedList(ctx, list, opt)
 	}

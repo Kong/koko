@@ -7,12 +7,16 @@ import (
 	"testing"
 
 	"github.com/gavv/httpexpect/v2"
+	"github.com/google/uuid"
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
+	"github.com/kong/koko/internal/model"
 	"github.com/kong/koko/internal/model/json/validation"
+	"github.com/kong/koko/internal/resource"
 	"github.com/kong/koko/internal/test/seed"
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc/codes"
 )
 
 type listFilterTestData struct {
@@ -183,6 +187,48 @@ func TestListFiltering(t *testing.T) {
 			for i, tt := range tests {
 				t.Run(tt.name, func(t *testing.T) {
 					testListFilteringForType(t, httpexpect.New(t, server.URL), &tests[i], resourceInfo)
+				})
+			}
+		})
+	}
+}
+
+func TestListFilteringWithReferenceListing(t *testing.T) {
+	s, cleanup := setup(t)
+	defer cleanup()
+
+	refID := uuid.NewString()
+
+	tests := []struct {
+		apiPath   string
+		refFields map[string]model.Type
+	}{
+		{apiPath: "plugins", refFields: map[string]model.Type{
+			"consumer_id": resource.TypeConsumer,
+			"route_id":    resource.TypeRoute,
+			"service_id":  resource.TypeService,
+		}},
+		{apiPath: "routes", refFields: map[string]model.Type{"service_id": resource.TypeService}},
+		{apiPath: "snis", refFields: map[string]model.Type{"certificate_id": resource.TypeCertificate}},
+		{apiPath: "targets", refFields: map[string]model.Type{"upstream_id": resource.TypeUpstream}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.apiPath, func(t *testing.T) {
+			for queryArg, refField := range tt.refFields {
+				t.Run("by "+string(refField), func(t *testing.T) {
+					res := httpexpect.New(t, s.URL).
+						GET("/v1/"+tt.apiPath).
+						WithQuery("page.filter", `"tag-1" in tags`).
+						WithQuery(queryArg, refID).
+						Expect()
+
+					res.Status(http.StatusBadRequest)
+					body := res.JSON().Object()
+					body.Value("code").Number().Equal(codes.FailedPrecondition)
+					body.Value("message").String().Equal(
+						"listing resources scoped to a resource while " +
+							"applying a filter are not yet supported",
+					)
 				})
 			}
 		})

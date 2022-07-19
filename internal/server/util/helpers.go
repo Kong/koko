@@ -200,6 +200,8 @@ func HandleErr(ctx context.Context, logger *zap.Logger, err error) error {
 	case ErrClient:
 		s := status.New(codes.InvalidArgument, e.Message)
 		return s.Err()
+	case store.ErrUnsupportedListOpts:
+		return status.New(codes.FailedPrecondition, e.Error()).Err()
 	default:
 		logger.With(zap.Error(err)).Error("error in service")
 		return status.Error(codes.Internal, "")
