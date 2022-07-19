@@ -10,6 +10,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/blang/semver/v4"
 	"github.com/cenkalti/backoff/v4"
 	"github.com/gavv/httpexpect/v2"
 	"github.com/google/uuid"
@@ -648,6 +649,100 @@ func TestRouteHeader(t *testing.T) {
 			return fmt.Errorf("expected route.Headers."+
 				"foo to have 2 values but got %v", len(route.Headers["foo"]))
 		}
+		return nil
+	})
+}
+
+func TestRouteHeaderWithRegex(t *testing.T) {
+	// ensure that routes that use header regex can be successufully synced
+	// to Kong gateway and used correctly.  This feature was introduced in 2.8.0,
+	// so this test won't run on earlier versions
+	ctx := context.Background()
+
+	client, err := kongClient.NewClient(util.BasedKongAdminAPIAddr, nil)
+	if err != nil {
+		t.Errorf("create go client for kong: %v", err)
+	}
+
+	info, err := client.Root(ctx)
+	if err != nil {
+		t.Errorf("fetching Kong Gateway info: %v", err)
+	}
+
+	dataPlaneVersion, err := kongClient.ParseSemanticVersion(kongClient.VersionFromInfo(info))
+	if err != nil {
+		t.Errorf("parsing Kong Gateway version: %v", err)
+	}
+
+	// check whether kong dp version is < 2.8.0
+	if v := semver.MustParse("2.8.0"); dataPlaneVersion.LT(v) {
+		return
+	}
+
+	cleanup := run.Koko(t)
+	defer cleanup()
+
+	service := &v1.Service{
+		Id:   uuid.NewString(),
+		Name: "foo",
+		Host: "httpbin.org",
+		Path: "/",
+	}
+	c := httpexpect.New(t, "http://localhost:3000")
+	res := c.POST("/v1/services").WithJSON(service).Expect()
+	res.Status(http.StatusCreated)
+	route := &v1.Route{
+		Name:  "bar",
+		Paths: []string{"/foo"},
+		Headers: map[string]*v1.HeaderValues{
+			"foo": {
+				Values: []string{"~*^(([Tt])([Ee])([Ss])([Tt]))$"},
+			},
+		},
+		Service: &v1.Service{
+			Id: service.Id,
+		},
+		HttpsRedirectStatusCode: http.StatusMovedPermanently,
+	}
+	res = c.POST("/v1/routes").WithJSON(route).Expect()
+	res.Status(http.StatusCreated)
+
+	dpCleanup := run.KongDP(kong.GetKongConfForShared())
+	defer dpCleanup()
+
+	require.Nil(t, util.WaitForKongPort(t, 8001))
+
+	util.WaitFunc(t, func() error {
+		routes, err := client.Routes.ListAll(ctx)
+		if err != nil {
+			return fmt.Errorf("fetch routes: %v", err)
+		}
+		if len(routes) != 1 {
+			return fmt.Errorf("expected %v routes but got %v routes", 1,
+				len(routes))
+		}
+		route := routes[0]
+		if len(route.Headers["foo"]) != 1 {
+			return fmt.Errorf("expected route.Headers."+
+				"foo to have 1 value but got %v", len(route.Headers["foo"]))
+		}
+
+		pc := httpexpect.New(t, "http://localhost:8000")
+
+		pc.GET("/foo").
+			Expect().
+			Status(http.StatusNotFound)
+
+		pc.GET("/foo").
+			WithHeader("foo", "wrong-header").
+			Expect().
+			Status(http.StatusNotFound)
+
+		pc.GET("/foo").
+			WithHeader("foo", "TEST").
+			Expect().
+			Status(http.StatusOK)
+
 		return nil
 	})
 }
