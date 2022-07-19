@@ -12,7 +12,7 @@ require (
 	github.com/ghodss/yaml v1.0.0
 	github.com/golang-migrate/migrate/v4 v4.15.2
 	github.com/golang/protobuf v1.5.2
-	github.com/google/cel-go v0.12.0
+	github.com/google/cel-go v0.12.4
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/websocket v1.5.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
@@ -21,7 +21,7 @@ require (
 	github.com/imdario/mergo v0.3.13
 	github.com/jackc/pgx/v4 v4.16.1
 	github.com/jeremywohl/flatten v1.0.1
-	github.com/kong/go-kong v0.29.0
+	github.com/kong/go-kong v0.30.0
 	github.com/kong/go-wrpc v0.0.0-20210914213024-d4348db6b815
 	github.com/kong/goks v0.4.7
 	github.com/mattn/go-sqlite3 v1.14.14
@@ -40,7 +40,7 @@ require (
 	go.uber.org/zap v1.21.0
 	golang.org/x/sync v0.0.0-20220601150217-0de741cfad7f
 	google.golang.org/genproto v0.0.0-20220617124728-180714bec0ad
-	google.golang.org/grpc v1.47.0
+	google.golang.org/grpc v1.48.0
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.2.0
 	google.golang.org/protobuf v1.28.0
 )
