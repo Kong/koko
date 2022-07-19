@@ -33,6 +33,7 @@ type vcPlugins struct {
 	name              string
 	id                string
 	config            string
+	versionRange      string
 	fieldUpdateChecks map[string][]update
 }
 
@@ -293,6 +294,14 @@ func TestVersionCompatibility(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "opentelemetry",
+			id:   uuid.NewString(),
+			config: `{
+				"endpoint": "http://example.dev"
+			}`,
+			versionRange: ">= 3.0.0",
+		},
 	}
 	for _, test := range tests {
 		var config structpb.Struct
@@ -339,15 +348,30 @@ func ensurePlugins(plugins []vcPlugins) error {
 		return fmt.Errorf("fetching plugins: %v", err)
 	}
 
+	// Remove plugins that may not be expected due to data plane version
+	var expectedPlugins []vcPlugins
+	for _, plugin := range plugins {
+		addPlugin := true
+		if len(plugin.versionRange) > 0 {
+			version := semver.MustParseRange(plugin.versionRange)
+			if !version(dataPlaneVersion) {
+				addPlugin = false
+			}
+		}
+		if addPlugin {
+			expectedPlugins = append(expectedPlugins, plugin)
+		}
+	}
+
 	// Because configurations may vary validation occurs via the name and ID for
 	// removal items and a special test for updates will be performed which
 	// verifies update occurred properly based on versions
-	if len(plugins) != len(dataPlanePlugins) {
-		return fmt.Errorf("plugins configured count does not match [%d != %d]", len(plugins), len(dataPlanePlugins))
+	if len(expectedPlugins) != len(dataPlanePlugins) {
+		return fmt.Errorf("plugins configured count does not match [%d != %d]", len(expectedPlugins), len(dataPlanePlugins))
 	}
 	var failedPlugins []string
 	var missingPlugins []string
-	for _, plugin := range plugins {
+	for _, plugin := range expectedPlugins {
 		found := false
 		for _, dataPlanePlugin := range dataPlanePlugins {
 			if plugin.name == *dataPlanePlugin.Name && plugin.id == *dataPlanePlugin.ID {
