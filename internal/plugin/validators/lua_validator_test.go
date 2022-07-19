@@ -863,7 +863,6 @@ func TestValidate(t *testing.T) {
 				require.Nil(t, err)
 			}
 		}
-
 	})
 
 	t.Run("test plugins' typedefs validators", func(t *testing.T) {
