@@ -1,25 +1,32 @@
 package config
 
 import (
-	"crypto/md5" //nolint: gosec
 	"fmt"
 
+	"github.com/cespare/xxhash/v2"
 	"github.com/kong/koko/internal/json"
 )
 
 const emptyHash = "00000000000000000000000000000000"
 
 func hashPart(v any) string {
-	h := md5.New() // nolint: gosec
+	h := xxhash.New()
 	e := json.NewEncoder(h)
 	if e.Encode(v) != nil {
 		return emptyHash
 	}
-	return fmt.Sprintf("%x", h.Sum(nil))
+	sum := h.Sum(nil)
+	return fmt.Sprintf("%x%x", sum, sum)
 }
 
 func getGranularHashes(c DataPlaneConfig) (string, map[string]string) {
-	out := make(map[string]string, len(c))
+	out := map[string]string{
+		"routes":    emptyHash,
+		"services":  emptyHash,
+		"plugins":   emptyHash,
+		"upstreams": emptyHash,
+		"targets":   emptyHash,
+	}
 	for k, v := range c {
 		out[k] = hashPart(v)
 	}

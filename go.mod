@@ -8,6 +8,7 @@ require (
 	github.com/blang/semver/v4 v4.0.0
 	github.com/bufbuild/buf v1.6.0
 	github.com/cenkalti/backoff/v4 v4.1.3
+	github.com/cespare/xxhash/v2 v2.1.2
 	github.com/gavv/httpexpect/v2 v2.3.1
 	github.com/ghodss/yaml v1.0.0
 	github.com/golang-migrate/migrate/v4 v4.15.2
@@ -52,7 +53,6 @@ require (
 	github.com/antlr/antlr4/runtime/Go/antlr v0.0.0-20220418222510-f25a4f6275ed // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bufbuild/connect-go v0.1.1 // indirect
-	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/fatih/structs v1.0.0 // indirect

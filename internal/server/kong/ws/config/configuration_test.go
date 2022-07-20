@@ -19,9 +19,9 @@ func TestReconfigurePayload(t *testing.T) {
 		`{
 			"type": "reconfigure",
 			"config_table": {"plugins":["test"]},
-			"config_hash": "c96ffe1c067f8f15eb733e540e7ef443",
+			"config_hash": "4fe09342df7064a94fe09342df7064a9",
 			"hashes": {
-				"plugins": "23235a224da3cb921fc8722198f0e76a",
+				"plugins": "5e2a17eac1fa241e5e2a17eac1fa241e",
 				"routes": "00000000000000000000000000000000",
 				"services": "00000000000000000000000000000000",
 				"targets": "00000000000000000000000000000000",
