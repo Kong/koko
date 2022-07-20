@@ -19,23 +19,10 @@ func hashPart(v any) string {
 }
 
 func getGranularHashes(c DataPlaneConfig) (string, map[string]string) {
-	out := map[string]string{
-		"routes":    emptyHash,
-		"services":  emptyHash,
-		"plugins":   emptyHash,
-		"upstreams": emptyHash,
-		"targets":   emptyHash,
-	}
-	h := md5.New() // nolint: gosec
-
+	out := make(map[string]string, len(c))
 	for k, v := range c {
-		hp := hashPart(v)
-		h.Write([]byte(k))
-		h.Write([]byte(hp))
-		if _, known := out[k]; known {
-			out[k] = hp
-		}
+		out[k] = hashPart(v)
 	}
 
-	return fmt.Sprintf("%x", h.Sum(nil)), out
+	return hashPart(out), out
 }
