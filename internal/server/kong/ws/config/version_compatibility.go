@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	KongGatewayCompatibilityVersion = "2.8.0"
+	KongGatewayCompatibilityVersion = "3.0.0"
 
 	buildVersionPattern = `(?P<build_version>^[0-9]+)[a-zA-Z\-]*`
 	invalidVersionOctet = 1000
