@@ -4,6 +4,7 @@ package e2e
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"testing"
 
@@ -31,8 +32,8 @@ func TestVersionCompatibility(t *testing.T) {
 
 	dpCleanup := run.KongDP(kong.GetKongConfForShared())
 	defer dpCleanup()
-	util.WaitForKong(t)
-	util.WaitForKongAdminAPI(t)
+	require.NoError(t, util.WaitForKong(t))
+	require.NoError(t, util.WaitForKongAdminAPI(t))
 
 	// Determine the data plane version for removal of plugins that are not expected to be present
 	// in the configuration.
@@ -174,8 +175,8 @@ func TestVersionCompatibilitySyslogFacilityField(t *testing.T) {
 
 	dpCleanup := run.KongDP(kong.GetKongConfForShared())
 	defer dpCleanup()
-	util.WaitForKong(t)
-	util.WaitForKongAdminAPI(t)
+	require.NoError(t, util.WaitForKong(t))
+	require.NoError(t, util.WaitForKongAdminAPI(t))
 
 	admin := httpexpect.New(t, "http://localhost:3000")
 
@@ -231,4 +232,149 @@ func TestVersionCompatibilitySyslogFacilityField(t *testing.T) {
 		t.Log("plugin validation failed", err)
 		return err
 	})
+}
+
+type vcUpstreamsTC struct {
+	name              string
+	upstream          *v1.Upstream
+	versionedExpected map[string]*v1.Upstream
+}
+
+func TestUpstreamsVersionCompatibility(t *testing.T) {
+	cleanup := run.Koko(t)
+	defer cleanup()
+
+	dpCleanup := run.KongDP(kong.GetKongConfForShared())
+	defer dpCleanup()
+	require.NoError(t, util.WaitForKong(t))
+	require.NoError(t, util.WaitForKongAdminAPI(t))
+
+	admin := httpexpect.WithConfig(httpexpect.Config{
+		BaseURL:  "http://localhost:3000",
+		Reporter: httpexpect.NewRequireReporter(t),
+		Printers: []httpexpect.Printer{
+			httpexpect.NewCompactPrinter(t),
+		},
+	})
+
+	tests := []vcUpstreamsTC{
+		{
+			name: "ensure hash_on_query_arg is dropped for DP < 3.0",
+			upstream: &v1.Upstream{
+				Id:             uuid.NewString(),
+				Name:           "foo-with-hash_on_query_arg",
+				HashOn:         "ip",
+				HashOnQueryArg: "test",
+			},
+			versionedExpected: map[string]*v1.Upstream{
+				"< 3.0.0": {
+					Name:           "foo-with-hash_on_query_arg",
+					HashOn:         "ip",
+					HashOnQueryArg: "",
+				},
+				">= 3.0.0": {
+					Name:           "foo-with-hash_on_query_arg",
+					HashOn:         "ip",
+					HashOnQueryArg: "test",
+				},
+			},
+		},
+		{
+			name: "ensure hash_on is reverted to 'none' when configured to incompatible values for DP < 3.0",
+			upstream: &v1.Upstream{
+				Id:             uuid.NewString(),
+				Name:           "foo-with-hash_on",
+				HashOn:         "path",
+				HashOnQueryArg: "test",
+			},
+			versionedExpected: map[string]*v1.Upstream{
+				"< 3.0.0": {
+					Name:           "foo-with-hash_on",
+					HashOn:         "none",
+					HashOnQueryArg: "",
+				},
+				">= 3.0.0": {
+					Name:           "foo-with-hash_on",
+					HashOn:         "path",
+					HashOnQueryArg: "test",
+				},
+			},
+		},
+		{
+			name: "ensure hash_fallback is reverted to 'none' when configured to incompatible values for DP < 3.0",
+			upstream: &v1.Upstream{
+				Id:             uuid.NewString(),
+				Name:           "foo-with-hash_fallback",
+				HashFallback:   "path",
+				HashOn:         "ip",
+				HashOnQueryArg: "test",
+			},
+			versionedExpected: map[string]*v1.Upstream{
+				"< 3.0.0": {
+					Name:           "foo-with-hash_fallback",
+					HashFallback:   "none",
+					HashOn:         "ip",
+					HashOnQueryArg: "",
+				},
+				">= 3.0.0": {
+					Name:           "foo-with-hash_fallback",
+					HashFallback:   "path",
+					HashOn:         "ip",
+					HashOnQueryArg: "test",
+				},
+			},
+		},
+	}
+	for _, test := range tests {
+		res := admin.POST("/v1/upstreams").WithJSON(test.upstream).Expect()
+		res.Status(http.StatusCreated)
+	}
+
+	util.WaitFunc(t, func() error {
+		err := ensureUpstreams(tests)
+		t.Log("upstreams validation failed", err)
+		return err
+	})
+}
+
+func ensureUpstreams(upstreams []vcUpstreamsTC) error {
+	kongAdmin, err := kongClient.NewClient(util.BasedKongAdminAPIAddr, nil)
+	if err != nil {
+		return fmt.Errorf("create go client for kong: %v", err)
+	}
+	ctx := context.Background()
+	info, err := kongAdmin.Root(ctx)
+	if err != nil {
+		return fmt.Errorf("fetching Kong Gateway info: %v", err)
+	}
+	dataPlaneVersion, err := versioning.NewVersion(kongClient.VersionFromInfo(info))
+	if err != nil {
+		return fmt.Errorf("parsing Kong Gateway version: %v", err)
+	}
+	dataPlaneUpstreams, err := kongAdmin.Upstreams.ListAll(ctx)
+	if err != nil {
+		return fmt.Errorf("fetching upstreams: %v", err)
+	}
+
+	if len(upstreams) != len(dataPlaneUpstreams) {
+		return fmt.Errorf("upstreams configured count does not match [%d != %d]", len(upstreams), len(dataPlaneUpstreams))
+	}
+
+	expectedConfig := &v1.TestingConfig{
+		Upstreams: []*v1.Upstream{},
+	}
+	for _, u := range upstreams {
+		for _, dataPlaneUpstream := range dataPlaneUpstreams {
+			if u.upstream.Name == *dataPlaneUpstream.Name && u.upstream.Id == *dataPlaneUpstream.ID {
+				for version, expectedUpstream := range u.versionedExpected {
+					version := versioning.MustNewRange(version)
+					if version(dataPlaneVersion) {
+						expectedConfig.Upstreams = append(expectedConfig.Upstreams, expectedUpstream)
+					}
+				}
+			}
+		}
+	}
+
+	return util.EnsureConfig(expectedConfig)
 }

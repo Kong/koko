@@ -39,14 +39,15 @@ const (
 
 	Service
 	Route
+	Upstream
 )
 
 func (u UpdateType) String() string {
-	return [...]string{"plugin", "plugin", "service", "route"}[u]
+	return [...]string{"plugin", "plugin", "service", "route", "upstream"}[u]
 }
 
 func (u UpdateType) ConfigTableKey() string {
-	return [...]string{"plugins", "plugins", "services", "routes"}[u]
+	return [...]string{"plugins", "plugins", "services", "routes", "upstreams"}[u]
 }
 
 //nolint:revive
@@ -244,7 +245,7 @@ func (vc *WSVersionCompatibility) processConfigTableUpdates(uncompressedPayload 
 		case Plugin:
 			processedPayload = vc.processPluginUpdates(processedPayload,
 				configTableUpdate, dataPlaneVersionStr, tracker)
-		case Service, CorePlugin, Route:
+		case Service, CorePlugin, Route, Upstream:
 			processedPayload = vc.processCoreEntityUpdates(processedPayload,
 				configTableUpdate, dataPlaneVersionStr, tracker)
 		default:
@@ -433,7 +434,7 @@ func (vc *WSVersionCompatibility) processPluginUpdates(payload string,
 										With(zap.Any("new-value", fieldUpdate.Value)).
 										With(zap.String("data-plane", dataPlaneVersionStr)).
 										With(zap.Error(err)).
-										Error("plugin configuration field was not updated int configuration")
+										Error("plugin configuration field was not updated in the configuration")
 								} else {
 									vc.logger.With(zap.String("plugin", pluginName)).
 										With(zap.String("field", configField)).

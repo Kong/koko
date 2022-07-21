@@ -5023,6 +5023,434 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "drop single upstream field",
+			configTableUpdates: map[string][]ConfigTableUpdates{
+				"< 3.0.0": {
+					{
+						Type: Upstream,
+						RemoveFields: []string{
+							"upstream_field_1",
+						},
+						ChangeID: "P042",
+					},
+				},
+			},
+			uncompressedPayload: `{
+				"config_table": {
+					"upstreams": [
+						{
+							"name": "upstream_1",
+							"upstream_field_1": "element",
+							"upstream_field_2": "element"
+						}
+					]
+				}
+			}`,
+			dataPlaneVersion: "2.7.0",
+			expectedPayload: `{
+				"config_table": {
+					"upstreams": [
+						{
+							"name": "upstream_1",
+							"upstream_field_2": "element"
+						}
+					]
+				}
+			}`,
+		},
+		{
+			name: "drop multiple upstream fields",
+			configTableUpdates: map[string][]ConfigTableUpdates{
+				"< 3.0.0": {
+					{
+						Type: Upstream,
+						RemoveFields: []string{
+							"upstream_field_1",
+							"upstream_field_2",
+						},
+						ChangeID: "P042",
+					},
+				},
+			},
+			uncompressedPayload: `{
+				"config_table": {
+					"upstreams": [
+						{
+							"name": "upstream_1",
+							"upstream_field_1": "element",
+							"upstream_field_2": "element",
+							"upstream_field_3": "element"
+						}
+					]
+				}
+			}`,
+			dataPlaneVersion: "2.7.0",
+			expectedPayload: `{
+				"config_table": {
+					"upstreams": [
+						{
+							"name": "upstream_1",
+							"upstream_field_3": "element"
+						}
+					]
+				}
+			}`,
+		},
+		{
+			name: "drop multiple upstream fields from multiple upstreams",
+			configTableUpdates: map[string][]ConfigTableUpdates{
+				"< 3.0.0": {
+					{
+						Type: Upstream,
+						RemoveFields: []string{
+							"upstream_field_1",
+							"upstream_field_2",
+							"upstream_field_4",
+						},
+						ChangeID: "P042",
+					},
+				},
+			},
+			uncompressedPayload: `{
+				"config_table": {
+					"upstreams": [
+						{
+							"name": "upstream_1",
+							"upstream_field_1": "element",
+							"upstream_field_2": "element",
+							"upstream_field_3": "element"
+						},
+						{
+							"name": "upstream_2",
+							"upstream_field_1": "element",
+							"upstream_field_3": "element",
+							"upstream_field_4": "element"
+						}
+					]
+				}
+			}`,
+			dataPlaneVersion: "2.7.0",
+			expectedPayload: `{
+				"config_table": {
+					"upstreams": [
+						{
+							"name": "upstream_1",
+							"upstream_field_3": "element"
+						},
+						{
+							"name": "upstream_2",
+							"upstream_field_3": "element"
+						}
+					]
+				}
+			}`,
+		},
+		{
+			name: "drop upstreams and plugins' fields",
+			configTableUpdates: map[string][]ConfigTableUpdates{
+				"< 3.0.0": {
+					{
+						Type: Upstream,
+						RemoveFields: []string{
+							"upstream_field_1",
+							"upstream_field_2",
+							"upstream_field_4",
+						},
+						ChangeID: "P042",
+					},
+					{
+						Name:     "plugin_1",
+						Type:     Plugin,
+						Remove:   true,
+						ChangeID: "P043",
+					},
+				},
+			},
+			uncompressedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"name": "plugin_2",
+							"config": {
+								"plugin_2_field_1": "element"
+							}
+						},
+						{
+							"name": "plugin_1",
+							"config": {
+								"plugin_1_field_1": "element"
+							}
+						},
+						{
+							"name": "plugin_3",
+							"config": {
+								"plugin_3_field_1": "element"
+							}
+						},
+						{
+							"name": "plugin_1",
+							"config": {
+								"plugin_1_field_1": "element"
+							}
+						}
+					],
+					"upstreams": [
+						{
+							"name": "upstream_1",
+							"upstream_field_1": "element",
+							"upstream_field_2": "element",
+							"upstream_field_3": "element"
+						},
+						{
+							"name": "upstream_2",
+							"upstream_field_1": "element",
+							"upstream_field_3": "element",
+							"upstream_field_4": "element"
+						}
+					]
+				}
+			}`,
+			dataPlaneVersion: "2.7.0",
+			expectedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"name": "plugin_2",
+							"config": {
+								"plugin_2_field_1": "element"
+							}
+						},
+						{
+							"name": "plugin_3",
+							"config": {
+								"plugin_3_field_1": "element"
+							}
+						}
+					],
+					"upstreams": [
+						{
+							"name": "upstream_1",
+							"upstream_field_3": "element"
+						},
+						{
+							"name": "upstream_2",
+							"upstream_field_3": "element"
+						}
+					]
+				}
+			}`,
+		},
+		{
+			name: "ensure unsupported upstreams fields values are changed to 'none'",
+			configTableUpdates: map[string][]ConfigTableUpdates{
+				"< 3.0.0": {
+					{
+						Type: Upstream,
+						FieldUpdates: []ConfigTableFieldCondition{
+							{
+								Field:     "hash_on",
+								Condition: "hash_on=path",
+								Updates: []ConfigTableFieldUpdate{
+									{
+										Field: "hash_on",
+										Value: "none",
+									},
+								},
+							},
+							{
+								Field:     "hash_on",
+								Condition: "hash_on=query_arg",
+								Updates: []ConfigTableFieldUpdate{
+									{
+										Field: "hash_on",
+										Value: "none",
+									},
+								},
+							},
+							{
+								Field:     "hash_on",
+								Condition: "hash_on=uri_capture",
+								Updates: []ConfigTableFieldUpdate{
+									{
+										Field: "hash_on",
+										Value: "none",
+									},
+								},
+							},
+							{
+								Field:     "hash_fallback",
+								Condition: "hash_fallback=path",
+								Updates: []ConfigTableFieldUpdate{
+									{
+										Field: "hash_fallback",
+										Value: "none",
+									},
+								},
+							},
+							{
+								Field:     "hash_fallback",
+								Condition: "hash_fallback=query_arg",
+								Updates: []ConfigTableFieldUpdate{
+									{
+										Field: "hash_fallback",
+										Value: "none",
+									},
+								},
+							},
+							{
+								Field:     "hash_fallback",
+								Condition: "hash_fallback=uri_capture",
+								Updates: []ConfigTableFieldUpdate{
+									{
+										Field: "hash_fallback",
+										Value: "none",
+									},
+								},
+							},
+						},
+						ChangeID: "P042",
+					},
+				},
+			},
+			uncompressedPayload: `{
+				"config_table": {
+					"upstreams": [
+						{
+							"name": "upstream_1",
+							"hash_on": "path",
+							"hash_fallback": "path"
+						},
+						{
+							"name": "upstream_2",
+							"hash_on": "query_arg",
+							"hash_fallback": "query_arg"
+						},
+						{
+							"name": "upstream_3",
+							"hash_on": "uri_capture",
+							"hash_fallback": "uri_capture"
+						}
+					]
+				}
+			}`,
+			dataPlaneVersion: "2.7.0",
+			expectedPayload: `{
+				"config_table": {
+					"upstreams": [
+						{
+							"name": "upstream_1",
+							"hash_on": "none",
+							"hash_fallback": "none"
+						},
+						{
+							"name": "upstream_2",
+							"hash_on": "none",
+							"hash_fallback": "none"
+						},
+						{
+							"name": "upstream_3",
+							"hash_on": "none",
+							"hash_fallback": "none"
+						}
+					]
+				}
+			}`,
+		},
+		{
+			name: "ensure unsupported upstreams fields are replaced and dropped",
+			configTableUpdates: map[string][]ConfigTableUpdates{
+				"< 3.0.0": {
+					{
+						Type: Upstream,
+						FieldUpdates: []ConfigTableFieldCondition{
+							{
+								Field:     "upstream_unsupported_1",
+								Condition: "upstream_unsupported_1",
+								Updates: []ConfigTableFieldUpdate{
+									{
+										Field:          "upstream_supported_2",
+										ValueFromField: "upstream_unsupported_1",
+									},
+									{
+										Field: "upstream_unsupported_1",
+									},
+								},
+							},
+						},
+						ChangeID: "P042",
+					},
+				},
+			},
+			uncompressedPayload: `{
+				"config_table": {
+					"upstreams": [
+						{
+							"name": "upstream_1",
+							"upstream_unsupported_1": "foo"
+						}
+					]
+				}
+			}`,
+			dataPlaneVersion: "2.7.0",
+			expectedPayload: `{
+				"config_table": {
+					"upstreams": [
+						{
+							"name": "upstream_1",
+							"upstream_supported_2": "foo"
+						}
+					]
+				}
+			}`,
+		},
+		{
+			name: "ensure missing upstreams ValueFromField doesn't cause any change",
+			configTableUpdates: map[string][]ConfigTableUpdates{
+				"< 3.0.0": {
+					{
+						Type: Upstream,
+						FieldUpdates: []ConfigTableFieldCondition{
+							{
+								Field:     "upstream_unsupported_1",
+								Condition: "upstream_unsupported_1",
+								Updates: []ConfigTableFieldUpdate{
+									{
+										Field:          "upstream_supported_1",
+										ValueFromField: "upstream_unsupported_2",
+									},
+									{
+										Field: "upstream_unsupported_1",
+									},
+								},
+							},
+						},
+						ChangeID: "P042",
+					},
+				},
+			},
+			uncompressedPayload: `{
+				"config_table": {
+					"upstreams": [
+						{
+							"name": "upstream_1",
+							"upstream_unsupported_1": "foo"
+						}
+					]
+				}
+			}`,
+			dataPlaneVersion: "2.7.0",
+			expectedPayload: `{
+				"config_table": {
+					"upstreams": [
+						{
+							"name": "upstream_1",
+							"upstream_unsupported_1": "foo"
+						}
+					]
+				}
+			}`,
+		},
 	}
 
 	for _, test := range tests {
