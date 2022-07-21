@@ -179,8 +179,7 @@ func (m *Manager) setupPingHandler(node *Node) {
 		} else if _, ok := err.(net.Error); ok {
 			return nil
 		}
-		loggerWithNode := nodeLogger(node, m.logger)
-		loggerWithNode.Info("websocket ping handler received hash",
+		node.logger.Info("websocket ping handler received hash",
 			zap.String("config_hash", appData))
 
 		node.lock.Lock()
@@ -188,21 +187,13 @@ func (m *Manager) setupPingHandler(node *Node) {
 		node.lock.Unlock()
 		if err != nil {
 			// Logging for now
-			loggerWithNode.With(zap.Error(err), zap.String("appData", appData)).
+			node.logger.With(zap.Error(err), zap.String("appData", appData)).
 				Error("ping handler: received invalid hash from kong data-plane")
 		}
 		m.updateNodeStatus(node)
 
 		return err
 	})
-}
-
-func nodeLogger(node *Node, logger *zap.Logger) *zap.Logger {
-	return logger.With(
-		zap.String("node-id", node.ID),
-		zap.String("node-hostname", node.Hostname),
-		zap.String("node-version", node.Version),
-		zap.String("client-ip", node.RemoteAddr().String()))
 }
 
 func increaseMetricCounter(code int) {
@@ -222,7 +213,6 @@ func (m *Manager) AddNode(node *Node) {
 		// for the first push.
 		_ = m.reconcileKongPayload(m.ctx)
 	})
-	loggerWithNode := nodeLogger(node, m.logger)
 	// track each authenticated node
 	m.writeNode(node)
 	if node.conn != nil {
@@ -252,12 +242,12 @@ func (m *Manager) AddNode(node *Node) {
 				if ok {
 					increaseMetricCounter(wsErr.Code)
 					if wsErr.Code == websocket.CloseAbnormalClosure {
-						loggerWithNode.Info("node disconnected")
+						node.logger.Info("node disconnected")
 					} else {
-						loggerWithNode.With(zap.Error(err)).Error("read thread: connection closed")
+						node.logger.With(zap.Error(err)).Error("read thread: connection closed")
 					}
 				} else {
-					loggerWithNode.With(zap.Error(err)).Error("read thread")
+					node.logger.With(zap.Error(err)).Error("read thread")
 				}
 			}
 			// if there are any ws errors, remove the node
@@ -265,7 +255,7 @@ func (m *Manager) AddNode(node *Node) {
 		}()
 	} else {
 		if err := m.nodes.Add(node); err != nil {
-			m.logger.Error("track node", zap.Error(err))
+			m.logger.Error("failed adding node to manager", zap.Error(err))
 		}
 	}
 	go m.broadcast()
@@ -285,10 +275,10 @@ func (m *Manager) removeNode(node *Node) {
 	defer m.nodeTrackingMu.Unlock()
 	// TODO(hbagdi): may need more graceful error handling
 	if err := m.nodes.Remove(node); err != nil {
-		nodeLogger(node, m.logger).Error("failed to remove node", zap.Error(err))
+		node.logger.Error("failed to remove node", zap.Error(err))
 	}
 	if err := node.Close(); err != nil {
-		nodeLogger(node, m.logger).Info("error closing node", zap.Error(err))
+		node.logger.Info("error closing node", zap.Error(err))
 	}
 	if len(m.nodes.All()) == 0 {
 		m.logger.Info("no nodes connected, disabling stream")
@@ -349,7 +339,7 @@ func (m *Manager) broadcast() {
 	// by only releasing the lock after all configs have been acked.
 	for _, node := range m.nodes.All() {
 		if err := node.sendConfig(m.ctx, m.payload); err != nil {
-			m.logger.With(zap.Error(err)).Error("unable to gather payload, payload not sent to node")
+			node.logger.Error("failed to send config to node", zap.Error(err))
 			// one node failure shouldn't result in no sync activity to all
 			// subsequent/nodes even though it is likely that all nodes are
 			// of same version

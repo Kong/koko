@@ -9,7 +9,7 @@ import (
 	"go.uber.org/zap"
 )
 
-// Configurer is the HandleRegisterer to be added to a Negotiator object.
+// Configurer is the Registerer to be added to a Negotiator object.
 // It also implements the ConfigService interface so it adds itself
 // as the wrpc.Service.  This allows the service to get a reference to
 // the Manager object.
@@ -29,13 +29,14 @@ func (c *Configurer) Register(peer *wrpc.Peer) error {
 	return peer.Register(&config_service.ConfigServiceServer{ConfigService: c})
 }
 
+// GetCapabilities is a wRPC method, should only be CP to DP.
 func (c *Configurer) GetCapabilities(
 	ctx context.Context,
 	peer *wrpc.Peer,
 	req *config_service.GetCapabilitiesRequest,
 ) (*config_service.GetCapabilitiesResponse, error) {
 	c.manager.logger.Warn("Received a GetCapabilities rpc call from DP",
-		zap.String("node-addr", peer.RemoteAddr().String()))
+		zap.String("wrpc-client-ip", peer.RemoteAddr().String()))
 
 	return nil, fmt.Errorf("not implemented")
 }
@@ -54,7 +55,7 @@ func (c *Configurer) PingCP(
 	if node == nil {
 		return nil, fmt.Errorf("can't find node from %v", peer.RemoteAddr())
 	}
-	node.logger.Debug("received PingCP method", zap.String("hash", req.Hash))
+	node.logger.Debug("received PingCP method", zap.String("config_hash", req.Hash))
 
 	node.lock.Lock()
 	var err error
@@ -80,7 +81,7 @@ func (c *Configurer) ReportMetadata(
 	req *config_service.ReportMetadataRequest,
 ) (*config_service.ReportMetadataResponse, error) {
 	c.manager.logger.Debug("received ReportMetadata method",
-		zap.String("nodeAddr", peer.RemoteAddr().String()))
+		zap.String("wprc-client-ip", peer.RemoteAddr().String()))
 
 	node := c.manager.pendingNodes.FindNode(peer.RemoteAddr().String())
 	if node == nil {
@@ -93,7 +94,7 @@ func (c *Configurer) ReportMetadata(
 	for i, p := range req.Plugins {
 		plugins[i] = p.Name
 	}
-	node.logger.Debug("plugin list", zap.Strings("plugins", plugins))
+	node.logger.Debug("plugin list reported by the DP", zap.Strings("plugins", plugins))
 
 	err := c.manager.addWrpcNode(node, plugins)
 	if err != nil {
@@ -108,6 +109,7 @@ func (c *Configurer) ReportMetadata(
 	}, nil
 }
 
+// SyncConfig is a wRPC method, should only be CP to DP.
 func (c *Configurer) SyncConfig(
 	ctx context.Context,
 	peer *wrpc.Peer,
@@ -115,7 +117,7 @@ func (c *Configurer) SyncConfig(
 ) (*config_service.SyncConfigResponse, error) {
 	// this is a CP->DP method
 	c.manager.logger.Warn("Received a SyncConfig rpc call from DP",
-		zap.String("nodeAddr", peer.RemoteAddr().String()))
+		zap.String("wrpc-client-ip", peer.RemoteAddr().String()))
 
 	return nil, fmt.Errorf("control plane nodes don't implement the SyncConfig method")
 }

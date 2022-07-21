@@ -42,25 +42,25 @@ func (c configCache) reset() error {
 	return nil
 }
 
-// CachedWrpcContent holds a prepared wRPC sync request.
-type CachedWrpcContent struct {
+// CachedWRPCContent holds a prepared wRPC sync request.
+type CachedWRPCContent struct {
 	Req   wrpc.Request
 	Error error
 	Hash  string
 }
 
 // configWRPCCache keeps config requests parallel to configCache.
-type configWRPCCache map[string]CachedWrpcContent
+type configWRPCCache map[string]CachedWRPCContent
 
-func (c configWRPCCache) store(key string, value CachedWrpcContent) error {
+func (c configWRPCCache) store(key string, value CachedWRPCContent) error {
 	c[key] = value
 	return nil
 }
 
-func (c configWRPCCache) load(key string) (CachedWrpcContent, error) {
+func (c configWRPCCache) load(key string) (CachedWRPCContent, error) {
 	value, found := c[key]
 	if !found {
-		return CachedWrpcContent{}, errNotFound
+		return CachedWRPCContent{}, errNotFound
 	}
 	return value, nil
 }

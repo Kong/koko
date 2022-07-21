@@ -111,13 +111,13 @@ func (h websocketHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		hostname:   nodeHostname,
 		version:    nodeVersion,
 		connection: c,
+		logger:     m.logger,
 	})
 	if err != nil {
-		h.logger.Error("Create wRPC Node failed", zap.Error(err), zap.String("wrpc-client-ip", r.RemoteAddr))
+		h.logger.Error("Create websocket Node failed", zap.Error(err), zap.String("client-ip", r.RemoteAddr))
 		h.respondWithErr(w, r, err)
 		return
 	}
-	node.logger = nodeLogger(node, m.logger)
 	m.AddNode(node)
 }
 
@@ -170,14 +170,13 @@ func (h wrpcHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		id:       queryParams.Get(nodeIDKey),
 		hostname: queryParams.Get(nodeHostnameKey),
 		version:  queryParams.Get(nodeVersionKey),
-		logger:   h.logger.With(zap.String("wrpc-client-ip", r.RemoteAddr)),
+		logger:   m.logger,
 	})
 	if err != nil {
 		h.logger.Error("Create wRPC Node failed", zap.Error(err), zap.String("wrpc-client-ip", r.RemoteAddr))
 		h.respondWithErr(w, r, err)
 		return
 	}
-	node.logger = nodeLogger(node, m.logger)
 
 	node.peer = &wrpc.Peer{
 		ErrLogger: func(err error) {
@@ -192,17 +191,17 @@ func (h wrpcHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	err = h.baseServices.Register(node.peer)
 	if err != nil {
-		h.logger.With(zap.Error(err)).Error("register base wRPC services")
+		node.logger.Error("register base wRPC services", zap.Error(err))
 		return
 	}
 	err = node.peer.Upgrade(w, r)
 	if err != nil {
-		h.logger.With(zap.Error(err)).Error("upgrade to wRPC connection failed")
+		node.logger.Error("upgrade to wRPC connection failed", zap.Error(err))
 		return
 	}
 
 	if err = m.AddPendingNode(node); err != nil {
-		m.logger.Error("adding to pending node list", zap.Error(err))
+		node.logger.Error("adding to pending node list", zap.Error(err))
 		node.Close()
 	}
 }

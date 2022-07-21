@@ -80,13 +80,25 @@ func NewNode(opts nodeOpts) (*Node, error) {
 	if opts.connection != nil && opts.peer != nil {
 		return nil, fmt.Errorf("a Node can't have both a WebSocket connection and a wRPC peer")
 	}
+
+	logger := opts.logger.With(
+		zap.String("node-id", opts.id),
+		zap.String("node-hostname", opts.hostname),
+		zap.String("node-version", opts.version))
+	if opts.connection != nil {
+		logger = logger.With(zap.String("client-ip", opts.connection.RemoteAddr().String()))
+	}
+	if opts.peer != nil {
+		logger = logger.With(zap.String("wrpc-client-ip", opts.peer.RemoteAddr().String()))
+	}
+
 	return &Node{
 		ID:       opts.id,
 		Version:  opts.version,
 		Hostname: opts.hostname,
 		conn:     opts.connection,
 		peer:     opts.peer,
-		logger:   opts.logger,
+		logger:   logger,
 	}, nil
 }
 
@@ -210,16 +222,16 @@ func (n *Node) sendJSONConfig(ctx context.Context, payload *Payload) error {
 		return fmt.Errorf("unable to gather payload: %w", err)
 	}
 	n.logger.Info("broadcasting to node",
-		zap.String("hash", content.Hash))
+		zap.String("config_hash", content.Hash))
 	// TODO(hbagdi): perf: use websocket.PreparedMessage
 	hash, err := truncateHash(content.Hash)
 	if err != nil {
-		n.logger.With(zap.Error(err)).Sugar().Errorf("invalid hash [%v]", hash)
+		n.logger.Error("invalid hash", zap.Error(err), zap.String("config_hash", hash.String()))
 		return err
 	}
 	err = n.write(content.CompressedPayload, hash)
 	if err != nil {
-		n.logger.Error("broadcast to node failed", zap.Error(err))
+		n.logger.Error("failed to send config", zap.Error(err))
 		// TODO(hbagdi: remove the node if connection has been closed?
 		return err
 	}
@@ -230,19 +242,18 @@ func (n *Node) sendJSONConfig(ctx context.Context, payload *Payload) error {
 func (n *Node) sendWRPCConfig(ctx context.Context, payload *Payload) error {
 	content, err := payload.WrpcConfigPayload(ctx, n.Version)
 	if err != nil {
-		n.logger.With(zap.Error(err)).Error("preparing wrpc config payload")
+		n.logger.Error("preparing wrpc config payload", zap.Error(err))
 		return err
 	}
 
 	hash, err := truncateHash(content.Hash)
 	if err != nil {
-		n.logger.Error("invalid hash", zap.Error(err), zap.String("hash", hash.String()))
+		n.logger.Error("invalid hash", zap.Error(err), zap.String("config_hash", hash.String()))
 		return err
 	}
 
 	if bytes.Equal(n.hash[:], hash[:]) {
-		n.logger.With(zap.String("config_hash",
-			hash.String())).Info("hash matched, skipping update")
+		n.logger.Info("hash matched, skipping update", zap.String("config_hash", hash.String()))
 		return nil
 	}
 
@@ -253,7 +264,16 @@ func (n *Node) sendWRPCConfig(ctx context.Context, payload *Payload) error {
 
 		err := n.peer.DoRequest(ctx, content.Req, &out)
 		if err != nil {
-			n.logger.With(zap.Error(err)).Error("sending config")
+			n.logger.Error("SyncConfig method failed", zap.Error(err))
+		}
+		if !out.Accepted {
+			n.logger.Info("configuration not accepted")
+			for _, configerr := range out.Errors {
+				n.logger.Info("rejection description",
+					zap.String("err-type", configerr.ErrType.String()),
+					zap.String("err-id", configerr.Id),
+					zap.String("err-entity", configerr.Entity))
+			}
 		}
 	}()
 	return nil

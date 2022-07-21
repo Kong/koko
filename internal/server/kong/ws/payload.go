@@ -107,7 +107,7 @@ func (p *Payload) configForVersion(version string) (cacheEntry, error) {
 	return cacheEntry{}, err
 }
 
-func (p *Payload) readWRPCCache(versionStr string) (wc CachedWrpcContent, err error) {
+func (p *Payload) readWRPCCache(versionStr string) (wc CachedWRPCContent, err error) {
 	p.configCacheLock.Lock()
 	defer p.configCacheLock.Unlock()
 
@@ -115,7 +115,7 @@ func (p *Payload) readWRPCCache(versionStr string) (wc CachedWrpcContent, err er
 	return
 }
 
-func (p *Payload) WrpcConfigPayload(ctx context.Context, versionStr string) (CachedWrpcContent, error) {
+func (p *Payload) WrpcConfigPayload(ctx context.Context, versionStr string) (CachedWRPCContent, error) {
 	wc, err := p.readWRPCCache(versionStr)
 	if err == nil {
 		return wc, nil
@@ -124,7 +124,7 @@ func (p *Payload) WrpcConfigPayload(ctx context.Context, versionStr string) (Cac
 	if errors.Is(err, errNotFound) {
 		c, err := p.Payload(ctx, versionStr)
 		if err != nil {
-			return CachedWrpcContent{}, err
+			return CachedWRPCContent{}, err
 		}
 
 		configTable := config_service.SyncConfigRequest{
@@ -137,7 +137,7 @@ func (p *Payload) WrpcConfigPayload(ctx context.Context, versionStr string) (Cac
 		defer p.configCacheLock.Unlock()
 
 		req, err := config_service.PrepareConfigServiceSyncConfigRequest(&configTable)
-		wc := CachedWrpcContent{
+		wc := CachedWRPCContent{
 			Req:   req,
 			Error: err,
 			Hash:  c.Hash,
