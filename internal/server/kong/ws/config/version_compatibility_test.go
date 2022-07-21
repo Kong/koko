@@ -1982,6 +1982,242 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 				}
 			}`,
 		},
+		{
+			name: "existing plugin to be removed is removed",
+			configTableUpdates: map[uint64][]ConfigTableUpdates{
+				3000000000: {
+					{
+						Name:   "plugin_1",
+						Type:   Plugin,
+						Remove: true,
+					},
+				},
+			},
+			uncompressedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"name": "plugin_1",
+							"config": {
+								"plugin_field_1": "value"
+							}
+						},
+						{
+							"name": "plugin_2",
+							"config": {
+								"plugin_field_2": "value"
+							}
+						}
+					]
+				}
+			}`,
+			dataPlaneVersion: 2007000000,
+			expectedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"name": "plugin_2",
+							"config": {
+								"plugin_field_2": "value"
+							}
+						}
+					]
+				}
+			}`,
+		},
+		{
+			name: "multiple existing plugins to be removed are removed",
+			configTableUpdates: map[uint64][]ConfigTableUpdates{
+				3000000000: {
+					{
+						Name:   "plugin_1",
+						Type:   Plugin,
+						Remove: true,
+					},
+					{
+						Name:   "plugin_2",
+						Type:   Plugin,
+						Remove: true,
+					},
+				},
+			},
+			uncompressedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"name": "plugin_1",
+							"config": {
+								"plugin_field_1": "value"
+							}
+						},
+						{
+							"name": "plugin_2",
+							"config": {
+								"plugin_field_2": "value"
+							}
+						},
+						{
+							"name": "plugin_3",
+							"config": {
+								"plugin_field_3": "value"
+							}
+						}
+					]
+				}
+			}`,
+			dataPlaneVersion: 2007000000,
+			expectedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"name": "plugin_3",
+							"config": {
+								"plugin_field_3": "value"
+							}
+						}
+					]
+				}
+			}`,
+		},
+		{
+			name: "all existing plugins to be removed are removed",
+			configTableUpdates: map[uint64][]ConfigTableUpdates{
+				3000000000: {
+					{
+						Name:   "plugin_1",
+						Type:   Plugin,
+						Remove: true,
+					},
+					{
+						Name:   "plugin_2",
+						Type:   Plugin,
+						Remove: true,
+					},
+				},
+			},
+			uncompressedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"name": "plugin_1",
+							"config": {
+								"plugin_field_1": "value"
+							}
+						},
+						{
+							"name": "plugin_2",
+							"config": {
+								"plugin_field_2": "value"
+							}
+						}
+					]
+				}
+			}`,
+			dataPlaneVersion: 2007000000,
+			expectedPayload: `{
+				"config_table": {
+					"plugins": []
+				}
+			}`,
+		},
+		{
+			name: "existing plugin not to be removed is not removed",
+			configTableUpdates: map[uint64][]ConfigTableUpdates{
+				3000000000: {
+					{
+						Name:   "plugin_1",
+						Type:   Plugin,
+						Remove: true,
+					},
+				},
+			},
+			uncompressedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"name": "plugin_1",
+							"config": {
+								"plugin_field_1": "value"
+							}
+						}
+					]
+				}
+			}`,
+			dataPlaneVersion: 3000000000,
+			expectedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"name": "plugin_1",
+							"config": {
+								"plugin_field_1": "value"
+							}
+						}
+					]
+				}
+			}`,
+		},
+		{
+			name: "ensure multiple plugins are removed from multiple configured plugins",
+			configTableUpdates: map[uint64][]ConfigTableUpdates{
+				3000000000: {
+					{
+						Name:   "plugin_1",
+						Type:   Plugin,
+						Remove: true,
+					},
+				},
+			},
+			uncompressedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"name": "plugin_2",
+							"config": {
+								"plugin_2_field_1": "element"
+							}
+						},
+						{
+							"name": "plugin_1",
+							"config": {
+								"plugin_1_field_1": "element"
+							}
+						},
+						{
+							"name": "plugin_3",
+							"config": {
+								"plugin_3_field_1": "element"
+							}
+						},
+						{
+							"name": "plugin_1",
+							"config": {
+								"plugin_1_field_1": "element"
+							}
+						}
+					]
+				}
+			}`,
+			dataPlaneVersion: 2007000000,
+			expectedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"name": "plugin_2",
+							"config": {
+								"plugin_2_field_1": "element"
+							}
+						},
+						{
+							"name": "plugin_3",
+							"config": {
+								"plugin_3_field_1": "element"
+							}
+						}
+					]
+				}
+			}`,
+		},
 	}
 
 	for _, test := range tests {
