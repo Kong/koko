@@ -17,16 +17,16 @@ import (
 const (
 	TypeUpstream model.Type = "upstream"
 
-	cookieNamePattern = "^[a-zA-Z0-9-_]+$"
-	maxSlots          = 1 << 16
-	minSlots          = 10
-	maxConcurrency    = 1 << 31
-	maxSeconds        = 65535
-	maxStatuses       = 32
-	minStatus         = 100
-	maxStatus         = 999
-	maxOneByteInt     = 255
-	maxThreshold      = 100
+	hashFieldPattern = "^[a-zA-Z0-9-_]+$"
+	maxSlots         = 1 << 16
+	minSlots         = 10
+	maxConcurrency   = 1 << 31
+	maxSeconds       = 65535
+	maxStatuses      = 32
+	minStatus        = 100
+	maxStatus        = 999
+	maxOneByteInt    = 255
+	maxThreshold     = 100
 
 	defaultSlots       = 10000
 	defaultConcurrency = 10
@@ -88,6 +88,10 @@ var (
 			"ip",
 			"header",
 			"cookie",
+			// 3.0+
+			"path",
+			"query_arg",
+			"uri_capture",
 		},
 	}
 	typedefSeconds = &generator.Schema{
@@ -170,6 +174,36 @@ func (r Upstream) Validate(ctx context.Context) error {
 			}
 		}
 	}
+	if r.Upstream.HashOnQueryArg != "" || r.Upstream.HashFallbackQueryArg != "" {
+		if r.Upstream.HashOnQueryArg == r.Upstream.HashFallbackQueryArg {
+			return validation.Error{
+				Errs: []*v1.ErrorDetail{
+					{
+						Type: v1.ErrorType_ERROR_TYPE_ENTITY,
+						Messages: []string{
+							"'hash_on_query_arg' must not be" +
+								" equal to 'hash_fallback_query_arg'",
+						},
+					},
+				},
+			}
+		}
+	}
+	if r.Upstream.HashOnUriCapture != "" || r.Upstream.HashFallbackUriCapture != "" {
+		if r.Upstream.HashOnUriCapture == r.Upstream.HashFallbackUriCapture {
+			return validation.Error{
+				Errs: []*v1.ErrorDetail{
+					{
+						Type: v1.ErrorType_ERROR_TYPE_ENTITY,
+						Messages: []string{
+							"'hash_on_uri_capture' must not be" +
+								" equal to 'hash_fallback_uri_capture'",
+						},
+					},
+				},
+			}
+		}
+	}
 	return nil
 }
 
@@ -234,9 +268,25 @@ func init() {
 			"hash_fallback_header": typedefs.Header,
 			"hash_on_cookie": {
 				Type:    "string",
-				Pattern: cookieNamePattern,
+				Pattern: hashFieldPattern,
 			},
 			"hash_on_cookie_path": typedefs.Path,
+			"hash_on_query_arg": {
+				Type:    "string",
+				Pattern: hashFieldPattern,
+			},
+			"hash_fallback_query_arg": {
+				Type:    "string",
+				Pattern: hashFieldPattern,
+			},
+			"hash_on_uri_capture": {
+				Type:    "string",
+				Pattern: hashFieldPattern,
+			},
+			"hash_fallback_uri_capture": {
+				Type:    "string",
+				Pattern: hashFieldPattern,
+			},
 			"slots": {
 				Type:    "integer",
 				Minimum: intP(minSlots),
@@ -422,7 +472,7 @@ func init() {
 			{
 				Description: "when 'hash_on' is set to 'consumer', " +
 					"'hash_fallback' must be set to one of 'none', 'ip', " +
-					"'header', 'cookie'",
+					"'header', 'cookie', 'path', 'query_arg', 'uri_capture'",
 				If: &generator.Schema{
 					Required: []string{"hash_on"},
 					Properties: map[string]*generator.Schema{
@@ -452,6 +502,18 @@ func init() {
 									Type:  "string",
 									Const: "cookie",
 								},
+								{
+									Type:  "string",
+									Const: "path",
+								},
+								{
+									Type:  "string",
+									Const: "query_arg",
+								},
+								{
+									Type:  "string",
+									Const: "uri_capture",
+								},
 							},
 						},
 					},
@@ -460,7 +522,7 @@ func init() {
 			{
 				Description: "when 'hash_on' is set to 'ip', " +
 					"'hash_fallback' must be set to one of 'none', 'consumer', " +
-					"'header', 'cookie'",
+					"'header', 'cookie', 'path', 'query_arg', 'uri_capture'",
 				If: &generator.Schema{
 					Required: []string{"hash_on"},
 					Properties: map[string]*generator.Schema{
@@ -490,9 +552,131 @@ func init() {
 									Type:  "string",
 									Const: "cookie",
 								},
+								{
+									Type:  "string",
+									Const: "path",
+								},
+								{
+									Type:  "string",
+									Const: "query_arg",
+								},
+								{
+									Type:  "string",
+									Const: "uri_capture",
+								},
 							},
 						},
 					},
+				},
+			},
+			{
+				Description: "when 'hash_on' is set to 'path', " +
+					"'hash_fallback' must be set to one of 'none', 'consumer', 'ip', " +
+					"'header', 'cookie', 'query_arg', 'uri_capture'",
+				If: &generator.Schema{
+					Required: []string{"hash_on"},
+					Properties: map[string]*generator.Schema{
+						"hash_on": {
+							Const: "path",
+						},
+					},
+				},
+				Then: &generator.Schema{
+					Required: []string{"hash_fallback"},
+					Properties: map[string]*generator.Schema{
+						"hash_fallback": {
+							AnyOf: []*generator.Schema{
+								{
+									Type:  "string",
+									Const: "none",
+								},
+								{
+									Type:  "string",
+									Const: "consumer",
+								},
+								{
+									Type:  "string",
+									Const: "header",
+								},
+								{
+									Type:  "string",
+									Const: "cookie",
+								},
+								{
+									Type:  "string",
+									Const: "ip",
+								},
+								{
+									Type:  "string",
+									Const: "query_arg",
+								},
+								{
+									Type:  "string",
+									Const: "uri_capture",
+								},
+							},
+						},
+					},
+				},
+			},
+			{
+				Description: "when 'hash_on' is set to 'query_arg', " +
+					"'hash_on_query_arg' must be set",
+				If: &generator.Schema{
+					Required: []string{"hash_on"},
+					Properties: map[string]*generator.Schema{
+						"hash_on": {
+							Const: "query_arg",
+						},
+					},
+				},
+				Then: &generator.Schema{
+					Required: []string{"hash_on_query_arg"},
+				},
+			},
+			{
+				Description: "when 'hash_fallback' is set to 'query_arg', " +
+					"'hash_fallback_query_arg' must be set",
+				If: &generator.Schema{
+					Required: []string{"hash_fallback"},
+					Properties: map[string]*generator.Schema{
+						"hash_fallback": {
+							Const: "query_arg",
+						},
+					},
+				},
+				Then: &generator.Schema{
+					Required: []string{"hash_fallback_query_arg"},
+				},
+			},
+			{
+				Description: "when 'hash_on' is set to 'uri_capture', " +
+					"'hash_on_uri_capture' must be set",
+				If: &generator.Schema{
+					Required: []string{"hash_on"},
+					Properties: map[string]*generator.Schema{
+						"hash_on": {
+							Const: "uri_capture",
+						},
+					},
+				},
+				Then: &generator.Schema{
+					Required: []string{"hash_on_uri_capture"},
+				},
+			},
+			{
+				Description: "when 'hash_fallback' is set to 'uri_capture', " +
+					"'hash_fallback_uri_capture' must be set",
+				If: &generator.Schema{
+					Required: []string{"hash_fallback"},
+					Properties: map[string]*generator.Schema{
+						"hash_fallback": {
+							Const: "uri_capture",
+						},
+					},
+				},
+				Then: &generator.Schema{
+					Required: []string{"hash_fallback_uri_capture"},
 				},
 			},
 		},

@@ -269,7 +269,8 @@ func TestUpstream_Validate(t *testing.T) {
 					Messages: []string{
 						"when 'hash_on' is set to 'consumer', " +
 							"'hash_fallback' must be set to one of 'none', " +
-							"'ip', 'header', 'cookie'",
+							"'ip', 'header', 'cookie', 'path', " +
+							"'query_arg', 'uri_capture'",
 					},
 				},
 			},
@@ -292,7 +293,8 @@ func TestUpstream_Validate(t *testing.T) {
 					Messages: []string{
 						"when 'hash_on' is set to 'ip', " +
 							"'hash_fallback' must be set to one of 'none', " +
-							"'consumer', 'header', 'cookie'",
+							"'consumer', 'header', 'cookie', 'path', " +
+							"'query_arg', 'uri_capture'",
 					},
 				},
 			},
@@ -519,6 +521,158 @@ func TestUpstream_Validate(t *testing.T) {
 					Field: "healthchecks.passive.type",
 					Messages: []string{
 						`value must be one of "tcp", "http", "https", "grpc", "grpcs"`,
+					},
+				},
+			},
+		},
+		{
+			name: "hash_fallback must not be set to 'path' when 'hash_on" +
+				"' is set to 'path'",
+			Upstream: func() Upstream {
+				u := NewUpstream()
+				u.Upstream.Id = uuid.NewString()
+				u.Upstream.Name = "foo"
+				u.Upstream.HashOn = "path"
+				u.Upstream.HashFallback = "path"
+				return u
+			},
+			wantErr: true,
+			Errs: []*model.ErrorDetail{
+				{
+					Type: model.ErrorType_ERROR_TYPE_ENTITY,
+					Messages: []string{
+						"when 'hash_on' is set to 'path', " +
+							"'hash_fallback' must be set to one of 'none', " +
+							"'consumer', 'ip', 'header', 'cookie', " +
+							"'query_arg', 'uri_capture'",
+					},
+				},
+			},
+		},
+		{
+			name: "hash_on_query_arg is required when hash_on is set" +
+				" to 'query_arg'",
+			Upstream: func() Upstream {
+				u := NewUpstream()
+				u.Upstream.Id = uuid.NewString()
+				u.Upstream.Name = "foo"
+				u.Upstream.HashOn = "query_arg"
+				return u
+			},
+			wantErr: true,
+			Errs: []*model.ErrorDetail{
+				{
+					Type: model.ErrorType_ERROR_TYPE_ENTITY,
+					Messages: []string{
+						"when 'hash_on' is set to 'query_arg', " +
+							"'hash_on_query_arg' must be set",
+					},
+				},
+			},
+		},
+		{
+			name: "hash_fallback_query_arg is required when hash_fallback is set" +
+				" to 'query_arg'",
+			Upstream: func() Upstream {
+				u := NewUpstream()
+				u.Upstream.Id = uuid.NewString()
+				u.Upstream.Name = "foo"
+				u.Upstream.HashFallback = "query_arg"
+				return u
+			},
+			wantErr: true,
+			Errs: []*model.ErrorDetail{
+				{
+					Type: model.ErrorType_ERROR_TYPE_ENTITY,
+					Messages: []string{
+						"when 'hash_fallback' is set to 'query_arg', " +
+							"'hash_fallback_query_arg' must be set",
+					},
+				},
+			},
+		},
+		{
+			name: "hash_on_query_arg is required when hash_on is set" +
+				" to 'uri_capture'",
+			Upstream: func() Upstream {
+				u := NewUpstream()
+				u.Upstream.Id = uuid.NewString()
+				u.Upstream.Name = "foo"
+				u.Upstream.HashOn = "uri_capture"
+				return u
+			},
+			wantErr: true,
+			Errs: []*model.ErrorDetail{
+				{
+					Type: model.ErrorType_ERROR_TYPE_ENTITY,
+					Messages: []string{
+						"when 'hash_on' is set to 'uri_capture', " +
+							"'hash_on_uri_capture' must be set",
+					},
+				},
+			},
+		},
+		{
+			name: "hash_fallback_uri_capture is required when hash_fallback is set" +
+				" to 'uri_capture'",
+			Upstream: func() Upstream {
+				u := NewUpstream()
+				u.Upstream.Id = uuid.NewString()
+				u.Upstream.Name = "foo"
+				u.Upstream.HashFallback = "uri_capture"
+				return u
+			},
+			wantErr: true,
+			Errs: []*model.ErrorDetail{
+				{
+					Type: model.ErrorType_ERROR_TYPE_ENTITY,
+					Messages: []string{
+						"when 'hash_fallback' is set to 'uri_capture', " +
+							"'hash_fallback_uri_capture' must be set",
+					},
+				},
+			},
+		},
+		{
+			name: "hash_on_query_arg must not be equal to hash_fallback_query_arg",
+			Upstream: func() Upstream {
+				u := NewUpstream()
+				u.Upstream.Id = uuid.NewString()
+				u.Upstream.Name = "foo"
+				u.Upstream.HashOn = "query_arg"
+				u.Upstream.HashFallbackQueryArg = "query"
+				u.Upstream.HashOnQueryArg = "query"
+				return u
+			},
+			wantErr: true,
+			Errs: []*model.ErrorDetail{
+				{
+					Type: model.ErrorType_ERROR_TYPE_ENTITY,
+					Messages: []string{
+						"'hash_on_query_arg' must not be equal to" +
+							" 'hash_fallback_query_arg'",
+					},
+				},
+			},
+		},
+		{
+			name: "hash_on_uri_capture must not be equal to hash_fallback_uri_capture",
+			Upstream: func() Upstream {
+				u := NewUpstream()
+				u.Upstream.Id = uuid.NewString()
+				u.Upstream.Name = "foo"
+				u.Upstream.HashOn = "uri_capture"
+				u.Upstream.HashFallbackUriCapture = "foobar"
+				u.Upstream.HashOnUriCapture = "foobar"
+				return u
+			},
+			wantErr: true,
+			Errs: []*model.ErrorDetail{
+				{
+					Type: model.ErrorType_ERROR_TYPE_ENTITY,
+					Messages: []string{
+						"'hash_on_uri_capture' must not be equal to" +
+							" 'hash_fallback_uri_capture'",
 					},
 				},
 			},
