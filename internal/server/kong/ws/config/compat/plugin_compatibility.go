@@ -183,4 +183,11 @@ var PluginConfigTableUpdates = map[uint64][]config.ConfigTableUpdates{
 			},
 		},
 	},
+	3000000000: {
+		{
+			Name:   "opentelemetry",
+			Type:   config.Plugin,
+			Remove: true,
+		},
+	},
 }

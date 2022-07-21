@@ -215,9 +215,8 @@ func Run(ctx context.Context, config ServerConfig) error {
 	// setup version compatibility processor
 	vcLogger := logger.With(zap.String("component", "version-compatibility"))
 	vc, err := kongConfigWS.NewVersionCompatibilityProcessor(kongConfigWS.VersionCompatibilityOpts{
-		Logger:          vcLogger,
-		KongCPVersion:   kongConfigWS.KongGatewayCompatibilityVersion,
-		ExtraProcessing: compat.VersionCompatibilityExtraProcessing,
+		Logger:        vcLogger,
+		KongCPVersion: kongConfigWS.KongGatewayCompatibilityVersion,
 	})
 	if err != nil {
 		panic(err.Error())

@@ -97,6 +97,8 @@ type ConfigTableUpdates struct {
 	// depending on the version compatibility requirement of the data plane
 	// version being targeted.
 	FieldUpdates []ConfigTableFieldCondition
+	// Remove indicates whether the whole entity should be removed or not.
+	Remove bool
 }
 
 type WSVersionCompatibility struct {
@@ -260,6 +262,32 @@ func parseSemanticVersion(versionStr string) (uint64, error) {
 	return version, nil
 }
 
+func removePlugin(processedPayload string, pluginName string, dataPlaneVersion uint64, logger *zap.Logger) string {
+	plugins := gjson.Get(processedPayload, "config_table.plugins")
+	if plugins.IsArray() {
+		removeCount := 0
+		for i, res := range plugins.Array() {
+			pluginCondition := fmt.Sprintf("..#(name=%s)", pluginName)
+			if gjson.Get(res.Raw, pluginCondition).Exists() {
+				var err error
+				pluginDelete := fmt.Sprintf("config_table.plugins.%d", i-removeCount)
+				if processedPayload, err = sjson.Delete(processedPayload, pluginDelete); err != nil {
+					logger.With(zap.String("plugin", pluginName)).
+						With(zap.Uint64("data-plane", dataPlaneVersion)).
+						With(zap.Error(err)).
+						Error("plugin was not removed from configuration")
+				} else {
+					logger.With(zap.String("plugin", pluginName)).
+						With(zap.Uint64("data-plane", dataPlaneVersion)).
+						Warn("removing plugin which is incompatible with data plane")
+					removeCount++
+				}
+			}
+		}
+	}
+	return processedPayload
+}
+
 func processPluginUpdates(payload string, configTableUpdate ConfigTableUpdates, dataPlaneVersion uint64,
 	logger *zap.Logger,
 ) string {
@@ -405,5 +433,8 @@ func processPluginUpdates(payload string, configTableUpdate ConfigTableUpdates, 
 		}
 	}
 
+	if configTableUpdate.Remove && results.Exists() {
+		processedPayload = removePlugin(processedPayload, pluginName, dataPlaneVersion, logger)
+	}
 	return processedPayload
 }
