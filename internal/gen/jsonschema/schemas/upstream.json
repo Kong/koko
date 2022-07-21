@@ -36,12 +36,23 @@
         "consumer",
         "ip",
         "header",
-        "cookie"
+        "cookie",
+        "path",
+        "query_arg",
+        "uri_capture"
       ],
       "type": "string"
     },
     "hash_fallback_header": {
       "pattern": "^[A-Za-z0-9!#$%\u0026'*+-.^_|~]{1,64}$",
+      "type": "string"
+    },
+    "hash_fallback_query_arg": {
+      "pattern": "^[a-zA-Z0-9-_]+$",
+      "type": "string"
+    },
+    "hash_fallback_uri_capture": {
+      "pattern": "^[a-zA-Z0-9-_]+$",
       "type": "string"
     },
     "hash_on": {
@@ -50,7 +61,10 @@
         "consumer",
         "ip",
         "header",
-        "cookie"
+        "cookie",
+        "path",
+        "query_arg",
+        "uri_capture"
       ],
       "type": "string"
     },
@@ -79,6 +93,14 @@
     },
     "hash_on_header": {
       "pattern": "^[A-Za-z0-9!#$%\u0026'*+-.^_|~]{1,64}$",
+      "type": "string"
+    },
+    "hash_on_query_arg": {
+      "pattern": "^[a-zA-Z0-9-_]+$",
+      "type": "string"
+    },
+    "hash_on_uri_capture": {
+      "pattern": "^[a-zA-Z0-9-_]+$",
       "type": "string"
     },
     "healthchecks": {
@@ -430,7 +452,7 @@
       }
     },
     {
-      "description": "when 'hash_on' is set to 'consumer', 'hash_fallback' must be set to one of 'none', 'ip', 'header', 'cookie'",
+      "description": "when 'hash_on' is set to 'consumer', 'hash_fallback' must be set to one of 'none', 'ip', 'header', 'cookie', 'path', 'query_arg', 'uri_capture'",
       "if": {
         "required": [
           "hash_on"
@@ -463,6 +485,18 @@
               {
                 "type": "string",
                 "const": "cookie"
+              },
+              {
+                "type": "string",
+                "const": "path"
+              },
+              {
+                "type": "string",
+                "const": "query_arg"
+              },
+              {
+                "type": "string",
+                "const": "uri_capture"
               }
             ]
           }
@@ -470,7 +504,7 @@
       }
     },
     {
-      "description": "when 'hash_on' is set to 'ip', 'hash_fallback' must be set to one of 'none', 'consumer', 'header', 'cookie'",
+      "description": "when 'hash_on' is set to 'ip', 'hash_fallback' must be set to one of 'none', 'consumer', 'header', 'cookie', 'path', 'query_arg', 'uri_capture'",
       "if": {
         "required": [
           "hash_on"
@@ -503,10 +537,146 @@
               {
                 "type": "string",
                 "const": "cookie"
+              },
+              {
+                "type": "string",
+                "const": "path"
+              },
+              {
+                "type": "string",
+                "const": "query_arg"
+              },
+              {
+                "type": "string",
+                "const": "uri_capture"
               }
             ]
           }
         }
+      }
+    },
+    {
+      "description": "when 'hash_on' is set to 'path', 'hash_fallback' must be set to one of 'none', 'consumer', 'ip', 'header', 'cookie', 'query_arg', 'uri_capture'",
+      "if": {
+        "required": [
+          "hash_on"
+        ],
+        "properties": {
+          "hash_on": {
+            "const": "path"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "hash_fallback"
+        ],
+        "properties": {
+          "hash_fallback": {
+            "anyOf": [
+              {
+                "type": "string",
+                "const": "none"
+              },
+              {
+                "type": "string",
+                "const": "consumer"
+              },
+              {
+                "type": "string",
+                "const": "header"
+              },
+              {
+                "type": "string",
+                "const": "cookie"
+              },
+              {
+                "type": "string",
+                "const": "ip"
+              },
+              {
+                "type": "string",
+                "const": "query_arg"
+              },
+              {
+                "type": "string",
+                "const": "uri_capture"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "description": "when 'hash_on' is set to 'query_arg', 'hash_on_query_arg' must be set",
+      "if": {
+        "required": [
+          "hash_on"
+        ],
+        "properties": {
+          "hash_on": {
+            "const": "query_arg"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "hash_on_query_arg"
+        ]
+      }
+    },
+    {
+      "description": "when 'hash_fallback' is set to 'query_arg', 'hash_fallback_query_arg' must be set",
+      "if": {
+        "required": [
+          "hash_fallback"
+        ],
+        "properties": {
+          "hash_fallback": {
+            "const": "query_arg"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "hash_fallback_query_arg"
+        ]
+      }
+    },
+    {
+      "description": "when 'hash_on' is set to 'uri_capture', 'hash_on_uri_capture' must be set",
+      "if": {
+        "required": [
+          "hash_on"
+        ],
+        "properties": {
+          "hash_on": {
+            "const": "uri_capture"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "hash_on_uri_capture"
+        ]
+      }
+    },
+    {
+      "description": "when 'hash_fallback' is set to 'uri_capture', 'hash_fallback_uri_capture' must be set",
+      "if": {
+        "required": [
+          "hash_fallback"
+        ],
+        "properties": {
+          "hash_fallback": {
+            "const": "uri_capture"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "hash_fallback_uri_capture"
+        ]
       }
     }
   ],

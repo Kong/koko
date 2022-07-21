@@ -24,6 +24,10 @@ message Upstream {
   repeated string tags = 14;
   string host_header = 15;
   Certificate client_certificate = 16;
+  string hash_on_query_arg = 17;
+  string hash_fallback_query_arg = 18;
+  string hash_on_uri_capture = 19;
+  string hash_fallback_uri_capture = 20;
 }
 
 message Healthchecks {

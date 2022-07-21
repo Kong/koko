@@ -3279,6 +3279,18 @@
                 },
                 "client_certificate": {
                   "$ref": "#/definitions/kong.admin.model.v1.Certificate"
+                },
+                "hash_on_query_arg": {
+                  "type": "string"
+                },
+                "hash_fallback_query_arg": {
+                  "type": "string"
+                },
+                "hash_on_uri_capture": {
+                  "type": "string"
+                },
+                "hash_fallback_uri_capture": {
+                  "type": "string"
                 }
               }
             }
@@ -4175,6 +4187,18 @@
         },
         "client_certificate": {
           "$ref": "#/definitions/kong.admin.model.v1.Certificate"
+        },
+        "hash_on_query_arg": {
+          "type": "string"
+        },
+        "hash_fallback_query_arg": {
+          "type": "string"
+        },
+        "hash_on_uri_capture": {
+          "type": "string"
+        },
+        "hash_fallback_uri_capture": {
+          "type": "string"
         }
       }
     },
