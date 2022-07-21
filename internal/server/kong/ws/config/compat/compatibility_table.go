@@ -43,6 +43,17 @@ func standardPluginNotAvailableMessage(pluginName string, versionWithFeatureSupp
 	)
 }
 
+func standardCoreEntityFieldsMessage(entityName string, fields []string, versionWithFeatureSupport string) string {
+	quotedFields := "'" + strings.Join(fields, "', '") + "'"
+	return fmt.Sprintf("For the '%s' entity, "+
+		"one or more of the following schema fields are set: %s "+
+		"but Kong Gateway versions < %s do not support these fields. "+
+		entityName,
+		quotedFields,
+		versionWithFeatureSupport,
+	)
+}
+
 const (
 	versionsPre260      = "< 2.6.0"
 	versionsPre270      = "< 2.7.0"
@@ -678,6 +689,115 @@ var (
 					{
 						Field:     "functions",
 						Condition: "functions",
+					},
+				},
+			},
+		},
+		{
+			Metadata: config.ChangeMetadata{
+				ID:       config.ChangeID("P126"),
+				Severity: config.ChangeSeverityError,
+				Description: standardCoreEntityFieldsMessage(config.Upstream.String(),
+					[]string{
+						"hash_on_query_arg",
+						"hash_fallback_query_arg",
+						"hash_on_uri_capture",
+						"hash_fallback_uri_capture",
+					},
+					"3.0"),
+				Resolution: standardUpgradeMessage("3.0"),
+			},
+			SemverRange: versionsPre300,
+			Update: config.ConfigTableUpdates{
+				Name: config.Upstream.String(),
+				Type: config.Upstream,
+				RemoveFields: []string{
+					"hash_on_query_arg",
+					"hash_fallback_query_arg",
+					"hash_on_uri_capture",
+					"hash_fallback_uri_capture",
+				},
+			},
+		},
+		{
+			Metadata: config.ChangeMetadata{
+				ID:       config.ChangeID("P127"),
+				Severity: config.ChangeSeverityError,
+				Description: fmt.Sprintf("For the 'upstreams' entity, "+
+					"one or more of the '%s' schema fields are set with one "+
+					"of the following values: %s, but Kong Gateway versions < 3.0 "+
+					"do not support these values. Because of this, 'hash_on' and 'hash_fallback'"+
+					"have been changed in the data-plane to 'none' and hashing is "+
+					"not working as expected.",
+					strings.Join([]string{"hash_on", "hash_fallback"}, ", "),
+					strings.Join([]string{"path", "query_arg", "uri_capture"}, ", "),
+				),
+				Resolution: standardUpgradeMessage("3.0"),
+			},
+			SemverRange: versionsPre300,
+			Update: config.ConfigTableUpdates{
+				Name: config.Upstream.String(),
+				Type: config.Upstream,
+				FieldUpdates: []config.ConfigTableFieldCondition{
+					{
+						Field:     "hash_on",
+						Condition: "hash_on=path",
+						Updates: []config.ConfigTableFieldUpdate{
+							{
+								Field: "hash_on",
+								Value: "none",
+							},
+						},
+					},
+					{
+						Field:     "hash_on",
+						Condition: "hash_on=query_arg",
+						Updates: []config.ConfigTableFieldUpdate{
+							{
+								Field: "hash_on",
+								Value: "none",
+							},
+						},
+					},
+					{
+						Field:     "hash_on",
+						Condition: "hash_on=uri_capture",
+						Updates: []config.ConfigTableFieldUpdate{
+							{
+								Field: "hash_on",
+								Value: "none",
+							},
+						},
+					},
+					{
+						Field:     "hash_fallback",
+						Condition: "hash_fallback=path",
+						Updates: []config.ConfigTableFieldUpdate{
+							{
+								Field: "hash_fallback",
+								Value: "none",
+							},
+						},
+					},
+					{
+						Field:     "hash_fallback",
+						Condition: "hash_fallback=query_arg",
+						Updates: []config.ConfigTableFieldUpdate{
+							{
+								Field: "hash_fallback",
+								Value: "none",
+							},
+						},
+					},
+					{
+						Field:     "hash_fallback",
+						Condition: "hash_fallback=uri_capture",
+						Updates: []config.ConfigTableFieldUpdate{
+							{
+								Field: "hash_fallback",
+								Value: "none",
+							},
+						},
 					},
 				},
 			},
