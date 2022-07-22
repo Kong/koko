@@ -49,6 +49,7 @@ func (l *KongServiceLoader) Mutate(ctx context.Context,
 			return err
 		}
 		delete(m, "enabled")
+		flattenForeign(m, "client_certificate")
 		res = append(res, m)
 	}
 	config["services"] = res
