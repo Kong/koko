@@ -70,6 +70,7 @@ func TestVersionCompatibility(t *testing.T) {
 			id:   uuid.NewString(),
 			config: `{
 				"aws_region": "AWS_REGION",
+				"host": "192.168.1.1",
 				"function_name": "FUNCTION_NAME"
 			}`,
 		},
