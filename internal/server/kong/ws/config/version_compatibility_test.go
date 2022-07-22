@@ -264,11 +264,11 @@ func TestVersionCompatibility_AddConfigTableUpdates(t *testing.T) {
 			})
 			require.Nil(t, err)
 			for _, configTableUpdate := range test.configTablesUpdates {
-				err := wsvc.AddConfigTableUpdates(configTableUpdate)
+				err := wsvc.AddConfigTableUpdates(configTableUpdate, false)
 				require.Nil(t, err)
 			}
-			require.Equal(t, test.expectedConfigTableUpdates, wsvc.configTableUpdates)
-			require.Equal(t, test.expectedCount, len(wsvc.configTableUpdates))
+			require.Equal(t, test.expectedConfigTableUpdates, wsvc.configTableUpdatesOlderDP)
+			require.Equal(t, test.expectedCount, len(wsvc.configTableUpdatesOlderDP))
 		})
 	}
 
@@ -341,7 +341,7 @@ func TestVersionCompatibility_AddConfigTableUpdates(t *testing.T) {
 				KongCPVersion: "2.8.0",
 			})
 			require.Nil(t, err)
-			err = wsvc.AddConfigTableUpdates(test)
+			err = wsvc.AddConfigTableUpdates(test, false)
 			require.NotNil(t, err)
 			require.EqualError(t, err, "'Value' and 'ValueFromField' are mutually exclusive")
 		}
@@ -477,7 +477,7 @@ func TestVersionCompatibility_GetConfigTableUpdates(t *testing.T) {
 		KongCPVersion: "2.8.0",
 	})
 	require.Nil(t, err)
-	err = wsvc.AddConfigTableUpdates(allPluginPlayloadUpdates())
+	err = wsvc.AddConfigTableUpdates(allPluginPlayloadUpdates(), false)
 	require.Nil(t, err)
 
 	tests := []struct {
@@ -547,7 +547,7 @@ func TestVersionCompatibility_GetConfigTableUpdates(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			pluginPayloadUpdates := wsvc.getConfigTableUpdates(test.dataPlaneVersion)
+			pluginPayloadUpdates := wsvc.getConfigTableUpdatesForOlderDPVersion(test.dataPlaneVersion)
 			require.ElementsMatch(t, test.expectedConfigTableUpdates(), pluginPayloadUpdates)
 		})
 	}
@@ -555,11 +555,12 @@ func TestVersionCompatibility_GetConfigTableUpdates(t *testing.T) {
 
 func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 	tests := []struct {
-		name                string
-		configTableUpdates  map[uint64][]ConfigTableUpdates
-		uncompressedPayload string
-		dataPlaneVersion    uint64
-		expectedPayload     string
+		name                          string
+		configTableUpdates            map[uint64][]ConfigTableUpdates
+		configTableUpdatesForNewerDPs map[uint64][]ConfigTableUpdates
+		uncompressedPayload           string
+		dataPlaneVersion              uint64
+		expectedPayload               string
 	}{
 		{
 			name: "single field element",
@@ -2218,6 +2219,70 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 				}
 			}`,
 		},
+		{
+			name: "ensure multiple plugins are removed from multiple configured plugins",
+			configTableUpdatesForNewerDPs: map[uint64][]ConfigTableUpdates{
+				2999999999: {
+					{
+						Name: "plugin_1",
+						Type: Plugin,
+						RemoveFields: []string{
+							"plugin_1_field_1",
+						},
+					},
+				},
+			},
+			uncompressedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"name": "plugin_2",
+							"config": {
+								"plugin_2_field_1": "element"
+							}
+						},
+						{
+							"name": "plugin_1",
+							"config": {
+								"plugin_1_field_1": "element",
+								"plugin_1_field_2": "element"
+							}
+						},
+						{
+							"name": "plugin_3",
+							"config": {
+								"plugin_3_field_1": "element"
+							}
+						}
+					]
+				}
+			}`,
+			dataPlaneVersion: 3000000000,
+			expectedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"name": "plugin_2",
+							"config": {
+								"plugin_2_field_1": "element"
+							}
+						},
+						{
+							"name": "plugin_1",
+							"config": {
+								"plugin_1_field_2": "element"
+							}
+						},
+						{
+							"name": "plugin_3",
+							"config": {
+								"plugin_3_field_1": "element"
+							}
+						}
+					]
+				}
+			}`,
+		},
 	}
 
 	for _, test := range tests {
@@ -2226,9 +2291,11 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 				Logger:        log.Logger,
 				KongCPVersion: "2.8.0",
 			})
-			require.Nil(t, err)
-			err = wsvc.AddConfigTableUpdates(test.configTableUpdates)
-			require.Nil(t, err)
+			require.NoError(t, err)
+			err = wsvc.AddConfigTableUpdates(test.configTableUpdates, false)
+			require.NoError(t, err)
+			err = wsvc.AddConfigTableUpdates(test.configTableUpdatesForNewerDPs, true)
+			require.NoError(t, err)
 
 			processedPayload, err := wsvc.processConfigTableUpdates(test.uncompressedPayload,
 				test.dataPlaneVersion)

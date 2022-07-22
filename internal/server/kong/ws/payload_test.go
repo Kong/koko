@@ -25,7 +25,7 @@ func TestConfigPayload_Cache(t *testing.T) {
 				},
 			},
 		},
-	})
+	}, false)
 	require.Nil(t, err)
 
 	payloadBytes := []byte(`{

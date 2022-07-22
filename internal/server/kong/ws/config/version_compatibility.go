@@ -27,7 +27,7 @@ const (
 var buildVersionRegex = regexp.MustCompile(buildVersionPattern)
 
 type VersionCompatibility interface {
-	AddConfigTableUpdates(configTableUpdates map[uint64][]ConfigTableUpdates) error
+	AddConfigTableUpdates(configTableUpdates map[uint64][]ConfigTableUpdates, applyToNewer bool) error
 	ProcessConfigTableUpdates(dataPlaneVersionStr string, compressedPayload []byte) ([]byte, error)
 }
 
@@ -130,7 +130,9 @@ func NewVersionCompatibilityProcessor(opts VersionCompatibilityOpts) (*WSVersion
 	}, nil
 }
 
-func (vc *WSVersionCompatibility) AddConfigTableUpdates(pluginPayloadUpdates map[uint64][]ConfigTableUpdates) error {
+func (vc *WSVersionCompatibility) AddConfigTableUpdates(
+	pluginPayloadUpdates map[uint64][]ConfigTableUpdates, applyToNewer bool,
+) error {
 	for version, pluginUpdates := range pluginPayloadUpdates {
 		// Handle restriction for FieldUpdates
 		for _, pluginUpdate := range pluginUpdates {
@@ -143,7 +145,11 @@ func (vc *WSVersionCompatibility) AddConfigTableUpdates(pluginPayloadUpdates map
 			}
 		}
 
-		vc.configTableUpdates[version] = append(vc.configTableUpdates[version], pluginUpdates...)
+		if applyToNewer {
+			vc.configTableUpdatesNewerDP[version] = append(vc.configTableUpdatesNewerDP[version], pluginUpdates...)
+		} else {
+			vc.configTableUpdatesOlderDP[version] = append(vc.configTableUpdatesOlderDP[version], pluginUpdates...)
+		}
 	}
 	return nil
 }
@@ -201,10 +207,20 @@ func (vc *WSVersionCompatibility) performExtraProcessing(uncompressedPayload str
 	return uncompressedPayload, nil
 }
 
-func (vc *WSVersionCompatibility) getConfigTableUpdates(dataPlaneVersion uint64) []ConfigTableUpdates {
+func (vc *WSVersionCompatibility) getConfigTableUpdatesForOlderDPVersion(dataPlaneVersion uint64) []ConfigTableUpdates {
 	configTableUpdates := []ConfigTableUpdates{}
-	for versionNumber, updates := range vc.configTableUpdates {
+	for versionNumber, updates := range vc.configTableUpdatesOlderDP {
 		if dataPlaneVersion < versionNumber {
+			configTableUpdates = append(configTableUpdates, updates...)
+		}
+	}
+	return configTableUpdates
+}
+
+func (vc *WSVersionCompatibility) getConfigTableUpdatesForNewerDPVersion(dataPlaneVersion uint64) []ConfigTableUpdates {
+	configTableUpdates := []ConfigTableUpdates{}
+	for versionNumber, updates := range vc.configTableUpdatesNewerDP {
+		if dataPlaneVersion > versionNumber {
 			configTableUpdates = append(configTableUpdates, updates...)
 		}
 	}
@@ -216,7 +232,15 @@ func (vc *WSVersionCompatibility) processConfigTableUpdates(uncompressedPayload 
 ) (string, error) {
 	processedPayload := uncompressedPayload
 
-	configTableUpdates := vc.getConfigTableUpdates(dataPlaneVersion)
+	configTableUpdates := vc.getConfigTableUpdatesForOlderDPVersion(dataPlaneVersion)
+	for _, configTableUpdate := range configTableUpdates {
+		if configTableUpdate.Type == Plugin {
+			processedPayload = processPluginUpdates(processedPayload, configTableUpdate, dataPlaneVersion,
+				vc.logger)
+		}
+	}
+
+	configTableUpdates = vc.getConfigTableUpdatesForNewerDPVersion(dataPlaneVersion)
 	for _, configTableUpdate := range configTableUpdates {
 		if configTableUpdate.Type == Plugin {
 			processedPayload = vc.processPluginUpdates(processedPayload,

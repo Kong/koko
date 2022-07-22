@@ -149,3 +149,15 @@ var PluginConfigTableUpdates = map[uint64][]config.ConfigTableUpdates{
 		},
 	},
 }
+
+var PluginConfigTableUpdatesForNewerDPs = map[uint64][]config.ConfigTableUpdates{
+	2999999999: {
+		{
+			Name: "aws-lambda",
+			Type: config.Plugin,
+			RemoveFields: []string{
+				"proxy_scheme",
+			},
+		},
+	},
+}
