@@ -16,7 +16,6 @@ import (
 	admin "github.com/kong/koko/internal/gen/grpc/kong/admin/service/v1"
 	relay "github.com/kong/koko/internal/gen/grpc/kong/relay/service/v1"
 	grpcKongUtil "github.com/kong/koko/internal/gen/grpc/kong/util/v1"
-	"github.com/kong/koko/internal/json"
 	"github.com/kong/koko/internal/metrics"
 	"github.com/kong/koko/internal/resource"
 	"github.com/kong/koko/internal/server/kong/ws/config"
@@ -175,7 +174,7 @@ func (m *Manager) setupPingHandler(node *Node) {
 		}
 		loggerWithNode := nodeLogger(node, m.logger)
 		loggerWithNode.Info("websocket ping handler received hash",
-			zap.String("hash", appData))
+			zap.String("config_hash", appData))
 
 		node.lock.Lock()
 		node.hash, err = truncateHash(appData)
@@ -196,7 +195,7 @@ func nodeLogger(node *Node, logger *zap.Logger) *zap.Logger {
 		zap.String("node-id", node.ID),
 		zap.String("node-hostname", node.Hostname),
 		zap.String("node-version", node.Version),
-		zap.String("client-ip", node.conn.RemoteAddr().String()))
+		zap.String("client-ip", node.RemoteAddr().String()))
 }
 
 func increaseMetricCounter(code int) {
@@ -228,7 +227,7 @@ func (m *Manager) AddNode(node *Node) {
 			zap.Error(err),
 			zap.String("node-id", node.ID),
 		).Info("kong DP node rejected")
-		err := node.conn.Close()
+		err := node.Close()
 		if err != nil {
 			m.logger.With(zap.Error(err)).Error(
 				"failed to close websocket connection")
@@ -273,13 +272,21 @@ func (m *Manager) removeNode(node *Node) {
 	defer m.nodeTrackingMu.Unlock()
 	// TODO(hbagdi): may need more graceful error handling
 	if err := m.nodes.Remove(node); err != nil {
-		nodeLogger(node, m.logger).With(zap.Error(err)).
-			Error("remove node")
+		nodeLogger(node, m.logger).Error("failed to remove node", zap.Error(err))
+	}
+	if err := node.Close(); err != nil {
+		nodeLogger(node, m.logger).Error("error closing node", zap.Error(err))
 	}
 	if len(m.nodes.All()) == 0 {
 		m.logger.Info("no nodes connected, disabling stream")
 		m.streamer.Disable()
 	}
+}
+
+// FindNode returns a pointer to the node given a remote address
+// or nil if not found.
+func (m *Manager) FindNode(remoteAddress string) *Node {
+	return m.nodes.FindNode(remoteAddress)
 }
 
 // broadcast sends the most recent configuration to all connected nodes.
@@ -298,7 +305,7 @@ func (m *Manager) broadcast() {
 		}
 		loggerWithNode := nodeLogger(node, m.logger)
 		loggerWithNode.Info("broadcasting to node",
-			zap.String("hash", payload.Hash))
+			zap.String("config_hash", payload.Hash))
 		// TODO(hbagdi): perf: use websocket.PreparedMessage
 		hash, err := truncateHash(payload.Hash)
 		if err != nil {
@@ -332,7 +339,7 @@ func (m *Manager) reconcileKongPayload(ctx context.Context) error {
 		return err
 	}
 	m.logger.Info("payload reconciled successfully",
-		zap.String("hash", config.Hash))
+		zap.String("config_hash", config.Hash))
 
 	return nil
 }
@@ -346,7 +353,7 @@ func (m *Manager) updateExpectedHash(ctx context.Context, hash string) {
 	// TODO(hbagdi): add retry with backoff, take a new hash during retry into account
 	ctx, cancel := context.WithTimeout(ctx, defaultRequestTimeout)
 	defer cancel()
-	m.logger.Info("update expected hash in database", zap.String("hash", hash))
+	m.logger.Info("update expected hash in database", zap.String("config_hash", hash))
 	_, err := m.configClient.Status.UpdateExpectedHash(ctx, &relay.UpdateExpectedHashRequest{
 		Cluster: m.reqCluster(),
 		Hash:    hash,
@@ -523,32 +530,10 @@ type nodeAttributes struct {
 	Version string
 }
 
-func (m *Manager) getPluginList(node *Node) ([]string, error) {
-	messageType, message, err := node.conn.ReadMessage()
-	if err != nil {
-		return nil, fmt.Errorf("read websocket message: %v", err)
-	}
-	if messageType != websocket.BinaryMessage {
-		return nil, fmt.Errorf("kong data-plane sent a message of type %v, "+
-			"expected %v", messageType, websocket.BinaryMessage)
-	}
-	var info basicInfo
-	err = json.Unmarshal(message, &info)
-	if err != nil {
-		return nil, fmt.Errorf("unmarshal basic-info json message: %v", err)
-	}
-
-	plugins := make([]string, 0, len(info.Plugins))
-	for _, p := range info.Plugins {
-		plugins = append(plugins, p.Name)
-	}
-	return plugins, nil
-}
-
 func (m *Manager) validateNode(node *Node) error {
-	pluginList, err := m.getPluginList(node)
+	pluginList, err := node.GetPluginList()
 	if err != nil {
-		return err
+		return fmt.Errorf("(websocket) unable to read plugin list from DP: %w", err)
 	}
 	mConfig := m.ReadConfig()
 	conditions := checkPreReqs(nodeAttributes{

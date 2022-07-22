@@ -4,10 +4,13 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"fmt"
+	"net"
 	"regexp"
 	"sync"
 
 	"github.com/gorilla/websocket"
+	"github.com/kong/go-wrpc/wrpc"
+	"github.com/kong/koko/internal/json"
 	"go.uber.org/zap"
 )
 
@@ -44,8 +47,18 @@ type Node struct {
 	Version  string
 	Hostname string
 	conn     *websocket.Conn
+	peer     *wrpc.Peer
 	logger   *zap.Logger
 	hash     sum
+}
+
+type nodeOpts struct {
+	id         string
+	version    string
+	hostname   string
+	connection *websocket.Conn
+	peer       *wrpc.Peer
+	logger     *zap.Logger
 }
 
 type ErrConnClosed struct {
@@ -56,8 +69,82 @@ func (e ErrConnClosed) Error() string {
 	return fmt.Sprintf("websocket connection closed (code: %v)", e.Code)
 }
 
+// NewNode creates a new Node object with the given options
+// after verifying them for consistency.
+func NewNode(opts nodeOpts) (*Node, error) {
+	if opts.connection == nil && opts.peer == nil {
+		return nil, fmt.Errorf("a Node requires either a WebSocket connection or a wRPC peer")
+	}
+	if opts.connection != nil && opts.peer != nil {
+		return nil, fmt.Errorf("a Node can't have both a WebSocket connection and a wRPC peer")
+	}
+	return &Node{
+		ID:       opts.id,
+		Version:  opts.version,
+		Hostname: opts.hostname,
+		conn:     opts.connection,
+		peer:     opts.peer,
+		logger:   opts.logger,
+	}, nil
+}
+
+// Close ends the Node's lifetime and of its connection.
+func (n *Node) Close() error {
+	if n.conn != nil {
+		return n.conn.Close()
+	}
+
+	if n.peer != nil {
+		return n.peer.Close()
+	}
+
+	return nil
+}
+
+// RemoteAddr returns the network address of the client.
+func (n *Node) RemoteAddr() net.Addr {
+	if n.conn != nil {
+		return n.conn.RemoteAddr()
+	}
+	if n.peer != nil {
+		return n.peer.RemoteAddr()
+	}
+	return &net.IPAddr{}
+}
+
+// GetPluginList receives the list of plugins the DP sends
+// right after connection on the old WebSocket protocol.
+func (n *Node) GetPluginList() ([]string, error) {
+	if n.conn == nil {
+		return nil, fmt.Errorf("not implemented")
+	}
+
+	messageType, message, err := n.conn.ReadMessage()
+	if err != nil {
+		return nil, fmt.Errorf("read websocket message: %w", err)
+	}
+	if messageType != websocket.BinaryMessage {
+		return nil, fmt.Errorf("kong data-plane sent a message of type %v, "+
+			"expected %v", messageType, websocket.BinaryMessage)
+	}
+	var info basicInfo
+	err = json.Unmarshal(message, &info)
+	if err != nil {
+		return nil, fmt.Errorf("unmarshal basic-info json message: %w", err)
+	}
+	plugins := make([]string, len(info.Plugins))
+	for i, p := range info.Plugins {
+		plugins[i] = p.Name
+	}
+	return plugins, nil
+}
+
 // readThread continuously reads messages from connected DP node.
 func (n *Node) readThread() error {
+	if n.conn == nil {
+		return fmt.Errorf("readThread is only for plain WebSocket nodes")
+	}
+
 	for {
 		_, message, err := n.conn.ReadMessage()
 		if err != nil {
@@ -71,7 +158,13 @@ func (n *Node) readThread() error {
 	}
 }
 
+// write sends the provided config payload to the DP, if the hash
+// is different from the last one reported.
+// Used only on WebSocket protocol.
 func (n *Node) write(payload []byte, hash sum) error {
+	if n.conn == nil {
+		return fmt.Errorf("node.write is only for plain WebSocket nodes")
+	}
 	n.lock.RLock()
 	defer n.lock.RUnlock()
 

@@ -22,7 +22,7 @@ require (
 	github.com/jackc/pgx/v4 v4.16.1
 	github.com/jeremywohl/flatten v1.0.1
 	github.com/kong/go-kong v0.30.0
-	github.com/kong/go-wrpc v0.0.0-20210914213024-d4348db6b815
+	github.com/kong/go-wrpc v0.0.0-20220713182016-0ac0ed43d830
 	github.com/kong/goks v0.4.8
 	github.com/mattn/go-sqlite3 v1.14.14
 	github.com/mitchellh/mapstructure v1.5.0
@@ -100,6 +100,7 @@ require (
 	github.com/sergi/go-diff v1.0.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/stoewer/go-strcase v1.2.0 // indirect
+	github.com/stretchr/objx v0.4.0 // indirect
 	github.com/tidwall/match v1.1.1 // indirect
 	github.com/tidwall/pretty v1.2.0 // indirect
 	github.com/tklauser/go-sysconf v0.3.10 // indirect
