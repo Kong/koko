@@ -167,7 +167,9 @@ func (h wrpcHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	peer := &wrpc.Peer{
 		ErrLogger: func(err error) {
-			h.logger.With(zap.Error(err), zap.String("wrpc-client-ip", r.RemoteAddr)).Error("peer object")
+			h.logger.Error("unexpected error with peer connection",
+				zap.Error(err),
+				zap.String("wrpc-client-ip", r.RemoteAddr))
 		},
 	}
 	err = h.baseServices.Register(peer)
