@@ -202,6 +202,12 @@ func TestVersionCompatibility(t *testing.T) {
 		{
 			name: "prometheus",
 			id:   uuid.NewString(),
+			config: `{
+				"status_code_metrics": true,
+				"lantency_metrics": true,
+				"bandwidth_metrics": true,
+				"upstream_health_metrics": true
+			}`,
 		},
 		{
 			name: "proxy-cache",
