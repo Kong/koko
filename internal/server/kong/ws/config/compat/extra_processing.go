@@ -20,9 +20,10 @@ func correctAWSLambdaMutuallyExclusiveFields(payload string, dataPlaneVersion ui
 			updatedRaw := res.Raw
 			awsRegionResult := gjson.Get(res.Raw, "config.aws_region")
 			hostResult := gjson.Get(res.Raw, "config.host")
-			// 'aws_region' and 'host' used to be mutually exclusive fields but
-			// both are accepted in 3.x. If both are set with DPs < 3.x, we decide
-			// to drop the 'host' field in order to prevent a failure in the DP.
+			// 'aws_region' and 'host' were mutually exclusive fields until
+			// Kong version 2.8 but both are accepted in 3.x. If both are set
+			// with DPs < 3.x, we decide to drop the 'host' field in order
+			// to prevent a failure in the DP.
 			if awsRegionResult.Exists() && hostResult.Exists() {
 				var err error
 				if updatedRaw, err = sjson.Delete(updatedRaw, "config.host"); err != nil {
