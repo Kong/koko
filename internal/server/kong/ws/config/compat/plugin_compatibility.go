@@ -183,11 +183,21 @@ var PluginConfigTableUpdates = map[uint64][]config.ConfigTableUpdates{
 			},
 		},
 	},
-	3000000000: {
+	2999999999: {
 		{
 			Name:   "opentelemetry",
 			Type:   config.Plugin,
 			Remove: true,
+		},
+		{
+			Name: "zipkin",
+			Type: config.Plugin,
+			RemoveFields: []string{
+				"http_span_name",
+				"connect_timeout",
+				"send_timeout",
+				"read_timeout",
+			},
 		},
 	},
 }

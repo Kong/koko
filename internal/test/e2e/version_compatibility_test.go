@@ -283,7 +283,11 @@ func TestVersionCompatibility(t *testing.T) {
 			id:   uuid.NewString(),
 			config: `{
 				"local_service_name": "LOCAL_SERVICE_NAME",
-				"header_type": "ignore"
+				"header_type": "ignore",
+				"http_span_name": "method_path",
+				"connect_timeout": 2001,
+				"send_timeout": 2001,
+				"read_timeout": 2001
 			}`,
 			fieldUpdateChecks: map[string][]update{
 				"< 2.7.0": {
