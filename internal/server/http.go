@@ -15,7 +15,10 @@ import (
 	"go.uber.org/zap"
 )
 
-const tlsHandshakeError = "http: TLS handshake error"
+const (
+	tlsHandshakeError = "http: TLS handshake error"
+	readTimeout       = 5 * time.Second
+)
 
 var defaultShutdownTimeout = 5 * time.Second
 
@@ -38,9 +41,11 @@ func NewHTTP(opts HTTPOpts) (*HTTP, error) {
 	}
 	return &HTTP{
 		server: &http.Server{
-			Addr:      opts.Address,
-			Handler:   opts.Handler,
-			TLSConfig: opts.TLS,
+			Addr:              opts.Address,
+			Handler:           opts.Handler,
+			TLSConfig:         opts.TLS,
+			ReadHeaderTimeout: readTimeout,
+			ReadTimeout:       readTimeout,
 		},
 		logger: opts.Logger,
 	}, nil
