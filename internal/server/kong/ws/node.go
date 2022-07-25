@@ -55,12 +55,13 @@ type Node struct {
 }
 
 type nodeOpts struct {
-	id         string
-	version    string
-	hostname   string
-	connection *websocket.Conn
-	peer       *wrpc.Peer
-	logger     *zap.Logger
+	id          string
+	version     string
+	hostname    string
+	connection  *websocket.Conn
+	peer        *wrpc.Peer
+	peerBuilder func(node *Node) *wrpc.Peer
+	logger      *zap.Logger
 }
 
 type ErrConnClosed struct {
@@ -74,13 +75,6 @@ func (e ErrConnClosed) Error() string {
 // NewNode creates a new Node object with the given options
 // after verifying them for consistency.
 func NewNode(opts nodeOpts) (*Node, error) {
-	if opts.connection == nil && opts.peer == nil {
-		return nil, fmt.Errorf("a Node requires either a WebSocket connection or a wRPC peer")
-	}
-	if opts.connection != nil && opts.peer != nil {
-		return nil, fmt.Errorf("a Node can't have both a WebSocket connection and a wRPC peer")
-	}
-
 	logger := opts.logger.With(
 		zap.String("node-id", opts.id),
 		zap.String("node-hostname", opts.hostname),
@@ -92,14 +86,31 @@ func NewNode(opts nodeOpts) (*Node, error) {
 		logger = logger.With(zap.String("wrpc-client-ip", opts.peer.RemoteAddr().String()))
 	}
 
-	return &Node{
+	node := &Node{
 		ID:       opts.id,
 		Version:  opts.version,
 		Hostname: opts.hostname,
-		conn:     opts.connection,
-		peer:     opts.peer,
 		logger:   logger,
-	}, nil
+	}
+
+	if opts.peer == nil && opts.peerBuilder != nil {
+		opts.peer = opts.peerBuilder(node)
+		if opts.peer == nil {
+			return nil, fmt.Errorf("the Peer building function returned nil")
+		}
+	}
+
+	if opts.connection == nil && opts.peer == nil {
+		return nil, fmt.Errorf("a Node requires either a WebSocket connection or a wRPC peer")
+	}
+	if opts.connection != nil && opts.peer != nil {
+		return nil, fmt.Errorf("a Node can't have both a WebSocket connection and a wRPC peer")
+	}
+
+	node.conn = opts.connection
+	node.peer = opts.peer
+
+	return node, nil
 }
 
 // Close ends the Node's lifetime and of its connection.

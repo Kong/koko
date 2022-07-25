@@ -171,22 +171,23 @@ func (h wrpcHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		hostname: queryParams.Get(nodeHostnameKey),
 		version:  queryParams.Get(nodeVersionKey),
 		logger:   m.logger,
+		peerBuilder: func(node *Node) *wrpc.Peer {
+			return &wrpc.Peer{
+				ErrLogger: func(err error) {
+					node.logger.Error("wRPC Peer object error", zap.Error(err))
+				},
+				ClosedCallbackFunc: func(p *wrpc.Peer) {
+					if node != nil {
+						m.removeNode(node)
+					}
+				},
+			}
+		},
 	})
 	if err != nil {
 		h.logger.Error("Create wRPC Node failed", zap.Error(err), zap.String("wrpc-client-ip", r.RemoteAddr))
 		h.respondWithErr(w, r, err)
 		return
-	}
-
-	node.peer = &wrpc.Peer{
-		ErrLogger: func(err error) {
-			node.logger.Error("wRPC Peer object error", zap.Error(err))
-		},
-		ClosedCallbackFunc: func(p *wrpc.Peer) {
-			if node != nil {
-				m.removeNode(node)
-			}
-		},
 	}
 
 	err = h.baseServices.Register(node.peer)
