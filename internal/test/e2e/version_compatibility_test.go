@@ -58,6 +58,13 @@ func TestVersionCompatibility(t *testing.T) {
 				]
 			}`,
 		},
+		// DP < 2.6
+		//   - remove 'preferred_chain', 'storage_config.vault.auth_method',
+		//     'storage_config.vault.auth_path', 'storage_config.vault.auth_role',
+		//     'storage_config.vault.jwt_path'
+		//
+		// DP < 3.0:
+		//   - remove 'allow_any_domain'
 		{
 			name: "acme",
 			id:   uuid.NewString(),

@@ -183,7 +183,7 @@ var PluginConfigTableUpdates = map[uint64][]config.ConfigTableUpdates{
 			},
 		},
 	},
-	2999999999: {
+	3000000000: {
 		{
 			Name:   "opentelemetry",
 			Type:   config.Plugin,
@@ -207,6 +207,13 @@ var PluginConfigTableUpdates = map[uint64][]config.ConfigTableUpdates{
 				"latency_metrics",
 				"bandwidth_metrics",
 				"upstream_health_metrics",
+			},
+		},
+		{
+			Name: "acme",
+			Type: config.Plugin,
+			RemoveFields: []string{
+				"allow_any_domain",
 			},
 		},
 	},
