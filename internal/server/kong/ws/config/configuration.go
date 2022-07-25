@@ -60,11 +60,12 @@ func (l *KongConfigurationLoader) Load(ctx context.Context, clusterID string) (C
 }
 
 func ReconfigurePayload(c DataPlaneConfig) (Content, error) {
-	hash := configHash(c)
+	configHash, hashes := getGranularHashes(c)
 	payload := Map{
 		"type":         "reconfigure",
 		"config_table": c,
-		"config_hash":  hash,
+		"config_hash":  configHash,
+		"hashes":       hashes,
 	}
 
 	var buf bytes.Buffer
@@ -81,7 +82,7 @@ func ReconfigurePayload(c DataPlaneConfig) (Content, error) {
 	}
 	return Content{
 		CompressedPayload: buf.Bytes(),
-		Hash:              hash,
+		Hash:              configHash,
 	}, nil
 }
 
