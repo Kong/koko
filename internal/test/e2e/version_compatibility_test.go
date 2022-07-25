@@ -62,7 +62,8 @@ func TestVersionCompatibility(t *testing.T) {
 			name: "acme",
 			id:   uuid.NewString(),
 			config: `{
-				"account_email": "example@example.com"
+				"account_email": "example@example.com",
+				"allow_any_domain": true
 			}`,
 		},
 		// DP < 2.6
