@@ -251,7 +251,7 @@ func (n *Node) sendJSONConfig(ctx context.Context, payload *Payload) error {
 }
 
 func (n *Node) sendWRPCConfig(ctx context.Context, payload *Payload) error {
-	content, err := payload.WrpcConfigPayload(ctx, n.Version)
+	content, err := payload.WRPCConfigPayload(ctx, n.Version)
 	if err != nil {
 		n.logger.Error("preparing wrpc config payload", zap.Error(err))
 		return err

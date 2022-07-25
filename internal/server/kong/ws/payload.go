@@ -115,7 +115,7 @@ func (p *Payload) readWRPCCache(versionStr string) (wc CachedWRPCContent, err er
 	return
 }
 
-func (p *Payload) WrpcConfigPayload(ctx context.Context, versionStr string) (CachedWRPCContent, error) {
+func (p *Payload) WRPCConfigPayload(ctx context.Context, versionStr string) (CachedWRPCContent, error) {
 	wc, err := p.readWRPCCache(versionStr)
 	if err == nil {
 		return wc, nil

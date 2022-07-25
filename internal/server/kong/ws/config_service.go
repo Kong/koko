@@ -81,7 +81,7 @@ func (c *Configurer) ReportMetadata(
 	req *config_service.ReportMetadataRequest,
 ) (*config_service.ReportMetadataResponse, error) {
 	c.manager.logger.Debug("received ReportMetadata method",
-		zap.String("wprc-client-ip", peer.RemoteAddr().String()))
+		zap.String("wrpc-client-ip", peer.RemoteAddr().String()))
 
 	node := c.manager.pendingNodes.FindNode(peer.RemoteAddr().String())
 	if node == nil {
@@ -96,7 +96,7 @@ func (c *Configurer) ReportMetadata(
 	}
 	node.logger.Debug("plugin list reported by the DP", zap.Strings("plugins", plugins))
 
-	err := c.manager.addWrpcNode(node, plugins)
+	err := c.manager.addWRPCNode(node, plugins)
 	if err != nil {
 		node.logger.With(zap.Error(err)).Error("error when adding validated node")
 		_ = node.Close()

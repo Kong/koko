@@ -307,12 +307,12 @@ func (m *Manager) AddPendingNode(node *Node) error {
 	return nil
 }
 
-// addWrpcNode is called on behalf of a node when it is ready
+// addWRPCNode is called on behalf of a node when it is ready
 // to receive config updates.  The ReportMetadata RPC method handler
 // does this after getting the list of plugins.  Here it's validated
 // and, if successful, moved from the `m.pendingNodes` to the
 // final `m.nodes` list.
-func (m *Manager) addWrpcNode(node *Node, pluginList []string) error {
+func (m *Manager) addWRPCNode(node *Node, pluginList []string) error {
 	err := m.doNodeValidation(node, pluginList)
 	if err != nil {
 		return err
