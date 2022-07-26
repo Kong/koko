@@ -68,6 +68,33 @@ func TestExtraProcessing_CorrectAWSLambdaMutuallyExclusiveFields(t *testing.T) {
 				}
 			}`,
 		},
+		{
+			name: "ensure 'aws_region' is not dropped when 'host' is not set",
+			uncompressedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"name": "aws-lambda",
+							"config": {
+								"aws_region": "test"
+							}
+						}
+					]
+				}
+			}`,
+			expectedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"name": "aws-lambda",
+							"config": {
+								"aws_region": "test"
+							}
+						}
+					]
+				}
+			}`,
+		},
 	}
 
 	for _, test := range tests {
