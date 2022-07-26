@@ -278,6 +278,15 @@ func TestVersionCompatibility(t *testing.T) {
 				"port": 1234
 			}`,
 		},
+		// DP < 2.4:
+		//   - remove 'tags_header' field (default: Zipkin-Tags)
+		//
+		// DP < 2.7:
+		//   - change 'header_type' from 'ignore' to 'preserve'
+		//
+		// DP < 3.0:
+		//   - remove 'http_span_name', 'connect_timeout'
+		//     'send_timeout', 'read_timeout'
 		{
 			name: "zipkin",
 			id:   uuid.NewString(),
