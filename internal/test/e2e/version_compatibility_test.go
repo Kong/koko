@@ -278,12 +278,25 @@ func TestVersionCompatibility(t *testing.T) {
 				"port": 1234
 			}`,
 		},
+		// DP < 2.4:
+		//   - remove 'tags_header' field (default: Zipkin-Tags)
+		//
+		// DP < 2.7:
+		//   - change 'header_type' from 'ignore' to 'preserve'
+		//
+		// DP < 3.0:
+		//   - remove 'http_span_name', 'connect_timeout'
+		//     'send_timeout', 'read_timeout'
 		{
 			name: "zipkin",
 			id:   uuid.NewString(),
 			config: `{
 				"local_service_name": "LOCAL_SERVICE_NAME",
-				"header_type": "ignore"
+				"header_type": "ignore",
+				"http_span_name": "method_path",
+				"connect_timeout": 2001,
+				"send_timeout": 2001,
+				"read_timeout": 2001
 			}`,
 			fieldUpdateChecks: map[string][]update{
 				"< 2.7.0": {
