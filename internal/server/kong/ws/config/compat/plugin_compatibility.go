@@ -183,7 +183,7 @@ var PluginConfigTableUpdates = map[uint64][]config.ConfigTableUpdates{
 			},
 		},
 	},
-	2999999999: {
+	3000000000: {
 		{
 			Name:   "opentelemetry",
 			Type:   config.Plugin,
@@ -197,6 +197,16 @@ var PluginConfigTableUpdates = map[uint64][]config.ConfigTableUpdates{
 				"connect_timeout",
 				"send_timeout",
 				"read_timeout",
+			},
+		},
+		{
+			Name: "prometheus",
+			Type: config.Plugin,
+			RemoveFields: []string{
+				"status_code_metrics",
+				"lantency_metrics",
+				"bandwidth_metrics",
+				"upstream_health_metrics",
 			},
 		},
 	},
