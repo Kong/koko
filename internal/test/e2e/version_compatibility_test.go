@@ -199,6 +199,12 @@ func TestVersionCompatibility(t *testing.T) {
 				]
 			}`,
 		},
+		// DP < 2.4
+		//   - remove 'per_consumer' field (default: false)
+		//
+		// DP < 3.0
+		//   - remove 'status_code_metrics', 'lantency_metrics'
+		//     'bandwidth_metrics', 'upstream_health_metrics'
 		{
 			name: "prometheus",
 			id:   uuid.NewString(),
