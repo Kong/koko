@@ -38,7 +38,7 @@ func (c *Configurer) GetCapabilities(
 	c.manager.logger.Warn("Received a GetCapabilities rpc call from DP",
 		zap.String("wrpc-client-ip", peer.RemoteAddr().String()))
 
-	return nil, fmt.Errorf("not implemented")
+	return nil, fmt.Errorf("Invalid RPC")
 }
 
 // PingCP handles the incoming ping method from the CP.
@@ -87,7 +87,7 @@ func (c *Configurer) ReportMetadata(
 	if node == nil {
 		c.manager.logger.Error("can't find pending node",
 			zap.String("wrpc-client-ip", peer.RemoteAddr().String()))
-		return nil, fmt.Errorf("can't find node from %v", peer.RemoteAddr())
+		return nil, fmt.Errorf("Invalid RPC")
 	}
 
 	plugins := make([]string, len(req.Plugins))
@@ -119,5 +119,5 @@ func (c *Configurer) SyncConfig(
 	c.manager.logger.Warn("Received a SyncConfig rpc call from DP",
 		zap.String("wrpc-client-ip", peer.RemoteAddr().String()))
 
-	return nil, fmt.Errorf("control plane nodes don't implement the SyncConfig method")
+	return nil, fmt.Errorf("Invalid RPC")
 }
