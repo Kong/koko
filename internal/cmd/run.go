@@ -15,6 +15,7 @@ import (
 	grpcKongUtil "github.com/kong/koko/internal/gen/grpc/kong/util/v1"
 	"github.com/kong/koko/internal/info"
 	"github.com/kong/koko/internal/metrics"
+	"github.com/kong/koko/internal/model"
 	"github.com/kong/koko/internal/persistence"
 	"github.com/kong/koko/internal/plugin"
 	"github.com/kong/koko/internal/plugin/validators"
@@ -90,6 +91,12 @@ func Run(ctx context.Context, config ServerConfig) error {
 	store := store.New(persister, logger.With(zap.String("component",
 		"store"))).ForCluster("default")
 	storeLoader := serverUtil.DefaultStoreLoader{Store: store}
+
+	instID, err := registerInstallation(ctx, store, logger)
+	if err != nil {
+		return fmt.Errorf("failed to register installation: %w", err)
+	}
+	logger.Info("running with cluster-id", zap.String("id", instID))
 
 	validator, err := validators.NewLuaValidator(validators.Opts{
 		Logger:      logger,
@@ -440,4 +447,40 @@ func runMigrations(m *db.Migrator) error {
 		return fmt.Errorf("migrating database: %v", err)
 	}
 	return nil
+}
+
+// registerInstallation creates or fetches an installationID (sometimes referred to as clusterID).
+// The installationID is generated once in the lifetime of a koko cluster and must be unique.
+func registerInstallation(ctx context.Context, st store.Store, logger *zap.Logger) (string, error) {
+	inst := resource.NewInstallation()
+	id, err := getInstallationID(ctx, st, inst)
+	if err != nil {
+		if err == store.ErrNotFound {
+			return setInstallationID(ctx, st, inst, logger)
+		}
+		return "", err
+	}
+	return id, nil
+}
+
+func getInstallationID(ctx context.Context, st store.Store, inst resource.Installation) (string, error) {
+	if err := st.Read(ctx, inst, store.GetByID(inst.ID())); err != nil {
+		return "", err
+	}
+	return inst.Installation.Value, nil
+}
+
+func setInstallationID(ctx context.Context, st store.Store,
+	inst resource.Installation, logger *zap.Logger,
+) (string, error) {
+	inst.Installation.Value = uuid.NewString()
+	if err := st.Create(ctx, inst); err != nil {
+		if err, ok := err.(store.ErrConstraint); ok && err.Index.Type == model.IndexUnique {
+			// another node has already created the id, so fetch it
+			return getInstallationID(ctx, st, inst)
+		}
+		return "", err
+	}
+	logger.Info("created new id for koko cluster", zap.String("cluster-id", inst.Installation.Value))
+	return inst.Installation.Value, nil
 }

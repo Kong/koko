@@ -1,0 +1,32 @@
+{
+  "required": [
+    "id",
+    "value"
+  ],
+  "properties": {
+    "created_at": {
+      "minimum": 1,
+      "type": "integer"
+    },
+    "id": {
+      "maxLength": 128,
+      "minLength": 1,
+      "pattern": "^[0-9a-zA-Z.\\-_~]*$",
+      "type": "string"
+    },
+    "updated_at": {
+      "minimum": 1,
+      "type": "integer"
+    },
+    "value": {
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+      "type": "string",
+      "description": "must be a valid UUID"
+    }
+  },
+  "additionalProperties": false,
+  "type": "object",
+  "x-koko-config": {
+    "disableValidateEndpoint": true
+  }
+}
