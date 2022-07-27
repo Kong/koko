@@ -204,7 +204,7 @@ var PluginConfigTableUpdates = map[uint64][]config.ConfigTableUpdates{
 			Type: config.Plugin,
 			RemoveFields: []string{
 				"status_code_metrics",
-				"lantency_metrics",
+				"latency_metrics",
 				"bandwidth_metrics",
 				"upstream_health_metrics",
 			},
