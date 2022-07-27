@@ -52,7 +52,7 @@ type CachedWRPCContent struct {
 // configWRPCCache keeps config requests parallel to configCache.
 type configWRPCCache map[string]CachedWRPCContent
 
-func (c configWRPCCache) store(key string, value CachedWRPCContent) error {
+func (c configWRPCCache) store(key string, value CachedWRPCContent) error { // nolint: unparam
 	c[key] = value
 	return nil
 }
