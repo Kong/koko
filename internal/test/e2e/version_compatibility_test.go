@@ -65,11 +65,19 @@ func TestVersionCompatibility(t *testing.T) {
 				"account_email": "example@example.com"
 			}`,
 		},
+		// DP < 2.6
+		//   - remove 'base64_encode_body'
+		//
+		// DP < 3.0
+		//   - if both 'aws_region' and 'host' are set
+		//     just drop 'host' and keep 'aws_region'
+		//     since these used to be  mutually exclusive
 		{
 			name: "aws-lambda",
 			id:   uuid.NewString(),
 			config: `{
 				"aws_region": "AWS_REGION",
+				"host": "192.168.1.1",
 				"function_name": "FUNCTION_NAME"
 			}`,
 		},
