@@ -38,7 +38,7 @@ func (c *Configurer) GetCapabilities(
 	c.manager.logger.Warn("Received a GetCapabilities rpc call from DP",
 		zap.String("wrpc-client-ip", peer.RemoteAddr().String()))
 
-	return nil, fmt.Errorf("Invalid RPC")
+	return nil, fmt.Errorf("invalid RPC")
 }
 
 // PingCP handles the incoming ping method from the CP.
@@ -55,14 +55,14 @@ func (c *Configurer) PingCP(
 	if node == nil {
 		return nil, fmt.Errorf("can't find node from %v", peer.RemoteAddr())
 	}
-	node.logger.Debug("received PingCP method", zap.String("config_hash", req.Hash))
+	node.Logger.Debug("received PingCP method", zap.String("config_hash", req.Hash))
 
 	node.lock.Lock()
 	var err error
 	node.hash, err = truncateHash(req.Hash)
 	node.lock.Unlock()
 	if err != nil {
-		node.logger.Error("Invalid hash in PingCP method", zap.Error(err))
+		node.Logger.Error("Invalid hash in PingCP method", zap.Error(err))
 		peer.ErrLogger(fmt.Errorf("PingCP: Received invalid hash from kong data-plane: %w", err))
 		return nil, err
 	}
@@ -87,22 +87,22 @@ func (c *Configurer) ReportMetadata(
 	if node == nil {
 		c.manager.logger.Error("can't find pending node",
 			zap.String("wrpc-client-ip", peer.RemoteAddr().String()))
-		return nil, fmt.Errorf("Invalid RPC")
+		return nil, fmt.Errorf("invalid RPC")
 	}
 
 	plugins := make([]string, len(req.Plugins))
 	for i, p := range req.Plugins {
 		plugins[i] = p.Name
 	}
-	node.logger.Debug("plugin list reported by the DP", zap.Strings("plugins", plugins))
+	node.Logger.Debug("plugin list reported by the DP", zap.Strings("plugins", plugins))
 
 	err := c.manager.addWRPCNode(node, plugins)
 	if err != nil {
-		node.logger.With(zap.Error(err)).Error("error when adding validated node")
+		node.Logger.With(zap.Error(err)).Error("error when adding validated node")
 		_ = node.Close()
 		return nil, err
 	}
-	node.logger.Debug("validated node added")
+	node.Logger.Debug("validated node added")
 
 	return &config_service.ReportMetadataResponse{
 		Response: &config_service.ReportMetadataResponse_Ok{Ok: "valid"},
@@ -119,5 +119,5 @@ func (c *Configurer) SyncConfig(
 	c.manager.logger.Warn("Received a SyncConfig rpc call from DP",
 		zap.String("wrpc-client-ip", peer.RemoteAddr().String()))
 
-	return nil, fmt.Errorf("Invalid RPC")
+	return nil, fmt.Errorf("invalid RPC")
 }

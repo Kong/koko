@@ -170,7 +170,7 @@ func (h wrpcHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var node *Node
 	peer := &wrpc.Peer{
 		ErrLogger: func(err error) {
-			node.logger.Error("wRPC Peer object error", zap.Error(err))
+			node.Logger.Error("wRPC Peer object error", zap.Error(err))
 		},
 		ClosedCallbackFunc: func(p *wrpc.Peer) {
 			if node != nil {
@@ -194,18 +194,18 @@ func (h wrpcHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	err = h.baseServices.Register(node.peer)
 	if err != nil {
-		node.logger.Error("register base wRPC services", zap.Error(err))
+		node.Logger.Error("register base wRPC services", zap.Error(err))
 		return
 	}
 	err = node.peer.Upgrade(w, r)
 	if err != nil {
-		node.logger.Error("upgrade to wRPC connection failed", zap.Error(err))
+		node.Logger.Error("upgrade to wRPC connection failed", zap.Error(err))
 		h.respondWithErr(w, r, err)
 		return
 	}
 
 	if err = m.AddPendingNode(node); err != nil {
-		node.logger.Error("adding to pending node list", zap.Error(err))
+		node.Logger.Error("adding to pending node list", zap.Error(err))
 		node.Close()
 	}
 }

@@ -58,7 +58,7 @@ type Node struct {
 	Hostname string
 	conn     *websocket.Conn
 	peer     *wrpc.Peer
-	logger   *zap.Logger
+	Logger   *zap.Logger
 	hash     sum
 }
 
@@ -103,7 +103,7 @@ func NewNode(opts nodeOpts) (*Node, error) {
 		Hostname: opts.hostname,
 		conn:     opts.connection,
 		peer:     opts.peer,
-		logger: opts.logger.With(
+		Logger: opts.logger.With(
 			zap.String("node-id", opts.id),
 			zap.String("node-protocol", protocolLabel),
 			zap.String("node-hostname", opts.hostname),
@@ -116,10 +116,8 @@ func NewNode(opts nodeOpts) (*Node, error) {
 // Close ends the Node's lifetime and of its connection.
 func (n *Node) Close() error {
 	switch n.nodetype {
-
 	case nodeTypeWebSocket:
 		return n.conn.Close()
-
 	case nodeTypeWRPC:
 		return n.peer.Close()
 	}
@@ -129,10 +127,8 @@ func (n *Node) Close() error {
 // RemoteAddr returns the network address of the client.
 func (n *Node) RemoteAddr() net.Addr {
 	switch n.nodetype {
-
 	case nodeTypeWebSocket:
 		return n.conn.RemoteAddr()
-
 	case nodeTypeWRPC:
 		return n.peer.RemoteAddr()
 	}
@@ -180,8 +176,8 @@ func (n *Node) readThread() error {
 			}
 			return err
 		}
-		n.logger.Info("received message from DP")
-		n.logger.Sugar().Debugf("recv: %s", message)
+		n.Logger.Info("received message from DP")
+		n.Logger.Sugar().Debugf("recv: %s", message)
 	}
 }
 
@@ -196,7 +192,7 @@ func (n *Node) write(payload []byte, hash sum) error {
 	defer n.lock.RUnlock()
 
 	if bytes.Equal(n.hash[:], hash[:]) {
-		n.logger.With(zap.String("config_hash",
+		n.Logger.With(zap.String("config_hash",
 			hash.String())).Info("hash matched, skipping update")
 		return nil
 	}
@@ -216,10 +212,8 @@ func (n *Node) write(payload []byte, hash sum) error {
 
 func (n *Node) sendConfig(ctx context.Context, payload *Payload) error {
 	switch n.nodetype {
-
 	case nodeTypeWebSocket:
 		return n.sendJSONConfig(ctx, payload)
-
 	case nodeTypeWRPC:
 		return n.sendWRPCConfig(ctx, payload)
 	}
@@ -235,39 +229,39 @@ func (n *Node) sendJSONConfig(ctx context.Context, payload *Payload) error {
 	if err != nil {
 		return fmt.Errorf("unable to gather payload: %w", err)
 	}
-	n.logger.Info("broadcasting to node",
+	n.Logger.Info("broadcasting to node",
 		zap.String("config_hash", content.Hash))
 	// TODO(hbagdi): perf: use websocket.PreparedMessage
 	hash, err := truncateHash(content.Hash)
 	if err != nil {
-		n.logger.Error("invalid hash", zap.Error(err), zap.String("config_hash", hash.String()))
+		n.Logger.Error("invalid hash", zap.Error(err), zap.String("config_hash", hash.String()))
 		return err
 	}
 	err = n.write(content.CompressedPayload, hash)
 	if err != nil {
-		n.logger.Error("failed to send config", zap.Error(err))
+		n.Logger.Error("failed to send config", zap.Error(err))
 		// TODO(hbagdi: remove the node if connection has been closed?
 		return err
 	}
-	n.logger.Info("successfully sent payload to node")
+	n.Logger.Info("successfully sent payload to node")
 	return nil
 }
 
 func (n *Node) sendWRPCConfig(ctx context.Context, payload *Payload) error {
 	content, err := payload.WRPCConfigPayload(ctx, n.Version)
 	if err != nil {
-		n.logger.Error("preparing wrpc config payload", zap.Error(err))
+		n.Logger.Error("preparing wrpc config payload", zap.Error(err))
 		return err
 	}
 
 	hash, err := truncateHash(content.Hash)
 	if err != nil {
-		n.logger.Error("invalid hash", zap.Error(err), zap.String("config_hash", hash.String()))
+		n.Logger.Error("invalid hash", zap.Error(err), zap.String("config_hash", hash.String()))
 		return err
 	}
 
 	if bytes.Equal(n.hash[:], hash[:]) {
-		n.logger.Info("hash matched, skipping update", zap.String("config_hash", hash.String()))
+		n.Logger.Info("hash matched, skipping update", zap.String("config_hash", hash.String()))
 		return nil
 	}
 
@@ -278,12 +272,12 @@ func (n *Node) sendWRPCConfig(ctx context.Context, payload *Payload) error {
 
 		err := n.peer.DoRequest(ctx, content.Req, &out)
 		if err != nil {
-			n.logger.Error("SyncConfig method failed", zap.Error(err))
+			n.Logger.Error("SyncConfig method failed", zap.Error(err))
 		}
 		if !out.Accepted {
-			n.logger.Info("configuration not accepted")
+			n.Logger.Info("configuration not accepted")
 			for _, configerr := range out.Errors {
-				n.logger.Info("rejection description",
+				n.Logger.Info("rejection description",
 					zap.String("err-type", configerr.ErrType.String()),
 					zap.String("err-id", configerr.Id),
 					zap.String("err-entity", configerr.Entity))

@@ -179,7 +179,7 @@ func (m *Manager) setupPingHandler(node *Node) {
 		} else if _, ok := err.(net.Error); ok {
 			return nil
 		}
-		node.logger.Info("websocket ping handler received hash",
+		node.Logger.Info("websocket ping handler received hash",
 			zap.String("config_hash", appData))
 
 		node.lock.Lock()
@@ -187,7 +187,7 @@ func (m *Manager) setupPingHandler(node *Node) {
 		node.lock.Unlock()
 		if err != nil {
 			// Logging for now
-			node.logger.With(zap.Error(err), zap.String("appData", appData)).
+			node.Logger.With(zap.Error(err), zap.String("appData", appData)).
 				Error("ping handler: received invalid hash from kong data-plane")
 		}
 		m.updateNodeStatus(node)
@@ -242,12 +242,12 @@ func (m *Manager) AddNode(node *Node) {
 				if ok {
 					increaseMetricCounter(wsErr.Code)
 					if wsErr.Code == websocket.CloseAbnormalClosure {
-						node.logger.Info("node disconnected")
+						node.Logger.Info("node disconnected")
 					} else {
-						node.logger.With(zap.Error(err)).Error("read thread: connection closed")
+						node.Logger.With(zap.Error(err)).Error("read thread: connection closed")
 					}
 				} else {
-					node.logger.With(zap.Error(err)).Error("read thread")
+					node.Logger.With(zap.Error(err)).Error("read thread")
 				}
 			}
 			// if there are any ws errors, remove the node
@@ -275,10 +275,10 @@ func (m *Manager) removeNode(node *Node) {
 	defer m.nodeTrackingMu.Unlock()
 	// TODO(hbagdi): may need more graceful error handling
 	if err := m.nodes.Remove(node); err != nil {
-		node.logger.Error("failed to remove node", zap.Error(err))
+		node.Logger.Error("failed to remove node", zap.Error(err))
 	}
 	if err := node.Close(); err != nil {
-		node.logger.Info("error closing node", zap.Error(err))
+		node.Logger.Info("error closing node", zap.Error(err))
 	}
 	if len(m.nodes.All()) == 0 {
 		m.logger.Info("no nodes connected, disabling stream")
@@ -339,7 +339,7 @@ func (m *Manager) broadcast() {
 	// by only releasing the lock after all configs have been acked.
 	for _, node := range m.nodes.All() {
 		if err := node.sendConfig(m.ctx, m.payload); err != nil {
-			node.logger.Error("failed to send config to node", zap.Error(err))
+			node.Logger.Error("failed to send config to node", zap.Error(err))
 			// one node failure shouldn't result in no sync activity to all
 			// subsequent/nodes even though it is likely that all nodes are
 			// of same version
