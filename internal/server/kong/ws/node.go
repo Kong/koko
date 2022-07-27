@@ -43,7 +43,15 @@ func truncateHash(s32 string) (sum, error) {
 	return s, nil
 }
 
+type nodeType int
+
+const (
+	nodeTypeWebSocket nodeType = iota + 1
+	nodeTypeWRPC
+)
+
 type Node struct {
+	nodetype nodeType
 	lock     sync.RWMutex
 	ID       string
 	Version  string
@@ -55,13 +63,12 @@ type Node struct {
 }
 
 type nodeOpts struct {
-	id          string
-	version     string
-	hostname    string
-	connection  *websocket.Conn
-	peer        *wrpc.Peer
-	peerBuilder func(node *Node) *wrpc.Peer
-	logger      *zap.Logger
+	id         string
+	version    string
+	hostname   string
+	connection *websocket.Conn
+	peer       *wrpc.Peer
+	logger     *zap.Logger
 }
 
 type ErrConnClosed struct {
@@ -75,31 +82,6 @@ func (e ErrConnClosed) Error() string {
 // NewNode creates a new Node object with the given options
 // after verifying them for consistency.
 func NewNode(opts nodeOpts) (*Node, error) {
-	logger := opts.logger.With(
-		zap.String("node-id", opts.id),
-		zap.String("node-hostname", opts.hostname),
-		zap.String("node-version", opts.version))
-	if opts.connection != nil {
-		logger = logger.With(zap.String("client-ip", opts.connection.RemoteAddr().String()))
-	}
-	if opts.peer != nil {
-		logger = logger.With(zap.String("wrpc-client-ip", opts.peer.RemoteAddr().String()))
-	}
-
-	node := &Node{
-		ID:       opts.id,
-		Version:  opts.version,
-		Hostname: opts.hostname,
-		logger:   logger,
-	}
-
-	if opts.peer == nil && opts.peerBuilder != nil {
-		opts.peer = opts.peerBuilder(node)
-		if opts.peer == nil {
-			return nil, fmt.Errorf("the Peer building function returned nil")
-		}
-	}
-
 	if opts.connection == nil && opts.peer == nil {
 		return nil, fmt.Errorf("a Node requires either a WebSocket connection or a wRPC peer")
 	}
@@ -107,31 +89,51 @@ func NewNode(opts nodeOpts) (*Node, error) {
 		return nil, fmt.Errorf("a Node can't have both a WebSocket connection and a wRPC peer")
 	}
 
-	node.conn = opts.connection
-	node.peer = opts.peer
+	nodetype := nodeTypeWebSocket
+	protocolLabel := "ws"
+	if opts.peer != nil {
+		nodetype = nodeTypeWRPC
+		protocolLabel = "wrpc"
+	}
+
+	node := &Node{
+		nodetype: nodetype,
+		ID:       opts.id,
+		Version:  opts.version,
+		Hostname: opts.hostname,
+		conn:     opts.connection,
+		peer:     opts.peer,
+		logger: opts.logger.With(
+			zap.String("node-id", opts.id),
+			zap.String("node-protocol", protocolLabel),
+			zap.String("node-hostname", opts.hostname),
+			zap.String("node-version", opts.version)),
+	}
 
 	return node, nil
 }
 
 // Close ends the Node's lifetime and of its connection.
 func (n *Node) Close() error {
-	if n.conn != nil {
-		return n.conn.Close()
-	}
+	switch n.nodetype {
 
-	if n.peer != nil {
+	case nodeTypeWebSocket:
+		return n.conn.Close()
+
+	case nodeTypeWRPC:
 		return n.peer.Close()
 	}
-
 	return nil
 }
 
 // RemoteAddr returns the network address of the client.
 func (n *Node) RemoteAddr() net.Addr {
-	if n.conn != nil {
+	switch n.nodetype {
+
+	case nodeTypeWebSocket:
 		return n.conn.RemoteAddr()
-	}
-	if n.peer != nil {
+
+	case nodeTypeWRPC:
 		return n.peer.RemoteAddr()
 	}
 	return &net.IPAddr{}
@@ -140,7 +142,7 @@ func (n *Node) RemoteAddr() net.Addr {
 // GetPluginList receives the list of plugins the DP sends
 // right after connection on the old WebSocket protocol.
 func (n *Node) GetPluginList() ([]string, error) {
-	if n.conn == nil {
+	if n.nodetype != nodeTypeWebSocket {
 		return nil, fmt.Errorf("not implemented")
 	}
 
@@ -166,7 +168,7 @@ func (n *Node) GetPluginList() ([]string, error) {
 
 // readThread continuously reads messages from connected DP node.
 func (n *Node) readThread() error {
-	if n.conn == nil {
+	if n.nodetype != nodeTypeWebSocket {
 		return fmt.Errorf("readThread is only for plain WebSocket nodes")
 	}
 
@@ -187,7 +189,7 @@ func (n *Node) readThread() error {
 // is different from the last one reported.
 // Used only on WebSocket protocol.
 func (n *Node) write(payload []byte, hash sum) error {
-	if n.conn == nil {
+	if n.nodetype != nodeTypeWebSocket {
 		return fmt.Errorf("node.write is only for plain WebSocket nodes")
 	}
 	n.lock.RLock()
@@ -213,11 +215,12 @@ func (n *Node) write(payload []byte, hash sum) error {
 }
 
 func (n *Node) sendConfig(ctx context.Context, payload *Payload) error {
-	if n.conn != nil {
-		return n.sendJSONConfig(ctx, payload)
-	}
+	switch n.nodetype {
 
-	if n.peer != nil {
+	case nodeTypeWebSocket:
+		return n.sendJSONConfig(ctx, payload)
+
+	case nodeTypeWRPC:
 		return n.sendWRPCConfig(ctx, payload)
 	}
 
