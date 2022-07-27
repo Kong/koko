@@ -118,7 +118,7 @@ func (h websocketHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		h.respondWithErr(w, r, err)
 		return
 	}
-	m.AddNode(node)
+	m.AddWebsocketNode(node)
 }
 
 // respondWithErr sends an error HTTP response, with a json message.

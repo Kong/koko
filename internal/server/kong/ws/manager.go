@@ -204,68 +204,66 @@ func increaseMetricCounter(code int) {
 	metrics.Count("websocket_connection_closed_count", 1, tags)
 }
 
-func (m *Manager) AddNode(node *Node) {
-	m.init.Do(func() {
-		go m.nodeCleanThread(m.ctx)
-		go m.eventHandlerThread(m.ctx)
-		// initial load of config data,
-		// done synchronously to ensure it's ready
-		// for the first push.
-		_ = m.reconcileKongPayload(m.ctx)
-	})
+func (m *Manager) startThreads() {
+	go m.nodeCleanThread(m.ctx)
+	go m.eventHandlerThread(m.ctx)
+	// initial load of config data,
+	// done synchronously to ensure it's ready
+	// for the first push.
+	_ = m.reconcileKongPayload(m.ctx)
+}
+
+func (m *Manager) AddWebsocketNode(node *Node) {
+	m.init.Do(m.startThreads)
 	// track each authenticated node
 	m.writeNode(node)
-	if node.conn != nil {
-		// check if node is compatible
-		err := m.validateNode(node)
+
+	// check if node is compatible
+	err := m.validateNode(node)
+	if err != nil {
+		// node has failed to meet the pre-requisites, close the connection
+		// TODO(hbagdi): send an error to Kong DP once wRPC is supported
+		m.logger.With(
+			zap.Error(err),
+			zap.String("node-id", node.ID),
+		).Info("kong DP node rejected")
+		err := node.Close()
 		if err != nil {
-			// node has failed to meet the pre-requisites, close the connection
-			// TODO(hbagdi): send an error to Kong DP once wRPC is supported
-			m.logger.With(
-				zap.Error(err),
-				zap.String("node-id", node.ID),
-			).Info("kong DP node rejected")
-			err := node.Close()
-			if err != nil {
-				m.logger.With(zap.Error(err)).Error(
-					"failed to close websocket connection")
-			}
-			return
+			m.logger.With(zap.Error(err)).Error(
+				"failed to close websocket connection")
 		}
-		m.setupPingHandler(node)
-		m.addNode(node)
-		// spawn a goroutine for each data-plane node that connects.
-		go func() {
-			err := node.readThread()
-			if err != nil {
-				wsErr, ok := err.(ErrConnClosed)
-				if ok {
-					increaseMetricCounter(wsErr.Code)
-					if wsErr.Code == websocket.CloseAbnormalClosure {
-						node.Logger.Info("node disconnected")
-					} else {
-						node.Logger.With(zap.Error(err)).Error("read thread: connection closed")
-					}
-				} else {
-					node.Logger.With(zap.Error(err)).Error("read thread")
-				}
-			}
-			// if there are any ws errors, remove the node
-			m.removeNode(node)
-		}()
-	} else {
-		if err := m.nodes.Add(node); err != nil {
-			m.logger.Error("failed adding node to manager", zap.Error(err))
-		}
+		return
 	}
+	m.setupPingHandler(node)
+	m.addToNodeList(node)
+	// spawn a goroutine for each data-plane node that connects.
+	go func() {
+		err := node.readThread()
+		if err != nil {
+			wsErr, ok := err.(ErrConnClosed)
+			if ok {
+				increaseMetricCounter(wsErr.Code)
+				if wsErr.Code == websocket.CloseAbnormalClosure {
+					node.Logger.Info("node disconnected")
+				} else {
+					node.Logger.With(zap.Error(err)).Error("read thread: connection closed")
+				}
+			} else {
+				node.Logger.With(zap.Error(err)).Error("read thread")
+			}
+		}
+		// if there are any ws errors, remove the node
+		m.removeNode(node)
+	}()
+
 	go m.broadcast()
 }
 
-func (m *Manager) addNode(node *Node) {
+func (m *Manager) addToNodeList(node *Node) {
 	m.nodeTrackingMu.Lock()
 	defer m.nodeTrackingMu.Unlock()
 	if err := m.nodes.Add(node); err != nil {
-		m.logger.With(zap.Error(err)).Error("track node")
+		m.logger.Error("failed adding node to manager", zap.Error(err))
 	}
 	m.streamer.Enable()
 }
@@ -313,6 +311,8 @@ func (m *Manager) AddPendingNode(node *Node) error {
 // and, if successful, moved from the `m.pendingNodes` to the
 // final `m.nodes` list.
 func (m *Manager) addWRPCNode(node *Node, pluginList []string) error {
+	m.init.Do(m.startThreads)
+
 	err := m.doNodeValidation(node, pluginList)
 	if err != nil {
 		return err
@@ -323,7 +323,8 @@ func (m *Manager) addWRPCNode(node *Node, pluginList []string) error {
 		return fmt.Errorf("taking node from pending list: %w", err)
 	}
 
-	m.AddNode(node)
+	m.addToNodeList(node)
+	go m.broadcast()
 	return nil
 }
 
