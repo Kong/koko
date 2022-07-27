@@ -111,7 +111,7 @@ func (h websocketHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		hostname:   nodeHostname,
 		version:    nodeVersion,
 		connection: c,
-		logger:     m.logger,
+		logger:     m.logger.With(zap.String("client-ip", r.RemoteAddr)),
 	})
 	if err != nil {
 		h.logger.Error("Create websocket Node failed", zap.Error(err), zap.String("client-ip", r.RemoteAddr))
@@ -166,23 +166,25 @@ func (h wrpcHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	queryParams := r.URL.Query()
-	node, err := NewNode(nodeOpts{
+
+	var node *Node
+	peer := &wrpc.Peer{
+		ErrLogger: func(err error) {
+			node.logger.Error("wRPC Peer object error", zap.Error(err))
+		},
+		ClosedCallbackFunc: func(p *wrpc.Peer) {
+			if node != nil {
+				m.removeNode(node)
+			}
+		},
+	}
+
+	node, err = NewNode(nodeOpts{
 		id:       queryParams.Get(nodeIDKey),
 		hostname: queryParams.Get(nodeHostnameKey),
 		version:  queryParams.Get(nodeVersionKey),
-		logger:   m.logger,
-		peerBuilder: func(node *Node) *wrpc.Peer {
-			return &wrpc.Peer{
-				ErrLogger: func(err error) {
-					node.logger.Error("wRPC Peer object error", zap.Error(err))
-				},
-				ClosedCallbackFunc: func(p *wrpc.Peer) {
-					if node != nil {
-						m.removeNode(node)
-					}
-				},
-			}
-		},
+		logger:   m.logger.With(zap.String("wrpc-client-ip", r.RemoteAddr)),
+		peer:     peer,
 	})
 	if err != nil {
 		h.logger.Error("Create wRPC Node failed", zap.Error(err), zap.String("wrpc-client-ip", r.RemoteAddr))
@@ -198,6 +200,7 @@ func (h wrpcHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	err = node.peer.Upgrade(w, r)
 	if err != nil {
 		node.logger.Error("upgrade to wRPC connection failed", zap.Error(err))
+		h.respondWithErr(w, r, err)
 		return
 	}
 
