@@ -199,5 +199,15 @@ var PluginConfigTableUpdates = map[uint64][]config.ConfigTableUpdates{
 				"read_timeout",
 			},
 		},
+		{
+			Name: "prometheus",
+			Type: config.Plugin,
+			RemoveFields: []string{
+				"status_code_metrics",
+				"latency_metrics",
+				"bandwidth_metrics",
+				"upstream_health_metrics",
+			},
+		},
 	},
 }

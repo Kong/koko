@@ -199,9 +199,21 @@ func TestVersionCompatibility(t *testing.T) {
 				]
 			}`,
 		},
+		// DP < 2.4
+		//   - remove 'per_consumer' field (default: false)
+		//
+		// DP < 3.0
+		//   - remove 'status_code_metrics', 'latency_metrics'
+		//     'bandwidth_metrics', 'upstream_health_metrics'
 		{
 			name: "prometheus",
 			id:   uuid.NewString(),
+			config: `{
+				"status_code_metrics": true,
+				"latency_metrics": true,
+				"bandwidth_metrics": true,
+				"upstream_health_metrics": true
+			}`,
 		},
 		{
 			name: "proxy-cache",
