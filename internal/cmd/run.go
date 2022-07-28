@@ -72,7 +72,7 @@ func Run(ctx context.Context, config ServerConfig) error {
 			return fmt.Errorf("create metrics handler failure: %w", err)
 		}
 		s, err := server.NewHTTP(server.HTTPOpts{
-			Address: ":9090",
+			Address: "localhost:9090",
 			Logger:  metricsLogger,
 			Handler: serverUtil.HandlerWithRecovery(metricsHandler, metricsLogger),
 		})
@@ -125,7 +125,7 @@ func Run(ctx context.Context, config ServerConfig) error {
 
 	// setup Admin API server
 	s, err := server.NewHTTP(server.HTTPOpts{
-		Address: ":3000",
+		Address: "localhost:3000",
 		Logger:  adminOpts.Logger,
 		Handler: serverUtil.HandlerWithRecovery(serverUtil.HandlerWithLogger(h, adminOpts.Logger), adminOpts.Logger),
 	})
@@ -143,7 +143,7 @@ func Run(ctx context.Context, config ServerConfig) error {
 	admin.RegisterAdminService(rawGRPCServer, adminOpts)
 
 	grpcServer, err := server.NewGRPC(server.GRPCOpts{
-		Address:    ":3001",
+		Address:    "localhost:3001",
 		GRPCServer: rawGRPCServer,
 		Logger:     logger,
 	})
@@ -301,7 +301,7 @@ func Run(ctx context.Context, config ServerConfig) error {
 	}
 
 	s, err = server.NewHTTP(server.HTTPOpts{
-		Address: ":3100",
+		Address: "localhost:3100",
 		Logger:  controlLogger,
 		Handler: serverUtil.HandlerWithRecovery(serverUtil.HandlerWithLogger(handler, controlLogger), controlLogger),
 		TLS: &tls.Config{
@@ -323,7 +323,7 @@ func Run(ctx context.Context, config ServerConfig) error {
 
 	healthLogger := logger.With(zap.String("component", "health-server"))
 	s, err = server.NewHTTP(server.HTTPOpts{
-		Address: ":4200",
+		Address: "localhost:4200",
 		Logger:  healthLogger,
 		Handler: serverUtil.HandlerWithRecovery(handler, healthLogger),
 	})
