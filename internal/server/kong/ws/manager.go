@@ -47,7 +47,7 @@ func (d DefaultCluster) Get() string {
 	return "default"
 }
 
-func NewManager(opts ManagerOpts) *Manager {
+func NewManager(opts ManagerOpts) (*Manager, error) {
 	payload, err := NewPayload(PayloadOpts{
 		VersionCompatibilityProcessor: opts.DPVersionCompatibility,
 		Logger:                        opts.Logger,
@@ -68,15 +68,14 @@ func NewManager(opts ManagerOpts) *Manager {
 		config:       opts.Config,
 	}
 	m.streamer = &streamer{
-		Logger:      opts.Logger.With(zap.String("component", "manager-streamer")),
-		EventClient: opts.Client.Event,
-		OnRecvFunc: func() {
+		Logger: opts.Logger.With(zap.String("component", "manager-streamer")),
+		OnRecvFunc: func(_ context.Context) {
 			m.updateEventCount.Add(1)
 		},
 		Cluster: opts.Cluster,
 		Ctx:     opts.Ctx,
 	}
-	return m
+	return m, nil
 }
 
 type ManagerConfig struct {
@@ -111,6 +110,11 @@ type Manager struct {
 	// removal.
 	nodeTrackingMu sync.Mutex
 	streamer       *streamer
+}
+
+// AddEventStream registers an EventStream for streaming events to the streamer.
+func (m *Manager) AddEventStream(eventStream EventStream) error {
+	return m.streamer.addStream(eventStream)
 }
 
 func (m *Manager) reqCluster() *model.RequestCluster {
@@ -210,6 +214,20 @@ func increaseMetricCounter(code int) {
 }
 
 func (m *Manager) startThreads() {
+	// setup relay event streamer
+	if relayEventStreamer, err := NewRelayEventStreamer(
+		RelayEventStreamerOpts{
+			EventServiceClient: m.configClient.Event,
+			Logger:             m.logger.With(zap.String("component", "relay-event-streamer")),
+		},
+	); err != nil {
+		m.logger.Error("failed to create new relay event streamer", zap.Error(err))
+	} else {
+		if err := m.streamer.addStream(relayEventStreamer); err != nil {
+			m.logger.Error("failed to add relay event streamer", zap.Error(err))
+		}
+	}
+
 	go m.nodeCleanThread(m.ctx)
 	go m.eventHandlerThread(m.ctx)
 	// initial load of config data,

@@ -251,7 +251,7 @@ func Run(ctx context.Context, config ServerConfig) error {
 
 	// setup control server
 	controlLogger := logger.With(zap.String("component", "control-server"))
-	m := ws.NewManager(ws.ManagerOpts{
+	m, err := ws.NewManager(ws.ManagerOpts{
 		Ctx:                    ctx,
 		Logger:                 controlLogger,
 		DPConfigLoader:         loader,
@@ -275,6 +275,9 @@ func Run(ctx context.Context, config ServerConfig) error {
 			},
 		},
 	})
+	if err != nil {
+		return fmt.Errorf("failed to create manager: %w", err)
+	}
 	var authFn ws.AuthFn
 	switch config.DPAuthMode {
 	case DPAuthSharedMTLS:
