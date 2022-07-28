@@ -26,8 +26,10 @@ const (
 
 var buildVersionRegex = regexp.MustCompile(buildVersionPattern)
 
+type VersionedConfigUpdates map[uint64][]ConfigTableUpdates
+
 type VersionCompatibility interface {
-	AddConfigTableUpdates(configTableUpdates map[uint64][]ConfigTableUpdates) error
+	AddConfigTableUpdates(configTableUpdates VersionedConfigUpdates) error
 	ProcessConfigTableUpdates(dataPlaneVersionStr string, compressedPayload []byte) ([]byte, error)
 }
 
@@ -130,7 +132,7 @@ func NewVersionCompatibilityProcessor(opts VersionCompatibilityOpts) (*WSVersion
 	}, nil
 }
 
-func (vc *WSVersionCompatibility) AddConfigTableUpdates(pluginPayloadUpdates map[uint64][]ConfigTableUpdates) error {
+func (vc *WSVersionCompatibility) AddConfigTableUpdates(pluginPayloadUpdates VersionedConfigUpdates) error {
 	for version, pluginUpdates := range pluginPayloadUpdates {
 		// Handle restriction for FieldUpdates
 		for _, pluginUpdate := range pluginUpdates {
