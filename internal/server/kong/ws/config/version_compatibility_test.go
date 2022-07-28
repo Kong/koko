@@ -87,20 +87,20 @@ func TestVersionCompatibility_ParseSemanticVersion(t *testing.T) {
 		},
 		{
 			versionStr:      "0.33.3-3-enterprise-edition",
-			expectedVersion: "0.33.3-3",
+			expectedVersion: "0.33.3.3",
 		},
 		{
 			versionStr:      "0.33.3-3-enterprise",
-			expectedVersion: "0.33.3-3",
+			expectedVersion: "0.33.3.3",
 		},
 		{
 			// go-kong won't parse build without suffix containing enterprise
 			versionStr:      "0.33.3-3-build-will-not-be-parsed",
-			expectedVersion: "0.33.3",
+			expectedVersion: "0.33.3-3",
 		},
 		{
-			versionStr:      "2.3.3.2",
-			expectedVersion: "2.3.3",
+			versionStr:      "2.3.3-2",
+			expectedVersion: "2.3.3-2",
 		},
 		{
 			versionStr:      "2.3.2",
@@ -120,7 +120,7 @@ func TestVersionCompatibility_ParseSemanticVersion(t *testing.T) {
 		},
 		{
 			versionStr:      "2.3.3.2-enterprise-edition",
-			expectedVersion: "2.3.3-2",
+			expectedVersion: "2.3.3.2",
 		},
 		{
 			versionStr:  "two.three.four",
@@ -2259,6 +2259,70 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 				}
 			}`,
 			dataPlaneVersion: "3.0.0",
+			expectedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"name": "plugin_2",
+							"config": {
+								"plugin_2_field_1": "element"
+							}
+						},
+						{
+							"name": "plugin_1",
+							"config": {
+								"plugin_1_field_2": "element"
+							}
+						},
+						{
+							"name": "plugin_3",
+							"config": {
+								"plugin_3_field_1": "element"
+							}
+						}
+					]
+				}
+			}`,
+		},
+		{
+			name: "ensure plugin field is removed because of newer version (enterprise format)",
+			configTableUpdates: map[string][]ConfigTableUpdates{
+				"> 2.9.9.9": {
+					{
+						Name: "plugin_1",
+						Type: Plugin,
+						RemoveFields: []string{
+							"plugin_1_field_1",
+						},
+					},
+				},
+			},
+			uncompressedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"name": "plugin_2",
+							"config": {
+								"plugin_2_field_1": "element"
+							}
+						},
+						{
+							"name": "plugin_1",
+							"config": {
+								"plugin_1_field_1": "element",
+								"plugin_1_field_2": "element"
+							}
+						},
+						{
+							"name": "plugin_3",
+							"config": {
+								"plugin_3_field_1": "element"
+							}
+						}
+					]
+				}
+			}`,
+			dataPlaneVersion: "3.0.0.0",
 			expectedPayload: `{
 				"config_table": {
 					"plugins": [
