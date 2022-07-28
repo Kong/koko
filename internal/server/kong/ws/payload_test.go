@@ -15,8 +15,8 @@ func TestConfigPayload_Cache(t *testing.T) {
 		KongCPVersion: "2.8.0",
 	})
 	require.Nil(t, err)
-	err = wsvc.AddConfigTableUpdates(map[uint64][]config.ConfigTableUpdates{
-		2007999999: {
+	err = wsvc.AddConfigTableUpdates(map[string][]config.ConfigTableUpdates{
+		"< 2.8.0": {
 			{
 				Name: "plugin_1",
 				Type: config.Plugin,
@@ -25,7 +25,7 @@ func TestConfigPayload_Cache(t *testing.T) {
 				},
 			},
 		},
-	}, false)
+	})
 	require.Nil(t, err)
 
 	payloadBytes := []byte(`{

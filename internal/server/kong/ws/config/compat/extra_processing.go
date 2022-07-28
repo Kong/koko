@@ -1,19 +1,22 @@
 package compat
 
 import (
+	"fmt"
+
+	"github.com/blang/semver/v4"
 	"github.com/tidwall/gjson"
 	"github.com/tidwall/sjson"
 	"go.uber.org/zap"
 )
 
 const (
-	dataPlaneVersion3000 = 3000000000
+	dataPlaneVersionOlderThan3000 = "< 3.0.0"
 )
 
 // correctAWSLambdaMutuallyExclusiveFields handles 'aws_region' and 'host' fields, which were
 // mutually exclusive until Kong version 2.8 but both are accepted in 3.x. If both are set
 // with DPs < 3.x, the 'host' field will be dropped in order to prevent a failure in the DP.
-func correctAWSLambdaMutuallyExclusiveFields(payload string, dataPlaneVersion uint64, logger *zap.Logger) string {
+func correctAWSLambdaMutuallyExclusiveFields(payload string, dataPlaneVersion string, logger *zap.Logger) string {
 	pluginName := "aws-lambda"
 	processedPayload := payload
 	results := gjson.Get(processedPayload, "config_table.plugins.#(name=aws-lambda)#")
@@ -27,13 +30,13 @@ func correctAWSLambdaMutuallyExclusiveFields(payload string, dataPlaneVersion ui
 			if updatedRaw, err = sjson.Delete(updatedRaw, "config.host"); err != nil {
 				logger.With(zap.String("plugin", pluginName)).
 					With(zap.String("field", "host")).
-					With(zap.Uint64("data-plane", dataPlaneVersion)).
+					With(zap.String("data-plane", dataPlaneVersion)).
 					With(zap.Error(err)).
 					Error("plugin configuration field was not removed from configuration")
 			} else {
 				logger.With(zap.String("plugin", pluginName)).
 					With(zap.String("field", "host")).
-					With(zap.Uint64("data-plane", dataPlaneVersion)).
+					With(zap.String("data-plane", dataPlaneVersion)).
 					Warn("removing plugin configuration field which is incompatible with data plane")
 			}
 		}
@@ -48,12 +51,18 @@ func correctAWSLambdaMutuallyExclusiveFields(payload string, dataPlaneVersion ui
 	return processedPayload
 }
 
-func VersionCompatibilityExtraProcessing(payload string, dataPlaneVersion uint64, isEnterprise bool,
+func VersionCompatibilityExtraProcessing(payload string, dataPlaneVersion string, isEnterprise bool,
 	logger *zap.Logger,
 ) (string, error) {
 	processedPayload := payload
 
-	if dataPlaneVersion < dataPlaneVersion3000 {
+	dataPlaneSemVer, err := semver.Parse(dataPlaneVersion)
+	if err != nil {
+		return "", fmt.Errorf("could not parse dataplane version: %s", dataPlaneVersion)
+	}
+
+	version := semver.MustParseRange(dataPlaneVersionOlderThan3000)
+	if version(dataPlaneSemVer) {
 		// 'aws_region' and 'host' are mutually exclusive for DP < 3.x
 		processedPayload = correctAWSLambdaMutuallyExclusiveFields(processedPayload, dataPlaneVersion, logger)
 	}

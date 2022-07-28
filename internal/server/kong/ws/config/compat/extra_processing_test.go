@@ -99,7 +99,7 @@ func TestExtraProcessing_CorrectAWSLambdaMutuallyExclusiveFields(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			processedPayload := correctAWSLambdaMutuallyExclusiveFields(test.uncompressedPayload, 2006000000, log.Logger)
+			processedPayload := correctAWSLambdaMutuallyExclusiveFields(test.uncompressedPayload, "2.6.0", log.Logger)
 			require.JSONEq(t, test.expectedPayload, processedPayload)
 		})
 	}

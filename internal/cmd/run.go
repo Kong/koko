@@ -229,10 +229,7 @@ func Run(ctx context.Context, config ServerConfig) error {
 	if err != nil {
 		panic(err.Error())
 	}
-	if err := vc.AddConfigTableUpdates(compat.PluginConfigTableUpdatesForOlderDPs, false); err != nil {
-		panic(err.Error())
-	}
-	if err := vc.AddConfigTableUpdates(compat.PluginConfigTableUpdatesForNewerDPs, true); err != nil {
+	if err := vc.AddConfigTableUpdates(compat.PluginConfigTableUpdates); err != nil {
 		panic(err.Error())
 	}
 	vcLogger.With(zap.String("control-plane", kongConfigWS.KongGatewayCompatibilityVersion)).

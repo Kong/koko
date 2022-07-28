@@ -2,8 +2,8 @@ package compat
 
 import "github.com/kong/koko/internal/server/kong/ws/config"
 
-var PluginConfigTableUpdates = map[uint64][]config.ConfigTableUpdates{
-	2005999999: {
+var PluginConfigTableUpdates = map[string][]config.ConfigTableUpdates{
+	"< 2.6.0": {
 		{
 			Name: "acme",
 			Type: config.Plugin,
@@ -38,7 +38,7 @@ var PluginConfigTableUpdates = map[uint64][]config.ConfigTableUpdates{
 			},
 		},
 	},
-	2006999999: {
+	"< 2.7.0": {
 		{
 			Name: "datadog",
 			Type: config.Plugin,
@@ -91,7 +91,7 @@ var PluginConfigTableUpdates = map[uint64][]config.ConfigTableUpdates{
 			},
 		},
 	},
-	2007999999: {
+	"< 2.8.0": {
 		{
 			Name: "acme",
 			Type: config.Plugin,
@@ -114,7 +114,7 @@ var PluginConfigTableUpdates = map[uint64][]config.ConfigTableUpdates{
 			},
 		},
 	},
-	3000000000: {
+	"< 3.0.0": {
 		{
 			Name:   "opentelemetry",
 			Type:   config.Plugin,
@@ -148,10 +148,7 @@ var PluginConfigTableUpdates = map[uint64][]config.ConfigTableUpdates{
 			},
 		},
 	},
-}
-
-var PluginConfigTableUpdatesForNewerDPs = map[uint64][]config.ConfigTableUpdates{
-	2999999999: {
+	">= 3.0.0": {
 		{
 			Name: "aws-lambda",
 			Type: config.Plugin,
