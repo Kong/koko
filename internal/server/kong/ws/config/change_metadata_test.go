@@ -197,7 +197,7 @@ func TestCompatChangeRegistryImpl_GetPluginUpdates(t *testing.T) {
 		},
 	}))
 
-	updates := registry.GetPluginUpdates()
+	updates := registry.GetUpdates()
 
 	require.Equal(t, 2, len(updates))
 

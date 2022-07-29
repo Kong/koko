@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/kong/go-kong/kong"
+	"github.com/kong/koko/internal/json"
 	"github.com/tidwall/gjson"
 	"github.com/tidwall/sjson"
 	"go.uber.org/zap"
@@ -42,8 +43,13 @@ type VersionCompatibilityOpts struct {
 type UpdateType uint8
 
 const (
-	Plugin UpdateType = 1
+	Plugin UpdateType = iota
+	Service
 )
+
+func (u UpdateType) String() string {
+	return [...]string{"plugins", "services"}[u]
+}
 
 //nolint: revive
 type ConfigTableFieldUpdate struct {
@@ -132,11 +138,11 @@ func NewVersionCompatibilityProcessor(opts VersionCompatibilityOpts) (*WSVersion
 	}, nil
 }
 
-func (vc *WSVersionCompatibility) AddConfigTableUpdates(pluginPayloadUpdates VersionedConfigUpdates) error {
-	for version, pluginUpdates := range pluginPayloadUpdates {
+func (vc *WSVersionCompatibility) AddConfigTableUpdates(payloadUpdates VersionedConfigUpdates) error {
+	for version, updates := range payloadUpdates {
 		// Handle restriction for FieldUpdates
-		for _, pluginUpdate := range pluginUpdates {
-			for _, fieldUpdates := range pluginUpdate.FieldUpdates {
+		for _, update := range updates {
+			for _, fieldUpdates := range update.FieldUpdates {
 				for _, fieldUpdate := range fieldUpdates.Updates {
 					if fieldUpdate.Value != nil && len(fieldUpdate.ValueFromField) > 0 {
 						return fmt.Errorf("'Value' and 'ValueFromField' are mutually exclusive")
@@ -145,7 +151,7 @@ func (vc *WSVersionCompatibility) AddConfigTableUpdates(pluginPayloadUpdates Ver
 			}
 		}
 
-		vc.configTableUpdates[version] = append(vc.configTableUpdates[version], pluginUpdates...)
+		vc.configTableUpdates[version] = append(vc.configTableUpdates[version], updates...)
 	}
 	return nil
 }
@@ -220,9 +226,15 @@ func (vc *WSVersionCompatibility) processConfigTableUpdates(uncompressedPayload 
 
 	configTableUpdates := vc.getConfigTableUpdates(dataPlaneVersion)
 	for _, configTableUpdate := range configTableUpdates {
-		if configTableUpdate.Type == Plugin {
+		switch configTableUpdate.Type {
+		case Plugin:
 			processedPayload = vc.processPluginUpdates(processedPayload,
 				configTableUpdate, dataPlaneVersion)
+		case Service:
+			processedPayload = vc.processCoreEntityUpdates(processedPayload,
+				configTableUpdate, dataPlaneVersion)
+		default:
+			return "", fmt.Errorf("unsupported value type: %d", configTableUpdate.Type)
 		}
 	}
 
@@ -446,6 +458,63 @@ func (vc *WSVersionCompatibility) processPluginUpdates(payload string,
 	if configTableUpdate.Remove && results.Exists() {
 		processedPayload = vc.removePlugin(processedPayload, pluginName,
 			dataPlaneVersion)
+	}
+	return processedPayload
+}
+
+func (vc *WSVersionCompatibility) processCoreEntityUpdates(payload string,
+	configTableUpdate ConfigTableUpdates,
+	dataPlaneVersion uint64,
+) string {
+	entityName := configTableUpdate.Type.String()
+	processedPayload := payload
+	results := gjson.Get(processedPayload, fmt.Sprintf("config_table.%s", entityName))
+	var (
+		updates = []interface{}{}
+		err     error
+	)
+	for _, res := range results.Array() {
+		var entityJSON map[string]interface{}
+		updatedRaw := res.Raw
+		name := res.Get("name").Raw
+
+		// Field removal
+		for _, field := range configTableUpdate.RemoveFields {
+			if gjson.Get(updatedRaw, field).Exists() {
+				if updatedRaw, err = sjson.Delete(updatedRaw, field); err != nil {
+					vc.logger.With(zap.String("entity", entityName)).
+						With(zap.String("name", name)).
+						With(zap.String("field", field)).
+						With(zap.Uint64("data-plane", dataPlaneVersion)).
+						With(zap.Error(err)).
+						Error("entity field was not removed from configuration")
+				} else {
+					vc.logger.With(zap.String("entity", entityName)).
+						With(zap.String("name", name)).
+						With(zap.String("field", field)).
+						With(zap.Uint64("data-plane", dataPlaneVersion)).
+						Warn("removing entity field which is incompatible with data plane")
+				}
+			}
+		}
+		if err = json.Unmarshal([]byte(updatedRaw), &entityJSON); err != nil {
+			vc.logger.With(zap.String("entity", entityName)).
+				With(zap.String("name", name)).
+				With(zap.String("config", updatedRaw)).
+				With(zap.Uint64("data-plane", dataPlaneVersion)).
+				With(zap.Error(err)).
+				Error("couldn't unmarshal entity config")
+		} else {
+			updates = append(updates, entityJSON)
+		}
+	}
+	if processedPayload, err = sjson.Set(
+		processedPayload, fmt.Sprintf("config_table.%s", entityName), updates,
+	); err != nil {
+		vc.logger.With(zap.String("entity", entityName)).
+			With(zap.Uint64("data-plane", dataPlaneVersion)).
+			With(zap.Error(err)).
+			Error("error while updating entities")
 	}
 	return processedPayload
 }
