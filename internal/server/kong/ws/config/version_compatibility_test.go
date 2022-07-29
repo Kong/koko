@@ -2348,6 +2348,70 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 				}
 			}`,
 		},
+		{
+			name: "ensure plugin field is removed because of older version (enterprise format)",
+			configTableUpdates: map[string][]ConfigTableUpdates{
+				"< 2.9.9.9": {
+					{
+						Name: "plugin_1",
+						Type: Plugin,
+						RemoveFields: []string{
+							"plugin_1_field_1",
+						},
+					},
+				},
+			},
+			uncompressedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"name": "plugin_2",
+							"config": {
+								"plugin_2_field_1": "element"
+							}
+						},
+						{
+							"name": "plugin_1",
+							"config": {
+								"plugin_1_field_1": "element",
+								"plugin_1_field_2": "element"
+							}
+						},
+						{
+							"name": "plugin_3",
+							"config": {
+								"plugin_3_field_1": "element"
+							}
+						}
+					]
+				}
+			}`,
+			dataPlaneVersion: "2.8.0.0",
+			expectedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"name": "plugin_2",
+							"config": {
+								"plugin_2_field_1": "element"
+							}
+						},
+						{
+							"name": "plugin_1",
+							"config": {
+								"plugin_1_field_2": "element"
+							}
+						},
+						{
+							"name": "plugin_3",
+							"config": {
+								"plugin_3_field_1": "element"
+							}
+						}
+					]
+				}
+			}`,
+		},
 	}
 
 	for _, test := range tests {

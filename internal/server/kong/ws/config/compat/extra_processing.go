@@ -9,9 +9,7 @@ import (
 	"go.uber.org/zap"
 )
 
-const (
-	dataPlaneVersionOlderThan3000 = "< 3.0.0"
-)
+var versionOlderThan3000 = semver.MustParseRange("< 3.0.0")
 
 // correctAWSLambdaMutuallyExclusiveFields handles 'aws_region' and 'host' fields, which were
 // mutually exclusive until Kong version 2.8 but both are accepted in 3.x. If both are set
@@ -61,8 +59,7 @@ func VersionCompatibilityExtraProcessing(payload string, dataPlaneVersion string
 		return "", fmt.Errorf("could not parse dataplane version: %s", dataPlaneVersion)
 	}
 
-	version := semver.MustParseRange(dataPlaneVersionOlderThan3000)
-	if version(dataPlaneSemVer) {
+	if versionOlderThan3000(dataPlaneSemVer) {
 		// 'aws_region' and 'host' are mutually exclusive for DP < 3.x
 		processedPayload = correctAWSLambdaMutuallyExclusiveFields(processedPayload, dataPlaneVersion, logger)
 	}
