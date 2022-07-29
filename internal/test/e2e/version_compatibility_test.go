@@ -35,6 +35,7 @@ type vcPlugins struct {
 	config            string
 	versionRange      string
 	fieldUpdateChecks map[string][]update
+	expectedConfig    string
 }
 
 func TestVersionCompatibility(t *testing.T) {
@@ -455,4 +456,61 @@ func ensurePlugins(plugins []vcPlugins) error {
 	}
 
 	return nil
+}
+
+func TestVersionCompatibilitySyslogFacilityField(t *testing.T) {
+	cleanup := run.Koko(t)
+	defer cleanup()
+
+	dpCleanup := run.KongDP(kong.GetKongConfForShared())
+	defer dpCleanup()
+	util.WaitForKong(t)
+	util.WaitForKongAdminAPI(t)
+
+	admin := httpexpect.New(t, "http://localhost:3000")
+
+	tests := []vcPlugins{
+		{
+			// make sure facility is set to 'user' for all DP versions
+			name:   "syslog",
+			config: `{}`,
+			expectedConfig: `{
+				"client_errors_severity": "info",
+				"custom_fields_by_lua": null,
+				"facility": "user",
+				"log_level": "info",
+				"server_errors_severity": "info",
+				"successful_severity": "info"
+			}`,
+		},
+	}
+
+	expectedConfig := &v1.TestingConfig{
+		Plugins: make([]*v1.Plugin, 0, len(tests)),
+	}
+
+	for _, test := range tests {
+		var config structpb.Struct
+		require.NoError(t, json.ProtoJSONUnmarshal([]byte(test.config), &config))
+
+		plugin := &v1.Plugin{
+			Id:        uuid.NewString(),
+			Name:      test.name,
+			Config:    &config,
+			Enabled:   wrapperspb.Bool(true),
+			Protocols: []string{"http", "https"},
+		}
+		pluginBytes, err := json.ProtoJSONMarshal(plugin)
+		require.NoError(t, err)
+		res := admin.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
+		res.Status(http.StatusCreated)
+
+		expectedConfig.Plugins = append(expectedConfig.Plugins, plugin)
+	}
+
+	util.WaitFunc(t, func() error {
+		err := util.EnsureConfig(expectedConfig)
+		t.Log("plugin validation failed", err)
+		return err
+	})
 }
