@@ -19,7 +19,7 @@ func standardPluginFieldsMessage(pluginName string, fields []string, versionWith
 	quotedFields := "'" + strings.Join(fields, "', '") + "'"
 
 	return fmt.Sprintf("For the '%s' plugin, "+
-		"one or more of the following 'config'' fields are set: %s "+
+		"one or more of the following 'config' fields are set: %s "+
 		"but Kong gateway versions < %s do not support these fields. "+
 		"Plugin features that rely on these fields are not working as intended.",
 		pluginName,
@@ -32,6 +32,18 @@ func standardPluginNotAvailableMessage(pluginName string, versionWithFeatureSupp
 	return fmt.Sprintf("Plugin '%s' is not available in Kong gateway versions "+
 		"< %s. '",
 		pluginName,
+		versionWithFeatureSupport,
+	)
+}
+
+func standardCoreEntityFieldsMessage(entityName string, fields []string, versionWithFeatureSupport string) string {
+	quotedFields := "'" + strings.Join(fields, "', '") + "'"
+
+	return fmt.Sprintf("For the '%s' entity, "+
+		"one or more of the following schema fields are set: %s "+
+		"but Kong gateway versions < %s do not support these fields. "+
+		entityName,
+		quotedFields,
 		versionWithFeatureSupport,
 	)
 }
@@ -383,6 +395,24 @@ var (
 				Type: config.Plugin,
 				RemoveFields: []string{
 					"allow_any_domain",
+				},
+			},
+		},
+		{
+			Metadata: config.ChangeMetadata{
+				ID:       config.ChangeID("P119"),
+				Severity: config.ChangeSeverityError,
+				Description: standardCoreEntityFieldsMessage(config.Service.String(),
+					[]string{"enabled"},
+					"2.7"),
+				Resolution: standardUpgradeMessage("2.7"),
+			},
+			Version: versionsPre270,
+			Update: config.ConfigTableUpdates{
+				Name: config.Service.String(),
+				Type: config.Service,
+				RemoveFields: []string{
+					"enabled",
 				},
 			},
 		},

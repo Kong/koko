@@ -103,9 +103,9 @@ type CompatChangeRegistry interface {
 	// It returns ErrRegistryEntryNotFound if a change with id has not been previously
 	// registered.
 	GetMetadata(id ChangeID) (ChangeMetadata, error)
-	// GetPluginUpdates returns configuration updates for all registered
+	// GetUpdates returns configuration updates for all registered
 	// changes. The order of updates within a version is not deterministic.
-	GetPluginUpdates() VersionedConfigUpdates
+	GetUpdates() VersionedConfigUpdates
 }
 
 // compatChangeRegistryImpl implements the CompatChangeRegistry interface.
@@ -140,7 +140,7 @@ func (c *compatChangeRegistryImpl) GetMetadata(id ChangeID) (ChangeMetadata, err
 	return res.Metadata, nil
 }
 
-func (c *compatChangeRegistryImpl) GetPluginUpdates() VersionedConfigUpdates {
+func (c *compatChangeRegistryImpl) GetUpdates() VersionedConfigUpdates {
 	res := make(VersionedConfigUpdates, len(c.changes))
 	for _, change := range c.changes {
 		res[change.Version] = append(res[change.Version], change.Update)

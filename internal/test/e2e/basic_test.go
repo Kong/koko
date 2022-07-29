@@ -604,7 +604,7 @@ func TestTargetSync(t *testing.T) {
 
 func TestServiceSync(t *testing.T) {
 	// ensure that services can be synced to Kong gateway
-	// only enabled services should be synced though
+	// regardless they are enabled or not
 	cleanup := run.Koko(t)
 	defer cleanup()
 
@@ -613,18 +613,63 @@ func TestServiceSync(t *testing.T) {
 	res := c.POST("/v1/services").WithJSON(enabledService).Expect()
 	res.Status(http.StatusCreated)
 
-	disabled, err := json.ProtoJSONMarshal(disabledService())
-	require.Nil(t, err)
+	disabledService := disabledService()
+	disabled, err := json.ProtoJSONMarshal(disabledService)
+	require.NoError(t, err)
 	res = c.POST("/v1/services").WithBytes(disabled).Expect()
 	res.Status(http.StatusCreated)
 
 	dpCleanup := run.KongDP(kong.GetKongConfForShared())
 	defer dpCleanup()
 
-	require.Nil(t, util.WaitForKongPort(t, 8001))
+	require.NoError(t, util.WaitForKongPort(t, 8001))
 
 	expectedConfig := &v1.TestingConfig{
-		Services: []*v1.Service{enabledService},
+		Services: []*v1.Service{enabledService, {
+			Name: disabledService.Name,
+			Host: disabledService.Host,
+			Path: disabledService.Path,
+		}},
+	}
+	util.WaitFunc(t, func() error {
+		err := util.EnsureConfig(expectedConfig)
+		t.Log("configuration mismatch", err)
+		return err
+	})
+}
+
+func TestServiceWithEnabledFieldSync(t *testing.T) {
+	// ensure that services can be synced to Kong gateway
+	// and make sure the 'enabled' field is correctly set
+	kongClient.RunWhenKong(t, ">= 2.7.0")
+	cleanup := run.Koko(t)
+	defer cleanup()
+
+	c := httpexpect.New(t, "http://localhost:3000")
+
+	// add enabled service
+	enabledService := goodService()
+	enabledService.Enabled = wrapperspb.Bool(true)
+	enabled, err := json.ProtoJSONMarshal(enabledService)
+	require.NoError(t, err)
+	res := c.POST("/v1/services").WithBytes(enabled).Expect()
+	res.Status(http.StatusCreated)
+
+	// add disabled service
+	disabledService := disabledService()
+	disabledService.Enabled = wrapperspb.Bool(false)
+	disabled, err := json.ProtoJSONMarshal(disabledService)
+	require.NoError(t, err)
+	res = c.POST("/v1/services").WithBytes(disabled).Expect()
+	res.Status(http.StatusCreated)
+
+	dpCleanup := run.KongDP(kong.GetKongConfForShared())
+	defer dpCleanup()
+
+	require.NoError(t, util.WaitForKongPort(t, 8001))
+
+	expectedConfig := &v1.TestingConfig{
+		Services: []*v1.Service{enabledService, disabledService},
 	}
 	util.WaitFunc(t, func() error {
 		err := util.EnsureConfig(expectedConfig)

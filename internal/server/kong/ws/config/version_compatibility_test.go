@@ -2218,6 +2218,223 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 				}
 			}`,
 		},
+		{
+			name: "drop single service field",
+			configTableUpdates: map[uint64][]ConfigTableUpdates{
+				3000000000: {
+					{
+						Name: Service.String(),
+						Type: Service,
+						RemoveFields: []string{
+							"service_field_1",
+						},
+					},
+				},
+			},
+			uncompressedPayload: `{
+				"config_table": {
+					"services": [
+						{
+							"name": "service_1",
+							"service_field_1": "element",
+							"service_field_2": "element"
+						}
+					]
+				}
+			}`,
+			dataPlaneVersion: 2007000000,
+			expectedPayload: `{
+				"config_table": {
+					"services": [
+						{
+							"name": "service_1",
+							"service_field_2": "element"
+						}
+					]
+				}
+			}`,
+		},
+		{
+			name: "drop multiple service fields",
+			configTableUpdates: map[uint64][]ConfigTableUpdates{
+				3000000000: {
+					{
+						Name: Service.String(),
+						Type: Service,
+						RemoveFields: []string{
+							"service_field_1",
+							"service_field_2",
+						},
+					},
+				},
+			},
+			uncompressedPayload: `{
+				"config_table": {
+					"services": [
+						{
+							"name": "service_1",
+							"service_field_1": "element",
+							"service_field_2": "element",
+							"service_field_3": "element"
+						}
+					]
+				}
+			}`,
+			dataPlaneVersion: 2007000000,
+			expectedPayload: `{
+				"config_table": {
+					"services": [
+						{
+							"name": "service_1",
+							"service_field_3": "element"
+						}
+					]
+				}
+			}`,
+		},
+		{
+			name: "drop multiple service fields from multiple services",
+			configTableUpdates: map[uint64][]ConfigTableUpdates{
+				3000000000: {
+					{
+						Name: Service.String(),
+						Type: Service,
+						RemoveFields: []string{
+							"service_field_1",
+							"service_field_2",
+							"service_field_4",
+						},
+					},
+				},
+			},
+			uncompressedPayload: `{
+				"config_table": {
+					"services": [
+						{
+							"name": "service_1",
+							"service_field_1": "element",
+							"service_field_2": "element",
+							"service_field_3": "element"
+						},
+						{
+							"name": "service_2",
+							"service_field_1": "element",
+							"service_field_3": "element",
+							"service_field_4": "element"
+						}
+					]
+				}
+			}`,
+			dataPlaneVersion: 2007000000,
+			expectedPayload: `{
+				"config_table": {
+					"services": [
+						{
+							"name": "service_1",
+							"service_field_3": "element"
+						},
+						{
+							"name": "service_2",
+							"service_field_3": "element"
+						}
+					]
+				}
+			}`,
+		},
+		{
+			name: "drop services and plugins' fields",
+			configTableUpdates: map[uint64][]ConfigTableUpdates{
+				3000000000: {
+					{
+						Name: Service.String(),
+						Type: Service,
+						RemoveFields: []string{
+							"service_field_1",
+							"service_field_2",
+							"service_field_4",
+						},
+					},
+					{
+						Name:   "plugin_1",
+						Type:   Plugin,
+						Remove: true,
+					},
+				},
+			},
+			uncompressedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"name": "plugin_2",
+							"config": {
+								"plugin_2_field_1": "element"
+							}
+						},
+						{
+							"name": "plugin_1",
+							"config": {
+								"plugin_1_field_1": "element"
+							}
+						},
+						{
+							"name": "plugin_3",
+							"config": {
+								"plugin_3_field_1": "element"
+							}
+						},
+						{
+							"name": "plugin_1",
+							"config": {
+								"plugin_1_field_1": "element"
+							}
+						}
+					],
+					"services": [
+						{
+							"name": "service_1",
+							"service_field_1": "element",
+							"service_field_2": "element",
+							"service_field_3": "element"
+						},
+						{
+							"name": "service_2",
+							"service_field_1": "element",
+							"service_field_3": "element",
+							"service_field_4": "element"
+						}
+					]
+				}
+			}`,
+			dataPlaneVersion: 2007000000,
+			expectedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"name": "plugin_2",
+							"config": {
+								"plugin_2_field_1": "element"
+							}
+						},
+						{
+							"name": "plugin_3",
+							"config": {
+								"plugin_3_field_1": "element"
+							}
+						}
+					],
+					"services": [
+						{
+							"name": "service_1",
+							"service_field_3": "element"
+						},
+						{
+							"name": "service_2",
+							"service_field_3": "element"
+						}
+					]
+				}
+			}`,
+		},
 	}
 
 	for _, test := range tests {

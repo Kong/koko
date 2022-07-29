@@ -41,14 +41,10 @@ func (l *KongServiceLoader) Mutate(ctx context.Context,
 	}
 	res := make([]Map, 0)
 	for _, svc := range allServices {
-		if !svc.Enabled.Value {
-			continue
-		}
 		m, err := convert(svc)
 		if err != nil {
 			return err
 		}
-		delete(m, "enabled")
 		flattenForeign(m, "client_certificate")
 		res = append(res, m)
 	}
