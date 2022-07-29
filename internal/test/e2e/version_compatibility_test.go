@@ -4,7 +4,6 @@ package e2e
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -12,8 +11,6 @@ import (
 
 	"github.com/blang/semver/v4"
 	"github.com/gavv/httpexpect/v2"
-	"github.com/google/go-cmp/cmp"
-	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/google/uuid"
 	kongClient "github.com/kong/go-kong/kong"
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
@@ -487,6 +484,11 @@ func TestVersionCompatibilitySyslogFacilityField(t *testing.T) {
 			}`,
 		},
 	}
+
+	expectedConfig := &v1.TestingConfig{
+		Plugins: make([]*v1.Plugin, 0, len(tests)),
+	}
+
 	for _, test := range tests {
 		var config structpb.Struct
 		require.NoError(t, json.ProtoJSONUnmarshal([]byte(test.config), &config))
@@ -502,48 +504,13 @@ func TestVersionCompatibilitySyslogFacilityField(t *testing.T) {
 		require.NoError(t, err)
 		res := admin.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
 		res.Status(http.StatusCreated)
+
+		expectedConfig.Plugins = append(expectedConfig.Plugins, plugin)
 	}
 
 	util.WaitFunc(t, func() error {
-		err := ensurePluginsConfig(t, tests)
+		err := util.EnsureConfig(expectedConfig)
 		t.Log("plugin validation failed", err)
 		return err
 	})
-}
-
-func ensurePluginsConfig(t *testing.T, plugins []vcPlugins) error {
-	kongAdmin, err := kongClient.NewClient(util.BasedKongAdminAPIAddr, nil)
-	if err != nil {
-		return fmt.Errorf("create go client for kong: %v", err)
-	}
-	ctx := context.Background()
-	dataPlanePlugins, err := kongAdmin.Plugins.ListAll(ctx)
-	if err != nil {
-		return fmt.Errorf("fetching plugins: %v", err)
-	}
-
-	var expectedPlugins []*kongClient.Plugin
-	for _, plugin := range plugins {
-		var expectedConfig kongClient.Configuration
-		require.NoError(t, json.ProtoJSONUnmarshal([]byte(plugin.expectedConfig), &expectedConfig))
-
-		plugin := &kongClient.Plugin{
-			Name:    kongClient.String(plugin.name),
-			Config:  expectedConfig,
-			Enabled: kongClient.Bool(true),
-		}
-		expectedPlugins = append(expectedPlugins, plugin)
-	}
-
-	opt := []cmp.Option{
-		cmpopts.IgnoreFields(kongClient.Plugin{}, "ID", "CreatedAt", "Protocols"),
-		cmpopts.SortSlices(func(a, b *kongClient.Plugin) bool { return *a.Name < *b.Name }),
-		cmpopts.EquateEmpty(),
-	}
-
-	if diff := cmp.Diff(dataPlanePlugins, expectedPlugins, opt...); diff != "" {
-		return errors.New(diff)
-	}
-
-	return nil
 }
