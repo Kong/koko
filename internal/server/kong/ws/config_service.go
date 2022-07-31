@@ -31,7 +31,7 @@ func NewConfigurer(m *Manager) *Configurer {
 // AnswerPingThread starts a background goroutine to send
 // config messages whenever a node requests it.
 // Currently only the PingCP rpc does this request.
-func (c *Configurer) AnswerPingThread(ctx context.Context, logger *zap.Logger) {
+func (c *Configurer) AnswerPingThread(ctx context.Context, _ *zap.Logger) {
 	c.ping = make(chan *Node)
 
 	go func() {
@@ -41,7 +41,9 @@ func (c *Configurer) AnswerPingThread(ctx context.Context, logger *zap.Logger) {
 				return
 
 			case node := <-c.ping:
-				_ = node.sendConfig(ctx, c.manager.payload)
+				if err := node.sendConfig(ctx, c.manager.payload); err != nil {
+					node.Logger.Error("failed sending config in response to Ping", zap.Error(err))
+				}
 			}
 		}
 	}()
