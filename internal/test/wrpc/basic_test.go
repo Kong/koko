@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"fmt"
 	"net/url"
+	"sync"
 	"testing"
 
 	"github.com/kong/go-wrpc/wrpc"
@@ -96,27 +97,29 @@ func TestNegotiationService(t *testing.T) {
 // trivial config service mock to log calls.
 
 type configMock struct {
-	log []string
+	lock sync.Mutex
+	log  []string
 }
 
 func (cm *configMock) reset() {
+	cm.lock.Lock()
+	defer cm.lock.Unlock()
 	cm.log = []string{}
 }
 
-// waitForCalls blocks until received at least n calls.
-func (cm *configMock) waitForCalls(t *testing.T, n int) {
-	err := fmt.Errorf("less than %d calls", n)
+func (cm *configMock) requireCalls(t *testing.T, l []string) {
+	err := fmt.Errorf("less than %d calls", len(l))
+
 	util.WaitFunc(t, func() error {
-		if len(cm.log) < n {
+		cm.lock.Lock()
+		defer cm.lock.Unlock()
+
+		if len(cm.log) < len(l) {
 			return err
 		}
+		require.Equal(t, l, cm.log[:len(l)])
 		return nil
 	})
-}
-
-// requireCalls fails if the logged calls are different from the given list.
-func (cm *configMock) requireCalls(t *testing.T, l []string) {
-	require.Equal(t, l, cm.log)
 }
 
 // implement all config service's RPCs, just log their names
@@ -126,6 +129,9 @@ func (cm *configMock) GetCapabilities(
 	p *wrpc.Peer,
 	req *config_service.GetCapabilitiesRequest,
 ) (resp *config_service.GetCapabilitiesResponse, err error) {
+	cm.lock.Lock()
+	defer cm.lock.Unlock()
+
 	cm.log = append(cm.log, "GetCapabilities")
 	return
 }
@@ -135,6 +141,9 @@ func (cm *configMock) PingCP(
 	p *wrpc.Peer,
 	req *config_service.PingCPRequest,
 ) (resp *config_service.PingCPResponse, err error) {
+	cm.lock.Lock()
+	defer cm.lock.Unlock()
+
 	cm.log = append(cm.log, "PingCP")
 	return
 }
@@ -144,6 +153,9 @@ func (cm *configMock) ReportMetadata(
 	p *wrpc.Peer,
 	req *config_service.ReportMetadataRequest,
 ) (resp *config_service.ReportMetadataResponse, err error) {
+	cm.lock.Lock()
+	defer cm.lock.Unlock()
+
 	cm.log = append(cm.log, "ReportMetadata")
 	return
 }
@@ -153,6 +165,9 @@ func (cm *configMock) SyncConfig(
 	p *wrpc.Peer,
 	req *config_service.SyncConfigRequest,
 ) (resp *config_service.SyncConfigResponse, err error) {
+	cm.lock.Lock()
+	defer cm.lock.Unlock()
+
 	cm.log = append(cm.log, "SyncConfig")
 	return
 }
@@ -215,7 +230,6 @@ func TestConfigService(t *testing.T) {
 		})
 		require.NoError(t, err)
 		require.EqualValues(t, &config_service.ReportMetadataResponse_Ok{Ok: "valid"}, resp.Response)
-		configMock.waitForCalls(t, 1)
 		configMock.requireCalls(t, []string{"SyncConfig"})
 	})
 
@@ -226,8 +240,6 @@ func TestConfigService(t *testing.T) {
 		})
 		require.NoError(t, err)
 		require.NotNil(t, resp)
-
-		configMock.waitForCalls(t, 1)
 		configMock.requireCalls(t, []string{"SyncConfig"})
 	})
 }
