@@ -3,6 +3,7 @@ package wrpc_test
 import (
 	"context"
 	"crypto/tls"
+	"fmt"
 	"net/url"
 	"testing"
 
@@ -12,13 +13,15 @@ import (
 	nego "github.com/kong/koko/internal/gen/wrpc/kong/services/negotiation/v1"
 	"github.com/kong/koko/internal/test/certs"
 	"github.com/kong/koko/internal/test/run"
+	"github.com/kong/koko/internal/test/util"
 	"github.com/stretchr/testify/require"
 )
 
 const (
-	node_id = "758435aa-bab5-4786-92d1-c509ac520c2d"
+	nodeID = "758435aa-bab5-4786-92d1-c509ac520c2d"
 )
 
+// wprcConn connects to koko's wrpc endpoint.
 func wprcConn(t *testing.T) *wrpc.Conn {
 	dialer := *wrpc.DefaultDialer
 
@@ -36,7 +39,7 @@ func wprcConn(t *testing.T) *wrpc.Conn {
 		Host:   "localhost:3100",
 		Path:   "/v1/wrpc",
 		RawQuery: url.Values{
-			"node_id":       {node_id},
+			"node_id":       {nodeID},
 			"node_hostname": {"localhost"},
 			"node_version":  {"3.0"},
 		}.Encode(),
@@ -65,6 +68,8 @@ func TestNegotiationService(t *testing.T) {
 
 	peer := &wrpc.Peer{}
 	peer.AddConn(conn)
+	defer peer.Close()
+
 	peer.Register(&nego.NegotiationServiceServer{})
 
 	cli := nego.NegotiationServiceClient{Peer: peer}
@@ -88,6 +93,70 @@ func TestNegotiationService(t *testing.T) {
 	})
 }
 
+// trivial config service mock to log calls.
+
+type configMock struct {
+	log []string
+}
+
+func (cm *configMock) reset() {
+	cm.log = []string{}
+}
+
+// waitForCalls blocks until received at least n calls.
+func (cm *configMock) waitForCalls(t *testing.T, n int) {
+	err := fmt.Errorf("less than %d calls", n)
+	util.WaitFunc(t, func() error {
+		if len(cm.log) < n {
+			return err
+		}
+		return nil
+	})
+}
+
+// requireCalls fails if the logged calls are different from the given list.
+func (cm *configMock) requireCalls(t *testing.T, l []string) {
+	require.Equal(t, l, cm.log)
+}
+
+// implement all config service's RPCs, just log their names
+
+func (cm *configMock) GetCapabilities(
+	ctx context.Context,
+	p *wrpc.Peer,
+	req *config_service.GetCapabilitiesRequest,
+) (resp *config_service.GetCapabilitiesResponse, err error) {
+	cm.log = append(cm.log, "GetCapabilities")
+	return
+}
+
+func (cm *configMock) PingCP(
+	ctx context.Context,
+	p *wrpc.Peer,
+	req *config_service.PingCPRequest,
+) (resp *config_service.PingCPResponse, err error) {
+	cm.log = append(cm.log, "PingCP")
+	return
+}
+
+func (cm *configMock) ReportMetadata(
+	ctx context.Context,
+	p *wrpc.Peer,
+	req *config_service.ReportMetadataRequest,
+) (resp *config_service.ReportMetadataResponse, err error) {
+	cm.log = append(cm.log, "ReportMetadata")
+	return
+}
+
+func (cm *configMock) SyncConfig(
+	ctx context.Context,
+	p *wrpc.Peer,
+	req *config_service.SyncConfigRequest,
+) (resp *config_service.SyncConfigResponse, err error) {
+	cm.log = append(cm.log, "SyncConfig")
+	return
+}
+
 func TestConfigService(t *testing.T) {
 	cleanup := run.Koko(t)
 	defer cleanup()
@@ -97,11 +166,16 @@ func TestConfigService(t *testing.T) {
 
 	peer := &wrpc.Peer{}
 	peer.AddConn(conn)
-	peer.Register(&nego.NegotiationServiceServer{})
-	peer.Register(&config_service.ConfigServiceServer{})
+	defer peer.Close()
 
-	cli_nego := nego.NegotiationServiceClient{Peer: peer}
-	resp, err := cli_nego.NegotiateServices(context.Background(), &model.NegotiateServicesRequest{
+	configMock := configMock{}
+	peer.Register(&nego.NegotiationServiceServer{})
+	peer.Register(&config_service.ConfigServiceServer{
+		ConfigService: &configMock,
+	})
+
+	negotiationClient := nego.NegotiationServiceClient{Peer: peer}
+	resp, err := negotiationClient.NegotiateServices(context.Background(), &model.NegotiateServicesRequest{
 		Node: &model.DPNodeDescription{
 			Type: "KONG",
 		},
@@ -122,11 +196,38 @@ func TestConfigService(t *testing.T) {
 		},
 	}, resp.ServicesAccepted)
 
-	cli_config := config_service.ConfigServiceClient{Peer: peer}
+	configClient := config_service.ConfigServiceClient{Peer: peer}
 
-	t.Run("empty initial report message", func(t *testing.T) {
-		resp, err := cli_config.ReportMetadata(context.Background(), &config_service.ReportMetadataRequest{})
+	t.Run("send empty initial report message, fail validation", func(t *testing.T) {
+		resp, err := configClient.ReportMetadata(context.Background(), &config_service.ReportMetadataRequest{})
+		require.ErrorContains(t, err, "node failed to meet pre-requisites")
+		require.Nil(t, resp)
+	})
+
+	t.Run("send some acceptable plugins, get an initial config", func(t *testing.T) {
+		configMock.reset()
+		resp, err := configClient.ReportMetadata(context.Background(), &config_service.ReportMetadataRequest{
+			Plugins: []*config_service.PluginVersion{
+				{
+					Name: "rate-limiting",
+				},
+			},
+		})
 		require.NoError(t, err)
-		require.Empty(t, resp)
+		require.EqualValues(t, &config_service.ReportMetadataResponse_Ok{Ok: "valid"}, resp.Response)
+		configMock.waitForCalls(t, 1)
+		configMock.requireCalls(t, []string{"SyncConfig"})
+	})
+
+	t.Run("send a ping, get a config", func(t *testing.T) {
+		configMock.reset()
+		resp, err := configClient.PingCP(context.Background(), &config_service.PingCPRequest{
+			Hash: "0123456789abcdef0123456789abcdef",
+		})
+		require.NoError(t, err)
+		require.NotNil(t, resp)
+
+		configMock.waitForCalls(t, 1)
+		configMock.requireCalls(t, []string{"SyncConfig"})
 	})
 }
