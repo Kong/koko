@@ -272,9 +272,19 @@ func (m *Manager) removeNode(node *Node) {
 	m.nodeTrackingMu.Lock()
 	defer m.nodeTrackingMu.Unlock()
 	// TODO(hbagdi): may need more graceful error handling
-	if err := m.nodes.Remove(node); err != nil {
-		node.Logger.Error("failed to remove node", zap.Error(err))
+
+	nodeAddr := node.RemoteAddr().String()
+	if m.nodes.FindNode(nodeAddr) == node {
+		if err := m.nodes.Remove(node); err != nil {
+			node.Logger.Error("failed to remove node", zap.Error(err))
+		}
 	}
+	if m.pendingNodes.FindNode(nodeAddr) == node {
+		if err := m.pendingNodes.Remove(node); err != nil {
+			node.Logger.Error("failed to remove pending node", zap.Error(err))
+		}
+	}
+
 	if err := node.Close(); err != nil {
 		node.Logger.Info("error closing node", zap.Error(err))
 	}

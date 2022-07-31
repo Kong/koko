@@ -125,7 +125,6 @@ func (c *Configurer) ReportMetadata(
 	err := c.manager.addWRPCNode(node, plugins)
 	if err != nil {
 		node.Logger.With(zap.Error(err)).Error("error when adding validated node")
-		_ = node.Close()
 		return nil, err
 	}
 	node.Logger.Debug("validated node added")
