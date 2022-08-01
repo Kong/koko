@@ -197,14 +197,12 @@ func (n *Node) write(payload []byte, hash sum) error {
 		return nil
 	}
 
-	if n.conn != nil {
-		err := n.conn.WriteMessage(websocket.BinaryMessage, payload)
-		if err != nil {
-			if wsCloseErr, ok := err.(*websocket.CloseError); ok {
-				return ErrConnClosed{Code: wsCloseErr.Code}
-			}
-			return err
+	err := n.conn.WriteMessage(websocket.BinaryMessage, payload)
+	if err != nil {
+		if wsCloseErr, ok := err.(*websocket.CloseError); ok {
+			return ErrConnClosed{Code: wsCloseErr.Code}
 		}
+		return err
 	}
 
 	return nil

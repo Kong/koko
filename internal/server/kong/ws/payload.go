@@ -16,12 +16,14 @@ const unversionedConfigKey = "unversioned"
 type Payload struct {
 	// configCache is a cache of configuration. It holds the originally fetched
 	// configuration as well as massaged configuration for each DP version.
-	configVersion   uint64
 	configCache     configCache
 	configCacheLock sync.Mutex
-	wrpcCache       configWRPCCache
-	vc              config.VersionCompatibility
-	logger          *zap.Logger
+	// configVersion is a counter incremented every config update.  Sent in the
+	// config wRPC service, only compared by DP within the lifetime of the connection.
+	configVersion uint64
+	wrpcCache     configWRPCCache
+	vc            config.VersionCompatibility
+	logger        *zap.Logger
 }
 
 type PayloadOpts struct {
@@ -58,6 +60,7 @@ func (p *Payload) Payload(_ context.Context, version string) (config.Content, er
 	return config.Content{
 		CompressedPayload: entry.CompressedPayload,
 		Hash:              entry.Hash,
+		GranularHashes:    entry.GranularHashes,
 	}, nil
 }
 
@@ -80,7 +83,8 @@ func (p *Payload) configForVersion(version string) (cacheEntry, error) {
 			Content: config.Content{
 				CompressedPayload: updatedPayload,
 				// Hash must remain stable across version.
-				Hash: unversionedConfig.Hash,
+				Hash:           unversionedConfig.Hash,
+				GranularHashes: unversionedConfig.GranularHashes,
 			},
 			Error: err,
 		}
@@ -131,6 +135,14 @@ func (p *Payload) WRPCConfigPayload(ctx context.Context, versionStr string) (Cac
 			Config:     c.CompressedPayload,
 			Version:    p.configVersion,
 			ConfigHash: c.Hash,
+			Hashes: &config_service.GranularHashes{
+				Config:    c.Hash,
+				Routes:    c.GranularHashes["routes"],
+				Services:  c.GranularHashes["services"],
+				Plugins:   c.GranularHashes["plugins"],
+				Upstreams: c.GranularHashes["upstreams"],
+				Targets:   c.GranularHashes["targets"],
+			},
 		}
 
 		p.configCacheLock.Lock()
@@ -147,12 +159,11 @@ func (p *Payload) WRPCConfigPayload(ctx context.Context, versionStr string) (Cac
 			p.logger.Error("failed to store wRPC configuration to cache",
 				zap.Error(err),
 				zap.String("kong-dp-version", versionStr))
-			return wc, nil
 		}
 		return wc, nil
 	}
 
-	return wc, err
+	return wc, nil
 }
 
 func (p *Payload) UpdateBinary(_ context.Context, c config.Content) error {

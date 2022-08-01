@@ -330,7 +330,7 @@ func (m *Manager) addWRPCNode(node *Node, pluginList []string) error {
 
 	err = m.pendingNodes.Remove(node)
 	if err != nil {
-		return fmt.Errorf("taking node from pending list: %w", err)
+		return fmt.Errorf("failed to remove node from pending list: %w", err)
 	}
 
 	m.addToNodeList(node)
