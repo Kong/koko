@@ -1,4 +1,4 @@
-package wrpc_test
+package ws_test
 
 import (
 	"context"
