@@ -145,11 +145,12 @@ func Run(ctx context.Context, config ServerConfig) error {
 	grpcServer, err := server.NewGRPC(server.GRPCOpts{
 		Address:    ":3001",
 		GRPCServer: rawGRPCServer,
-		Logger:     logger,
+		Logger:     logger.With(zap.String("component", "relay-server")),
 	})
 	if err != nil {
 		return err
 	}
+
 	eventService := relayImpl.NewEventService(ctx,
 		relayImpl.EventServiceOpts{
 			Store:  store,
@@ -164,7 +165,20 @@ func Run(ctx context.Context, config ServerConfig) error {
 	g.AddWithCtxE(grpcServer.Run)
 
 	// setup relay client
-	grpcClients, err := setupGRPCClients()
+	const grpcMaxSendMsgSize = 1024 * 1024 * 8
+	dialOpts := []grpc.DialOption{
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithDefaultCallOptions(
+			grpc.MaxCallSendMsgSize(grpcMaxSendMsgSize),
+			grpc.MaxCallRecvMsgSize(grpcMaxSendMsgSize),
+		),
+	}
+	cc, err := grpc.Dial("localhost:3001", dialOpts...)
+	if err != nil {
+		return err
+	}
+	defer cc.Close()
+	grpcClients := setupGRPCClients(cc)
 	if err != nil {
 		return err
 	}
@@ -375,19 +389,7 @@ type grpcClients struct {
 	Event  relay.EventServiceClient
 }
 
-func setupGRPCClients() (grpcClients, error) {
-	const grpcMaxSendMsgSize = 1024 * 1024 * 8
-	dialOpts := []grpc.DialOption{
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpc.WithDefaultCallOptions(
-			grpc.MaxCallSendMsgSize(grpcMaxSendMsgSize),
-			grpc.MaxCallRecvMsgSize(grpcMaxSendMsgSize),
-		),
-	}
-	cc, err := grpc.Dial("localhost:3001", dialOpts...)
-	if err != nil {
-		return grpcClients{}, err
-	}
+func setupGRPCClients(cc *grpc.ClientConn) grpcClients {
 	return grpcClients{
 		Service:       v1.NewServiceServiceClient(cc),
 		Route:         v1.NewRouteServiceClient(cc),
@@ -403,7 +405,7 @@ func setupGRPCClients() (grpcClients, error) {
 		Node:   v1.NewNodeServiceClient(cc),
 		Event:  relay.NewEventServiceClient(cc),
 		Status: relay.NewStatusServiceClient(cc),
-	}, nil
+	}
 }
 
 func setupDB(logger *zap.Logger, configDB config.Database) (persistence.Persister, error) {

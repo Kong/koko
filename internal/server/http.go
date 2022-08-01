@@ -47,7 +47,7 @@ func NewHTTP(opts HTTPOpts) (*HTTP, error) {
 			ReadHeaderTimeout: readTimeout,
 			ReadTimeout:       readTimeout,
 		},
-		logger: opts.Logger,
+		logger: opts.Logger.With(zap.String("address", opts.Address)),
 	}, nil
 }
 
@@ -74,7 +74,7 @@ func (h *HTTP) Run(ctx context.Context) error {
 	s := h.server
 	h.addTLSHandshakeErrorHandler()
 	go func() {
-		h.logger.Debug("starting server")
+		h.logger.Info("starting server")
 		listener, err := net.Listen("tcp", h.server.Addr)
 		if err != nil {
 			errCh <- err
@@ -94,15 +94,11 @@ func (h *HTTP) Run(ctx context.Context) error {
 	case err := <-errCh:
 		return err
 	case <-ctx.Done():
-		ctx, cleanup := context.WithDeadline(context.Background(),
-			time.Now().Add(defaultShutdownTimeout))
+		ctx, cleanup := context.WithTimeout(context.Background(), defaultShutdownTimeout)
 		defer cleanup()
-		// ctx not inheritted since the parent ctx will already be Done()
+		// ctx not inherited since the parent ctx will already be Done()
 		// at this point
-		err := s.Shutdown(ctx)
-		if err != nil {
-			return err
-		}
+		h.logger.Info("stopping HTTP server", zap.String("shutdown-timeout", defaultShutdownTimeout.String()))
+		return h.server.Shutdown(ctx)
 	}
-	return nil
 }

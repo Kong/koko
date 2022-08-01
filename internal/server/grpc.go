@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"time"
 
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
@@ -40,7 +41,7 @@ func NewGRPC(opts GRPCOpts) (*GRPC, error) {
 	return &GRPC{
 		address: opts.Address,
 		server:  opts.GRPCServer,
-		logger:  opts.Logger,
+		logger:  opts.Logger.With(zap.String("address", opts.Address)),
 	}, nil
 }
 
@@ -48,7 +49,7 @@ func (g *GRPC) Run(ctx context.Context) error {
 	errCh := make(chan error)
 	s := g.server
 	go func() {
-		g.logger.Debug("starting server")
+		g.logger.Info("starting server")
 		listener, err := net.Listen("tcp", g.address)
 		if err != nil {
 			errCh <- err
@@ -62,11 +63,27 @@ func (g *GRPC) Run(ctx context.Context) error {
 			}
 		}
 	}()
+
 	select {
 	case err := <-errCh:
 		return err
 	case <-ctx.Done():
-		s.Stop()
+		// Guarantee the server stops. GracefulStop will never close
+		// when a client is holding open a streaming connection.
+		stopped := make(chan struct{})
+		go func() {
+			g.logger.Info("attempting to gracefully stop GRPC server")
+			s.GracefulStop()
+			close(stopped)
+		}()
+		t := time.NewTimer(defaultShutdownTimeout)
+		select {
+		case <-t.C:
+			g.logger.Info("stopping GRPC server")
+			s.Stop()
+		case <-stopped:
+			t.Stop()
+		}
 	}
 	return nil
 }
