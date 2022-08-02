@@ -87,20 +87,20 @@ func TestVersionCompatibility_ParseSemanticVersion(t *testing.T) {
 		},
 		{
 			versionStr:      "0.33.3-3-enterprise-edition",
-			expectedVersion: "0.33.3-3",
+			expectedVersion: "0.33.3.3",
 		},
 		{
 			versionStr:      "0.33.3-3-enterprise",
-			expectedVersion: "0.33.3-3",
+			expectedVersion: "0.33.3.3",
 		},
 		{
 			// go-kong won't parse build without suffix containing enterprise
 			versionStr:      "0.33.3-3-build-will-not-be-parsed",
-			expectedVersion: "0.33.3",
+			expectedVersion: "0.33.3-3",
 		},
 		{
-			versionStr:      "2.3.3.2",
-			expectedVersion: "2.3.3",
+			versionStr:      "2.3.3-2",
+			expectedVersion: "2.3.3-2",
 		},
 		{
 			versionStr:      "2.3.2",
@@ -120,7 +120,7 @@ func TestVersionCompatibility_ParseSemanticVersion(t *testing.T) {
 		},
 		{
 			versionStr:      "2.3.3.2-enterprise-edition",
-			expectedVersion: "2.3.3-2",
+			expectedVersion: "2.3.3.2",
 		},
 		{
 			versionStr:  "two.three.four",
@@ -2504,7 +2504,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 		{
 			name: "ensure plugin field is removed because of newer version (enterprise format)",
 			configTableUpdates: map[string][]ConfigTableUpdates{
-				">= 2.8.0": {
+				">= 3.0.0.0": {
 					{
 						Name: "plugin_1",
 						Type: Plugin,
@@ -2539,7 +2539,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 					]
 				}
 			}`,
-			dataPlaneVersion: "3.0.0",
+			dataPlaneVersion: "3.0.0.0",
 			expectedPayload: `{
 				"config_table": {
 					"plugins": [
@@ -2568,7 +2568,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 		{
 			name: "ensure plugin field is removed because of older version (enterprise format)",
 			configTableUpdates: map[string][]ConfigTableUpdates{
-				"< 3.0.0": {
+				"< 3.0.0.0": {
 					{
 						Name: "plugin_1",
 						Type: Plugin,
@@ -2603,7 +2603,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 					]
 				}
 			}`,
-			dataPlaneVersion: "2.8.0",
+			dataPlaneVersion: "2.8.0.0",
 			expectedPayload: `{
 				"config_table": {
 					"plugins": [

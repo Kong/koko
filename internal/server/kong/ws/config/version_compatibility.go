@@ -21,6 +21,8 @@ const (
 	invalidVersionOctet = 1000
 	base                = 10
 	bitSize             = 64
+
+	nonEnterpriseFormatDigits = 3
 )
 
 var buildVersionRegex = regexp.MustCompile(buildVersionPattern)
@@ -148,7 +150,7 @@ func (vc *WSVersionCompatibility) AddConfigTableUpdates(payloadUpdates Versioned
 				}
 			}
 		}
-
+		version = translateVersionFormat(version)
 		vc.configTableUpdates[version] = append(vc.configTableUpdates[version], updates...)
 	}
 	return nil
@@ -182,6 +184,18 @@ func (vc *WSVersionCompatibility) ProcessConfigTableUpdates(dataPlaneVersionStr 
 	}
 
 	return CompressPayload([]byte(processedPayload))
+}
+
+// translateVersionFormat leaves the input version string untouched if
+// it's in the X.Y.Z format, while it turns X.Y.Z.Q format (which is not
+// parsable with the semver library) into X.Y.Z-Q-enterprise, which can
+// be parsed instead.
+func translateVersionFormat(version string) string {
+	parts := strings.Split(version, ".")
+	if len(parts) == nonEnterpriseFormatDigits {
+		return version
+	}
+	return fmt.Sprintf("%s.%s.%s-%s-enterprise", parts[0], parts[1], parts[2], parts[3])
 }
 
 func (vc *WSVersionCompatibility) performExtraProcessing(uncompressedPayload string, dataPlaneVersion string,
@@ -218,7 +232,7 @@ func (vc *WSVersionCompatibility) processConfigTableUpdates(uncompressedPayload 
 ) (string, error) {
 	processedPayload := uncompressedPayload
 
-	versionSemVer, err := semver.Parse(dataPlaneVersion)
+	versionSemVer, err := semver.Parse(translateVersionFormat(dataPlaneVersion))
 	if err != nil {
 		return "", fmt.Errorf(
 			"could not parse data plane version %s: %w", dataPlaneVersion, err,
@@ -246,6 +260,34 @@ func (vc *WSVersionCompatibility) processConfigTableUpdates(uncompressedPayload 
 	return processedPayload, nil
 }
 
+// If the extra info is in the X-enterprise format,
+// then merge it with version using the dotted format, otherwise use
+// the dash/build format.
+func addEnterpriseVersion(version, extra, num string) string {
+	if strings.Contains(extra, "enterprise") {
+		return fmt.Sprintf("%s.%s", version, num)
+	}
+	return fmt.Sprintf("%s-%s", version, num)
+}
+
+// parseSemanticVersion parses a data plane version into something that
+// follows Koko's convention allowing version ranges to be handled which are not
+// necessarily semver-compliant; this can be a parsing standard semver for the
+// case of a simple X.Y.Z format, but it can handle more expressive version
+// format translations in the case of patch versions or enterprise version formats.
+// For example:
+//
+// input:  0.33.3                (OSS build)
+// output: 0.33.3
+//
+// input:  0.33.3-3              (OSS patch build)
+// output: 0.33.3-3
+//
+// input:  0.33.3-3-enterprise   (enterprise patch build)
+// output: 0.33.3.3
+//
+// input:  0.33.3.3-enterprise   (enterprise build)
+// output: 0.33.3.3
 func parseSemanticVersion(versionStr string) (string, error) {
 	semVersion, err := kong.ParseSemanticVersion(versionStr)
 	if err != nil {
@@ -264,6 +306,15 @@ func parseSemanticVersion(versionStr string) (string, error) {
 		semVersion.Patch,
 	)
 
+	if semVersion.Pre != nil {
+		pre := semVersion.Pre[0].String()
+		preNumString := strings.Split(pre, "-")[0]
+		_, err := strconv.Atoi(preNumString)
+		if err == nil {
+			version = addEnterpriseVersion(version, pre, preNumString)
+		}
+	}
+
 	if len(semVersion.Build) > 0 {
 		buildVersion := semVersion.Build[0]
 		if buildVersionRegex.MatchString(buildVersion) {
@@ -276,7 +327,7 @@ func parseSemanticVersion(versionStr string) (string, error) {
 			if buildNum >= invalidVersionOctet {
 				return "", fmt.Errorf("build version must not be >= %d", invalidVersionOctet)
 			}
-			version = fmt.Sprintf("%s-%d", version, buildNum)
+			version = addEnterpriseVersion(version, buildVersion, buildVersionStr)
 		}
 	}
 
