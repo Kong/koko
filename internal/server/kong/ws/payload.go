@@ -17,8 +17,11 @@ type Payload struct {
 	// configuration as well as massaged configuration for each DP version.
 	configCache     configCache
 	configCacheLock sync.Mutex
-	vc              config.VersionCompatibility
-	logger          *zap.Logger
+	// configVersion is a counter incremented every config update.  Sent in the
+	// config wRPC service, only compared by DP within the lifetime of the connection.
+	configVersion uint64
+	vc            config.VersionCompatibility
+	logger        *zap.Logger
 }
 
 type PayloadOpts struct {
@@ -54,6 +57,7 @@ func (p *Payload) Payload(_ context.Context, version string) (config.Content, er
 	return config.Content{
 		CompressedPayload: entry.CompressedPayload,
 		Hash:              entry.Hash,
+		GranularHashes:    entry.GranularHashes,
 	}, nil
 }
 
@@ -76,7 +80,8 @@ func (p *Payload) configForVersion(version string) (cacheEntry, error) {
 			Content: config.Content{
 				CompressedPayload: updatedPayload,
 				// Hash must remain stable across version.
-				Hash: unversionedConfig.Hash,
+				Hash:           unversionedConfig.Hash,
+				GranularHashes: unversionedConfig.GranularHashes,
 			},
 			Error: err,
 		}
@@ -106,10 +111,13 @@ func (p *Payload) configForVersion(version string) (cacheEntry, error) {
 func (p *Payload) UpdateBinary(_ context.Context, c config.Content) error {
 	p.configCacheLock.Lock()
 	defer p.configCacheLock.Unlock()
+
+	p.configVersion++
 	err := p.configCache.reset()
 	if err != nil {
 		return err
 	}
+
 	err = p.configCache.store(unversionedConfigKey, cacheEntry{Content: c})
 	if err != nil {
 		return err

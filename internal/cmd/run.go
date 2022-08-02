@@ -297,18 +297,23 @@ func Run(ctx context.Context, config ServerConfig) error {
 		AuthFn:  authFn,
 	}
 
-	// 	negotiator := &ws.Negotiator{
-	// 		Cluster: m.Cluster,
-	// 		Logger: controlLogger.With(
-	// 			zap.String("protocol", "wRPC"),
-	// 			zap.String("wrpc-service", "negotiation"),
-	// 		),
-	// 	}
+	negotiator := &ws.Negotiator{
+		Cluster: m.Cluster,
+		Logger: controlLogger.With(
+			zap.String("protocol", "wRPC"),
+			zap.String("wrpc-service", "negotiation"),
+		),
+	}
+
+	err = negotiator.AddService("config", "v1", "wRPC configuration", ws.NewConfigurer(m))
+	if err != nil {
+		return err
+	}
 
 	handler, err := ws.NewHandler(ws.HandlerOpts{
 		Logger:        controlLogger,
 		Authenticator: authenticator,
-		// BaseServices:  negotiator,
+		BaseServices:  negotiator,
 	})
 	if err != nil {
 		return err

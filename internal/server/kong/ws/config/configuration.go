@@ -15,6 +15,7 @@ type Map map[string]interface{}
 type Content struct {
 	CompressedPayload []byte
 	Hash              string
+	GranularHashes    map[string]string
 }
 
 type MutatorOpts struct {
@@ -83,6 +84,7 @@ func ReconfigurePayload(c DataPlaneConfig) (Content, error) {
 	return Content{
 		CompressedPayload: buf.Bytes(),
 		Hash:              configHash,
+		GranularHashes:    hashes,
 	}, nil
 }
 

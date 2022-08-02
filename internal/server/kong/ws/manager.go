@@ -64,6 +64,7 @@ func NewManager(opts ManagerOpts) *Manager {
 		configLoader: opts.DPConfigLoader,
 		payload:      payload,
 		nodes:        &NodeList{},
+		pendingNodes: &NodeList{},
 		config:       opts.Config,
 	}
 	m.streamer = &streamer{
@@ -91,6 +92,8 @@ type Manager struct {
 
 	payload *Payload
 	nodes   *NodeList
+
+	pendingNodes *NodeList
 
 	broadcastMutex sync.Mutex
 
@@ -176,8 +179,7 @@ func (m *Manager) setupPingHandler(node *Node) {
 		} else if _, ok := err.(net.Error); ok {
 			return nil
 		}
-		loggerWithNode := nodeLogger(node, m.logger)
-		loggerWithNode.Info("websocket ping handler received hash",
+		node.Logger.Info("websocket ping handler received hash",
 			zap.String("config_hash", appData))
 
 		node.lock.Lock()
@@ -185,21 +187,13 @@ func (m *Manager) setupPingHandler(node *Node) {
 		node.lock.Unlock()
 		if err != nil {
 			// Logging for now
-			loggerWithNode.With(zap.Error(err), zap.String("appData", appData)).
+			node.Logger.With(zap.Error(err), zap.String("appData", appData)).
 				Error("ping handler: received invalid hash from kong data-plane")
 		}
 		m.updateNodeStatus(node)
 
 		return err
 	})
-}
-
-func nodeLogger(node *Node, logger *zap.Logger) *zap.Logger {
-	return logger.With(
-		zap.String("node-id", node.ID),
-		zap.String("node-hostname", node.Hostname),
-		zap.String("node-version", node.Version),
-		zap.String("client-ip", node.RemoteAddr().String()))
 }
 
 func increaseMetricCounter(code int) {
@@ -210,18 +204,20 @@ func increaseMetricCounter(code int) {
 	metrics.Count("websocket_connection_closed_count", 1, tags)
 }
 
-func (m *Manager) AddNode(node *Node) {
-	m.init.Do(func() {
-		go m.nodeCleanThread(m.ctx)
-		go m.eventHandlerThread(m.ctx)
-		// initial load of config data,
-		// done synchronously to ensure it's ready
-		// for the first push.
-		_ = m.reconcileKongPayload(m.ctx)
-	})
-	loggerWithNode := nodeLogger(node, m.logger)
+func (m *Manager) startThreads() {
+	go m.nodeCleanThread(m.ctx)
+	go m.eventHandlerThread(m.ctx)
+	// initial load of config data,
+	// done synchronously to ensure it's ready
+	// for the first push.
+	_ = m.reconcileKongPayload(m.ctx)
+}
+
+func (m *Manager) AddWebsocketNode(node *Node) {
+	m.init.Do(m.startThreads)
 	// track each authenticated node
 	m.writeNode(node)
+
 	// check if node is compatible
 	err := m.validateNode(node)
 	if err != nil {
@@ -239,7 +235,7 @@ func (m *Manager) AddNode(node *Node) {
 		return
 	}
 	m.setupPingHandler(node)
-	m.addNode(node)
+	m.addToNodeList(node)
 	// spawn a goroutine for each data-plane node that connects.
 	go func() {
 		err := node.readThread()
@@ -248,25 +244,26 @@ func (m *Manager) AddNode(node *Node) {
 			if ok {
 				increaseMetricCounter(wsErr.Code)
 				if wsErr.Code == websocket.CloseAbnormalClosure {
-					loggerWithNode.Info("node disconnected")
+					node.Logger.Info("node disconnected")
 				} else {
-					loggerWithNode.With(zap.Error(err)).Error("read thread: connection closed")
+					node.Logger.With(zap.Error(err)).Error("read thread: connection closed")
 				}
 			} else {
-				loggerWithNode.With(zap.Error(err)).Error("read thread")
+				node.Logger.With(zap.Error(err)).Error("read thread")
 			}
 		}
 		// if there are any ws errors, remove the node
 		m.removeNode(node)
 	}()
+
 	go m.broadcast()
 }
 
-func (m *Manager) addNode(node *Node) {
+func (m *Manager) addToNodeList(node *Node) {
 	m.nodeTrackingMu.Lock()
 	defer m.nodeTrackingMu.Unlock()
 	if err := m.nodes.Add(node); err != nil {
-		m.logger.With(zap.Error(err)).Error("track node")
+		m.logger.Error("failed adding node to manager", zap.Error(err))
 	}
 	m.streamer.Enable()
 }
@@ -275,11 +272,21 @@ func (m *Manager) removeNode(node *Node) {
 	m.nodeTrackingMu.Lock()
 	defer m.nodeTrackingMu.Unlock()
 	// TODO(hbagdi): may need more graceful error handling
-	if err := m.nodes.Remove(node); err != nil {
-		nodeLogger(node, m.logger).Error("failed to remove node", zap.Error(err))
+
+	nodeAddr := node.RemoteAddr().String()
+	if m.nodes.FindNode(nodeAddr) == node {
+		if err := m.nodes.Remove(node); err != nil {
+			node.Logger.Error("failed to remove node", zap.Error(err))
+		}
 	}
+	if m.pendingNodes.FindNode(nodeAddr) == node {
+		if err := m.pendingNodes.Remove(node); err != nil {
+			node.Logger.Error("failed to remove pending node", zap.Error(err))
+		}
+	}
+
 	if err := node.Close(); err != nil {
-		nodeLogger(node, m.logger).Error("error closing node", zap.Error(err))
+		node.Logger.Info("error closing node", zap.Error(err))
 	}
 	if len(m.nodes.All()) == 0 {
 		m.logger.Info("no nodes connected, disabling stream")
@@ -293,35 +300,63 @@ func (m *Manager) FindNode(remoteAddress string) *Node {
 	return m.nodes.FindNode(remoteAddress)
 }
 
+// AddPendingNode registers a Node that hasn't been validated yet.
+// In particular, wrpc nodes have to be actively listening in order
+// to negotiate the services it will handle.  In the meantime,
+// the manager keeps them as "pending"
+// A wrpc node isn't directly added to the `m.nodes` list.
+// Instead, as soon as their connection is live, they're added to
+// the `m.pendingNodes` list until it finishes some initialization.
+func (m *Manager) AddPendingNode(node *Node) error {
+	if err := m.pendingNodes.Add(node); err != nil {
+		return err
+	}
+	m.writeNode(node)
+	return nil
+}
+
+// addWRPCNode is called on behalf of a node when it is ready
+// to receive config updates.  The ReportMetadata RPC method handler
+// does this after getting the list of plugins.  Here it's validated
+// and, if successful, moved from the `m.pendingNodes` to the
+// final `m.nodes` list.
+func (m *Manager) addWRPCNode(node *Node, pluginList []string) error {
+	m.init.Do(m.startThreads)
+
+	err := m.doNodeValidation(node, pluginList)
+	if err != nil {
+		return err
+	}
+
+	err = m.pendingNodes.Remove(node)
+	if err != nil {
+		return fmt.Errorf("failed to remove node from pending list: %w", err)
+	}
+
+	m.addToNodeList(node)
+	go m.broadcast()
+	return nil
+}
+
+const defaultBroadcastTimeout = 1 * time.Minute // should this be configurable?
+
 // broadcast sends the most recent configuration to all connected nodes.
 func (m *Manager) broadcast() {
 	m.broadcastMutex.Lock()
 	defer m.broadcastMutex.Unlock()
+	// NOTE: since wRPC syncs are done in goroutines, they continue after
+	// this loop has finished and the lock has been released.
+	// Avoid overlaps by either cancelling the passed context, or
+	// by only releasing the lock after all configs have been acked.
 	for _, node := range m.nodes.All() {
-		payload, err := m.payload.Payload(context.Background(), node.Version)
-		if err != nil {
-			m.logger.With(zap.Error(err)).Error("unable to gather payload, payload not sent to node")
+		if err := node.sendConfig(m.ctx, m.payload); err != nil {
+			node.Logger.Error("failed to send config to node", zap.Error(err))
 			// one node failure shouldn't result in no sync activity to all
 			// subsequent/nodes even though it is likely that all nodes are
 			// of same version
 			continue
 			// TODO(hbagdi) add a metric
 		}
-		loggerWithNode := nodeLogger(node, m.logger)
-		loggerWithNode.Info("broadcasting to node",
-			zap.String("config_hash", payload.Hash))
-		// TODO(hbagdi): perf: use websocket.PreparedMessage
-		hash, err := truncateHash(payload.Hash)
-		if err != nil {
-			m.logger.With(zap.Error(err)).Sugar().Errorf("invalid hash [%v]", hash[:])
-			continue
-		}
-		err = node.write(payload.CompressedPayload, hash)
-		if err != nil {
-			loggerWithNode.Error("broadcast to node failed", zap.Error(err))
-			// TODO(hbagdi: remove the node if connection has been closed?
-		}
-		loggerWithNode.Info("successfully sent payload to node")
 	}
 }
 
@@ -354,6 +389,7 @@ func (m *Manager) updateExpectedHash(ctx context.Context, hash string) {
 	if m.latestExpectedHash == hash {
 		return
 	}
+
 	// TODO(hbagdi): add retry with backoff, take a new hash during retry into account
 	ctx, cancel := context.WithTimeout(ctx, defaultRequestTimeout)
 	defer cancel()
@@ -539,6 +575,10 @@ func (m *Manager) validateNode(node *Node) error {
 	if err != nil {
 		return fmt.Errorf("(websocket) unable to read plugin list from DP: %w", err)
 	}
+	return m.doNodeValidation(node, pluginList)
+}
+
+func (m *Manager) doNodeValidation(node *Node, pluginList []string) error {
 	mConfig := m.ReadConfig()
 	conditions := checkPreReqs(nodeAttributes{
 		Plugins: pluginList,
@@ -550,7 +590,7 @@ func (m *Manager) validateNode(node *Node) error {
 	ctx, cancel := context.WithTimeout(context.Background(), defaultRequestTimeout)
 	defer cancel()
 	// update status before returning
-	_, err = m.configClient.Status.UpdateStatus(ctx,
+	_, err := m.configClient.Status.UpdateStatus(ctx,
 		&relay.UpdateStatusRequest{
 			Item: &model.Status{
 				ContextReference: &model.EntityReference{
