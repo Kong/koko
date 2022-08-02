@@ -208,23 +208,47 @@ func TestVersionCompatibility(t *testing.T) {
 				"key": "KEY"
 			}`,
 		},
+		// DP >= 3.0
+		//   - replace 'functions' with 'access'
 		{
 			name: "post-function",
 			id:   uuid.NewString(),
 			config: `{
-				"access": [
+				"functions": [
 					"kong.log.err('Goodbye Koko!')"
 				]
 			}`,
+			fieldUpdateChecks: map[string][]update{
+				">= 3.0.0": {
+					{
+						field: "access",
+						value: `[
+							"kong.log.err('Goodbye Koko!')"
+						]`,
+					},
+				},
+			},
 		},
+		// DP >= 3.0
+		//   - replace 'functions' with 'access'
 		{
 			name: "pre-function",
 			id:   uuid.NewString(),
 			config: `{
-				"access": [
+				"functions": [
 					"kong.log.err('Hello Koko!')"
 				]
 			}`,
+			fieldUpdateChecks: map[string][]update{
+				">= 3.0.0": {
+					{
+						field: "access",
+						value: `[
+							"kong.log.err('Hello Koko!')"
+						]`,
+					},
+				},
+			},
 		},
 		// DP < 2.4
 		//   - remove 'per_consumer' field (default: false)
