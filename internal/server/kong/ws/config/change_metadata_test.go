@@ -15,7 +15,7 @@ func TestChange_valid(t *testing.T) {
 				Description: "some description",
 				Resolution:  "some resolution",
 			},
-			Version: 42,
+			SemverRange: "< 2.8.0",
 		}
 		err := change.valid()
 		require.NoError(t, err)
@@ -28,7 +28,7 @@ func TestChange_valid(t *testing.T) {
 				Description: "some description",
 				Resolution:  "some resolution",
 			},
-			Version: 42,
+			SemverRange: "< 2.8.0",
 		}
 		err := change.valid()
 		require.ErrorContains(t, err, "invalid change severity")
@@ -41,7 +41,7 @@ func TestChange_valid(t *testing.T) {
 				Description: "some description",
 				Resolution:  "some resolution",
 			},
-			Version: 42,
+			SemverRange: "< 2.8.0",
 		}
 		err := change.valid()
 		require.ErrorContains(t, err, "invalid change ID")
@@ -54,7 +54,7 @@ func TestChange_valid(t *testing.T) {
 				Description: "",
 				Resolution:  "some resolution",
 			},
-			Version: 42,
+			SemverRange: "< 2.8.0",
 		}
 		err := change.valid()
 		require.ErrorContains(t, err, "no description or resolution")
@@ -67,7 +67,7 @@ func TestChange_valid(t *testing.T) {
 				Description: "some description",
 				Resolution:  "",
 			},
-			Version: 42,
+			SemverRange: "< 2.8.0",
 		}
 		err := change.valid()
 		require.ErrorContains(t, err, "no description or resolution")
@@ -84,6 +84,19 @@ func TestChange_valid(t *testing.T) {
 		err := change.valid()
 		require.ErrorContains(t, err, "invalid version")
 	})
+	t.Run("change with invalid version range errors", func(t *testing.T) {
+		change := Change{
+			Metadata: ChangeMetadata{
+				ID:          "F123",
+				Severity:    ChangeSeverityWarning,
+				Description: "some description",
+				Resolution:  "some resolution",
+			},
+			SemverRange: "< a.b.c",
+		}
+		err := change.valid()
+		require.ErrorContains(t, err, "invalid range")
+	})
 }
 
 func TestCompatChangeRegistryImpl_Register(t *testing.T) {
@@ -91,8 +104,8 @@ func TestCompatChangeRegistryImpl_Register(t *testing.T) {
 
 	t.Run("invalid change errors", func(t *testing.T) {
 		err := registry.Register(Change{
-			Metadata: ChangeMetadata{},
-			Version:  42,
+			Metadata:    ChangeMetadata{},
+			SemverRange: "< 2.8.0",
 		})
 		require.ErrorContains(t, err, "invalid change severity")
 	})
@@ -104,7 +117,7 @@ func TestCompatChangeRegistryImpl_Register(t *testing.T) {
 				Description: "42 is not the answer",
 				Resolution:  "Make it so",
 			},
-			Version: 42,
+			SemverRange: "< 2.8.0",
 		})
 		require.NoError(t, err)
 	})
@@ -116,7 +129,7 @@ func TestCompatChangeRegistryImpl_Register(t *testing.T) {
 				Description: "compile time errors",
 				Resolution:  "yay",
 			},
-			Version: 420,
+			SemverRange: "< 2.8.0",
 		})
 		require.ErrorContains(t, err, "already registered")
 	})
@@ -131,7 +144,7 @@ func TestCompatChangeRegistryImpl_GetMetadata(t *testing.T) {
 			Description: "42 is not the answer",
 			Resolution:  "Make it so",
 		},
-		Version: 42,
+		SemverRange: "< 2.8.0",
 	}))
 
 	t.Run("get for an existing ID doesn't return an error", func(t *testing.T) {
@@ -156,7 +169,7 @@ func TestCompatChangeRegistryImpl_GetPluginUpdates(t *testing.T) {
 			Description: "42 is not the answer",
 			Resolution:  "Make it so",
 		},
-		Version: 42,
+		SemverRange: "< 2.7.0",
 		Update: ConfigTableUpdates{
 			Name:   "opentelemetry",
 			Type:   Plugin,
@@ -170,7 +183,7 @@ func TestCompatChangeRegistryImpl_GetPluginUpdates(t *testing.T) {
 			Description: "New version introduced a field.",
 			Resolution:  "Please upgrade.",
 		},
-		Version: 42,
+		SemverRange: "< 2.7.0",
 		Update: ConfigTableUpdates{
 			Name: "response-ratelimiting",
 			Type: Plugin,
@@ -186,7 +199,7 @@ func TestCompatChangeRegistryImpl_GetPluginUpdates(t *testing.T) {
 			Description: "New version introduced a field.",
 			Resolution:  "Please upgrade.",
 		},
-		Version: 44,
+		SemverRange: "< 2.8.0",
 		Update: ConfigTableUpdates{
 			Name: "ip-restriction",
 			Type: Plugin,
@@ -201,6 +214,6 @@ func TestCompatChangeRegistryImpl_GetPluginUpdates(t *testing.T) {
 
 	require.Equal(t, 2, len(updates))
 
-	require.Equal(t, 2, len(updates[42]))
-	require.Equal(t, 1, len(updates[44]))
+	require.Equal(t, 2, len(updates["< 2.7.0"]))
+	require.Equal(t, 1, len(updates["< 2.8.0"]))
 }

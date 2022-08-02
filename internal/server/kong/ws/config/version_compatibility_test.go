@@ -5,6 +5,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/blang/semver/v4"
 	"github.com/kong/koko/internal/log"
 	"github.com/stretchr/testify/require"
 	"github.com/tidwall/sjson"
@@ -78,48 +79,48 @@ func TestVersionCompatibility_ParseSemanticVersion(t *testing.T) {
 		versionStr      string
 		wantsErr        bool
 		expectedErr     string
-		expectedVersion uint64
+		expectedVersion string
 	}{
 		{
 			versionStr:      "0.33.3",
-			expectedVersion: 33003000,
+			expectedVersion: "0.33.3",
 		},
 		{
 			versionStr:      "0.33.3-3-enterprise-edition",
-			expectedVersion: 33003003,
+			expectedVersion: "0.33.3-3",
 		},
 		{
 			versionStr:      "0.33.3-3-enterprise",
-			expectedVersion: 33003003,
+			expectedVersion: "0.33.3-3",
 		},
 		{
 			// go-kong won't parse build without suffix containing enterprise
 			versionStr:      "0.33.3-3-build-will-not-be-parsed",
-			expectedVersion: 33003000,
+			expectedVersion: "0.33.3",
 		},
 		{
 			versionStr:      "2.3.3.2",
-			expectedVersion: 2003003000,
+			expectedVersion: "2.3.3",
 		},
 		{
 			versionStr:      "2.3.2",
-			expectedVersion: 2003002000,
+			expectedVersion: "2.3.2",
 		},
 		{
 			versionStr:      "2.3.2-rc1",
-			expectedVersion: 2003002000,
+			expectedVersion: "2.3.2",
 		},
 		{
 			versionStr:      "2.3.3-alpha",
-			expectedVersion: 2003003000,
+			expectedVersion: "2.3.3",
 		},
 		{
 			versionStr:      "2.3.4-beta1",
-			expectedVersion: 2003004000,
+			expectedVersion: "2.3.4",
 		},
 		{
 			versionStr:      "2.3.3.2-enterprise-edition",
-			expectedVersion: 2003003002,
+			expectedVersion: "2.3.3-2",
 		},
 		{
 			versionStr:  "two.three.four",
@@ -148,7 +149,7 @@ func TestVersionCompatibility_ParseSemanticVersion(t *testing.T) {
 		if test.wantsErr {
 			require.NotNil(t, err)
 			require.EqualError(t, err, test.expectedErr)
-			require.EqualValues(t, 0, version)
+			require.EqualValues(t, "", version)
 		} else {
 			require.Nil(t, err)
 			require.Equal(t, test.expectedVersion, version)
@@ -159,15 +160,15 @@ func TestVersionCompatibility_ParseSemanticVersion(t *testing.T) {
 func TestVersionCompatibility_AddConfigTableUpdates(t *testing.T) {
 	tests := []struct {
 		name                       string
-		configTablesUpdates        []map[uint64][]ConfigTableUpdates
-		expectedConfigTableUpdates map[uint64][]ConfigTableUpdates
+		configTablesUpdates        []map[string][]ConfigTableUpdates
+		expectedConfigTableUpdates map[string][]ConfigTableUpdates
 		expectedCount              int
 	}{
 		{
 			name: "single addition of plugin payload updates",
-			configTablesUpdates: []map[uint64][]ConfigTableUpdates{
+			configTablesUpdates: []map[string][]ConfigTableUpdates{
 				{
-					2005999999: {
+					"< 2.6.0": {
 						{
 							Name: "plugin_1",
 							Type: Plugin,
@@ -178,8 +179,8 @@ func TestVersionCompatibility_AddConfigTableUpdates(t *testing.T) {
 					},
 				},
 			},
-			expectedConfigTableUpdates: map[uint64][]ConfigTableUpdates{
-				2005999999: {
+			expectedConfigTableUpdates: map[string][]ConfigTableUpdates{
+				"< 2.6.0": {
 					{
 						Name: "plugin_1",
 						Type: Plugin,
@@ -193,9 +194,9 @@ func TestVersionCompatibility_AddConfigTableUpdates(t *testing.T) {
 		},
 		{
 			name: "multiple additions of plugin payload updates",
-			configTablesUpdates: []map[uint64][]ConfigTableUpdates{
+			configTablesUpdates: []map[string][]ConfigTableUpdates{
 				{
-					2005999999: {
+					"< 2.6.0": {
 						{
 							Name: "plugin_1",
 							Type: Plugin,
@@ -206,7 +207,7 @@ func TestVersionCompatibility_AddConfigTableUpdates(t *testing.T) {
 					},
 				},
 				{
-					2004999999: {
+					"< 2.5.0": {
 						{
 							Name: "plugin_1",
 							Type: Plugin,
@@ -225,8 +226,8 @@ func TestVersionCompatibility_AddConfigTableUpdates(t *testing.T) {
 					},
 				},
 			},
-			expectedConfigTableUpdates: map[uint64][]ConfigTableUpdates{
-				2005999999: {
+			expectedConfigTableUpdates: map[string][]ConfigTableUpdates{
+				"< 2.6.0": {
 					{
 						Name: "plugin_1",
 						Type: Plugin,
@@ -235,7 +236,7 @@ func TestVersionCompatibility_AddConfigTableUpdates(t *testing.T) {
 						},
 					},
 				},
-				2004999999: {
+				"< 2.5.0": {
 					{
 						Name: "plugin_1",
 						Type: Plugin,
@@ -273,9 +274,9 @@ func TestVersionCompatibility_AddConfigTableUpdates(t *testing.T) {
 	}
 
 	t.Run("ensure mutually exclusive attributes for FieldUpdate", func(t *testing.T) {
-		tests := []map[uint64][]ConfigTableUpdates{
+		tests := []map[string][]ConfigTableUpdates{
 			{
-				2005999999: {
+				"< 2.6.0": {
 					{
 						Name: "plugin_1",
 						Type: Plugin,
@@ -296,7 +297,7 @@ func TestVersionCompatibility_AddConfigTableUpdates(t *testing.T) {
 				},
 			},
 			{
-				2005999999: {
+				"< 2.6.0": {
 					{
 						Name: "plugin_1",
 						Type: Plugin,
@@ -314,7 +315,7 @@ func TestVersionCompatibility_AddConfigTableUpdates(t *testing.T) {
 						},
 					},
 				},
-				2004999999: {
+				"< 2.5.0": {
 					{
 						Name: "plugin_1",
 						Type: Plugin,
@@ -350,8 +351,8 @@ func TestVersionCompatibility_AddConfigTableUpdates(t *testing.T) {
 
 // Used for TestVersionCompatibility_GetConfigTableUpdates.
 var (
-	pluginPayloadUpdates27x = map[uint64][]ConfigTableUpdates{
-		2007999999: {
+	pluginPayloadUpdates27x = map[string][]ConfigTableUpdates{
+		"< 2.8.0": {
 			{
 				Name: "plugin_1",
 				Type: Plugin,
@@ -395,8 +396,8 @@ var (
 			},
 		},
 	}
-	pluginPayloadUpdates26x = map[uint64][]ConfigTableUpdates{
-		2006999999: {
+	pluginPayloadUpdates26x = map[string][]ConfigTableUpdates{
+		"< 2.7.0": {
 			{
 				Name: "plugin_1",
 				Type: Plugin,
@@ -421,8 +422,8 @@ var (
 			},
 		},
 	}
-	pluginPayloadUpdates25xAnd24x = map[uint64][]ConfigTableUpdates{
-		2005999999: {
+	pluginPayloadUpdates25xAnd24x = map[string][]ConfigTableUpdates{
+		"< 2.6.0": {
 			{
 				Name: "plugin_1",
 				Type: Plugin,
@@ -431,7 +432,7 @@ var (
 				},
 			},
 		},
-		2004999999: {
+		"< 2.5.0": {
 			{
 				Name: "plugin_1",
 				Type: Plugin,
@@ -457,8 +458,8 @@ var (
 	}
 )
 
-func allPluginPlayloadUpdates() map[uint64][]ConfigTableUpdates {
-	pluginPayloadUpdates := make(map[uint64][]ConfigTableUpdates)
+func allPluginPlayloadUpdates() map[string][]ConfigTableUpdates {
+	pluginPayloadUpdates := make(map[string][]ConfigTableUpdates)
 	for k, v := range pluginPayloadUpdates25xAnd24x {
 		pluginPayloadUpdates[k] = v
 	}
@@ -482,72 +483,73 @@ func TestVersionCompatibility_GetConfigTableUpdates(t *testing.T) {
 
 	tests := []struct {
 		name                       string
-		dataPlaneVersion           uint64
+		dataPlaneVersion           string
 		expectedConfigTableUpdates func() []ConfigTableUpdates
 	}{
 		{
 			name:             "current version - no config table updates",
-			dataPlaneVersion: 2008000000,
+			dataPlaneVersion: "2.8.0",
 			expectedConfigTableUpdates: func() []ConfigTableUpdates {
 				return []ConfigTableUpdates{}
 			},
 		},
 		{
 			name:             "previous version - < 2.8",
-			dataPlaneVersion: 2007000000,
+			dataPlaneVersion: "2.7.0",
 			expectedConfigTableUpdates: func() []ConfigTableUpdates {
 				var pluginPayloadUpdates []ConfigTableUpdates
-				pluginPayloadUpdates = append(pluginPayloadUpdates, pluginPayloadUpdates27x[2007999999]...)
+				pluginPayloadUpdates = append(pluginPayloadUpdates, pluginPayloadUpdates27x["< 2.8.0"]...)
 				return pluginPayloadUpdates
 			},
 		},
 		{
 			name:             "previous version with a new minor version - < 2.8",
-			dataPlaneVersion: 2007001000,
+			dataPlaneVersion: "2.7.1",
 			expectedConfigTableUpdates: func() []ConfigTableUpdates {
 				var pluginPayloadUpdates []ConfigTableUpdates
-				pluginPayloadUpdates = append(pluginPayloadUpdates, pluginPayloadUpdates27x[2007999999]...)
+				pluginPayloadUpdates = append(pluginPayloadUpdates, pluginPayloadUpdates27x["< 2.8.0"]...)
 				return pluginPayloadUpdates
 			},
 		},
 		{
 			name:             "older version - < 2.7",
-			dataPlaneVersion: 2006000000,
+			dataPlaneVersion: "2.6.0",
 			expectedConfigTableUpdates: func() []ConfigTableUpdates {
 				var pluginPayloadUpdates []ConfigTableUpdates
-				pluginPayloadUpdates = append(pluginPayloadUpdates, pluginPayloadUpdates27x[2007999999]...)
-				pluginPayloadUpdates = append(pluginPayloadUpdates, pluginPayloadUpdates26x[2006999999]...)
+				pluginPayloadUpdates = append(pluginPayloadUpdates, pluginPayloadUpdates27x["< 2.8.0"]...)
+				pluginPayloadUpdates = append(pluginPayloadUpdates, pluginPayloadUpdates26x["< 2.7.0"]...)
 				return pluginPayloadUpdates
 			},
 		},
 		{
 			name:             "older version - < 2.6",
-			dataPlaneVersion: 2005000000,
+			dataPlaneVersion: "2.5.0",
 			expectedConfigTableUpdates: func() []ConfigTableUpdates {
 				var pluginPayloadUpdates []ConfigTableUpdates
-				pluginPayloadUpdates = append(pluginPayloadUpdates, pluginPayloadUpdates27x[2007999999]...)
-				pluginPayloadUpdates = append(pluginPayloadUpdates, pluginPayloadUpdates26x[2006999999]...)
-				pluginPayloadUpdates = append(pluginPayloadUpdates, pluginPayloadUpdates25xAnd24x[2005999999]...)
+				pluginPayloadUpdates = append(pluginPayloadUpdates, pluginPayloadUpdates27x["< 2.8.0"]...)
+				pluginPayloadUpdates = append(pluginPayloadUpdates, pluginPayloadUpdates26x["< 2.7.0"]...)
+				pluginPayloadUpdates = append(pluginPayloadUpdates, pluginPayloadUpdates25xAnd24x["< 2.6.0"]...)
 				return pluginPayloadUpdates
 			},
 		},
 		{
 			name:             "older version - < 2.4",
-			dataPlaneVersion: 2003002000,
+			dataPlaneVersion: "2.3.2",
 			expectedConfigTableUpdates: func() []ConfigTableUpdates {
 				var pluginPayloadUpdates []ConfigTableUpdates
-				pluginPayloadUpdates = append(pluginPayloadUpdates, pluginPayloadUpdates27x[2007999999]...)
-				pluginPayloadUpdates = append(pluginPayloadUpdates, pluginPayloadUpdates26x[2006999999]...)
-				pluginPayloadUpdates = append(pluginPayloadUpdates, pluginPayloadUpdates25xAnd24x[2005999999]...)
-				pluginPayloadUpdates = append(pluginPayloadUpdates, pluginPayloadUpdates25xAnd24x[2004999999]...)
+				pluginPayloadUpdates = append(pluginPayloadUpdates, pluginPayloadUpdates27x["< 2.8.0"]...)
+				pluginPayloadUpdates = append(pluginPayloadUpdates, pluginPayloadUpdates26x["< 2.7.0"]...)
+				pluginPayloadUpdates = append(pluginPayloadUpdates, pluginPayloadUpdates25xAnd24x["< 2.6.0"]...)
+				pluginPayloadUpdates = append(pluginPayloadUpdates, pluginPayloadUpdates25xAnd24x["< 2.5.0"]...)
 				return pluginPayloadUpdates
 			},
 		},
 	}
-
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			pluginPayloadUpdates := wsvc.getConfigTableUpdates(test.dataPlaneVersion)
+			version, err := semver.Parse(test.dataPlaneVersion)
+			require.NoError(t, err)
+			pluginPayloadUpdates := wsvc.getConfigTableUpdates(version)
 			require.ElementsMatch(t, test.expectedConfigTableUpdates(), pluginPayloadUpdates)
 		})
 	}
@@ -556,15 +558,15 @@ func TestVersionCompatibility_GetConfigTableUpdates(t *testing.T) {
 func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 	tests := []struct {
 		name                string
-		configTableUpdates  map[uint64][]ConfigTableUpdates
+		configTableUpdates  map[string][]ConfigTableUpdates
 		uncompressedPayload string
-		dataPlaneVersion    uint64
+		dataPlaneVersion    string
 		expectedPayload     string
 	}{
 		{
 			name: "single field element",
-			configTableUpdates: map[uint64][]ConfigTableUpdates{
-				2007999999: {
+			configTableUpdates: map[string][]ConfigTableUpdates{
+				"< 2.8.0": {
 					{
 						Name: "plugin_1",
 						Type: Plugin,
@@ -586,7 +588,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 					]
 				}
 			}`,
-			dataPlaneVersion: 2007000000,
+			dataPlaneVersion: "2.7.0",
 			expectedPayload: `{
 				"config_table": {
 					"plugins": [
@@ -600,8 +602,8 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 		},
 		{
 			name: "single field object",
-			configTableUpdates: map[uint64][]ConfigTableUpdates{
-				2007999999: {
+			configTableUpdates: map[string][]ConfigTableUpdates{
+				"< 2.8.0": {
 					{
 						Name: "plugin_1",
 						Type: Plugin,
@@ -626,7 +628,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 					]
 				}
 			}`,
-			dataPlaneVersion: 2007000000,
+			dataPlaneVersion: "2.7.0",
 			expectedPayload: `{
 				"config_table": {
 					"plugins": [
@@ -640,8 +642,8 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 		},
 		{
 			name: "single field array",
-			configTableUpdates: map[uint64][]ConfigTableUpdates{
-				2007999999: {
+			configTableUpdates: map[string][]ConfigTableUpdates{
+				"< 2.8.0": {
 					{
 						Name: "plugin_1",
 						Type: Plugin,
@@ -666,7 +668,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 					]
 				}
 			}`,
-			dataPlaneVersion: 2007000000,
+			dataPlaneVersion: "2.7.0",
 			expectedPayload: `{
 				"config_table": {
 					"plugins": [
@@ -680,8 +682,8 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 		},
 		{
 			name: "single field element where field is last",
-			configTableUpdates: map[uint64][]ConfigTableUpdates{
-				2007999999: {
+			configTableUpdates: map[string][]ConfigTableUpdates{
+				"< 2.8.0": {
 					{
 						Name: "plugin_1",
 						Type: Plugin,
@@ -704,7 +706,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 					]
 				}
 			}`,
-			dataPlaneVersion: 2007000000,
+			dataPlaneVersion: "2.7.0",
 			expectedPayload: `{
 				"config_table": {
 					"plugins": [
@@ -720,8 +722,8 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 		},
 		{
 			name: "multiple field elements",
-			configTableUpdates: map[uint64][]ConfigTableUpdates{
-				2007999999: {
+			configTableUpdates: map[string][]ConfigTableUpdates{
+				"< 2.8.0": {
 					{
 						Name: "plugin_1",
 						Type: Plugin,
@@ -757,7 +759,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 					]
 				}
 			}`,
-			dataPlaneVersion: 2007000000,
+			dataPlaneVersion: "2.7.0",
 			expectedPayload: `{
 				"config_table": {
 					"plugins": [
@@ -777,8 +779,8 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 		},
 		{
 			name: "multiple field elements from multiple plugin instances",
-			configTableUpdates: map[uint64][]ConfigTableUpdates{
-				2007999999: {
+			configTableUpdates: map[string][]ConfigTableUpdates{
+				"< 2.8.0": {
 					{
 						Name: "plugin_1",
 						Type: Plugin,
@@ -807,7 +809,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 					]
 				}
 			}`,
-			dataPlaneVersion: 2007000000,
+			dataPlaneVersion: "2.7.0",
 			expectedPayload: `{
 				"config_table": {
 					"plugins": [
@@ -827,8 +829,8 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 		},
 		{
 			name: "nested field element",
-			configTableUpdates: map[uint64][]ConfigTableUpdates{
-				2007999999: {
+			configTableUpdates: map[string][]ConfigTableUpdates{
+				"< 2.8.0": {
 					{
 						Name: "plugin_1",
 						Type: Plugin,
@@ -852,7 +854,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 					]
 				}
 			}`,
-			dataPlaneVersion: 2007000000,
+			dataPlaneVersion: "2.7.0",
 			expectedPayload: `{
 				"config_table": {
 					"plugins": [
@@ -868,8 +870,8 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 		},
 		{
 			name: "nested field with additional fields remaining",
-			configTableUpdates: map[uint64][]ConfigTableUpdates{
-				2007999999: {
+			configTableUpdates: map[string][]ConfigTableUpdates{
+				"< 2.8.0": {
 					{
 						Name: "plugin_1",
 						Type: Plugin,
@@ -896,7 +898,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 					]
 				}
 			}`,
-			dataPlaneVersion: 2007000000,
+			dataPlaneVersion: "2.7.0",
 			expectedPayload: `{
 				"config_table": {
 					"plugins": [
@@ -916,8 +918,8 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 		},
 		{
 			name: "two minor versions older",
-			configTableUpdates: map[uint64][]ConfigTableUpdates{
-				2007999999: {
+			configTableUpdates: map[string][]ConfigTableUpdates{
+				"< 2.8.0": {
 					{
 						Name: "plugin_1",
 						Type: Plugin,
@@ -926,7 +928,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 						},
 					},
 				},
-				2006999999: {
+				"< 2.7.0": {
 					{
 						Name: "plugin_1",
 						Type: Plugin,
@@ -950,7 +952,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 					]
 				}
 			}`,
-			dataPlaneVersion: 2006000000,
+			dataPlaneVersion: "2.6.0",
 			expectedPayload: `{
 				"config_table": {
 					"plugins": [
@@ -966,8 +968,8 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 		},
 		{
 			name: "single field array removal with single item in array",
-			configTableUpdates: map[uint64][]ConfigTableUpdates{
-				2007999999: {
+			configTableUpdates: map[string][]ConfigTableUpdates{
+				"< 2.8.0": {
 					{
 						Name: "plugin_1",
 						Type: Plugin,
@@ -996,7 +998,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 					]
 				}
 			}`,
-			dataPlaneVersion: 2007000000,
+			dataPlaneVersion: "2.7.0",
 			expectedPayload: `{
 				"config_table": {
 					"plugins": [
@@ -1012,8 +1014,8 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 		},
 		{
 			name: "single nested field array removal with single item in array",
-			configTableUpdates: map[uint64][]ConfigTableUpdates{
-				2007999999: {
+			configTableUpdates: map[string][]ConfigTableUpdates{
+				"< 2.8.0": {
 					{
 						Name: "plugin_1",
 						Type: Plugin,
@@ -1044,7 +1046,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 					]
 				}
 			}`,
-			dataPlaneVersion: 2007000000,
+			dataPlaneVersion: "2.7.0",
 			expectedPayload: `{
 				"config_table": {
 					"plugins": [
@@ -1062,8 +1064,8 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 		},
 		{
 			name: "single field array removal with multiple items in array",
-			configTableUpdates: map[uint64][]ConfigTableUpdates{
-				2007999999: {
+			configTableUpdates: map[string][]ConfigTableUpdates{
+				"< 2.8.0": {
 					{
 						Name: "plugin_1",
 						Type: Plugin,
@@ -1109,7 +1111,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 					]
 				}
 			}`,
-			dataPlaneVersion: 2007000000,
+			dataPlaneVersion: "2.7.0",
 			expectedPayload: `{
 				"config_table": {
 					"plugins": [
@@ -1141,8 +1143,8 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 		},
 		{
 			name: "field and array removal with multiple array removals",
-			configTableUpdates: map[uint64][]ConfigTableUpdates{
-				2007999999: {
+			configTableUpdates: map[string][]ConfigTableUpdates{
+				"< 2.8.0": {
 					{
 						Name: "plugin_1",
 						Type: Plugin,
@@ -1193,7 +1195,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 					]
 				}
 			}`,
-			dataPlaneVersion: 2007000000,
+			dataPlaneVersion: "2.7.0",
 			expectedPayload: `{
 				"config_table": {
 					"plugins": [
@@ -1221,8 +1223,8 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 		},
 		{
 			name: "no array removal",
-			configTableUpdates: map[uint64][]ConfigTableUpdates{
-				2007999999: {
+			configTableUpdates: map[string][]ConfigTableUpdates{
+				"< 2.8.0": {
 					{
 						Name: "plugin_1",
 						Type: Plugin,
@@ -1263,7 +1265,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 					]
 				}
 			}`,
-			dataPlaneVersion: 2007000000,
+			dataPlaneVersion: "2.7.0",
 			expectedPayload: `{
 				"config_table": {
 					"plugins": [
@@ -1291,8 +1293,8 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 		},
 		{
 			name: "no array removal with multiple versions defined",
-			configTableUpdates: map[uint64][]ConfigTableUpdates{
-				2007999999: {
+			configTableUpdates: map[string][]ConfigTableUpdates{
+				"< 2.8.0": {
 					{
 						Name: "plugin_1",
 						Type: Plugin,
@@ -1307,7 +1309,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 						},
 					},
 				},
-				2006999999: {
+				"< 2.7.0": {
 					{
 						Name: "plugin_1",
 						Type: Plugin,
@@ -1359,7 +1361,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 					]
 				}
 			}`,
-			dataPlaneVersion: 2006000000,
+			dataPlaneVersion: "2.6.0",
 			expectedPayload: `{
 				"config_table": {
 					"plugins": [
@@ -1393,8 +1395,8 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 		},
 		{
 			name: "single field update with single item",
-			configTableUpdates: map[uint64][]ConfigTableUpdates{
-				2007999999: {
+			configTableUpdates: map[string][]ConfigTableUpdates{
+				"< 2.8.0": {
 					{
 						Name: "plugin_1",
 						Type: Plugin,
@@ -1425,7 +1427,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 					]
 				}
 			}`,
-			dataPlaneVersion: 2007000000,
+			dataPlaneVersion: "2.7.0",
 			expectedPayload: `{
 				"config_table": {
 					"plugins": [
@@ -1441,8 +1443,8 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 		},
 		{
 			name: "field updates with multiple data types",
-			configTableUpdates: map[uint64][]ConfigTableUpdates{
-				2007999999: {
+			configTableUpdates: map[string][]ConfigTableUpdates{
+				"< 2.8.0": {
 					{
 						Name: "plugin_1",
 						Type: Plugin,
@@ -1495,7 +1497,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 					]
 				}
 			}`,
-			dataPlaneVersion: 2007000000,
+			dataPlaneVersion: "2.7.0",
 			expectedPayload: `{
 				"config_table": {
 					"plugins": [
@@ -1513,8 +1515,8 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 		},
 		{
 			name: "field update with multiple value updates",
-			configTableUpdates: map[uint64][]ConfigTableUpdates{
-				2007999999: {
+			configTableUpdates: map[string][]ConfigTableUpdates{
+				"< 2.8.0": {
 					{
 						Name: "plugin_1",
 						Type: Plugin,
@@ -1552,7 +1554,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 					]
 				}
 			}`,
-			dataPlaneVersion: 2007000000,
+			dataPlaneVersion: "2.7.0",
 			expectedPayload: `{
 				"config_table": {
 					"plugins": [
@@ -1571,8 +1573,8 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 		},
 		{
 			name: "nested field update",
-			configTableUpdates: map[uint64][]ConfigTableUpdates{
-				2007999999: {
+			configTableUpdates: map[string][]ConfigTableUpdates{
+				"< 2.8.0": {
 					{
 						Name: "plugin_1",
 						Type: Plugin,
@@ -1605,7 +1607,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 					]
 				}
 			}`,
-			dataPlaneVersion: 2007000000,
+			dataPlaneVersion: "2.7.0",
 			expectedPayload: `{
 				"config_table": {
 					"plugins": [
@@ -1623,8 +1625,8 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 		},
 		{
 			name: "field update with additional nested field update",
-			configTableUpdates: map[uint64][]ConfigTableUpdates{
-				2007999999: {
+			configTableUpdates: map[string][]ConfigTableUpdates{
+				"< 2.8.0": {
 					{
 						Name: "plugin_1",
 						Type: Plugin,
@@ -1662,7 +1664,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 					]
 				}
 			}`,
-			dataPlaneVersion: 2007000000,
+			dataPlaneVersion: "2.7.0",
 			expectedPayload: `{
 				"config_table": {
 					"plugins": [
@@ -1681,8 +1683,8 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 		},
 		{
 			name: "no field updates",
-			configTableUpdates: map[uint64][]ConfigTableUpdates{
-				2007999999: {
+			configTableUpdates: map[string][]ConfigTableUpdates{
+				"< 2.8.0": {
 					{
 						Name: "plugin_1",
 						Type: Plugin,
@@ -1720,7 +1722,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 					]
 				}
 			}`,
-			dataPlaneVersion: 2007000000,
+			dataPlaneVersion: "2.7.0",
 			expectedPayload: `{
 				"config_table": {
 					"plugins": [
@@ -1739,8 +1741,8 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 		},
 		{
 			name: "field, array removal, and field update",
-			configTableUpdates: map[uint64][]ConfigTableUpdates{
-				2007999999: {
+			configTableUpdates: map[string][]ConfigTableUpdates{
+				"< 2.8.0": {
 					{
 						Name: "plugin_1",
 						Type: Plugin,
@@ -1804,7 +1806,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 					]
 				}
 			}`,
-			dataPlaneVersion: 2007000000,
+			dataPlaneVersion: "2.7.0",
 			expectedPayload: `{
 				"config_table": {
 					"plugins": [
@@ -1833,8 +1835,8 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 		},
 		{
 			name: "field value create based on other field and delete",
-			configTableUpdates: map[uint64][]ConfigTableUpdates{
-				2007999999: {
+			configTableUpdates: map[string][]ConfigTableUpdates{
+				"< 2.8.0": {
 					{
 						Name: "plugin_1",
 						Type: Plugin,
@@ -1868,7 +1870,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 					]
 				}
 			}`,
-			dataPlaneVersion: 2007000000,
+			dataPlaneVersion: "2.7.0",
 			expectedPayload: `{
 				"config_table": {
 					"plugins": [
@@ -1884,8 +1886,8 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 		},
 		{
 			name: "field value update based on other field and delete",
-			configTableUpdates: map[uint64][]ConfigTableUpdates{
-				2007999999: {
+			configTableUpdates: map[string][]ConfigTableUpdates{
+				"< 2.8.0": {
 					{
 						Name: "plugin_1",
 						Type: Plugin,
@@ -1920,7 +1922,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 					]
 				}
 			}`,
-			dataPlaneVersion: 2007000000,
+			dataPlaneVersion: "2.7.0",
 			expectedPayload: `{
 				"config_table": {
 					"plugins": [
@@ -1936,8 +1938,8 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 		},
 		{
 			name: "field value based on non-existing field; ensure no change",
-			configTableUpdates: map[uint64][]ConfigTableUpdates{
-				2007999999: {
+			configTableUpdates: map[string][]ConfigTableUpdates{
+				"< 2.8.0": {
 					{
 						Name: "plugin_1",
 						Type: Plugin,
@@ -1968,7 +1970,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 					]
 				}
 			}`,
-			dataPlaneVersion: 2007000000,
+			dataPlaneVersion: "2.7.0",
 			expectedPayload: `{
 				"config_table": {
 					"plugins": [
@@ -1984,8 +1986,8 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 		},
 		{
 			name: "existing plugin to be removed is removed",
-			configTableUpdates: map[uint64][]ConfigTableUpdates{
-				3000000000: {
+			configTableUpdates: map[string][]ConfigTableUpdates{
+				"< 3.0.0": {
 					{
 						Name:   "plugin_1",
 						Type:   Plugin,
@@ -2011,7 +2013,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 					]
 				}
 			}`,
-			dataPlaneVersion: 2007000000,
+			dataPlaneVersion: "2.7.0",
 			expectedPayload: `{
 				"config_table": {
 					"plugins": [
@@ -2027,8 +2029,8 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 		},
 		{
 			name: "multiple existing plugins to be removed are removed",
-			configTableUpdates: map[uint64][]ConfigTableUpdates{
-				3000000000: {
+			configTableUpdates: map[string][]ConfigTableUpdates{
+				"< 3.0.0": {
 					{
 						Name:   "plugin_1",
 						Type:   Plugin,
@@ -2065,7 +2067,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 					]
 				}
 			}`,
-			dataPlaneVersion: 2007000000,
+			dataPlaneVersion: "2.7.0",
 			expectedPayload: `{
 				"config_table": {
 					"plugins": [
@@ -2081,8 +2083,8 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 		},
 		{
 			name: "all existing plugins to be removed are removed",
-			configTableUpdates: map[uint64][]ConfigTableUpdates{
-				3000000000: {
+			configTableUpdates: map[string][]ConfigTableUpdates{
+				"< 3.0.0": {
 					{
 						Name:   "plugin_1",
 						Type:   Plugin,
@@ -2113,7 +2115,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 					]
 				}
 			}`,
-			dataPlaneVersion: 2007000000,
+			dataPlaneVersion: "2.7.0",
 			expectedPayload: `{
 				"config_table": {
 					"plugins": []
@@ -2122,8 +2124,8 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 		},
 		{
 			name: "existing plugin not to be removed is not removed",
-			configTableUpdates: map[uint64][]ConfigTableUpdates{
-				3000000000: {
+			configTableUpdates: map[string][]ConfigTableUpdates{
+				"< 3.0.0": {
 					{
 						Name:   "plugin_1",
 						Type:   Plugin,
@@ -2143,7 +2145,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 					]
 				}
 			}`,
-			dataPlaneVersion: 3000000000,
+			dataPlaneVersion: "3.0.0",
 			expectedPayload: `{
 				"config_table": {
 					"plugins": [
@@ -2159,8 +2161,8 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 		},
 		{
 			name: "ensure multiple plugins are removed from multiple configured plugins",
-			configTableUpdates: map[uint64][]ConfigTableUpdates{
-				3000000000: {
+			configTableUpdates: map[string][]ConfigTableUpdates{
+				"< 3.0.0": {
 					{
 						Name:   "plugin_1",
 						Type:   Plugin,
@@ -2198,7 +2200,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 					]
 				}
 			}`,
-			dataPlaneVersion: 2007000000,
+			dataPlaneVersion: "2.7.0",
 			expectedPayload: `{
 				"config_table": {
 					"plugins": [
@@ -2220,8 +2222,8 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 		},
 		{
 			name: "drop single service field",
-			configTableUpdates: map[uint64][]ConfigTableUpdates{
-				3000000000: {
+			configTableUpdates: map[string][]ConfigTableUpdates{
+				"< 3.0.0": {
 					{
 						Name: Service.String(),
 						Type: Service,
@@ -2242,7 +2244,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 					]
 				}
 			}`,
-			dataPlaneVersion: 2007000000,
+			dataPlaneVersion: "2.7.0",
 			expectedPayload: `{
 				"config_table": {
 					"services": [
@@ -2256,8 +2258,8 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 		},
 		{
 			name: "drop multiple service fields",
-			configTableUpdates: map[uint64][]ConfigTableUpdates{
-				3000000000: {
+			configTableUpdates: map[string][]ConfigTableUpdates{
+				"< 3.0.0": {
 					{
 						Name: Service.String(),
 						Type: Service,
@@ -2280,7 +2282,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 					]
 				}
 			}`,
-			dataPlaneVersion: 2007000000,
+			dataPlaneVersion: "2.7.0",
 			expectedPayload: `{
 				"config_table": {
 					"services": [
@@ -2294,8 +2296,8 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 		},
 		{
 			name: "drop multiple service fields from multiple services",
-			configTableUpdates: map[uint64][]ConfigTableUpdates{
-				3000000000: {
+			configTableUpdates: map[string][]ConfigTableUpdates{
+				"< 3.0.0": {
 					{
 						Name: Service.String(),
 						Type: Service,
@@ -2325,7 +2327,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 					]
 				}
 			}`,
-			dataPlaneVersion: 2007000000,
+			dataPlaneVersion: "2.7.0",
 			expectedPayload: `{
 				"config_table": {
 					"services": [
@@ -2343,8 +2345,8 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 		},
 		{
 			name: "drop services and plugins' fields",
-			configTableUpdates: map[uint64][]ConfigTableUpdates{
-				3000000000: {
+			configTableUpdates: map[string][]ConfigTableUpdates{
+				"< 3.0.0": {
 					{
 						Name: Service.String(),
 						Type: Service,
@@ -2405,7 +2407,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 					]
 				}
 			}`,
-			dataPlaneVersion: 2007000000,
+			dataPlaneVersion: "2.7.0",
 			expectedPayload: `{
 				"config_table": {
 					"plugins": [
@@ -2435,6 +2437,198 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 				}
 			}`,
 		},
+		{
+			name: "ensure plugin field is removed because of newer version",
+			configTableUpdates: map[string][]ConfigTableUpdates{
+				">= 3.0.0": {
+					{
+						Name: "plugin_1",
+						Type: Plugin,
+						RemoveFields: []string{
+							"plugin_1_field_1",
+						},
+					},
+				},
+			},
+			uncompressedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"name": "plugin_2",
+							"config": {
+								"plugin_2_field_1": "element"
+							}
+						},
+						{
+							"name": "plugin_1",
+							"config": {
+								"plugin_1_field_1": "element",
+								"plugin_1_field_2": "element"
+							}
+						},
+						{
+							"name": "plugin_3",
+							"config": {
+								"plugin_3_field_1": "element"
+							}
+						}
+					]
+				}
+			}`,
+			dataPlaneVersion: "3.0.0",
+			expectedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"name": "plugin_2",
+							"config": {
+								"plugin_2_field_1": "element"
+							}
+						},
+						{
+							"name": "plugin_1",
+							"config": {
+								"plugin_1_field_2": "element"
+							}
+						},
+						{
+							"name": "plugin_3",
+							"config": {
+								"plugin_3_field_1": "element"
+							}
+						}
+					]
+				}
+			}`,
+		},
+		{
+			name: "ensure plugin field is removed because of newer version (enterprise format)",
+			configTableUpdates: map[string][]ConfigTableUpdates{
+				">= 2.8.0": {
+					{
+						Name: "plugin_1",
+						Type: Plugin,
+						RemoveFields: []string{
+							"plugin_1_field_1",
+						},
+					},
+				},
+			},
+			uncompressedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"name": "plugin_2",
+							"config": {
+								"plugin_2_field_1": "element"
+							}
+						},
+						{
+							"name": "plugin_1",
+							"config": {
+								"plugin_1_field_1": "element",
+								"plugin_1_field_2": "element"
+							}
+						},
+						{
+							"name": "plugin_3",
+							"config": {
+								"plugin_3_field_1": "element"
+							}
+						}
+					]
+				}
+			}`,
+			dataPlaneVersion: "3.0.0",
+			expectedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"name": "plugin_2",
+							"config": {
+								"plugin_2_field_1": "element"
+							}
+						},
+						{
+							"name": "plugin_1",
+							"config": {
+								"plugin_1_field_2": "element"
+							}
+						},
+						{
+							"name": "plugin_3",
+							"config": {
+								"plugin_3_field_1": "element"
+							}
+						}
+					]
+				}
+			}`,
+		},
+		{
+			name: "ensure plugin field is removed because of older version (enterprise format)",
+			configTableUpdates: map[string][]ConfigTableUpdates{
+				"< 3.0.0": {
+					{
+						Name: "plugin_1",
+						Type: Plugin,
+						RemoveFields: []string{
+							"plugin_1_field_1",
+						},
+					},
+				},
+			},
+			uncompressedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"name": "plugin_2",
+							"config": {
+								"plugin_2_field_1": "element"
+							}
+						},
+						{
+							"name": "plugin_1",
+							"config": {
+								"plugin_1_field_1": "element",
+								"plugin_1_field_2": "element"
+							}
+						},
+						{
+							"name": "plugin_3",
+							"config": {
+								"plugin_3_field_1": "element"
+							}
+						}
+					]
+				}
+			}`,
+			dataPlaneVersion: "2.8.0",
+			expectedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"name": "plugin_2",
+							"config": {
+								"plugin_2_field_1": "element"
+							}
+						},
+						{
+							"name": "plugin_1",
+							"config": {
+								"plugin_1_field_2": "element"
+							}
+						},
+						{
+							"name": "plugin_3",
+							"config": {
+								"plugin_3_field_1": "element"
+							}
+						}
+					]
+				}
+			}`,
+		},
 	}
 
 	for _, test := range tests {
@@ -2443,9 +2637,9 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 				Logger:        log.Logger,
 				KongCPVersion: "2.8.0",
 			})
-			require.Nil(t, err)
+			require.NoError(t, err)
 			err = wsvc.AddConfigTableUpdates(test.configTableUpdates)
-			require.Nil(t, err)
+			require.NoError(t, err)
 
 			processedPayload, err := wsvc.processConfigTableUpdates(test.uncompressedPayload,
 				test.dataPlaneVersion)
@@ -2503,7 +2697,7 @@ func TestVersionCompatibility_PerformExtraProcessing(t *testing.T) {
 			wsvc, err := NewVersionCompatibilityProcessor(VersionCompatibilityOpts{
 				Logger:        log.Logger,
 				KongCPVersion: "2.8.0",
-				ExtraProcessor: func(uncompressedPayload string, dataPlaneVersion uint64, isEnterprise bool,
+				ExtraProcessor: func(uncompressedPayload string, dataPlaneVersion string, isEnterprise bool,
 					logger *zap.Logger,
 				) (string, error) {
 					if test.wantsErr {
@@ -2520,7 +2714,7 @@ func TestVersionCompatibility_PerformExtraProcessing(t *testing.T) {
 			})
 			require.Nil(t, err)
 
-			processedPayload, err := wsvc.performExtraProcessing("{}", 2008000000, test.isEnterprise)
+			processedPayload, err := wsvc.performExtraProcessing("{}", "2.8.0", test.isEnterprise)
 			if test.wantsErr || test.wantsInvalidJSON {
 				require.NotNil(t, err)
 				if test.wantsErr {
@@ -2539,7 +2733,7 @@ func TestVersionCompatibility_PerformExtraProcessing(t *testing.T) {
 		wsvc, err := NewVersionCompatibilityProcessor(VersionCompatibilityOpts{
 			Logger:        log.Logger,
 			KongCPVersion: "2.8.0",
-			ExtraProcessor: func(uncompressedPayload string, dataPlaneVersion uint64, isEnterprise bool,
+			ExtraProcessor: func(uncompressedPayload string, dataPlaneVersion string, isEnterprise bool,
 				logger *zap.Logger,
 			) (string, error) {
 				return sjson.Set(uncompressedPayload, "config_table.extra_processing", "processed")

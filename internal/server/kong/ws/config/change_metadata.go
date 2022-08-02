@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
+
+	"github.com/blang/semver/v4"
 )
 
 type ChangeSeverity string
@@ -59,9 +61,9 @@ type ChangeMetadata struct {
 type Change struct {
 	// Metadata holds metadata associated with a change.
 	Metadata ChangeMetadata
-	// Version is the last version for which this change must be executed to
+	// SemverRange is the version range for which this change must be executed to
 	// guarantee compatibility.
-	Version uint64
+	SemverRange string
 	// Update holds a declarative definition of the change that must be
 	// applied to a specific schema.
 	Update ConfigTableUpdates
@@ -83,8 +85,12 @@ func (c *Change) valid() error {
 		return fmt.Errorf("change has no description or resolution")
 	}
 
-	if c.Version == 0 {
-		return fmt.Errorf("invalid version '%v'", c.Version)
+	if c.SemverRange == "" {
+		return fmt.Errorf("invalid version range '%v'", c.SemverRange)
+	}
+
+	if _, err := semver.ParseRange(c.SemverRange); err != nil {
+		return fmt.Errorf("invalid range format '%v': %w", c.SemverRange, err)
 	}
 	return nil
 }
@@ -143,7 +149,7 @@ func (c *compatChangeRegistryImpl) GetMetadata(id ChangeID) (ChangeMetadata, err
 func (c *compatChangeRegistryImpl) GetUpdates() VersionedConfigUpdates {
 	res := make(VersionedConfigUpdates, len(c.changes))
 	for _, change := range c.changes {
-		res[change.Version] = append(res[change.Version], change.Update)
+		res[change.SemverRange] = append(res[change.SemverRange], change.Update)
 	}
 	return res
 }

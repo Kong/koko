@@ -15,15 +15,21 @@ func standardUpgradeMessage(version string) string {
 		"or above.", version)
 }
 
-func standardPluginFieldsMessage(pluginName string, fields []string, versionWithFeatureSupport string) string {
+func standardPluginFieldsMessage(
+	pluginName string, fields []string, versionWithFeatureSupport string, isNewer bool,
+) string {
 	quotedFields := "'" + strings.Join(fields, "', '") + "'"
-
+	olderOrNewer := "<"
+	if isNewer {
+		olderOrNewer = ">="
+	}
 	return fmt.Sprintf("For the '%s' plugin, "+
 		"one or more of the following 'config' fields are set: %s "+
-		"but Kong gateway versions < %s do not support these fields. "+
+		"but Kong Gateway versions %s %s do not support these fields. "+
 		"Plugin features that rely on these fields are not working as intended.",
 		pluginName,
 		quotedFields,
+		olderOrNewer,
 		versionWithFeatureSupport,
 	)
 }
@@ -37,10 +43,11 @@ func standardPluginNotAvailableMessage(pluginName string, versionWithFeatureSupp
 }
 
 const (
-	versionsPre260 = 2005999999
-	versionsPre270 = 2006999999
-	versionsPre280 = 2007999999
-	versionsPre300 = 3000000000
+	versionsPre260      = "< 2.6.0"
+	versionsPre270      = "< 2.7.0"
+	versionsPre280      = "< 2.8.0"
+	versionsPre300      = "< 3.0.0"
+	versions300AndAbove = ">= 3.0.0"
 )
 
 var (
@@ -69,10 +76,10 @@ var (
 			Metadata: config.ChangeMetadata{
 				ID:          config.ChangeID("P101"),
 				Severity:    config.ChangeSeverityError,
-				Description: standardPluginFieldsMessage("acme", acme25xFields, "2.6"),
+				Description: standardPluginFieldsMessage("acme", acme25xFields, "2.6", false),
 				Resolution:  standardUpgradeMessage("2.6"),
 			},
-			Version: versionsPre260,
+			SemverRange: versionsPre260,
 			Update: config.ConfigTableUpdates{
 				Name:         "acme",
 				Type:         config.Plugin,
@@ -83,10 +90,10 @@ var (
 			Metadata: config.ChangeMetadata{
 				ID:          config.ChangeID("P102"),
 				Severity:    config.ChangeSeverityError,
-				Description: standardPluginFieldsMessage("aws-lambda", []string{"base64_encode_body"}, "2.6"),
+				Description: standardPluginFieldsMessage("aws-lambda", []string{"base64_encode_body"}, "2.6", false),
 				Resolution:  standardUpgradeMessage("2.6"),
 			},
-			Version: versionsPre260,
+			SemverRange: versionsPre260,
 			Update: config.ConfigTableUpdates{
 				Name: "aws-lambda",
 				Type: config.Plugin,
@@ -100,10 +107,10 @@ var (
 				ID:       config.ChangeID("P103"),
 				Severity: config.ChangeSeverityError,
 				Description: standardPluginFieldsMessage("grpc-web",
-					[]string{"allow_origin_header"}, "2.6"),
+					[]string{"allow_origin_header"}, "2.6", false),
 				Resolution: standardUpgradeMessage("2.6"),
 			},
-			Version: versionsPre260,
+			SemverRange: versionsPre260,
 			Update: config.ConfigTableUpdates{
 				Name: "grpc-web",
 				Type: config.Plugin,
@@ -117,10 +124,10 @@ var (
 				ID:       config.ChangeID("P104"),
 				Severity: config.ChangeSeverityError,
 				Description: standardPluginFieldsMessage("request-termination",
-					[]string{"echo", "trigger"}, "2.6"),
+					[]string{"echo", "trigger"}, "2.6", false),
 				Resolution: standardUpgradeMessage("2.6"),
 			},
-			Version: versionsPre260,
+			SemverRange: versionsPre260,
 			Update: config.ConfigTableUpdates{
 				Name: "request-termination",
 				Type: config.Plugin,
@@ -139,10 +146,10 @@ var (
 						"service_name_tag",
 						"status_tag",
 						"consumer_tag",
-					}, "2.7"),
+					}, "2.7", false),
 				Resolution: standardUpgradeMessage("2.7"),
 			},
-			Version: versionsPre270,
+			SemverRange: versionsPre270,
 			Update: config.ConfigTableUpdates{
 				Name: "datadog",
 				Type: config.Plugin,
@@ -163,7 +170,7 @@ var (
 					"Distribution metrics will not be emitted by the gateway.",
 				Resolution: standardUpgradeMessage("2.7"),
 			},
-			Version: versionsPre270,
+			SemverRange: versionsPre270,
 			Update: config.ConfigTableUpdates{
 				Name: "datadog",
 				Type: config.Plugin,
@@ -180,10 +187,10 @@ var (
 				ID:       config.ChangeID("P107"),
 				Severity: config.ChangeSeverityError,
 				Description: standardPluginFieldsMessage("ip-restriction",
-					[]string{"status", "message"}, "2.7"),
+					[]string{"status", "message"}, "2.7", false),
 				Resolution: standardUpgradeMessage("2.7"),
 			},
-			Version: versionsPre270,
+			SemverRange: versionsPre270,
 			Update: config.ConfigTableUpdates{
 				Name: "ip-restriction",
 				Type: config.Plugin,
@@ -198,10 +205,10 @@ var (
 				ID:       config.ChangeID("P108"),
 				Severity: config.ChangeSeverityError,
 				Description: standardPluginFieldsMessage("rate-limiting",
-					[]string{"redis_ssl", "redis_ssl_verify", "redis_server_name"}, "2.7"),
+					[]string{"redis_ssl", "redis_ssl_verify", "redis_server_name"}, "2.7", false),
 				Resolution: standardUpgradeMessage("2.7"),
 			},
-			Version: versionsPre270,
+			SemverRange: versionsPre270,
 			Update: config.ConfigTableUpdates{
 				Name: "rate-limiting",
 				Type: config.Plugin,
@@ -223,7 +230,7 @@ var (
 					"header_type=preserve' in the data-plane.",
 				Resolution: standardUpgradeMessage("2.7"),
 			},
-			Version: versionsPre270,
+			SemverRange: versionsPre270,
 			Update: config.ConfigTableUpdates{
 				Name: "zipkin",
 				Type: config.Plugin,
@@ -246,10 +253,10 @@ var (
 				ID:       config.ChangeID("P110"),
 				Severity: config.ChangeSeverityError,
 				Description: standardPluginFieldsMessage("zipkin",
-					[]string{"local_service_name"}, "2.7"),
+					[]string{"local_service_name"}, "2.7", false),
 				Resolution: standardUpgradeMessage("2.7"),
 			},
-			Version: versionsPre270,
+			SemverRange: versionsPre270,
 			Update: config.ConfigTableUpdates{
 				Name: "zipkin",
 				Type: config.Plugin,
@@ -263,10 +270,10 @@ var (
 				ID:       config.ChangeID("P111"),
 				Severity: config.ChangeSeverityError,
 				Description: standardPluginFieldsMessage("acme",
-					[]string{"rsa_key_size"}, "2.8"),
+					[]string{"rsa_key_size"}, "2.8", false),
 				Resolution: standardUpgradeMessage("2.8"),
 			},
-			Version: versionsPre280,
+			SemverRange: versionsPre280,
 			Update: config.ConfigTableUpdates{
 				Name: "acme",
 				Type: config.Plugin,
@@ -280,10 +287,10 @@ var (
 				ID:       config.ChangeID("P112"),
 				Severity: config.ChangeSeverityError,
 				Description: standardPluginFieldsMessage("rate-limiting",
-					[]string{"redis_username"}, "2.8"),
+					[]string{"redis_username"}, "2.8", false),
 				Resolution: standardUpgradeMessage("2.8"),
 			},
-			Version: versionsPre280,
+			SemverRange: versionsPre280,
 			Update: config.ConfigTableUpdates{
 				Name: "rate-limiting",
 				Type: config.Plugin,
@@ -297,10 +304,10 @@ var (
 				ID:       config.ChangeID("P113"),
 				Severity: config.ChangeSeverityError,
 				Description: standardPluginFieldsMessage("response-ratelimiting",
-					[]string{"redis_username"}, "2.8"),
+					[]string{"redis_username"}, "2.8", false),
 				Resolution: standardUpgradeMessage("2.8"),
 			},
-			Version: versionsPre280,
+			SemverRange: versionsPre280,
 			Update: config.ConfigTableUpdates{
 				Name: "response-ratelimiting",
 				Type: config.Plugin,
@@ -314,10 +321,10 @@ var (
 				ID:       config.ChangeID("P114"),
 				Severity: config.ChangeSeverityError,
 				Description: standardPluginFieldsMessage("response-ratelimiting",
-					[]string{"redis_username"}, "2.8"),
+					[]string{"redis_username"}, "2.8", false),
 				Resolution: standardUpgradeMessage("3.0"),
 			},
-			Version: versionsPre280,
+			SemverRange: versionsPre280,
 			Update: config.ConfigTableUpdates{
 				Name: "response-ratelimiting",
 				Type: config.Plugin,
@@ -333,7 +340,7 @@ var (
 				Description: standardPluginNotAvailableMessage("opentelemetry", "3.0"),
 				Resolution:  standardUpgradeMessage("3.0"),
 			},
-			Version: versionsPre300,
+			SemverRange: versionsPre300,
 			Update: config.ConfigTableUpdates{
 				Name:   "opentelemetry",
 				Type:   config.Plugin,
@@ -344,10 +351,10 @@ var (
 			Metadata: config.ChangeMetadata{
 				ID:          config.ChangeID("P116"),
 				Severity:    config.ChangeSeverityError,
-				Description: standardPluginFieldsMessage("zipkin", zipkin30Fields, "3.0"),
+				Description: standardPluginFieldsMessage("zipkin", zipkin30Fields, "3.0", false),
 				Resolution:  standardUpgradeMessage("3.0"),
 			},
-			Version: versionsPre300,
+			SemverRange: versionsPre300,
 			Update: config.ConfigTableUpdates{
 				Name:         "zipkin",
 				Type:         config.Plugin,
@@ -356,12 +363,14 @@ var (
 		},
 		{
 			Metadata: config.ChangeMetadata{
-				ID:          config.ChangeID("P117"),
-				Severity:    config.ChangeSeverityError,
-				Description: standardPluginFieldsMessage("prometheus", prometheus30Fields, "3.0"),
-				Resolution:  standardUpgradeMessage("3.0"),
+				ID:       config.ChangeID("P117"),
+				Severity: config.ChangeSeverityError,
+				Description: standardPluginFieldsMessage(
+					"prometheus", prometheus30Fields, "3.0", false,
+				),
+				Resolution: standardUpgradeMessage("3.0"),
 			},
-			Version: versionsPre300,
+			SemverRange: versionsPre300,
 			Update: config.ConfigTableUpdates{
 				Name:         "prometheus",
 				Type:         config.Plugin,
@@ -374,10 +383,10 @@ var (
 				Severity: config.ChangeSeverityError,
 				Description: standardPluginFieldsMessage("acme",
 					[]string{"allow_any_domain"},
-					"3.0"),
+					"3.0", false),
 				Resolution: standardUpgradeMessage("3.0"),
 			},
-			Version: versionsPre300,
+			SemverRange: versionsPre300,
 			Update: config.ConfigTableUpdates{
 				Name: "acme",
 				Type: config.Plugin,
@@ -401,7 +410,7 @@ var (
 					"Gateway.",
 				Resolution: standardUpgradeMessage("2.7"),
 			},
-			Version: versionsPre270,
+			SemverRange: versionsPre270,
 			Update: config.ConfigTableUpdates{
 				Name: config.Service.String(),
 				Type: config.Service,
