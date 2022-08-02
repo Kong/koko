@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/blang/semver/v4"
 	"github.com/kong/go-kong/kong"
 	"github.com/kong/koko/internal/json"
 	"github.com/tidwall/gjson"
@@ -18,16 +19,13 @@ const (
 
 	buildVersionPattern = `(?P<build_version>^[0-9]+)[a-zA-Z\-]*`
 	invalidVersionOctet = 1000
-	majorVersionBase    = 1000000000
-	minorVersionBase    = majorVersionBase / 1000
-	patchVersionBase    = minorVersionBase / 1000
 	base                = 10
 	bitSize             = 64
 )
 
 var buildVersionRegex = regexp.MustCompile(buildVersionPattern)
 
-type VersionedConfigUpdates map[uint64][]ConfigTableUpdates
+type VersionedConfigUpdates map[string][]ConfigTableUpdates
 
 type VersionCompatibility interface {
 	AddConfigTableUpdates(configTableUpdates VersionedConfigUpdates) error
@@ -108,13 +106,13 @@ type ConfigTableUpdates struct {
 	Remove bool
 }
 
-type Processor func(uncompressedPayload string, dataPlaneVersion uint64,
+type Processor func(uncompressedPayload string, dataPlaneVersion string,
 	isEnterprise bool, logger *zap.Logger) (string, error)
 
 type WSVersionCompatibility struct {
 	logger             *zap.Logger
-	kongCPVersion      uint64
-	configTableUpdates map[uint64][]ConfigTableUpdates
+	kongCPVersion      string
+	configTableUpdates map[string][]ConfigTableUpdates
 	extraProcessor     Processor
 }
 
@@ -133,7 +131,7 @@ func NewVersionCompatibilityProcessor(opts VersionCompatibilityOpts) (*WSVersion
 	return &WSVersionCompatibility{
 		logger:             opts.Logger,
 		kongCPVersion:      controlPlaneVersion,
-		configTableUpdates: make(map[uint64][]ConfigTableUpdates),
+		configTableUpdates: make(map[string][]ConfigTableUpdates),
 		extraProcessor:     opts.ExtraProcessor,
 	}, nil
 }
@@ -164,11 +162,6 @@ func (vc *WSVersionCompatibility) ProcessConfigTableUpdates(dataPlaneVersionStr 
 		return nil, fmt.Errorf("unable to parse data plane version: %v", err)
 	}
 
-	// Short circuit if possible (extra processing cannot be skipped)
-	if vc.kongCPVersion == dataPlaneVersion && vc.extraProcessor == nil {
-		return compressedPayload, nil
-	}
-
 	uncompressedPayloadBytes, err := UncompressPayload(compressedPayload)
 	if err != nil {
 		return nil, fmt.Errorf("unable to uncompress payload: %v", err)
@@ -191,7 +184,7 @@ func (vc *WSVersionCompatibility) ProcessConfigTableUpdates(dataPlaneVersionStr 
 	return CompressPayload([]byte(processedPayload))
 }
 
-func (vc *WSVersionCompatibility) performExtraProcessing(uncompressedPayload string, dataPlaneVersion uint64,
+func (vc *WSVersionCompatibility) performExtraProcessing(uncompressedPayload string, dataPlaneVersion string,
 	isEnterprise bool,
 ) (string, error) {
 	if vc.extraProcessor != nil {
@@ -209,10 +202,11 @@ func (vc *WSVersionCompatibility) performExtraProcessing(uncompressedPayload str
 	return uncompressedPayload, nil
 }
 
-func (vc *WSVersionCompatibility) getConfigTableUpdates(dataPlaneVersion uint64) []ConfigTableUpdates {
+func (vc *WSVersionCompatibility) getConfigTableUpdates(dataPlaneVersion semver.Version) []ConfigTableUpdates {
 	configTableUpdates := []ConfigTableUpdates{}
-	for versionNumber, updates := range vc.configTableUpdates {
-		if dataPlaneVersion < versionNumber {
+	for versionRange, updates := range vc.configTableUpdates {
+		versionRangeFunc := semver.MustParseRange(versionRange)
+		if versionRangeFunc(dataPlaneVersion) {
 			configTableUpdates = append(configTableUpdates, updates...)
 		}
 	}
@@ -220,11 +214,18 @@ func (vc *WSVersionCompatibility) getConfigTableUpdates(dataPlaneVersion uint64)
 }
 
 func (vc *WSVersionCompatibility) processConfigTableUpdates(uncompressedPayload string,
-	dataPlaneVersion uint64,
+	dataPlaneVersion string,
 ) (string, error) {
 	processedPayload := uncompressedPayload
 
-	configTableUpdates := vc.getConfigTableUpdates(dataPlaneVersion)
+	versionSemVer, err := semver.Parse(dataPlaneVersion)
+	if err != nil {
+		return "", fmt.Errorf(
+			"could not parse data plane version %s: %w", dataPlaneVersion, err,
+		)
+	}
+
+	configTableUpdates := vc.getConfigTableUpdates(versionSemVer)
 	for _, configTableUpdate := range configTableUpdates {
 		switch configTableUpdate.Type {
 		case Plugin:
@@ -245,20 +246,23 @@ func (vc *WSVersionCompatibility) processConfigTableUpdates(uncompressedPayload 
 	return processedPayload, nil
 }
 
-func parseSemanticVersion(versionStr string) (uint64, error) {
+func parseSemanticVersion(versionStr string) (string, error) {
 	semVersion, err := kong.ParseSemanticVersion(versionStr)
 	if err != nil {
-		return 0, err
+		return "", err
 	}
 	if semVersion.Minor >= invalidVersionOctet {
-		return 0, fmt.Errorf("minor version must not be >= %d", invalidVersionOctet)
+		return "", fmt.Errorf("minor version must not be >= %d", invalidVersionOctet)
 	}
 	if semVersion.Patch >= invalidVersionOctet {
-		return 0, fmt.Errorf("patch version must not be >= %d", invalidVersionOctet)
+		return "", fmt.Errorf("patch version must not be >= %d", invalidVersionOctet)
 	}
-	version := (majorVersionBase * semVersion.Major) +
-		(minorVersionBase * semVersion.Minor) +
-		(patchVersionBase * semVersion.Patch)
+
+	version := fmt.Sprintf("%d.%d.%d",
+		semVersion.Major,
+		semVersion.Minor,
+		semVersion.Patch,
+	)
 
 	if len(semVersion.Build) > 0 {
 		buildVersion := semVersion.Build[0]
@@ -267,12 +271,12 @@ func parseSemanticVersion(versionStr string) (uint64, error) {
 			buildVersionStr := tokens[buildVersionRegex.SubexpIndex("build_version")]
 			buildNum, err := strconv.ParseUint(buildVersionStr, base, bitSize)
 			if err != nil {
-				return 0, fmt.Errorf("unable to parse build version from version: %v", err)
+				return "", fmt.Errorf("unable to parse build version from version: %v", err)
 			}
 			if buildNum >= invalidVersionOctet {
-				return 0, fmt.Errorf("build version must not be >= %d", invalidVersionOctet)
+				return "", fmt.Errorf("build version must not be >= %d", invalidVersionOctet)
 			}
-			version += buildNum
+			version = fmt.Sprintf("%s-%d", version, buildNum)
 		}
 	}
 
@@ -282,7 +286,7 @@ func parseSemanticVersion(versionStr string) (uint64, error) {
 func (vc *WSVersionCompatibility) removePlugin(
 	processedPayload string,
 	pluginName string,
-	dataPlaneVersion uint64,
+	dataPlaneVersion string,
 ) string {
 	plugins := gjson.Get(processedPayload, "config_table.plugins")
 	if plugins.IsArray() {
@@ -294,12 +298,12 @@ func (vc *WSVersionCompatibility) removePlugin(
 				pluginDelete := fmt.Sprintf("config_table.plugins.%d", i-removeCount)
 				if processedPayload, err = sjson.Delete(processedPayload, pluginDelete); err != nil {
 					vc.logger.With(zap.String("plugin", pluginName)).
-						With(zap.Uint64("data-plane", dataPlaneVersion)).
+						With(zap.String("data-plane", dataPlaneVersion)).
 						With(zap.Error(err)).
 						Error("plugin was not removed from configuration")
 				} else {
 					vc.logger.With(zap.String("plugin", pluginName)).
-						With(zap.Uint64("data-plane", dataPlaneVersion)).
+						With(zap.String("data-plane", dataPlaneVersion)).
 						Warn("removing plugin which is incompatible with data plane")
 					removeCount++
 				}
@@ -311,7 +315,7 @@ func (vc *WSVersionCompatibility) removePlugin(
 
 func (vc *WSVersionCompatibility) processPluginUpdates(payload string,
 	configTableUpdate ConfigTableUpdates,
-	dataPlaneVersion uint64,
+	dataPlaneVersion string,
 ) string {
 	pluginName := configTableUpdate.Name
 	processedPayload := payload
@@ -329,13 +333,13 @@ func (vc *WSVersionCompatibility) processPluginUpdates(payload string,
 					if updatedRaw, err = sjson.Delete(updatedRaw, configField); err != nil {
 						vc.logger.With(zap.String("plugin", pluginName)).
 							With(zap.String("field", configField)).
-							With(zap.Uint64("data-plane", dataPlaneVersion)).
+							With(zap.String("data-plane", dataPlaneVersion)).
 							With(zap.Error(err)).
 							Error("plugin configuration field was not removed from configuration")
 					} else {
 						vc.logger.With(zap.String("plugin", pluginName)).
 							With(zap.String("field", configField)).
-							With(zap.Uint64("data-plane", dataPlaneVersion)).
+							With(zap.String("data-plane", dataPlaneVersion)).
 							Warn("removing plugin configuration field which is incompatible with data plane")
 					}
 				}
@@ -363,7 +367,7 @@ func (vc *WSVersionCompatibility) processPluginUpdates(payload string,
 								With(zap.String("field", configField)).
 								With(zap.String("condition", array.Condition)).
 								With(zap.Int("index", arrayIndex)).
-								With(zap.Uint64("data-plane", dataPlaneVersion)).
+								With(zap.String("data-plane", dataPlaneVersion)).
 								With(zap.Error(err)).
 								Error("plugin configuration array item was not removed from configuration")
 						} else {
@@ -371,7 +375,7 @@ func (vc *WSVersionCompatibility) processPluginUpdates(payload string,
 								With(zap.String("field", configField)).
 								With(zap.String("condition", array.Condition)).
 								With(zap.Int("index", arrayIndex)).
-								With(zap.Uint64("data-plane", dataPlaneVersion)).
+								With(zap.String("data-plane", dataPlaneVersion)).
 								Warn("removing plugin configuration array item which is incompatible with data plane")
 						}
 					}
@@ -391,14 +395,14 @@ func (vc *WSVersionCompatibility) processPluginUpdates(payload string,
 								if updatedRaw, err = sjson.Delete(updatedRaw, conditionUpdate); err != nil {
 									vc.logger.With(zap.String("plugin", pluginName)).
 										With(zap.String("field", conditionUpdate)).
-										With(zap.Uint64("data-plane", dataPlaneVersion)).
+										With(zap.String("data-plane", dataPlaneVersion)).
 										With(zap.Error(err)).
 										Error("plugin configuration item was not removed from configuration")
 								} else {
 									vc.logger.With(zap.String("plugin", pluginName)).
 										With(zap.String("field", configField)).
 										With(zap.String("condition", conditionUpdate)).
-										With(zap.Uint64("data-plane", dataPlaneVersion)).
+										With(zap.String("data-plane", dataPlaneVersion)).
 										Warn("removing plugin configuration item which is incompatible with data plane")
 								}
 							} else {
@@ -416,7 +420,7 @@ func (vc *WSVersionCompatibility) processPluginUpdates(payload string,
 											With(zap.String("field", configField)).
 											With(zap.String("condition", update.Condition)).
 											With(zap.Any("new-value", fieldUpdate.Value)).
-											With(zap.Uint64("data-plane", dataPlaneVersion)).
+											With(zap.String("data-plane", dataPlaneVersion)).
 											With(zap.Error(err)).
 											Error("plugin configuration does not contain field value")
 										break
@@ -429,7 +433,7 @@ func (vc *WSVersionCompatibility) processPluginUpdates(payload string,
 										With(zap.String("field", configField)).
 										With(zap.String("condition", update.Condition)).
 										With(zap.Any("new-value", fieldUpdate.Value)).
-										With(zap.Uint64("data-plane", dataPlaneVersion)).
+										With(zap.String("data-plane", dataPlaneVersion)).
 										With(zap.Error(err)).
 										Error("plugin configuration field was not updated int configuration")
 								} else {
@@ -437,7 +441,7 @@ func (vc *WSVersionCompatibility) processPluginUpdates(payload string,
 										With(zap.String("field", configField)).
 										With(zap.String("condition", update.Condition)).
 										With(zap.Any("new-value", fieldUpdate.Value)).
-										With(zap.Uint64("data-plane", dataPlaneVersion)).
+										With(zap.String("data-plane", dataPlaneVersion)).
 										Warn("updating plugin configuration field which is incompatible with data plane")
 								}
 							}
@@ -464,7 +468,7 @@ func (vc *WSVersionCompatibility) processPluginUpdates(payload string,
 
 func (vc *WSVersionCompatibility) processCoreEntityUpdates(payload string,
 	configTableUpdate ConfigTableUpdates,
-	dataPlaneVersion uint64,
+	dataPlaneVersion string,
 ) string {
 	entityName := configTableUpdate.Type.String()
 	processedPayload := payload
@@ -485,14 +489,14 @@ func (vc *WSVersionCompatibility) processCoreEntityUpdates(payload string,
 					vc.logger.With(zap.String("entity", entityName)).
 						With(zap.String("name", name)).
 						With(zap.String("field", field)).
-						With(zap.Uint64("data-plane", dataPlaneVersion)).
+						With(zap.String("data-plane", dataPlaneVersion)).
 						With(zap.Error(err)).
 						Error("entity field was not removed from configuration")
 				} else {
 					vc.logger.With(zap.String("entity", entityName)).
 						With(zap.String("name", name)).
 						With(zap.String("field", field)).
-						With(zap.Uint64("data-plane", dataPlaneVersion)).
+						With(zap.String("data-plane", dataPlaneVersion)).
 						Warn("removing entity field which is incompatible with data plane")
 				}
 			}
@@ -501,7 +505,7 @@ func (vc *WSVersionCompatibility) processCoreEntityUpdates(payload string,
 			vc.logger.With(zap.String("entity", entityName)).
 				With(zap.String("name", name)).
 				With(zap.String("config", updatedRaw)).
-				With(zap.Uint64("data-plane", dataPlaneVersion)).
+				With(zap.String("data-plane", dataPlaneVersion)).
 				With(zap.Error(err)).
 				Error("couldn't unmarshal entity config")
 		} else {
@@ -512,7 +516,7 @@ func (vc *WSVersionCompatibility) processCoreEntityUpdates(payload string,
 		processedPayload, fmt.Sprintf("config_table.%s", entityName), updates,
 	); err != nil {
 		vc.logger.With(zap.String("entity", entityName)).
-			With(zap.Uint64("data-plane", dataPlaneVersion)).
+			With(zap.String("data-plane", dataPlaneVersion)).
 			With(zap.Error(err)).
 			Error("error while updating entities")
 	}
