@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"sync"
 
-	config_service "github.com/kong/koko/internal/gen/wrpc/kong/services/config/v1"
 	"github.com/kong/koko/internal/server/kong/ws/config"
 	"go.uber.org/zap"
 )
@@ -21,7 +20,6 @@ type Payload struct {
 	// configVersion is a counter incremented every config update.  Sent in the
 	// config wRPC service, only compared by DP within the lifetime of the connection.
 	configVersion uint64
-	wrpcCache     configWRPCCache
 	vc            config.VersionCompatibility
 	logger        *zap.Logger
 }
@@ -40,7 +38,6 @@ func NewPayload(opts PayloadOpts) (*Payload, error) {
 		vc:          opts.VersionCompatibilityProcessor,
 		configCache: configCache{},
 		logger:      opts.Logger,
-		wrpcCache:   configWRPCCache{},
 	}, nil
 }
 
@@ -111,72 +108,12 @@ func (p *Payload) configForVersion(version string) (cacheEntry, error) {
 	return cacheEntry{}, err
 }
 
-func (p *Payload) readWRPCCache(versionStr string) (wc CachedWRPCContent, err error) {
-	p.configCacheLock.Lock()
-	defer p.configCacheLock.Unlock()
-
-	wc, err = p.wrpcCache.load(versionStr)
-	return
-}
-
-func (p *Payload) WRPCConfigPayload(ctx context.Context, versionStr string) (CachedWRPCContent, error) {
-	wc, err := p.readWRPCCache(versionStr)
-	if err == nil {
-		return wc, nil
-	}
-
-	if errors.Is(err, errNotFound) {
-		c, err := p.Payload(ctx, versionStr)
-		if err != nil {
-			return CachedWRPCContent{}, err
-		}
-
-		configTable := config_service.SyncConfigRequest{
-			Config:     c.CompressedPayload,
-			Version:    p.configVersion,
-			ConfigHash: c.Hash,
-			Hashes: &config_service.GranularHashes{
-				Config:    c.Hash,
-				Routes:    c.GranularHashes["routes"],
-				Services:  c.GranularHashes["services"],
-				Plugins:   c.GranularHashes["plugins"],
-				Upstreams: c.GranularHashes["upstreams"],
-				Targets:   c.GranularHashes["targets"],
-			},
-		}
-
-		p.configCacheLock.Lock()
-		defer p.configCacheLock.Unlock()
-
-		req, err := config_service.PrepareConfigServiceSyncConfigRequest(&configTable)
-		wc := CachedWRPCContent{
-			Req:   req,
-			Error: err,
-			Hash:  c.Hash,
-		}
-		err = p.wrpcCache.store(versionStr, wc)
-		if err != nil {
-			p.logger.Error("failed to store wRPC configuration to cache",
-				zap.Error(err),
-				zap.String("kong-dp-version", versionStr))
-		}
-		return wc, nil
-	}
-
-	return wc, nil
-}
-
 func (p *Payload) UpdateBinary(_ context.Context, c config.Content) error {
 	p.configCacheLock.Lock()
 	defer p.configCacheLock.Unlock()
 
 	p.configVersion++
 	err := p.configCache.reset()
-	if err != nil {
-		return err
-	}
-
-	err = p.wrpcCache.reset()
 	if err != nil {
 		return err
 	}

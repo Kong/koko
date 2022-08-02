@@ -2,6 +2,7 @@ package ws
 
 import (
 	"bytes"
+	"compress/gzip"
 	"context"
 	"crypto/sha256"
 	"fmt"
@@ -13,6 +14,7 @@ import (
 	"github.com/kong/go-wrpc/wrpc"
 	config_service "github.com/kong/koko/internal/gen/wrpc/kong/services/config/v1"
 	"github.com/kong/koko/internal/json"
+	"github.com/kong/koko/internal/server/kong/ws/config"
 	"go.uber.org/zap"
 )
 
@@ -181,49 +183,8 @@ func (n *Node) readThread() error {
 	}
 }
 
-// write sends the provided config payload to the DP, if the hash
-// is different from the last one reported.
-// Used only on WebSocket protocol.
-func (n *Node) write(payload []byte, hash sum) error {
-	if n.nodetype != nodeTypeWebSocket {
-		return fmt.Errorf("node.write is only for plain WebSocket nodes")
-	}
-	n.lock.RLock()
-	defer n.lock.RUnlock()
-
-	if bytes.Equal(n.hash[:], hash[:]) {
-		n.Logger.With(zap.String("config_hash",
-			hash.String())).Info("hash matched, skipping update")
-		return nil
-	}
-
-	err := n.conn.WriteMessage(websocket.BinaryMessage, payload)
-	if err != nil {
-		if wsCloseErr, ok := err.(*websocket.CloseError); ok {
-			return ErrConnClosed{Code: wsCloseErr.Code}
-		}
-		return err
-	}
-
-	return nil
-}
-
 func (n *Node) sendConfig(ctx context.Context, payload *Payload) error {
-	switch n.nodetype {
-	case nodeTypeWebSocket:
-		return n.sendJSONConfig(ctx, payload)
-	case nodeTypeWRPC:
-		return n.sendWRPCConfig(ctx, payload)
-	}
-
-	return fmt.Errorf("node disconnected")
-}
-
-func (n *Node) sendJSONConfig(ctx context.Context, payload *Payload) error {
-	ctx, cancel := context.WithTimeout(ctx, defaultBroadcastTimeout)
-	defer cancel()
-
-	content, err := payload.Payload(ctx, n.Version)
+	content, err := n.getPayload(ctx, payload)
 	if err != nil {
 		return fmt.Errorf("unable to gather payload: %w", err)
 	}
@@ -235,44 +196,97 @@ func (n *Node) sendJSONConfig(ctx context.Context, payload *Payload) error {
 		n.Logger.Error("invalid hash", zap.Error(err), zap.String("config_hash", hash.String()))
 		return err
 	}
-	err = n.write(content.CompressedPayload, hash)
+
+	n.lock.RLock()
+	defer n.lock.RUnlock()
+
+	if bytes.Equal(n.hash[:], hash[:]) {
+		n.Logger.With(zap.String("config_hash",
+			hash.String())).Info("hash matched, skipping update")
+		return nil
+	}
+
+	switch n.nodetype {
+	case nodeTypeWebSocket:
+		return n.writeConfig(ctx, content)
+
+	case nodeTypeWRPC:
+		return n.writeWRPCConfig(ctx, content, payload.configVersion)
+	}
+
+	return nil
+}
+
+func (n *Node) getPayload(ctx context.Context, payload *Payload) (config.Content, error) {
+	if n.nodetype == nodeTypeWebSocket {
+		return payload.Payload(ctx, n.Version)
+	}
+
+	key := n.Version + "-wrpc"
+	entry, err := payload.configCache.load(key)
+	if err == errNotFound {
+		content, err := payload.Payload(ctx, n.Version)
+		if err != nil {
+			return content, err
+		}
+
+		content.CompressedPayload, err = peelPayload(content.CompressedPayload)
+		if err != nil {
+			return config.Content{}, err
+		}
+
+		entry = cacheEntry{
+			Content: content,
+			Error:   nil,
+		}
+		err = payload.configCache.store(key, entry)
+		if err != nil {
+			return config.Content{}, err
+		}
+	}
+
+	return entry.Content, nil
+}
+
+func (n *Node) writeConfig(_ context.Context, c config.Content) error {
+	err := n.conn.WriteMessage(websocket.BinaryMessage, c.CompressedPayload)
 	if err != nil {
-		n.Logger.Error("failed to send config", zap.Error(err))
-		// TODO(hbagdi: remove the node if connection has been closed?
+		if wsCloseErr, ok := err.(*websocket.CloseError); ok {
+			return ErrConnClosed{Code: wsCloseErr.Code}
+		}
 		return err
 	}
+
 	n.Logger.Info("successfully sent payload to node")
 	return nil
 }
 
-func (n *Node) sendWRPCConfig(ctx context.Context, payload *Payload) error {
-	content, err := payload.WRPCConfigPayload(ctx, n.Version)
-	if err != nil {
-		n.Logger.Error("preparing wrpc config payload", zap.Error(err))
-		return err
+func (n *Node) writeWRPCConfig(ctx context.Context, c config.Content, configVersion uint64) error {
+	req := &config_service.SyncConfigRequest{
+		Config:     c.CompressedPayload,
+		Version:    configVersion,
+		ConfigHash: c.Hash,
+		Hashes: &config_service.GranularHashes{
+			Config:    c.Hash,
+			Routes:    c.GranularHashes["routes"],
+			Services:  c.GranularHashes["services"],
+			Plugins:   c.GranularHashes["plugins"],
+			Upstreams: c.GranularHashes["upstreams"],
+			Targets:   c.GranularHashes["targets"],
+		},
 	}
 
-	hash, err := truncateHash(content.Hash)
-	if err != nil {
-		n.Logger.Error("invalid hash", zap.Error(err), zap.String("config_hash", hash.String()))
-		return err
-	}
-
-	if bytes.Equal(n.hash[:], hash[:]) {
-		n.Logger.Info("hash matched, skipping update", zap.String("config_hash", hash.String()))
-		return nil
-	}
-
-	var out config_service.SyncConfigResponse
 	go func() {
 		ctx, cancel := context.WithTimeout(ctx, defaultBroadcastTimeout)
 		defer cancel()
 
-		err := n.peer.DoRequest(ctx, content.Req, &out)
+		cli := config_service.ConfigServiceClient{Peer: n.peer}
+		out, err := cli.SyncConfig(ctx, req)
 		if err != nil {
 			n.Logger.Error("SyncConfig method failed", zap.Error(err))
+			return
 		}
-		if !out.Accepted {
+		if out != nil && !out.Accepted {
 			n.Logger.Info("configuration not accepted")
 			for _, configerr := range out.Errors {
 				n.Logger.Info("rejection description",
@@ -280,7 +294,38 @@ func (n *Node) sendWRPCConfig(ctx context.Context, payload *Payload) error {
 					zap.String("err-id", configerr.Id),
 					zap.String("err-entity", configerr.Entity))
 			}
+			return
 		}
+
+		n.Logger.Info("successfully sent payload to node")
 	}()
+
 	return nil
+}
+
+func peelPayload(compressed []byte) ([]byte, error) {
+	compressedReader := bytes.NewReader(compressed)
+	decompressReader, err := gzip.NewReader(compressedReader)
+	if err != nil {
+		return nil, err
+	}
+
+	jsonDecoder := json.Marshaller.NewDecoder(decompressReader)
+	var m map[string]any
+	err = jsonDecoder.Decode(&m)
+	if err != nil {
+		return nil, err
+	}
+
+	var buf bytes.Buffer
+	w := gzip.NewWriter(&buf)
+	jsonEncoder := json.Marshaller.NewEncoder(w)
+	if err = jsonEncoder.Encode(m["config_table"]); err != nil {
+		return nil, err
+	}
+	if err = w.Close(); err != nil {
+		return nil, err
+	}
+
+	return buf.Bytes(), nil
 }
