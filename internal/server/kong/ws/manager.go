@@ -53,7 +53,7 @@ func NewManager(opts ManagerOpts) (*Manager, error) {
 		Logger:                        opts.Logger,
 	})
 	if err != nil {
-		panic(err)
+		return nil, fmt.Errorf("failed to create new payload: %v", err)
 	}
 
 	m := &Manager{
