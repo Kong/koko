@@ -170,7 +170,12 @@ func (m *Manager) setupPingHandler(node *Node) {
 		metrics.Count("data_plane_ping_total", 1, metrics.Tag{
 			Key:   "dp_version",
 			Value: node.Version,
-		})
+		},
+			metrics.Tag{
+				Key:   "protocol",
+				Value: "ws",
+			},
+		)
 		writeWait := time.Second
 		err := c.WriteControl(websocket.PongMessage, nil,
 			time.Now().Add(writeWait))

@@ -6,6 +6,7 @@ import (
 
 	"github.com/kong/go-wrpc/wrpc"
 	config_service "github.com/kong/koko/internal/gen/wrpc/kong/services/config/v1"
+	"github.com/kong/koko/internal/metrics"
 	"go.uber.org/zap"
 )
 
@@ -67,6 +68,15 @@ func (c *Configurer) PingCP(
 		return nil, err
 	}
 
+	metrics.Count("data_plane_ping_total", 1, metrics.Tag{
+		Key:   "dp_version",
+		Value: node.Version,
+	},
+		metrics.Tag{
+			Key:   "protocol",
+			Value: "wrpc",
+		},
+	)
 	c.manager.updateNodeStatus(node)
 	return &config_service.PingCPResponse{}, nil
 }
