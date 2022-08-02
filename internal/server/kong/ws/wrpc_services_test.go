@@ -232,14 +232,4 @@ func TestConfigService(t *testing.T) {
 		require.EqualValues(t, &config_service.ReportMetadataResponse_Ok{Ok: "valid"}, resp.Response)
 		configMock.requireCalls(t, []string{"SyncConfig"})
 	})
-
-	t.Run("send a ping, get a config", func(t *testing.T) {
-		configMock.reset()
-		resp, err := configClient.PingCP(context.Background(), &config_service.PingCPRequest{
-			Hash: "0123456789abcdef0123456789abcdef",
-		})
-		require.NoError(t, err)
-		require.NotNil(t, resp)
-		configMock.requireCalls(t, []string{"SyncConfig"})
-	})
 }

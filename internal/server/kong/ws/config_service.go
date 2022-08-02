@@ -15,38 +15,13 @@ import (
 // the Manager object.
 type Configurer struct {
 	manager *Manager
-	ping    chan *Node
 }
 
 // NewConfigurer creates a new configurer with the given manager.
 func NewConfigurer(m *Manager) *Configurer {
-	c := &Configurer{
+	return &Configurer{
 		manager: m,
 	}
-
-	c.AnswerPingThread(m.ctx, m.logger)
-	return c
-}
-
-// AnswerPingThread starts a background goroutine to send
-// config messages whenever a node requests it.
-// Currently only the PingCP rpc does this request.
-func (c *Configurer) AnswerPingThread(ctx context.Context, _ *zap.Logger) {
-	c.ping = make(chan *Node)
-
-	go func() {
-		for {
-			select {
-			case <-ctx.Done():
-				return
-
-			case node := <-c.ping:
-				if err := node.sendConfig(ctx, c.manager.payload); err != nil {
-					node.Logger.Error("failed sending config in response to Ping", zap.Error(err))
-				}
-			}
-		}
-	}()
 }
 
 // Register the "v1" config service.
@@ -68,8 +43,7 @@ func (c *Configurer) GetCapabilities(
 
 // PingCP handles the incoming ping method from the CP.
 // (Different from a websocket Ping frame)
-// Records the given hashes from CP and signals the answerPing thread
-// to send a config if necessary.
+// Records the given hashes from CP.
 func (c *Configurer) PingCP(
 	_ context.Context,
 	peer *wrpc.Peer,
@@ -94,8 +68,6 @@ func (c *Configurer) PingCP(
 	}
 
 	c.manager.updateNodeStatus(node)
-	c.ping <- node
-
 	return &config_service.PingCPResponse{}, nil
 }
 
