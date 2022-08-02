@@ -250,7 +250,7 @@ func Run(ctx context.Context, config ServerConfig) error {
 	if err != nil {
 		return fmt.Errorf("failed to set up config compatibility processor: %w", err)
 	}
-	if err := vc.AddConfigTableUpdates(compat.PluginConfigTableUpdates); err != nil {
+	if err := vc.AddConfigTableUpdates(kongConfigWS.ChangeRegistry.GetPluginUpdates()); err != nil {
 		return fmt.Errorf("failed to register config table updates: %w", err)
 	}
 	vcLogger.With(zap.String("control-plane", kongConfigWS.KongGatewayCompatibilityVersion)).
