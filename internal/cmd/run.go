@@ -187,50 +187,57 @@ func Run(ctx context.Context, config ServerConfig) error {
 	err = loader.Register(&kongConfigWS.KongServiceLoader{Client: grpcClients.
 		Service})
 	if err != nil {
-		panic(err.Error())
+		return fmt.Errorf("failed to register service configuration loader: %w", err)
 	}
 	err = loader.Register(&kongConfigWS.KongRouteLoader{Client: grpcClients.Route})
 	if err != nil {
-		panic(err.Error())
+		return fmt.Errorf("failed to register route configuration loader: %w", err)
 	}
 	err = loader.Register(&kongConfigWS.KongPluginLoader{Client: grpcClients.Plugin})
 	if err != nil {
-		panic(err.Error())
+		return fmt.Errorf("failed to register plugin configuration loader: %w", err)
 	}
 
 	err = loader.Register(&kongConfigWS.KongUpstreamLoader{Client: grpcClients.Upstream})
 	if err != nil {
-		panic(err.Error())
+		return fmt.Errorf("failed to register upstream configuration loader"+
+			": %w", err)
 	}
 
 	err = loader.Register(&kongConfigWS.KongTargetLoader{Client: grpcClients.Target})
 	if err != nil {
-		panic(err.Error())
+		return fmt.Errorf("failed to register target configuration loader: %w"+
+			"", err)
 	}
 
 	err = loader.Register(&kongConfigWS.KongConsumerLoader{Client: grpcClients.Consumer})
 	if err != nil {
-		panic(err.Error())
+		return fmt.Errorf("failed to register consumer configuration loader"+
+			": %w", err)
 	}
 
 	err = loader.Register(&kongConfigWS.KongCertificateLoader{Client: grpcClients.Certificate})
 	if err != nil {
-		panic(err.Error())
+		return fmt.Errorf("failed to register certificate configuration"+
+			" loader: %w", err)
 	}
 
 	err = loader.Register(&kongConfigWS.KongCACertificateLoader{Client: grpcClients.CACertificate})
 	if err != nil {
-		panic(err.Error())
+		return fmt.Errorf("failed to register ca-certificate configuration"+
+			" loader: %w", err)
 	}
 
 	err = loader.Register(&kongConfigWS.KongSNILoader{Client: grpcClients.SNI})
 	if err != nil {
-		panic(err.Error())
+		return fmt.Errorf("failed to register sni configuration loader: %w",
+			err)
 	}
 
 	err = loader.Register(&kongConfigWS.VersionLoader{})
 	if err != nil {
-		panic(err.Error())
+		return fmt.Errorf("failed to register version configuration loader"+
+			": %w", err)
 	}
 
 	// setup version compatibility processor
@@ -241,10 +248,10 @@ func Run(ctx context.Context, config ServerConfig) error {
 		ExtraProcessor: compat.VersionCompatibilityExtraProcessing,
 	})
 	if err != nil {
-		panic(err.Error())
+		return fmt.Errorf("failed to set up config compatibility processor: %w", err)
 	}
 	if err := vc.AddConfigTableUpdates(compat.PluginConfigTableUpdates); err != nil {
-		panic(err.Error())
+		return fmt.Errorf("failed to register config table updates: %w", err)
 	}
 	vcLogger.With(zap.String("control-plane", kongConfigWS.KongGatewayCompatibilityVersion)).
 		Info("Lua control plane compatibility version")
