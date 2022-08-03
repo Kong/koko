@@ -14,7 +14,9 @@ import (
 	"github.com/kong/koko/internal/plugin"
 	"github.com/kong/koko/internal/plugin/validators"
 	"github.com/kong/koko/internal/resource"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
@@ -415,4 +417,209 @@ func TestPlugin_Indexes(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestPlugin_UnmarshalResourceJSON(t *testing.T) {
+	tests := []struct {
+		name        string
+		pluginJSON  string
+		expected    *model.Plugin
+		expectedErr string
+	}{
+		{
+			name: "do not overwrite headers of non http-log plugins",
+			pluginJSON: `{
+				"name": "another-plugin",
+				"config": {
+					"headers": {
+						"header-1": ["test-1"]
+					}
+				}
+			}`,
+			expected: &model.Plugin{
+				Name: "another-plugin",
+				Config: mustNewStruct(map[string]interface{}{
+					"headers": map[string]interface{}{
+						"header-1": []interface{}{"test-1"},
+					},
+				}),
+			},
+		},
+		{
+			name: "http-log plugin with single header with value as array",
+			pluginJSON: `{
+				"name": "http-log",
+				"config": {
+					"headers": {
+						"header-1": ["test-1", "test-2"]
+					}
+				}
+			}`,
+			expected: &model.Plugin{
+				Name: "http-log",
+				Config: mustNewStruct(map[string]interface{}{
+					"headers": map[string]interface{}{
+						"header-1": "test-1, test-2",
+					},
+				}),
+			},
+		},
+		{
+			name: "http-log plugin with multiple headers with values as array",
+			pluginJSON: `{
+				"name": "http-log",
+				"config": {
+					"headers": {
+						"header-1": [],
+						"header-2": ["test-1"],
+						"header-3": ["test-1", "test-2"]
+					}
+				}
+			}`,
+			expected: &model.Plugin{
+				Name: "http-log",
+				Config: mustNewStruct(map[string]interface{}{
+					"headers": map[string]interface{}{
+						"header-1": "",
+						"header-2": "test-1",
+						"header-3": "test-1, test-2",
+					},
+				}),
+			},
+		},
+		{
+			name: "http-log plugin with single header with value as string",
+			pluginJSON: `{
+				"name": "http-log",
+				"config": {
+					"headers": {
+						"header-1": "test-1, test-2"
+					}
+				}
+			}`,
+			expected: &model.Plugin{
+				Name: "http-log",
+				Config: mustNewStruct(map[string]interface{}{
+					"headers": map[string]interface{}{
+						"header-1": "test-1, test-2",
+					},
+				}),
+			},
+		},
+		{
+			name: "http-log plugin with multiple headers with values as string",
+			pluginJSON: `{
+				"name": "http-log",
+				"config": {
+					"headers": {
+						"header-1": "",
+						"header-2": "test-1",
+						"header-3": "test-1, test-2"
+					}
+				}
+			}`,
+			expected: &model.Plugin{
+				Name: "http-log",
+				Config: mustNewStruct(map[string]interface{}{
+					"headers": map[string]interface{}{
+						"header-1": "",
+						"header-2": "test-1",
+						"header-3": "test-1, test-2",
+					},
+				}),
+			},
+		},
+		{
+			name: "http-log plugin with no headers",
+			pluginJSON: `{
+				"name": "http-log",
+				"config": {}
+			}`,
+			expected: &model.Plugin{
+				Name:   "http-log",
+				Config: mustNewStruct(map[string]interface{}{}),
+			},
+		},
+		{
+			name: "http-log plugin with null as headers",
+			pluginJSON: `{
+				"name": "http-log",
+				"config": {
+					"headers": null
+				}
+			}`,
+			expected: &model.Plugin{
+				Name: "http-log",
+				Config: mustNewStruct(map[string]interface{}{
+					"headers": nil,
+				}),
+			},
+		},
+		{
+			name: "http-log plugin with empty array as headers",
+			pluginJSON: `{
+				"name": "http-log",
+				"config": {
+					"headers": []
+				}
+			}`,
+			expected: &model.Plugin{
+				Name: "http-log",
+				Config: mustNewStruct(map[string]interface{}{
+					"headers": []interface{}{},
+				}),
+			},
+		},
+
+		// Should never happen, but just some sanity checks.
+		{
+			name: "http-log plugin with invalid headers type",
+			pluginJSON: `{
+				"name": "http-log",
+				"config": {
+					"headers": "test"
+				}
+			}`,
+			expectedErr: "unexpected headers type: *structpb.Value",
+		},
+		{
+			name: "http-log plugin with invalid header value",
+			pluginJSON: `{
+				"name": "http-log",
+				"config": {
+					"headers": {
+						"header-1": [123]
+					}
+				}
+			}`,
+			expectedErr: `unexpected header value type for "header-1", got: float64, expected: string`,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			actual := resource.Plugin{Plugin: &model.Plugin{}}
+			err := actual.UnmarshalResourceJSON([]byte(tt.pluginJSON))
+			if tt.expectedErr != "" {
+				assert.EqualError(t, err, tt.expectedErr)
+				return
+			}
+			require.NoError(t, err)
+			assert.True(t, proto.Equal(tt.expected, actual.Plugin))
+		})
+	}
+}
+
+func TestPlugin_MarshalResourceJSON(t *testing.T) {
+	actual := resource.Plugin{Plugin: &model.Plugin{Name: "test"}}
+	pluginJSON, err := actual.MarshalResourceJSON()
+	require.NoError(t, err)
+	assert.JSONEq(t, `{"name": "test"}`, string(pluginJSON))
+}
+
+func mustNewStruct(v map[string]interface{}) *structpb.Struct {
+	pbStruct, err := structpb.NewStruct(v)
+	if err != nil {
+		panic(err)
+	}
+	return pbStruct
 }
