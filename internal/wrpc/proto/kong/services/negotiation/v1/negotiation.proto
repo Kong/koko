@@ -9,10 +9,11 @@ option go_package = "github.com/kong/koko/internal/gen/wrpc/kong/service/negotia
 // NegotiationService allows DP to ask for services and CP answer with the accepted version of each
 // +wrpc:service-id=5
 service NegotiationService {
-  // NegotiateServices should be the first RPC call upon connecting.  It allows the CP
-  // to get which services does the DP handle.
+  // NegotiateServices must be the first RPC call initiated by the DP upon a
+  // succesful connection.  It allows the CP to get which services does the DP
+  // handle and vice-versa.
   //
   // Call direction: DP to CP
-  // +wrpc:rpc-id=4
+  // +wrpc:rpc-id=1
   rpc NegotiateServices(kong.model.NegotiateServicesRequest) returns (kong.model.NegotiateServicesResponse);
 }

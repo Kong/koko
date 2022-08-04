@@ -27,6 +27,10 @@ message NegotiateServicesResponse {
   repeated RejectedService services_rejected = 4;
 }
 
+message CPNodeDescription {
+  string id = 1;
+}
+
 message AcceptedService {
   string name = 1;
   string version = 2;
@@ -36,8 +40,4 @@ message AcceptedService {
 message RejectedService {
   string name = 1;
   string message = 3;
-}
-
-message CPNodeDescription {
-  string id = 1;
 }

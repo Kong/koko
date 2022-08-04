@@ -479,6 +479,10 @@ type SyncConfigRequest struct {
 
 	// Config represents a configuration of Kong Gateway.
 	// This is same as the declarative configuration of Kong.
+	// It's encoded into JSON and then compressed with Gzip.
+	// Only Kong-entities are present in this config, no hashes are part of this data.
+	// The format of the JSON document is as defined as the declarative configuration format of Kong gateway.
+	// Please see https://github.com/Kong/kong/blob/master/kong/templates/kong_yml.lua.
 	//
 	// DP MUST NOT combine configuration from two SyncConfigRequest. Config in
 	// each request is self-contained.
