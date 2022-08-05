@@ -264,6 +264,53 @@ func (x *NegotiateServicesResponse) GetServicesRejected() []*RejectedService {
 	return nil
 }
 
+type CPNodeDescription struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+}
+
+func (x *CPNodeDescription) Reset() {
+	*x = CPNodeDescription{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_kong_model_negotiation_proto_msgTypes[4]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *CPNodeDescription) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CPNodeDescription) ProtoMessage() {}
+
+func (x *CPNodeDescription) ProtoReflect() protoreflect.Message {
+	mi := &file_kong_model_negotiation_proto_msgTypes[4]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CPNodeDescription.ProtoReflect.Descriptor instead.
+func (*CPNodeDescription) Descriptor() ([]byte, []int) {
+	return file_kong_model_negotiation_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *CPNodeDescription) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
 type AcceptedService struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -277,7 +324,7 @@ type AcceptedService struct {
 func (x *AcceptedService) Reset() {
 	*x = AcceptedService{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_kong_model_negotiation_proto_msgTypes[4]
+		mi := &file_kong_model_negotiation_proto_msgTypes[5]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -290,7 +337,7 @@ func (x *AcceptedService) String() string {
 func (*AcceptedService) ProtoMessage() {}
 
 func (x *AcceptedService) ProtoReflect() protoreflect.Message {
-	mi := &file_kong_model_negotiation_proto_msgTypes[4]
+	mi := &file_kong_model_negotiation_proto_msgTypes[5]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -303,7 +350,7 @@ func (x *AcceptedService) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AcceptedService.ProtoReflect.Descriptor instead.
 func (*AcceptedService) Descriptor() ([]byte, []int) {
-	return file_kong_model_negotiation_proto_rawDescGZIP(), []int{4}
+	return file_kong_model_negotiation_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *AcceptedService) GetName() string {
@@ -339,7 +386,7 @@ type RejectedService struct {
 func (x *RejectedService) Reset() {
 	*x = RejectedService{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_kong_model_negotiation_proto_msgTypes[5]
+		mi := &file_kong_model_negotiation_proto_msgTypes[6]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -352,7 +399,7 @@ func (x *RejectedService) String() string {
 func (*RejectedService) ProtoMessage() {}
 
 func (x *RejectedService) ProtoReflect() protoreflect.Message {
-	mi := &file_kong_model_negotiation_proto_msgTypes[5]
+	mi := &file_kong_model_negotiation_proto_msgTypes[6]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -365,7 +412,7 @@ func (x *RejectedService) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RejectedService.ProtoReflect.Descriptor instead.
 func (*RejectedService) Descriptor() ([]byte, []int) {
-	return file_kong_model_negotiation_proto_rawDescGZIP(), []int{5}
+	return file_kong_model_negotiation_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *RejectedService) GetName() string {
@@ -378,53 +425,6 @@ func (x *RejectedService) GetName() string {
 func (x *RejectedService) GetMessage() string {
 	if x != nil {
 		return x.Message
-	}
-	return ""
-}
-
-type CPNodeDescription struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-}
-
-func (x *CPNodeDescription) Reset() {
-	*x = CPNodeDescription{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_kong_model_negotiation_proto_msgTypes[6]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *CPNodeDescription) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*CPNodeDescription) ProtoMessage() {}
-
-func (x *CPNodeDescription) ProtoReflect() protoreflect.Message {
-	mi := &file_kong_model_negotiation_proto_msgTypes[6]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use CPNodeDescription.ProtoReflect.Descriptor instead.
-func (*CPNodeDescription) Descriptor() ([]byte, []int) {
-	return file_kong_model_negotiation_proto_rawDescGZIP(), []int{6}
-}
-
-func (x *CPNodeDescription) GetId() string {
-	if x != nil {
-		return x.Id
 	}
 	return ""
 }
@@ -471,19 +471,19 @@ var file_kong_model_negotiation_proto_rawDesc = []byte{
 	0x0b, 0x32, 0x1b, 0x2e, 0x6b, 0x6f, 0x6e, 0x67, 0x2e, 0x6d, 0x6f, 0x64, 0x65, 0x6c, 0x2e, 0x52,
 	0x65, 0x6a, 0x65, 0x63, 0x74, 0x65, 0x64, 0x53, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x52, 0x10,
 	0x73, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x73, 0x52, 0x65, 0x6a, 0x65, 0x63, 0x74, 0x65, 0x64,
-	0x22, 0x59, 0x0a, 0x0f, 0x41, 0x63, 0x63, 0x65, 0x70, 0x74, 0x65, 0x64, 0x53, 0x65, 0x72, 0x76,
+	0x22, 0x23, 0x0a, 0x11, 0x43, 0x50, 0x4e, 0x6f, 0x64, 0x65, 0x44, 0x65, 0x73, 0x63, 0x72, 0x69,
+	0x70, 0x74, 0x69, 0x6f, 0x6e, 0x12, 0x0e, 0x0a, 0x02, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28,
+	0x09, 0x52, 0x02, 0x69, 0x64, 0x22, 0x59, 0x0a, 0x0f, 0x41, 0x63, 0x63, 0x65, 0x70, 0x74, 0x65,
+	0x64, 0x53, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x12, 0x12, 0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65,
+	0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x12, 0x18, 0x0a, 0x07,
+	0x76, 0x65, 0x72, 0x73, 0x69, 0x6f, 0x6e, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x76,
+	0x65, 0x72, 0x73, 0x69, 0x6f, 0x6e, 0x12, 0x18, 0x0a, 0x07, 0x6d, 0x65, 0x73, 0x73, 0x61, 0x67,
+	0x65, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x6d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65,
+	0x22, 0x3f, 0x0a, 0x0f, 0x52, 0x65, 0x6a, 0x65, 0x63, 0x74, 0x65, 0x64, 0x53, 0x65, 0x72, 0x76,
 	0x69, 0x63, 0x65, 0x12, 0x12, 0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28,
-	0x09, 0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x12, 0x18, 0x0a, 0x07, 0x76, 0x65, 0x72, 0x73, 0x69,
-	0x6f, 0x6e, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x76, 0x65, 0x72, 0x73, 0x69, 0x6f,
-	0x6e, 0x12, 0x18, 0x0a, 0x07, 0x6d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x18, 0x03, 0x20, 0x01,
-	0x28, 0x09, 0x52, 0x07, 0x6d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x22, 0x3f, 0x0a, 0x0f, 0x52,
-	0x65, 0x6a, 0x65, 0x63, 0x74, 0x65, 0x64, 0x53, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x12, 0x12,
-	0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6e, 0x61,
-	0x6d, 0x65, 0x12, 0x18, 0x0a, 0x07, 0x6d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x18, 0x03, 0x20,
-	0x01, 0x28, 0x09, 0x52, 0x07, 0x6d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x22, 0x23, 0x0a, 0x11,
-	0x43, 0x50, 0x4e, 0x6f, 0x64, 0x65, 0x44, 0x65, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x69, 0x6f,
-	0x6e, 0x12, 0x0e, 0x0a, 0x02, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x02, 0x69,
-	0x64, 0x42, 0x39, 0x5a, 0x37, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f,
+	0x09, 0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x12, 0x18, 0x0a, 0x07, 0x6d, 0x65, 0x73, 0x73, 0x61,
+	0x67, 0x65, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x6d, 0x65, 0x73, 0x73, 0x61, 0x67,
+	0x65, 0x42, 0x39, 0x5a, 0x37, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f,
 	0x6b, 0x6f, 0x6e, 0x67, 0x2f, 0x6b, 0x6f, 0x6b, 0x6f, 0x2f, 0x69, 0x6e, 0x74, 0x65, 0x72, 0x6e,
 	0x61, 0x6c, 0x2f, 0x67, 0x65, 0x6e, 0x2f, 0x77, 0x72, 0x70, 0x63, 0x2f, 0x6b, 0x6f, 0x6e, 0x67,
 	0x2f, 0x6d, 0x6f, 0x64, 0x65, 0x6c, 0x3b, 0x6d, 0x6f, 0x64, 0x65, 0x6c, 0x62, 0x06, 0x70, 0x72,
@@ -508,16 +508,16 @@ var file_kong_model_negotiation_proto_goTypes = []interface{}{
 	(*DPNodeDescription)(nil),         // 1: kong.model.DPNodeDescription
 	(*ServiceRequest)(nil),            // 2: kong.model.ServiceRequest
 	(*NegotiateServicesResponse)(nil), // 3: kong.model.NegotiateServicesResponse
-	(*AcceptedService)(nil),           // 4: kong.model.AcceptedService
-	(*RejectedService)(nil),           // 5: kong.model.RejectedService
-	(*CPNodeDescription)(nil),         // 6: kong.model.CPNodeDescription
+	(*CPNodeDescription)(nil),         // 4: kong.model.CPNodeDescription
+	(*AcceptedService)(nil),           // 5: kong.model.AcceptedService
+	(*RejectedService)(nil),           // 6: kong.model.RejectedService
 }
 var file_kong_model_negotiation_proto_depIdxs = []int32{
 	1, // 0: kong.model.NegotiateServicesRequest.node:type_name -> kong.model.DPNodeDescription
 	2, // 1: kong.model.NegotiateServicesRequest.services_requested:type_name -> kong.model.ServiceRequest
-	6, // 2: kong.model.NegotiateServicesResponse.node:type_name -> kong.model.CPNodeDescription
-	4, // 3: kong.model.NegotiateServicesResponse.services_accepted:type_name -> kong.model.AcceptedService
-	5, // 4: kong.model.NegotiateServicesResponse.services_rejected:type_name -> kong.model.RejectedService
+	4, // 2: kong.model.NegotiateServicesResponse.node:type_name -> kong.model.CPNodeDescription
+	5, // 3: kong.model.NegotiateServicesResponse.services_accepted:type_name -> kong.model.AcceptedService
+	6, // 4: kong.model.NegotiateServicesResponse.services_rejected:type_name -> kong.model.RejectedService
 	5, // [5:5] is the sub-list for method output_type
 	5, // [5:5] is the sub-list for method input_type
 	5, // [5:5] is the sub-list for extension type_name
@@ -580,7 +580,7 @@ func file_kong_model_negotiation_proto_init() {
 			}
 		}
 		file_kong_model_negotiation_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*AcceptedService); i {
+			switch v := v.(*CPNodeDescription); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -592,7 +592,7 @@ func file_kong_model_negotiation_proto_init() {
 			}
 		}
 		file_kong_model_negotiation_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*RejectedService); i {
+			switch v := v.(*AcceptedService); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -604,7 +604,7 @@ func file_kong_model_negotiation_proto_init() {
 			}
 		}
 		file_kong_model_negotiation_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*CPNodeDescription); i {
+			switch v := v.(*RejectedService); i {
 			case 0:
 				return &v.state
 			case 1:

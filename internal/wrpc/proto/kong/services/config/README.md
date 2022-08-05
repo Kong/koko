@@ -11,7 +11,9 @@ a separate service or a future addition to this service.
 
 ## Configuration data
 
-Configuration contains data that Kong needs to proxy traffic correctly.
+Configurations are encoded into JSON objects and then compressed with gzip.
+
+Configurations contain data that Kong needs to proxy traffic correctly.
 This includes (exhaustive list):
 - Services
 - Routes

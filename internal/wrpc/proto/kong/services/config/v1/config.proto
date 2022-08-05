@@ -36,15 +36,10 @@ service ConfigService {
   // +wrpc:rpc-id=2
   rpc SyncConfig(SyncConfigRequest) returns (SyncConfigResponse);
 
-  // PingCP notifies that a DP would like CP to send the latest configuration.
-  // Once this call succeeds, CP MUST issue a SyncConfig request to the DP.
-  // DP expects the CP to send an updated configuration (or a no-op) on a
-  // soft real-time basis.
-  // DP can make multiple calls to CP and CP may choose to coallesce multiplee
-  // requests for configuration into a single SyncConfig().
-  //
-  // Configuration is always PUSHed to the DP and so configuration is not sent
-  // as part of the response to this call to simplify implementation.
+  // PingCP reports the current state of a DP, helping the CP to keep an
+  // updated record of the health of DP and if they have received the
+  // latest configuration.
+  // CP may use this information to choose to send a new SyncConfig.
   //
   // Call direction:
   // - DP to CP
@@ -94,6 +89,10 @@ message GranularHashes {
 message SyncConfigRequest {
   // Config represents a configuration of Kong Gateway.
   // This is same as the declarative configuration of Kong.
+  // It's encoded into JSON and then compressed with Gzip.
+  // Only Kong-entities are present in this config, no hashes are part of this data.
+  // The format of the JSON document is as defined as the declarative configuration format of Kong gateway.
+  // Please see https://github.com/Kong/kong/blob/master/kong/templates/kong_yml.lua.
   //
   // DP MUST NOT combine configuration from two SyncConfigRequest. Config in
   // each request is self-contained.
