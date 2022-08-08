@@ -30,13 +30,25 @@ type VersionCompatibilityPlugins struct {
 // VersionCompatibilityOSSPluginConfigurationTests are the OSS plugins schemas to test in order to
 // validate version compatibility layer.
 var VersionCompatibilityOSSPluginConfigurationTests = []VersionCompatibilityPlugins{
+	// DP > 3.0:
+	//   - replace 'whitelist' with 'allow'
 	{
 		Name: "acl",
 		Config: `{
-			"allow": [
-				"kongers"
-			]
-		}`,
+				"whitelist": [
+					"kongers"
+				]
+			}`,
+		FieldUpdateChecks: map[string][]FieldUpdateCheck{
+			"> 3.0.0": {
+				{
+					Field: "allow",
+					Value: `[
+							"kongers"
+						]`,
+				},
+			},
+		},
 		ConfigureForService: true,
 		ConfigureForRoute:   true,
 	},
@@ -85,10 +97,35 @@ var VersionCompatibilityOSSPluginConfigurationTests = []VersionCompatibilityPlug
 		ConfigureForService: true,
 		ConfigureForRoute:   true,
 	},
+	// DP > 3.0:
+	//   - replace 'whitelist' with 'allow'
+	//   - replace 'blacklist' with 'deny'
 	{
-		Name:                "bot-detection",
-		ConfigureForService: true,
-		ConfigureForRoute:   true,
+		Name: "bot-detection",
+		Config: `{
+				"whitelist": [
+					"192.0.2.0/24"
+				],
+				"blacklist": [
+					"198.51.100.0/24"
+				]
+			}`,
+		FieldUpdateChecks: map[string][]FieldUpdateCheck{
+			"> 3.0.0": {
+				{
+					Field: "allow",
+					Value: `[
+							"192.0.2.0/24"
+						]`,
+				},
+				{
+					Field: "deny",
+					Value: `[
+							"198.51.100.0/24"
+						]`,
+				},
+			},
+		},
 	},
 	{
 		Name:                "correlation-id",
@@ -164,15 +201,37 @@ var VersionCompatibilityOSSPluginConfigurationTests = []VersionCompatibilityPlug
 		ConfigureForService: true,
 		ConfigureForRoute:   true,
 	},
+	// DP > 3.0:
+	//   - replace 'whitelist' with 'allow'
+	//   - replace 'blacklist' with 'deny'
 	{
 		Name: "ip-restriction",
 		Config: `{
-			"allow": [
-				"1.2.3.4"
-			],
-			"status": 200,
-			"message": "MESSAGE"
-		}`,
+				"whitelist": [
+					"192.0.2.0/24"
+				],
+				"blacklist": [
+					"198.51.100.0/24"
+				],
+				"status": 200,
+				"message": "MESSAGE"
+			}`,
+		FieldUpdateChecks: map[string][]FieldUpdateCheck{
+			"> 3.0.0": {
+				{
+					Field: "allow",
+					Value: `[
+							"192.0.2.0/24"
+						]`,
+				},
+				{
+					Field: "deny",
+					Value: `[
+							"198.51.100.0/24"
+						]`,
+				},
+			},
+		},
 		ConfigureForService: true,
 		ConfigureForRoute:   true,
 	},

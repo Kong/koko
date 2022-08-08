@@ -682,6 +682,84 @@ var (
 				},
 			},
 		},
+		{
+			Metadata: config.ChangeMetadata{
+				ID:       config.ChangeID("P126"),
+				Severity: config.ChangeSeverityWarning,
+				Description: standardPluginFieldsMessage("acl",
+					[]string{"whitelist", "blacklist"}, "3.0", true),
+				Resolution: "Please update the plugin configuration to use " +
+					"'config.allow' and 'config.deny' fields in place of " +
+					"'config.whitelist' and 'config.blacklist' fields",
+			},
+			SemverRange: versionsPre300,
+			Update: config.ConfigTableUpdates{
+				Name: "acl",
+				Type: config.Plugin,
+				FieldUpdates: []config.ConfigTableFieldCondition{
+					{
+						Field:     "whitelist",
+						Condition: "whitelist",
+					},
+					{
+						Field:     "blacklist",
+						Condition: "blacklist",
+					},
+				},
+			},
+		},
+		{
+			Metadata: config.ChangeMetadata{
+				ID:       config.ChangeID("P127"),
+				Severity: config.ChangeSeverityWarning,
+				Description: standardPluginFieldsMessage("ip-restriction",
+					[]string{"whitelist", "blacklist"}, "3.0", true),
+				Resolution: "Please update the plugin configuration to use " +
+					"'config.allow' and 'config.deny' fields in place of " +
+					"'config.whitelist' and 'config.blacklist' fields",
+			},
+			SemverRange: versionsPre300,
+			Update: config.ConfigTableUpdates{
+				Name: "ip-restriction",
+				Type: config.Plugin,
+				FieldUpdates: []config.ConfigTableFieldCondition{
+					{
+						Field:     "whitelist",
+						Condition: "whitelist",
+					},
+					{
+						Field:     "blacklist",
+						Condition: "blacklist",
+					},
+				},
+			},
+		},
+		{
+			Metadata: config.ChangeMetadata{
+				ID:       config.ChangeID("P128"),
+				Severity: config.ChangeSeverityWarning,
+				Description: standardPluginFieldsMessage("bot-detection",
+					[]string{"whitelist", "blacklist"}, "3.0", true),
+				Resolution: "Please update the plugin configuration to use " +
+					"'config.allow' and 'config.deny' fields in place of " +
+					"'config.whitelist' and 'config.blacklist' fields",
+			},
+			SemverRange: versionsPre300,
+			Update: config.ConfigTableUpdates{
+				Name: "bot-detection",
+				Type: config.Plugin,
+				FieldUpdates: []config.ConfigTableFieldCondition{
+					{
+						Field:     "whitelist",
+						Condition: "whitelist",
+					},
+					{
+						Field:     "blacklist",
+						Condition: "blacklist",
+					},
+				},
+			},
+		},
 	}
 )
 
