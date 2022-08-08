@@ -505,7 +505,15 @@ func TestVersionCompatibilitySyslogFacilityField(t *testing.T) {
 		res := admin.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
 		res.Status(http.StatusCreated)
 
-		expectedConfig.Plugins = append(expectedConfig.Plugins, plugin)
+		var expected structpb.Struct
+		require.NoError(t, json.ProtoJSONUnmarshal([]byte(test.expectedConfig), &expected))
+		expectedConfig.Plugins = append(expectedConfig.Plugins, &v1.Plugin{
+			Id:        plugin.Id,
+			Name:      plugin.Name,
+			Config:    &expected,
+			Enabled:   plugin.Enabled,
+			Protocols: plugin.Protocols,
+		})
 	}
 
 	util.WaitFunc(t, func() error {
