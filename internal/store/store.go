@@ -57,7 +57,7 @@ func New(persister persistence.Persister, logger *zap.Logger) *ObjectStore {
 	}
 }
 
-var clusterRegex = regexp.MustCompile("^[_a-z0-9]{1,64}$")
+var clusterRegex = regexp.MustCompile(`^[\_\-a-z0-9]{1,64}$`)
 
 func (s *ObjectStore) ForCluster(cluster string) *ObjectStore {
 	if !clusterRegex.MatchString(cluster) {
