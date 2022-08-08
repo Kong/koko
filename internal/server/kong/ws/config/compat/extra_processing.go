@@ -1,6 +1,8 @@
 package compat
 
 import (
+	"fmt"
+
 	"github.com/tidwall/gjson"
 	"github.com/tidwall/sjson"
 	"go.uber.org/zap"
@@ -48,14 +50,66 @@ func correctAWSLambdaMutuallyExclusiveFields(payload string, dataPlaneVersion ui
 	return processedPayload
 }
 
+func correctHTTPLogHeadersField(payload string) (string, error) {
+	for i, plugin := range gjson.Get(payload, "config_table.plugins").Array() {
+		if plugin.Get("name").Str != "http-log" {
+			continue
+		}
+
+		for _, headers := range plugin.Get("config.headers").Array() {
+			// When `headers.Type` is not a JSON object, no headers have been set, so we'll re-write it to be null.
+			// This matches the behavior of the gateway when the headers field exists, but no value is defined.
+			var newHeadersIface interface{}
+
+			// Handle transforming the headers on each plugin from an object consisting
+			// of a single string (`{"header-1": "value-1"}`), to an object consisting
+			// of a single string value in an array (`{"header-1": ["value-1"]}`).
+			if headers.Type == gjson.JSON {
+				newHeaders := make(map[string][]string, len(headers.Indexes))
+				newHeadersIface = newHeaders
+				for key, values := range headers.Map() {
+					// In <=2.8, while it is possible to set a header with an empty array of values,
+					// the data plane won't send the header to the HTTP log endpoint with no value to
+					// the defined HTTP endpoint. To match this behavior, we'll remove the header.
+					if len(values.Str) == 0 {
+						continue
+					}
+
+					newHeaders[key] = []string{values.Str}
+				}
+			}
+
+			// Replace the headers for the http-log plugin.
+			var err error
+			if payload, err = sjson.SetOptions(
+				payload,
+				fmt.Sprintf("config_table.plugins.%d.config.headers", i),
+				newHeadersIface,
+				&sjson.Options{Optimistic: true},
+			); err != nil {
+				return "", err
+			}
+		}
+	}
+
+	return payload, nil
+}
+
 func VersionCompatibilityExtraProcessing(payload string, dataPlaneVersion uint64, isEnterprise bool,
 	logger *zap.Logger,
 ) (string, error) {
 	processedPayload := payload
 
+	var err error
 	if dataPlaneVersion < dataPlaneVersion3000 {
 		// 'aws_region' and 'host' are mutually exclusive for DP < 3.x
 		processedPayload = correctAWSLambdaMutuallyExclusiveFields(processedPayload, dataPlaneVersion, logger)
+
+		// The `headers` field on the `http-log` plugin changed from an array of strings to just a single string
+		// for DP's >= 3.0. As such, we need to transform the headers back to a single string within an array.
+		if processedPayload, err = correctHTTPLogHeadersField(processedPayload); err != nil {
+			return "", err
+		}
 	}
 
 	return processedPayload, nil

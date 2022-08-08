@@ -155,11 +155,21 @@ func TestVersionCompatibility(t *testing.T) {
 			name: "hmac-auth",
 			id:   uuid.NewString(),
 		},
+		// DP <= 2.8
+		//   - Convert header values from `string` to `[]string`.
+		//     e.g.: `"value-1"` -> `[]string{"value-1"}`
+		//
+		// DP >= 3.0
+		//   - Default behavior, use `string` header values as-is.
 		{
 			name: "http-log",
 			id:   uuid.NewString(),
 			config: `{
-				"http_endpoint": "http://example.com/logs"
+				"http_endpoint": "http://example.com/logs",
+				"headers": {
+					"header-1": "value-1",
+					"header-2": "value-2"
+				}
 			}`,
 		},
 		{
