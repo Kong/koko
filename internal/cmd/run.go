@@ -96,7 +96,7 @@ func Run(ctx context.Context, config ServerConfig) error {
 	if err != nil {
 		return fmt.Errorf("failed to register installation: %w", err)
 	}
-	logger.Info("running with cluster-id", zap.String("id", instID))
+	logger.Info("running with installation-id", zap.String("id", instID))
 
 	validator, err := validators.NewLuaValidator(validators.Opts{
 		Logger:      logger,
@@ -240,6 +240,17 @@ func Run(ctx context.Context, config ServerConfig) error {
 			": %w", err)
 	}
 
+	parametersLoader, err := kongConfigWS.NewParametersLoader(instID)
+	if err != nil {
+		return fmt.Errorf("failed to create parameters configuration loader"+
+			": %w", err)
+	}
+	err = loader.Register(parametersLoader)
+	if err != nil {
+		return fmt.Errorf("failed to register parameters configuration loader"+
+			": %w", err)
+	}
+
 	// setup version compatibility processor
 	vcLogger := logger.With(zap.String("component", "version-compatibility"))
 	vc, err := kongConfigWS.NewVersionCompatibilityProcessor(kongConfigWS.VersionCompatibilityOpts{
@@ -367,8 +378,7 @@ func Run(ctx context.Context, config ServerConfig) error {
 		reporter := util.Reporter{
 			Info: util.Info{
 				KokoVersion: info.VERSION,
-				// TODO(hbagdi): replace this with cluster-id
-				ID: uuid.NewString(),
+				ID:          instID,
 			},
 			Logger: logger,
 		}
