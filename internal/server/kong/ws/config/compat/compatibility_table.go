@@ -36,18 +36,6 @@ func standardPluginNotAvailableMessage(pluginName string, versionWithFeatureSupp
 	)
 }
 
-func standardCoreEntityFieldsMessage(entityName string, fields []string, versionWithFeatureSupport string) string {
-	quotedFields := "'" + strings.Join(fields, "', '") + "'"
-
-	return fmt.Sprintf("For the '%s' entity, "+
-		"one or more of the following schema fields are set: %s "+
-		"but Kong gateway versions < %s do not support these fields. "+
-		entityName,
-		quotedFields,
-		versionWithFeatureSupport,
-	)
-}
-
 const (
 	versionsPre260 = 2005999999
 	versionsPre270 = 2006999999
@@ -402,9 +390,15 @@ var (
 			Metadata: config.ChangeMetadata{
 				ID:       config.ChangeID("P119"),
 				Severity: config.ChangeSeverityError,
-				Description: standardCoreEntityFieldsMessage(config.Service.String(),
-					[]string{"enabled"},
-					"2.7"),
+				Description: "For the 'Service' entity, " +
+					"'enabled' field has been set to 'true' but Kong " +
+					"Gateway versions < 2.7 do not support this feature. " +
+					"The Service has been left enabled in the Kong Gateway, " +
+					"and the traffic for the Service is being routed " +
+					"by Kong Gateway. " +
+					"This is a critical error and may result in unwanted " +
+					"traffic being routed to the upstream Services via Kong " +
+					"Gateway.",
 				Resolution: standardUpgradeMessage("2.7"),
 			},
 			Version: versionsPre270,
