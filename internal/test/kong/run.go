@@ -58,7 +58,7 @@ cleanup () {
   docker rm -f koko-dp
 }
 DIR=$(dirname "$0")
-trap cleanup SIGINT
+trap cleanup INT
 docker run \
   --rm \
   --name koko-dp \
@@ -78,7 +78,8 @@ docker run \
 {{- if .Computed.CPHostname }}
   --add-host "{{- .Computed.CPHostname -}}:host-gateway" \
 {{- end -}}
-  --network host {{ .Image }}
+  --network host {{ .Image }} &
+wait
 `
 
 var t *template.Template
@@ -149,7 +150,7 @@ func RunDP(ctx context.Context, input DockerInput) error {
 	go func() {
 		defer wg.Done()
 		<-ctx.Done()
-		_ = cmd.Process.Signal(os.Kill)
+		_ = cmd.Process.Signal(os.Interrupt)
 	}()
 
 	err = cmd.Wait()
