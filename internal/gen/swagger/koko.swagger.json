@@ -3503,6 +3503,52 @@
         "key"
       ]
     },
+    "kong.admin.model.v1.CompatibilityIssue": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "string"
+        },
+        "severity": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "resolution": {
+          "type": "string"
+        },
+        "affected_resources": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/kong.admin.model.v1.Resource"
+          }
+        }
+      }
+    },
+    "kong.admin.model.v1.CompatibilityState": {
+      "type": "string",
+      "enum": [
+        "COMPATIBILITY_STATE_UNSPECIFIED",
+        "COMPATIBILITY_STATE_FULLY_COMPATIBLE",
+        "COMPATIBILITY_STATE_INCOMPATIBLE"
+      ],
+      "default": "COMPATIBILITY_STATE_UNSPECIFIED"
+    },
+    "kong.admin.model.v1.CompatibilityStatus": {
+      "type": "object",
+      "properties": {
+        "state": {
+          "$ref": "#/definitions/kong.admin.model.v1.CompatibilityState"
+        },
+        "issues": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/kong.admin.model.v1.CompatibilityIssue"
+          }
+        }
+      }
+    },
     "kong.admin.model.v1.Condition": {
       "type": "object",
       "properties": {
@@ -3611,6 +3657,9 @@
         },
         "config_hash": {
           "type": "string"
+        },
+        "compatibility_status": {
+          "$ref": "#/definitions/kong.admin.model.v1.CompatibilityStatus"
         }
       }
     },
@@ -3767,6 +3816,17 @@
       "type": "object",
       "properties": {
         "id": {
+          "type": "string"
+        }
+      }
+    },
+    "kong.admin.model.v1.Resource": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "type": {
           "type": "string"
         }
       }
@@ -4650,6 +4710,28 @@
     "kong.admin.service.v1.ValidateUpstreamSchemaResponse": {
       "type": "object"
     },
+    "kong.nonpublic.v1.NodeStatus": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "created_at": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "updated_at": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "issues": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/kong.admin.model.v1.CompatibilityIssue"
+          }
+        }
+      }
+    },
     "kong.relay.service.v1.ClearStatusResponse": {
       "type": "object"
     },
@@ -4657,6 +4739,9 @@
       "type": "object"
     },
     "kong.relay.service.v1.UpdateExpectedHashResponse": {
+      "type": "object"
+    },
+    "kong.relay.service.v1.UpdateNodeStatusResponse": {
       "type": "object"
     },
     "kong.relay.service.v1.UpdateStatusResponse": {

@@ -13,5 +13,29 @@ message Node {
   int32 created_at = 6;
   int32 updated_at = 7;
   string config_hash = 8;
-  // int32 last_config = 8;
+  CompatibilityStatus compatibility_status = 9;
+}
+
+enum CompatibilityState {
+  COMPATIBILITY_STATE_UNSPECIFIED = 0;
+  COMPATIBILITY_STATE_FULLY_COMPATIBLE = 1;
+  COMPATIBILITY_STATE_INCOMPATIBLE = 2;
+}
+
+message CompatibilityStatus {
+  CompatibilityState state = 1;
+  repeated CompatibilityIssue issues = 2;
+}
+
+message CompatibilityIssue {
+  string code = 1;
+  string severity = 2;
+  string description = 3;
+  string resolution = 4;
+  repeated Resource affected_resources = 5;
+}
+
+message Resource {
+  string id = 1;
+  string type = 2;
 }

@@ -4,6 +4,7 @@ package kong.relay.service.v1;
 
 import "kong/admin/model/v1/cluster.proto";
 import "kong/admin/model/v1/status.proto";
+import "kong/nonpublic/v1/node_status.proto";
 
 option go_package = "github.com/kong/koko/internal/gen/kong/relay/service/v1;v1";
 
@@ -15,6 +16,8 @@ service StatusService {
   rpc ClearStatus(ClearStatusRequest) returns (ClearStatusResponse);
 
   rpc UpdateExpectedHash(UpdateExpectedHashRequest) returns (UpdateExpectedHashResponse);
+
+  rpc UpdateNodeStatus(UpdateNodeStatusRequest) returns (UpdateNodeStatusResponse);
 }
 
 message UpdateStatusRequest {
@@ -39,3 +42,9 @@ message UpdateExpectedHashRequest {
 }
 
 message UpdateExpectedHashResponse {}
+
+message UpdateNodeStatusRequest {
+  nonpublic.v1.NodeStatus node_status = 1;
+}
+
+message UpdateNodeStatusResponse {}
