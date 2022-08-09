@@ -100,16 +100,14 @@ func (n *Negotiator) chooseVersion(requestedServ *model.ServiceRequest) (choice 
 }
 
 // NegotiateServices is the method handler for the only RPC in this service.
-// The response to the client includes:
-//    - information about the node (just the node ID for now).
-//    - for each requested service, it's either
-//      - in the accepted list:
-//        - respond with the version and a description.
-//        - call the registerer object associated with that service/version
-//          to activate the right responses on this specific peer.
-//      - in the rejected list:
-//        - with a message relevant to the reason (unknown or disabled
-//          service, bad versions).
+// The response to the client includes information about the node (only ID
+// currently) and each requested service.
+//
+// For a service in the accepted list, respond with the version and a description and
+// call the registerer object associated with that service/version to activate
+// the right responses on this specific peer.
+// For a service in the rejected list, respond with a message relevant to the reason
+// (unknown or disabled service, bad versions).
 func (n *Negotiator) NegotiateServices(
 	_ context.Context,
 	peer *wrpc.Peer,

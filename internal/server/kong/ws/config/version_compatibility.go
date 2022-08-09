@@ -51,7 +51,7 @@ func (u UpdateType) String() string {
 	return [...]string{"plugins", "services"}[u]
 }
 
-//nolint: revive
+//nolint:revive
 type ConfigTableFieldUpdate struct {
 	// Field to perform update or delete operation on; if Value is nil or
 	// ValueFromField is empty the field will be removed.
@@ -64,7 +64,7 @@ type ConfigTableFieldUpdate struct {
 	ValueFromField string
 }
 
-//nolint: revive
+//nolint:revive
 type ConfigTableFieldCondition struct {
 	// Field is a top-level or nested field; use dot notation for nested fields.
 	Field string
@@ -75,7 +75,7 @@ type ConfigTableFieldCondition struct {
 	Updates []ConfigTableFieldUpdate
 }
 
-//nolint: revive
+//nolint:revive
 type ConfigTableUpdates struct {
 	// Name is the name of the configuration or field depending on UpdateType.
 	Name string

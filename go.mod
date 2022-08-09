@@ -1,6 +1,6 @@
 module github.com/kong/koko
 
-go 1.18
+go 1.19
 
 require (
 	github.com/DataDog/datadog-go/v5 v5.1.1

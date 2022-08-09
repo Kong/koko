@@ -2,7 +2,7 @@ package config
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"time"
 
@@ -43,7 +43,7 @@ func Get(filename string) (Config, error) {
 	if filename == "" {
 		return defaultConfig, nil
 	}
-	content, err := ioutil.ReadFile(filepath.Clean(filename))
+	content, err := os.ReadFile(filepath.Clean(filename))
 	if err != nil {
 		return Config{}, fmt.Errorf("reading file '%v': %w", filename, err)
 	}

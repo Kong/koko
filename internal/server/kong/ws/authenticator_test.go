@@ -4,9 +4,9 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/pem"
-	"io/ioutil"
 	"net/http"
 	"net/url"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -291,7 +291,7 @@ func TestAuthFnPKITLS(t *testing.T) {
 }
 
 func loadCertFile(filepath string) ([]byte, error) {
-	certPEM, err := ioutil.ReadFile(filepath)
+	certPEM, err := os.ReadFile(filepath)
 	return certPEM, err
 }
 

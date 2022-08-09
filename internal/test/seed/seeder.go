@@ -6,7 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"hash/fnv"
-	"io/ioutil"
+	"io"
 	"math/rand"
 	"net/http"
 	"net/http/httputil"
@@ -391,10 +391,11 @@ func (s *seeder) doHTTPRequest(req *http.Request, msg proto.Message) error {
 	if err != nil {
 		return fmt.Errorf("unable to create resource via the API: %w", err)
 	}
+	defer resp.Body.Close()
 
 	// Replace the resource with the API response, as the API can automatically set fields & so
 	// forth. This assumes the `$.item` key contains the created resource in the response.
-	respJSON, err := ioutil.ReadAll(resp.Body)
+	respJSON, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return err
 	}

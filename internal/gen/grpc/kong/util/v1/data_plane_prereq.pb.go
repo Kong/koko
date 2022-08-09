@@ -26,6 +26,7 @@ type DataPlanePrerequisite struct {
 	unknownFields protoimpl.UnknownFields
 
 	// Types that are assignable to Config:
+	//
 	//	*DataPlanePrerequisite_RequiredPlugins
 	Config isDataPlanePrerequisite_Config `protobuf_oneof:"config"`
 }

@@ -5,7 +5,7 @@ import (
 	"compress/gzip"
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 
 	"github.com/kong/koko/internal/json"
 )
@@ -108,7 +108,7 @@ func UncompressPayload(payload []byte) ([]byte, error) {
 		return nil, err
 	}
 
-	buf, err := ioutil.ReadAll(r)
+	buf, err := io.ReadAll(r)
 	if err != nil {
 		_ = r.Close()
 		return nil, err

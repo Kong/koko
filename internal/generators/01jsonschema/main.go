@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
-	"io/ioutil"
 	"log"
 	"os"
 
@@ -38,7 +37,7 @@ func main() {
 			log.Fatalln(err)
 		}
 		filepath := fmt.Sprintf("%s/%s.json", schemasDir, name)
-		err = ioutil.WriteFile(filepath, jsonSchema, fs.ModePerm)
+		err = os.WriteFile(filepath, jsonSchema, fs.ModePerm)
 		if err != nil {
 			log.Fatalln(err)
 		}
@@ -46,7 +45,7 @@ func main() {
 
 	embedFilename := "embed.go"
 	filepath := fmt.Sprintf("%s/%s", jsonSchemaDir, embedFilename)
-	err = ioutil.WriteFile(filepath, []byte(embedContent), fs.ModePerm)
+	err = os.WriteFile(filepath, []byte(embedContent), fs.ModePerm)
 	if err != nil {
 		log.Fatalln(err)
 	}

@@ -30,7 +30,6 @@ linters:
   - gosimple
   - govet
   - grouper
-  - ifshort
   - importas
   - ineffassign
   - lll

@@ -99,7 +99,7 @@ func (ts *TestService) PanicTest() (interface{}, error) {
 	panic(errors.New("something bad happened"))
 }
 
-// nolint:revive // ctx must be second to satisfy interface
+//nolint:revive // ctx must be second to satisfy interface
 func panicTestHandler(srv interface{}, ctx context.Context, _ func(interface{}) error,
 	interceptor grpc.UnaryServerInterceptor,
 ) (interface{}, error) {
