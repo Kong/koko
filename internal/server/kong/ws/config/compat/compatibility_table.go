@@ -419,6 +419,24 @@ var (
 				},
 			},
 		},
+		{
+			Metadata: config.ChangeMetadata{
+				ID:       config.ChangeID("P120"),
+				Severity: config.ChangeSeverityError,
+				Description: standardPluginFieldsMessage("aws-lambda",
+					[]string{"proxy_scheme"}, "3.0", true),
+				Resolution: "Please use 'config.proxy_url' instead of " +
+					"'config.proxy_scheme' field.",
+			},
+			SemverRange: versions300AndAbove,
+			Update: config.ConfigTableUpdates{
+				Name: "aws-lambda",
+				Type: config.Plugin,
+				RemoveFields: []string{
+					"proxy_scheme",
+				},
+			},
+		},
 	}
 )
 
