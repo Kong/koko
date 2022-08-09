@@ -22,7 +22,8 @@ import (
 // to define new functions that piggyback off the default behavior.
 //
 // We know the resources are of the proper type, so we're disabling the type assertion linter.
-// nolint:forcetypeassert
+//
+//nolint:forcetypeassert
 var DefaultNewResourceFuncs = map[model.Type]NewResourceFunc{
 	resource.TypeCACertificate: func(_ Seeder, m proto.Message, _ int) error {
 		r := m.(*v1.CACertificate)

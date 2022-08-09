@@ -33,13 +33,15 @@ type PaginationRequest struct {
 	// following CEL expressions are supported:
 	//
 	// - Matches resources that have `tag1` as any tag:
-	//     - `"tag1" in tags`
+	//   - `"tag1" in tags`
+	//
 	// - Matches all resources that have both `tag1` & `tag2`:
-	//     - `["tag1", "tag2"].all(x, x in tags)`
-	//     - `"tag1" in tags && "tag2" in tags`
+	//   - `["tag1", "tag2"].all(x, x in tags)`
+	//   - `"tag1" in tags && "tag2" in tags`
+	//
 	// - Matches resources that have `tag1` or `tag2`:
-	//     - `["tag1", "tag2"].exists(x, x in tags)`
-	//     - `"tag1" in tags || "tag2" in tags`
+	//   - `["tag1", "tag2"].exists(x, x in tags)`
+	//   - `"tag1" in tags || "tag2" in tags`
 	//
 	// Limitations:
 	// Currently, it is only possible to filter on tags, and supported logical

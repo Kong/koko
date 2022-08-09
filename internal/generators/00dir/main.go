@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
-	"io/ioutil"
 	"log"
 	"os"
 )
@@ -12,6 +11,7 @@ import (
 // This generator generates the directory structure for the gen/jsonschema
 // package. This is done before generating the schemas because if gen/jsonschema
 // package doesn't exist, the jsonschema generator won't compile.
+//
 //go:generate go run main.go
 func main() {
 	genDir := "../../gen"
@@ -32,7 +32,7 @@ func main() {
 
 	embedFilename := "embed.go"
 	filepath := fmt.Sprintf("%s/%s", jsonSchemaDir, embedFilename)
-	err = ioutil.WriteFile(filepath, []byte(embedContent), fs.ModePerm)
+	err = os.WriteFile(filepath, []byte(embedContent), fs.ModePerm)
 	if err != nil {
 		log.Fatalln(err)
 	}

@@ -331,7 +331,7 @@ func addFilterToQuery(query sq.SelectBuilder, expr *exprpb.Expr) (sq.SelectBuild
 
 	queryArgs, err := persistence.GetQueryArgsFromExprConstants(tags)
 	if err != nil {
-		return query, nil
+		return query, err
 	}
 
 	// No-op when there are no tags to filter against, to treat it as if there is no filter at all.

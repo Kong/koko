@@ -134,7 +134,7 @@ func (r *RelayEventStreamer) setupStream(ctx context.Context,
 			if ctx.Err() != nil {
 				ctxErr = err
 				// stop retrying if ctx is cancelled
-				return nil
+				return nil //nolint:nilerr
 			}
 		}
 		return err

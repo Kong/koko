@@ -256,6 +256,7 @@ type ReportMetadataResponse struct {
 	unknownFields protoimpl.UnknownFields
 
 	// Types that are assignable to Response:
+	//
 	//	*ReportMetadataResponse_Ok
 	//	*ReportMetadataResponse_Error
 	Response isReportMetadataResponse_Response `protobuf_oneof:"response"`
@@ -491,7 +492,6 @@ type SyncConfigRequest struct {
 	// in the request.
 	// Version field has no significance outside the context of a single ephemeral
 	// connection between a DP node and a CP node.
-	//
 	Version uint64 `protobuf:"varint,2,opt,name=version,proto3" json:"version,omitempty"`
 	// raw binary hash of the config data.
 	ConfigHash string          `protobuf:"bytes,3,opt,name=config_hash,json=configHash,proto3" json:"config_hash,omitempty"`
