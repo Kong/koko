@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/blang/semver/v4"
+	"github.com/kong/koko/internal/resource"
 	"github.com/kong/koko/internal/server/kong/ws/config"
 	"github.com/tidwall/gjson"
 	"github.com/tidwall/sjson"
@@ -12,20 +13,65 @@ import (
 
 var versionOlderThan300 = semver.MustParseRange("< 3.0.0")
 
+const (
+	awsLambdaExclusiveFieldChangeID = "P121"
+)
+
+func init() {
+	err := config.ChangeRegistry.Register(config.Change{
+		Metadata: config.ChangeMetadata{
+			ID:       awsLambdaExclusiveFieldChangeID,
+			Severity: config.ChangeSeverityError,
+			Description: "For the 'aws-lambda' plugin, " +
+				"'config.aws_region' and 'config.host' fields are set. " +
+				"These fields were mutually exclusive for Kong gateway " +
+				"versions < 3.0. The plugin configuration has been changed " +
+				"to remove the 'config.host' field.",
+			Resolution:       standardUpgradeMessage("3.0"),
+			DocumentationURL: "",
+		},
+		SemverRange: versionsPre300,
+		// none since the logic is hard-coded instead
+		Update: config.ConfigTableUpdates{},
+	})
+	if err != nil {
+		panic(err)
+	}
+}
+
 // correctAWSLambdaMutuallyExclusiveFields handles 'aws_region' and 'host' fields, which were
 // mutually exclusive until Kong version 2.8 but both are accepted in 3.x. If both are set
 // with DPs < 3.x, the 'host' field will be dropped in order to prevent a failure in the DP.
-func correctAWSLambdaMutuallyExclusiveFields(payload string, dataPlaneVersion string, logger *zap.Logger) string {
+func correctAWSLambdaMutuallyExclusiveFields(
+	payload string,
+	dataPlaneVersion string,
+	tracker *config.ChangeTracker,
+	logger *zap.Logger,
+) string {
 	pluginName := "aws-lambda"
 	processedPayload := payload
 	results := gjson.Get(processedPayload, "config_table.plugins.#(name=aws-lambda)#")
 	indexUpdate := 0
 	for _, res := range results.Array() {
 		updatedRaw := res.Raw
-		awsRegionResult := gjson.Get(res.Raw, "config.aws_region")
-		hostResult := gjson.Get(res.Raw, "config.host")
+		awsRegionResult := res.Get("config.aws_region")
+		hostResult := res.Get("config.host")
 		if awsRegionResult.Exists() && hostResult.Exists() {
-			var err error
+			var (
+				err      error
+				pluginID = res.Get("id").String()
+			)
+			err = tracker.TrackForResource(awsLambdaExclusiveFieldChangeID,
+				config.ResourceInfo{
+					Type: string(resource.TypePlugin),
+					ID:   pluginID,
+				})
+			if err != nil {
+				logger.Error("failed to track version compatibility"+
+					" change",
+					zap.String("change-id", awsLambdaExclusiveFieldChangeID),
+					zap.String("resource-type", "plugin"))
+			}
 			if updatedRaw, err = sjson.Delete(updatedRaw, "config.host"); err != nil {
 				logger.With(zap.String("plugin", pluginName)).
 					With(zap.String("field", "host")).
@@ -96,7 +142,7 @@ func correctHTTPLogHeadersField(payload string) (string, error) {
 }
 
 func VersionCompatibilityExtraProcessing(payload string, dataPlaneVersion string, isEnterprise bool,
-	logger *zap.Logger,
+	tracker *config.ChangeTracker, logger *zap.Logger,
 ) (string, error) {
 	processedPayload := payload
 
@@ -111,7 +157,8 @@ func VersionCompatibilityExtraProcessing(payload string, dataPlaneVersion string
 
 	if versionOlderThan300(dataPlaneSemVer) {
 		// 'aws_region' and 'host' are mutually exclusive for DP < 3.x
-		processedPayload = correctAWSLambdaMutuallyExclusiveFields(processedPayload, dataPlaneVersion, logger)
+		processedPayload = correctAWSLambdaMutuallyExclusiveFields(
+			processedPayload, dataPlaneVersion, tracker, logger)
 
 		// The `headers` field on the `http-log` plugin changed from an array of strings to just a single string
 		// for DP's >= 3.0. As such, we need to transform the headers back to a single string within an array.

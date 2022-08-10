@@ -175,6 +175,7 @@ func TestVersionCompatibility_AddConfigTableUpdates(t *testing.T) {
 							RemoveFields: []string{
 								"plugin_1_field_1",
 							},
+							ChangeID: "P042",
 						},
 					},
 				},
@@ -187,6 +188,7 @@ func TestVersionCompatibility_AddConfigTableUpdates(t *testing.T) {
 						RemoveFields: []string{
 							"plugin_1_field_1",
 						},
+						ChangeID: "P042",
 					},
 				},
 			},
@@ -203,6 +205,7 @@ func TestVersionCompatibility_AddConfigTableUpdates(t *testing.T) {
 							RemoveFields: []string{
 								"plugin_1_field_1",
 							},
+							ChangeID: "P042",
 						},
 					},
 				},
@@ -214,6 +217,7 @@ func TestVersionCompatibility_AddConfigTableUpdates(t *testing.T) {
 							RemoveFields: []string{
 								"plugin_1_field_1",
 							},
+							ChangeID: "P043",
 						},
 						{
 							Name: "plugin_2",
@@ -222,6 +226,7 @@ func TestVersionCompatibility_AddConfigTableUpdates(t *testing.T) {
 								"plugin_2_field_1",
 								"plugin_2_field_2",
 							},
+							ChangeID: "P044",
 						},
 					},
 				},
@@ -234,6 +239,7 @@ func TestVersionCompatibility_AddConfigTableUpdates(t *testing.T) {
 						RemoveFields: []string{
 							"plugin_1_field_1",
 						},
+						ChangeID: "P042",
 					},
 				},
 				"< 2.5.0": {
@@ -243,6 +249,7 @@ func TestVersionCompatibility_AddConfigTableUpdates(t *testing.T) {
 						RemoveFields: []string{
 							"plugin_1_field_1",
 						},
+						ChangeID: "P043",
 					},
 					{
 						Name: "plugin_2",
@@ -251,6 +258,7 @@ func TestVersionCompatibility_AddConfigTableUpdates(t *testing.T) {
 							"plugin_2_field_1",
 							"plugin_2_field_2",
 						},
+						ChangeID: "P044",
 					},
 				},
 			},
@@ -293,6 +301,7 @@ func TestVersionCompatibility_AddConfigTableUpdates(t *testing.T) {
 								},
 							},
 						},
+						ChangeID: "P032",
 					},
 				},
 			},
@@ -313,6 +322,7 @@ func TestVersionCompatibility_AddConfigTableUpdates(t *testing.T) {
 								},
 							},
 						},
+						ChangeID: "P033",
 					},
 				},
 				"< 2.5.0": {
@@ -332,6 +342,7 @@ func TestVersionCompatibility_AddConfigTableUpdates(t *testing.T) {
 								},
 							},
 						},
+						ChangeID: "P034",
 					},
 				},
 			},
@@ -366,6 +377,7 @@ var (
 						Condition: "array_element_1=condition",
 					},
 				},
+				ChangeID: "T101",
 			},
 			{
 				Name: "plugin_2",
@@ -373,6 +385,7 @@ var (
 				RemoveFields: []string{
 					"plugin_2_field_1",
 				},
+				ChangeID: "T101",
 			},
 			{
 				Name: "plugin_3",
@@ -393,6 +406,7 @@ var (
 						Condition: "array_element_2=condition",
 					},
 				},
+				ChangeID: "T102",
 			},
 		},
 	}
@@ -419,6 +433,7 @@ var (
 						},
 					},
 				},
+				ChangeID: "T103",
 			},
 		},
 	}
@@ -430,6 +445,7 @@ var (
 				RemoveFields: []string{
 					"plugin_1_field_1",
 				},
+				ChangeID: "T104",
 			},
 		},
 		"< 2.5.0": {
@@ -439,6 +455,7 @@ var (
 				RemoveFields: []string{
 					"plugin_1_field_1",
 				},
+				ChangeID: "T105",
 			},
 			{
 				Name: "plugin_2",
@@ -453,6 +470,7 @@ var (
 						Condition: "array_element_1=condition",
 					},
 				},
+				ChangeID: "T106",
 			},
 		},
 	}
@@ -562,6 +580,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 		uncompressedPayload string
 		dataPlaneVersion    string
 		expectedPayload     string
+		expectedChanges     TrackedChanges
 	}{
 		{
 			name: "single field element",
@@ -573,6 +592,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 						RemoveFields: []string{
 							"plugin_1_field_1",
 						},
+						ChangeID: "T101",
 					},
 				},
 			},
@@ -580,6 +600,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 				"config_table": {
 					"plugins": [
 						{
+							"id": "933a565e-b645-4101-ab4a-a999fd1951eb",
 							"name": "plugin_1",
 							"config": {
 								"plugin_1_field_1": "element"
@@ -593,12 +614,26 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 				"config_table": {
 					"plugins": [
 						{
+							"id": "933a565e-b645-4101-ab4a-a999fd1951eb",
 							"name": "plugin_1",
 							"config": {}
 						}
 					]
 				}
 			}`,
+			expectedChanges: TrackedChanges{
+				ChangeDetails: []ChangeDetail{
+					{
+						ID: "T101",
+						Resources: []ResourceInfo{
+							{
+								Type: "plugin",
+								ID:   "933a565e-b645-4101-ab4a-a999fd1951eb",
+							},
+						},
+					},
+				},
+			},
 		},
 		{
 			name: "single field object",
@@ -610,6 +645,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 						RemoveFields: []string{
 							"plugin_1_field_1",
 						},
+						ChangeID: "T101",
 					},
 				},
 			},
@@ -639,6 +675,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 					]
 				}
 			}`,
+			expectedChanges: TrackedChanges{},
 		},
 		{
 			name: "single field array",
@@ -650,6 +687,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 						RemoveFields: []string{
 							"plugin_1_field_1",
 						},
+						ChangeID: "T101",
 					},
 				},
 			},
@@ -657,6 +695,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 				"config_table": {
 					"plugins": [
 						{
+						"id": "47e46c41-e781-49d1-b4b8-d02e419b7ef5",
 							"name": "plugin_1",
 							"config": {
 								"plugin_1_field_1": [
@@ -673,12 +712,26 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 				"config_table": {
 					"plugins": [
 						{
+							"id": "47e46c41-e781-49d1-b4b8-d02e419b7ef5",
 							"name": "plugin_1",
 							"config": {}
 						}
 					]
 				}
 			}`,
+			expectedChanges: TrackedChanges{
+				ChangeDetails: []ChangeDetail{
+					{
+						ID: "T101",
+						Resources: []ResourceInfo{
+							{
+								Type: "plugin",
+								ID:   "47e46c41-e781-49d1-b4b8-d02e419b7ef5",
+							},
+						},
+					},
+				},
+			},
 		},
 		{
 			name: "single field element where field is last",
@@ -690,6 +743,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 						RemoveFields: []string{
 							"plugin_1_field_2",
 						},
+						ChangeID: "T101",
 					},
 				},
 			},
@@ -697,6 +751,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 				"config_table": {
 					"plugins": [
 						{
+							"id": "ab3b5a6d-923e-4e71-83b4-77e4b68d3e55",
 							"name": "plugin_1",
 							"config": {
 								"plugin_1_field_1": "element",
@@ -711,6 +766,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 				"config_table": {
 					"plugins": [
 						{
+							"id": "ab3b5a6d-923e-4e71-83b4-77e4b68d3e55",
 							"name": "plugin_1",
 							"config": {
 								"plugin_1_field_1": "element"
@@ -719,6 +775,19 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 					]
 				}
 			}`,
+			expectedChanges: TrackedChanges{
+				ChangeDetails: []ChangeDetail{
+					{
+						ID: "T101",
+						Resources: []ResourceInfo{
+							{
+								Type: "plugin",
+								ID:   "ab3b5a6d-923e-4e71-83b4-77e4b68d3e55",
+							},
+						},
+					},
+				},
+			},
 		},
 		{
 			name: "multiple field elements",
@@ -730,6 +799,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 						RemoveFields: []string{
 							"plugin_1_field_1",
 						},
+						ChangeID: "T101",
 					},
 					{
 						Name: "plugin_3",
@@ -737,6 +807,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 						RemoveFields: []string{
 							"plugin_3_field_1",
 						},
+						ChangeID: "T102",
 					},
 				},
 			},
@@ -744,12 +815,14 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 				"config_table": {
 					"plugins": [
 						{
+							"id": "ab3b5a6d-923e-4e71-83b4-77e4b68d3e55",
 							"name": "plugin_1",
 							"config": {
 								"plugin_1_field_1": "element"
 							}
 						},
 						{
+							"id": "af1ab105-c9a3-42c8-9b12-442e3fd87a7f",
 							"name": "plugin_3",
 							"config": {
 								"plugin_3_field_2": "element",
@@ -764,10 +837,12 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 				"config_table": {
 					"plugins": [
 						{
+							"id": "ab3b5a6d-923e-4e71-83b4-77e4b68d3e55",
 							"name": "plugin_1",
 							"config": {}
 						},
 						{
+							"id": "af1ab105-c9a3-42c8-9b12-442e3fd87a7f",
 							"name": "plugin_3",
 							"config": {
 								"plugin_3_field_2": "element"
@@ -776,6 +851,28 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 					]
 				}
 			}`,
+			expectedChanges: TrackedChanges{
+				ChangeDetails: []ChangeDetail{
+					{
+						ID: "T101",
+						Resources: []ResourceInfo{
+							{
+								Type: "plugin",
+								ID:   "ab3b5a6d-923e-4e71-83b4-77e4b68d3e55",
+							},
+						},
+					},
+					{
+						ID: "T102",
+						Resources: []ResourceInfo{
+							{
+								Type: "plugin",
+								ID:   "af1ab105-c9a3-42c8-9b12-442e3fd87a7f",
+							},
+						},
+					},
+				},
+			},
 		},
 		{
 			name: "multiple field elements from multiple plugin instances",
@@ -787,6 +884,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 						RemoveFields: []string{
 							"plugin_1_field_1",
 						},
+						ChangeID: "T101",
 					},
 				},
 			},
@@ -794,12 +892,14 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 				"config_table": {
 					"plugins": [
 						{
+							"id": "ab3b5a6d-923e-4e71-83b4-77e4b68d3e55",
 							"name": "plugin_1",
 							"config": {
 								"plugin_1_field_1": "element"
 							}
 						},
 						{
+							"id": "5441b100-f441-4d4b-bcc2-3bb153e2bd40",
 							"name": "plugin_1",
 							"config": {
 								"plugin_1_field_2": "element",
@@ -814,10 +914,12 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 				"config_table": {
 					"plugins": [
 						{
+							"id": "ab3b5a6d-923e-4e71-83b4-77e4b68d3e55",
 							"name": "plugin_1",
 							"config": {}
 						},
 						{
+							"id": "5441b100-f441-4d4b-bcc2-3bb153e2bd40",
 							"name": "plugin_1",
 							"config": {
 								"plugin_1_field_2": "element"
@@ -826,6 +928,23 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 					]
 				}
 			}`,
+			expectedChanges: TrackedChanges{
+				ChangeDetails: []ChangeDetail{
+					{
+						ID: "T101",
+						Resources: []ResourceInfo{
+							{
+								Type: "plugin",
+								ID:   "5441b100-f441-4d4b-bcc2-3bb153e2bd40",
+							},
+							{
+								Type: "plugin",
+								ID:   "ab3b5a6d-923e-4e71-83b4-77e4b68d3e55",
+							},
+						},
+					},
+				},
+			},
 		},
 		{
 			name: "nested field element",
@@ -837,6 +956,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 						RemoveFields: []string{
 							"plugin_1_field_1.plugin_1_nested_field_1",
 						},
+						ChangeID: "T101",
 					},
 				},
 			},
@@ -844,6 +964,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 				"config_table": {
 					"plugins": [
 						{
+							"id": "ab3b5a6d-923e-4e71-83b4-77e4b68d3e55",
 							"name": "plugin_1",
 							"config": {
 								"plugin_1_field_1": {
@@ -859,6 +980,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 				"config_table": {
 					"plugins": [
 						{
+							"id": "ab3b5a6d-923e-4e71-83b4-77e4b68d3e55",
 							"name": "plugin_1",
 							"config": {
 								"plugin_1_field_1": {}
@@ -867,6 +989,19 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 					]
 				}
 			}`,
+			expectedChanges: TrackedChanges{
+				ChangeDetails: []ChangeDetail{
+					{
+						ID: "T101",
+						Resources: []ResourceInfo{
+							{
+								Type: "plugin",
+								ID:   "ab3b5a6d-923e-4e71-83b4-77e4b68d3e55",
+							},
+						},
+					},
+				},
+			},
 		},
 		{
 			name: "nested field with additional fields remaining",
@@ -878,6 +1013,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 						RemoveFields: []string{
 							"plugin_1_field_1.plugin_1_nested_field_1",
 						},
+						ChangeID: "T101",
 					},
 				},
 			},
@@ -885,6 +1021,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 				"config_table": {
 					"plugins": [
 						{
+							"id": "ab3b5a6d-923e-4e71-83b4-77e4b68d3e55",
 							"name": "plugin_1",
 							"config": {
 								"plugin_1_field_1": {
@@ -903,6 +1040,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 				"config_table": {
 					"plugins": [
 						{
+							"id": "ab3b5a6d-923e-4e71-83b4-77e4b68d3e55",
 							"name": "plugin_1",
 							"config": {
 								"plugin_1_field_1": {
@@ -915,6 +1053,19 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 					]
 				}
 			}`,
+			expectedChanges: TrackedChanges{
+				ChangeDetails: []ChangeDetail{
+					{
+						ID: "T101",
+						Resources: []ResourceInfo{
+							{
+								Type: "plugin",
+								ID:   "ab3b5a6d-923e-4e71-83b4-77e4b68d3e55",
+							},
+						},
+					},
+				},
+			},
 		},
 		{
 			name: "two minor versions older",
@@ -926,6 +1077,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 						RemoveFields: []string{
 							"plugin_1_field_2",
 						},
+						ChangeID: "T101",
 					},
 				},
 				"< 2.7.0": {
@@ -935,6 +1087,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 						RemoveFields: []string{
 							"plugin_1_field_1",
 						},
+						ChangeID: "T102",
 					},
 				},
 			},
@@ -942,6 +1095,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 				"config_table": {
 					"plugins": [
 						{
+							"id": "ab3b5a6d-923e-4e71-83b4-77e4b68d3e55",
 							"name": "plugin_1",
 							"config": {
 								"plugin_1_field_1": "element",
@@ -957,6 +1111,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 				"config_table": {
 					"plugins": [
 						{
+							"id": "ab3b5a6d-923e-4e71-83b4-77e4b68d3e55",
 							"name": "plugin_1",
 							"config": {
 								"plugin_1_field_3": "element"
@@ -965,6 +1120,28 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 					]
 				}
 			}`,
+			expectedChanges: TrackedChanges{
+				ChangeDetails: []ChangeDetail{
+					{
+						ID: "T101",
+						Resources: []ResourceInfo{
+							{
+								Type: "plugin",
+								ID:   "ab3b5a6d-923e-4e71-83b4-77e4b68d3e55",
+							},
+						},
+					},
+					{
+						ID: "T102",
+						Resources: []ResourceInfo{
+							{
+								Type: "plugin",
+								ID:   "ab3b5a6d-923e-4e71-83b4-77e4b68d3e55",
+							},
+						},
+					},
+				},
+			},
 		},
 		{
 			name: "single field array removal with single item in array",
@@ -979,6 +1156,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 								Condition: "array_element_1=condition",
 							},
 						},
+						ChangeID: "T101",
 					},
 				},
 			},
@@ -986,6 +1164,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 				"config_table": {
 					"plugins": [
 						{
+							"id": "ab3b5a6d-923e-4e71-83b4-77e4b68d3e55",
 							"name": "plugin_1",
 							"config": {
 								"plugin_field_array_1": [
@@ -1003,6 +1182,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 				"config_table": {
 					"plugins": [
 						{
+							"id": "ab3b5a6d-923e-4e71-83b4-77e4b68d3e55",
 							"name": "plugin_1",
 							"config": {
 								"plugin_field_array_1": []
@@ -1011,6 +1191,19 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 					]
 				}
 			}`,
+			expectedChanges: TrackedChanges{
+				ChangeDetails: []ChangeDetail{
+					{
+						ID: "T101",
+						Resources: []ResourceInfo{
+							{
+								Type: "plugin",
+								ID:   "ab3b5a6d-923e-4e71-83b4-77e4b68d3e55",
+							},
+						},
+					},
+				},
+			},
 		},
 		{
 			name: "single nested field array removal with single item in array",
@@ -1025,6 +1218,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 								Condition: "array_element_1=condition",
 							},
 						},
+						ChangeID: "T101",
 					},
 				},
 			},
@@ -1032,6 +1226,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 				"config_table": {
 					"plugins": [
 						{
+							"id": "29b2b210-3a3a-4344-8208-36c698aa9f5a",
 							"name": "plugin_1",
 							"config": {
 								"plugin_field_1": {
@@ -1051,6 +1246,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 				"config_table": {
 					"plugins": [
 						{
+							"id": "29b2b210-3a3a-4344-8208-36c698aa9f5a",
 							"name": "plugin_1",
 							"config": {
 								"plugin_field_1": {
@@ -1061,6 +1257,19 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 					]
 				}
 			}`,
+			expectedChanges: TrackedChanges{
+				ChangeDetails: []ChangeDetail{
+					{
+						ID: "T101",
+						Resources: []ResourceInfo{
+							{
+								Type: "plugin",
+								ID:   "29b2b210-3a3a-4344-8208-36c698aa9f5a",
+							},
+						},
+					},
+				},
+			},
 		},
 		{
 			name: "single field array removal with multiple items in array",
@@ -1075,6 +1284,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 								Condition: "array_element_1=condition",
 							},
 						},
+						ChangeID: "T101",
 					},
 				},
 			},
@@ -1082,6 +1292,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 				"config_table": {
 					"plugins": [
 						{
+							"id": "29b2b210-3a3a-4344-8208-36c698aa9f5a",
 							"name": "plugin_1",
 							"config": {
 								"plugin_field_array_1": [
@@ -1116,6 +1327,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 				"config_table": {
 					"plugins": [
 						{
+							"id": "29b2b210-3a3a-4344-8208-36c698aa9f5a",
 							"name": "plugin_1",
 							"config": {
 								"plugin_field_array_1": [
@@ -1140,6 +1352,19 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 					]
 				}
 			}`,
+			expectedChanges: TrackedChanges{
+				ChangeDetails: []ChangeDetail{
+					{
+						ID: "T101",
+						Resources: []ResourceInfo{
+							{
+								Type: "plugin",
+								ID:   "29b2b210-3a3a-4344-8208-36c698aa9f5a",
+							},
+						},
+					},
+				},
+			},
 		},
 		{
 			name: "field and array removal with multiple array removals",
@@ -1157,6 +1382,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 								Condition: "array_element_3=condition",
 							},
 						},
+						ChangeID: "T101",
 					},
 				},
 			},
@@ -1164,6 +1390,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 				"config_table": {
 					"plugins": [
 						{
+							"id": "29b2b210-3a3a-4344-8208-36c698aa9f5a",
 							"name": "plugin_1",
 							"config": {
 								"plugin_1_field_1": "element"
@@ -1200,6 +1427,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 				"config_table": {
 					"plugins": [
 						{
+							"id": "29b2b210-3a3a-4344-8208-36c698aa9f5a",
 							"name": "plugin_1",
 							"config": {
 								"plugin_field_array_2": [
@@ -1220,6 +1448,19 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 					]
 				}
 			}`,
+			expectedChanges: TrackedChanges{
+				ChangeDetails: []ChangeDetail{
+					{
+						ID: "T101",
+						Resources: []ResourceInfo{
+							{
+								Type: "plugin",
+								ID:   "29b2b210-3a3a-4344-8208-36c698aa9f5a",
+							},
+						},
+					},
+				},
+			},
 		},
 		{
 			name: "no array removal",
@@ -1237,6 +1478,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 								Condition: "array_element_3=condition",
 							},
 						},
+						ChangeID: "T101",
 					},
 				},
 			},
@@ -1244,6 +1486,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 				"config_table": {
 					"plugins": [
 						{
+							"id": "29b2b210-3a3a-4344-8208-36c698aa9f5a",
 							"name": "plugin_1",
 							"config": {
 								"plugin_1_field_1": "element",
@@ -1270,6 +1513,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 				"config_table": {
 					"plugins": [
 						{
+							"id": "29b2b210-3a3a-4344-8208-36c698aa9f5a",
 							"name": "plugin_1",
 							"config": {
 								"plugin_field_array_2": [
@@ -1290,6 +1534,19 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 					]
 				}
 			}`,
+			expectedChanges: TrackedChanges{
+				ChangeDetails: []ChangeDetail{
+					{
+						ID: "T101",
+						Resources: []ResourceInfo{
+							{
+								Type: "plugin",
+								ID:   "29b2b210-3a3a-4344-8208-36c698aa9f5a",
+							},
+						},
+					},
+				},
+			},
 		},
 		{
 			name: "no array removal with multiple versions defined",
@@ -1307,6 +1564,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 								Condition: "array_element_3=condition",
 							},
 						},
+						ChangeID: "T101",
 					},
 				},
 				"< 2.7.0": {
@@ -1326,6 +1584,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 								Condition: "array_element_1=condition",
 							},
 						},
+						ChangeID: "T102",
 					},
 				},
 			},
@@ -1333,6 +1592,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 				"config_table": {
 					"plugins": [
 						{
+							"id": "29b2b210-3a3a-4344-8208-36c698aa9f5a",
 							"name": "plugin_1",
 							"config": {
 								"plugin_1_field_1": "element",
@@ -1366,6 +1626,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 				"config_table": {
 					"plugins": [
 						{
+							"id": "29b2b210-3a3a-4344-8208-36c698aa9f5a",
 							"name": "plugin_1",
 							"config": {
 								"plugin_field_array_2": [
@@ -1392,6 +1653,28 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 					]
 				}
 			}`,
+			expectedChanges: TrackedChanges{
+				ChangeDetails: []ChangeDetail{
+					{
+						ID: "T101",
+						Resources: []ResourceInfo{
+							{
+								Type: "plugin",
+								ID:   "29b2b210-3a3a-4344-8208-36c698aa9f5a",
+							},
+						},
+					},
+					{
+						ID: "T102",
+						Resources: []ResourceInfo{
+							{
+								Type: "plugin",
+								ID:   "29b2b210-3a3a-4344-8208-36c698aa9f5a",
+							},
+						},
+					},
+				},
+			},
 		},
 		{
 			name: "single field update with single item",
@@ -1412,6 +1695,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 								},
 							},
 						},
+						ChangeID: "T101",
 					},
 				},
 			},
@@ -1419,6 +1703,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 				"config_table": {
 					"plugins": [
 						{
+							"id": "c50e912c-873c-45da-9f7c-f12a19fd56d1",
 							"name": "plugin_1",
 							"config": {
 								"plugin_field_1": "condition"
@@ -1432,6 +1717,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 				"config_table": {
 					"plugins": [
 						{
+							"id": "c50e912c-873c-45da-9f7c-f12a19fd56d1",
 							"name": "plugin_1",
 							"config": {
 								"plugin_field_1": "value_updated"
@@ -1440,6 +1726,19 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 					]
 				}
 			}`,
+			expectedChanges: TrackedChanges{
+				ChangeDetails: []ChangeDetail{
+					{
+						ID: "T101",
+						Resources: []ResourceInfo{
+							{
+								Type: "plugin",
+								ID:   "c50e912c-873c-45da-9f7c-f12a19fd56d1",
+							},
+						},
+					},
+				},
+			},
 		},
 		{
 			name: "field updates with multiple data types",
@@ -1480,6 +1779,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 								},
 							},
 						},
+						ChangeID: "T101",
 					},
 				},
 			},
@@ -1487,6 +1787,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 				"config_table": {
 					"plugins": [
 						{
+							"id": "47e46c41-e781-49d1-b4b8-d02e419b7ef5",
 							"name": "plugin_1",
 							"config": {
 								"plugin_field_string": "old",
@@ -1502,6 +1803,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 				"config_table": {
 					"plugins": [
 						{
+							"id": "47e46c41-e781-49d1-b4b8-d02e419b7ef5",
 							"name": "plugin_1",
 							"config": {
 								"plugin_field_string": "new",
@@ -1512,6 +1814,19 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 					]
 				}
 			}`,
+			expectedChanges: TrackedChanges{
+				ChangeDetails: []ChangeDetail{
+					{
+						ID: "T101",
+						Resources: []ResourceInfo{
+							{
+								Type: "plugin",
+								ID:   "47e46c41-e781-49d1-b4b8-d02e419b7ef5",
+							},
+						},
+					},
+				},
+			},
 		},
 		{
 			name: "field update with multiple value updates",
@@ -1536,6 +1851,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 								},
 							},
 						},
+						ChangeID: "T101",
 					},
 				},
 			},
@@ -1543,6 +1859,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 				"config_table": {
 					"plugins": [
 						{
+							"id": "47e46c41-e781-49d1-b4b8-d02e419b7ef5",
 							"name": "plugin_1",
 							"config": {
 								"plugin_field_1": "condition",
@@ -1559,6 +1876,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 				"config_table": {
 					"plugins": [
 						{
+							"id": "47e46c41-e781-49d1-b4b8-d02e419b7ef5",
 							"name": "plugin_1",
 							"config": {
 								"plugin_field_1": "value_updated",
@@ -1570,6 +1888,19 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 					]
 				}
 			}`,
+			expectedChanges: TrackedChanges{
+				ChangeDetails: []ChangeDetail{
+					{
+						ID: "T101",
+						Resources: []ResourceInfo{
+							{
+								Type: "plugin",
+								ID:   "47e46c41-e781-49d1-b4b8-d02e419b7ef5",
+							},
+						},
+					},
+				},
+			},
 		},
 		{
 			name: "nested field update",
@@ -1590,6 +1921,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 								},
 							},
 						},
+						ChangeID: "T101",
 					},
 				},
 			},
@@ -1597,6 +1929,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 				"config_table": {
 					"plugins": [
 						{
+							"id": "47e46c41-e781-49d1-b4b8-d02e419b7ef5",
 							"name": "plugin_1",
 							"config": {
 								"plugin_field_1": {
@@ -1612,6 +1945,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 				"config_table": {
 					"plugins": [
 						{
+							"id": "47e46c41-e781-49d1-b4b8-d02e419b7ef5",
 							"name": "plugin_1",
 							"config": {
 								"plugin_field_1": {
@@ -1622,6 +1956,19 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 					]
 				}
 			}`,
+			expectedChanges: TrackedChanges{
+				ChangeDetails: []ChangeDetail{
+					{
+						ID: "T101",
+						Resources: []ResourceInfo{
+							{
+								Type: "plugin",
+								ID:   "47e46c41-e781-49d1-b4b8-d02e419b7ef5",
+							},
+						},
+					},
+				},
+			},
 		},
 		{
 			name: "field update with additional nested field update",
@@ -1646,6 +1993,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 								},
 							},
 						},
+						ChangeID: "T101",
 					},
 				},
 			},
@@ -1653,6 +2001,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 				"config_table": {
 					"plugins": [
 						{
+							"id": "47e46c41-e781-49d1-b4b8-d02e419b7ef5",
 							"name": "plugin_1",
 							"config": {
 								"plugin_field_1": "condition",
@@ -1669,6 +2018,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 				"config_table": {
 					"plugins": [
 						{
+							"id": "47e46c41-e781-49d1-b4b8-d02e419b7ef5",
 							"name": "plugin_1",
 							"config": {
 								"plugin_field_1": "value_updated",
@@ -1680,6 +2030,19 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 					]
 				}
 			}`,
+			expectedChanges: TrackedChanges{
+				ChangeDetails: []ChangeDetail{
+					{
+						ID: "T101",
+						Resources: []ResourceInfo{
+							{
+								Type: "plugin",
+								ID:   "47e46c41-e781-49d1-b4b8-d02e419b7ef5",
+							},
+						},
+					},
+				},
+			},
 		},
 		{
 			name: "no field updates",
@@ -1704,6 +2067,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 								},
 							},
 						},
+						ChangeID: "T101",
 					},
 				},
 			},
@@ -1711,6 +2075,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 				"config_table": {
 					"plugins": [
 						{
+							"id": "47e46c41-e781-49d1-b4b8-d02e419b7ef5",
 							"name": "plugin_1",
 							"config": {
 								"plugin_field_1": "value",
@@ -1727,6 +2092,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 				"config_table": {
 					"plugins": [
 						{
+							"id": "47e46c41-e781-49d1-b4b8-d02e419b7ef5",
 							"name": "plugin_1",
 							"config": {
 								"plugin_field_1": "value",
@@ -1738,6 +2104,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 					]
 				}
 			}`,
+			expectedChanges: TrackedChanges{},
 		},
 		{
 			name: "field, array removal, and field update",
@@ -1767,6 +2134,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 								},
 							},
 						},
+						ChangeID: "T101",
 					},
 				},
 			},
@@ -1774,6 +2142,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 				"config_table": {
 					"plugins": [
 						{
+							"id": "47e46c41-e781-49d1-b4b8-d02e419b7ef5",
 							"name": "plugin_1",
 							"config": {
 								"plugin_1_field_1": "element"
@@ -1811,6 +2180,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 				"config_table": {
 					"plugins": [
 						{
+							"id": "47e46c41-e781-49d1-b4b8-d02e419b7ef5",
 							"name": "plugin_1",
 							"config": {
 								"plugin_field_array_2": [
@@ -1832,6 +2202,19 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 					]
 				}
 			}`,
+			expectedChanges: TrackedChanges{
+				ChangeDetails: []ChangeDetail{
+					{
+						ID: "T101",
+						Resources: []ResourceInfo{
+							{
+								Type: "plugin",
+								ID:   "47e46c41-e781-49d1-b4b8-d02e419b7ef5",
+							},
+						},
+					},
+				},
+			},
 		},
 		{
 			name: "field value create based on other field and delete",
@@ -1855,6 +2238,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 								},
 							},
 						},
+						ChangeID: "T101",
 					},
 				},
 			},
@@ -1862,6 +2246,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 				"config_table": {
 					"plugins": [
 						{
+							"id": "47e46c41-e781-49d1-b4b8-d02e419b7ef5",
 							"name": "plugin_1",
 							"config": {
 								"plugin_field_1": "value"
@@ -1875,6 +2260,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 				"config_table": {
 					"plugins": [
 						{
+							"id": "47e46c41-e781-49d1-b4b8-d02e419b7ef5",
 							"name": "plugin_1",
 							"config": {
 								"plugin_field_2": "value"
@@ -1883,6 +2269,19 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 					]
 				}
 			}`,
+			expectedChanges: TrackedChanges{
+				ChangeDetails: []ChangeDetail{
+					{
+						ID: "T101",
+						Resources: []ResourceInfo{
+							{
+								Type: "plugin",
+								ID:   "47e46c41-e781-49d1-b4b8-d02e419b7ef5",
+							},
+						},
+					},
+				},
+			},
 		},
 		{
 			name: "field value update based on other field and delete",
@@ -1906,6 +2305,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 								},
 							},
 						},
+						ChangeID: "T101",
 					},
 				},
 			},
@@ -1913,6 +2313,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 				"config_table": {
 					"plugins": [
 						{
+							"id": "47e46c41-e781-49d1-b4b8-d02e419b7ef5",
 							"name": "plugin_1",
 							"config": {
 								"plugin_field_1": "plugin_field_1_value"
@@ -1927,6 +2328,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 				"config_table": {
 					"plugins": [
 						{
+							"id": "47e46c41-e781-49d1-b4b8-d02e419b7ef5",
 							"name": "plugin_1",
 							"config": {
 								"plugin_field_2": "plugin_field_1_value"
@@ -1935,6 +2337,19 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 					]
 				}
 			}`,
+			expectedChanges: TrackedChanges{
+				ChangeDetails: []ChangeDetail{
+					{
+						ID: "T101",
+						Resources: []ResourceInfo{
+							{
+								Type: "plugin",
+								ID:   "47e46c41-e781-49d1-b4b8-d02e419b7ef5",
+							},
+						},
+					},
+				},
+			},
 		},
 		{
 			name: "field value based on non-existing field; ensure no change",
@@ -1955,6 +2370,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 								},
 							},
 						},
+						ChangeID: "T101",
 					},
 				},
 			},
@@ -1962,6 +2378,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 				"config_table": {
 					"plugins": [
 						{
+							"id": "47e46c41-e781-49d1-b4b8-d02e419b7ef5",
 							"name": "plugin_1",
 							"config": {
 								"plugin_field_1": "value"
@@ -1975,6 +2392,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 				"config_table": {
 					"plugins": [
 						{
+							"id": "47e46c41-e781-49d1-b4b8-d02e419b7ef5",
 							"name": "plugin_1",
 							"config": {
 								"plugin_field_1": "value"
@@ -1983,15 +2401,17 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 					]
 				}
 			}`,
+			expectedChanges: TrackedChanges{},
 		},
 		{
 			name: "existing plugin to be removed is removed",
 			configTableUpdates: map[string][]ConfigTableUpdates{
 				"< 3.0.0": {
 					{
-						Name:   "plugin_1",
-						Type:   Plugin,
-						Remove: true,
+						Name:     "plugin_1",
+						Type:     Plugin,
+						Remove:   true,
+						ChangeID: "T101",
 					},
 				},
 			},
@@ -1999,12 +2419,14 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 				"config_table": {
 					"plugins": [
 						{
+							"id": "2f303641-37dd-4757-a189-bdebe357fd23",
 							"name": "plugin_1",
 							"config": {
 								"plugin_field_1": "value"
 							}
 						},
 						{
+							"id": "ab3b5a6d-923e-4e71-83b4-77e4b68d3e55",
 							"name": "plugin_2",
 							"config": {
 								"plugin_field_2": "value"
@@ -2018,6 +2440,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 				"config_table": {
 					"plugins": [
 						{
+							"id": "ab3b5a6d-923e-4e71-83b4-77e4b68d3e55",
 							"name": "plugin_2",
 							"config": {
 								"plugin_field_2": "value"
@@ -2026,20 +2449,35 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 					]
 				}
 			}`,
+			expectedChanges: TrackedChanges{
+				ChangeDetails: []ChangeDetail{
+					{
+						ID: "T101",
+						Resources: []ResourceInfo{
+							{
+								Type: "plugin",
+								ID:   "2f303641-37dd-4757-a189-bdebe357fd23",
+							},
+						},
+					},
+				},
+			},
 		},
 		{
 			name: "multiple existing plugins to be removed are removed",
 			configTableUpdates: map[string][]ConfigTableUpdates{
 				"< 3.0.0": {
 					{
-						Name:   "plugin_1",
-						Type:   Plugin,
-						Remove: true,
+						Name:     "plugin_1",
+						Type:     Plugin,
+						Remove:   true,
+						ChangeID: "T101",
 					},
 					{
-						Name:   "plugin_2",
-						Type:   Plugin,
-						Remove: true,
+						Name:     "plugin_2",
+						Type:     Plugin,
+						Remove:   true,
+						ChangeID: "T102",
 					},
 				},
 			},
@@ -2047,18 +2485,21 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 				"config_table": {
 					"plugins": [
 						{
+							"id": "5441b100-f441-4d4b-bcc2-3bb153e2bd40",
 							"name": "plugin_1",
 							"config": {
 								"plugin_field_1": "value"
 							}
 						},
 						{
+							"id": "5441b100-f441-4d4b-bcc2-3bb153e2bd41",
 							"name": "plugin_2",
 							"config": {
 								"plugin_field_2": "value"
 							}
 						},
 						{
+							"id": "5441b100-f441-4d4b-bcc2-3bb153e2bd43",
 							"name": "plugin_3",
 							"config": {
 								"plugin_field_3": "value"
@@ -2072,6 +2513,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 				"config_table": {
 					"plugins": [
 						{
+							"id": "5441b100-f441-4d4b-bcc2-3bb153e2bd43",
 							"name": "plugin_3",
 							"config": {
 								"plugin_field_3": "value"
@@ -2080,20 +2522,44 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 					]
 				}
 			}`,
+			expectedChanges: TrackedChanges{
+				ChangeDetails: []ChangeDetail{
+					{
+						ID: "T101",
+						Resources: []ResourceInfo{
+							{
+								Type: "plugin",
+								ID:   "5441b100-f441-4d4b-bcc2-3bb153e2bd40",
+							},
+						},
+					},
+					{
+						ID: "T102",
+						Resources: []ResourceInfo{
+							{
+								Type: "plugin",
+								ID:   "5441b100-f441-4d4b-bcc2-3bb153e2bd41",
+							},
+						},
+					},
+				},
+			},
 		},
 		{
 			name: "all existing plugins to be removed are removed",
 			configTableUpdates: map[string][]ConfigTableUpdates{
 				"< 3.0.0": {
 					{
-						Name:   "plugin_1",
-						Type:   Plugin,
-						Remove: true,
+						Name:     "plugin_1",
+						Type:     Plugin,
+						Remove:   true,
+						ChangeID: "T101",
 					},
 					{
-						Name:   "plugin_2",
-						Type:   Plugin,
-						Remove: true,
+						Name:     "plugin_2",
+						Type:     Plugin,
+						Remove:   true,
+						ChangeID: "T102",
 					},
 				},
 			},
@@ -2101,12 +2567,14 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 				"config_table": {
 					"plugins": [
 						{
+							"id": "5441b100-f441-4d4b-bcc2-3bb153e2bd40",
 							"name": "plugin_1",
 							"config": {
 								"plugin_field_1": "value"
 							}
 						},
 						{
+							"id": "5441b100-f441-4d4b-bcc2-3bb153e2bd41",
 							"name": "plugin_2",
 							"config": {
 								"plugin_field_2": "value"
@@ -2121,15 +2589,38 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 					"plugins": []
 				}
 			}`,
+			expectedChanges: TrackedChanges{
+				ChangeDetails: []ChangeDetail{
+					{
+						ID: "T101",
+						Resources: []ResourceInfo{
+							{
+								Type: "plugin",
+								ID:   "5441b100-f441-4d4b-bcc2-3bb153e2bd40",
+							},
+						},
+					},
+					{
+						ID: "T102",
+						Resources: []ResourceInfo{
+							{
+								Type: "plugin",
+								ID:   "5441b100-f441-4d4b-bcc2-3bb153e2bd41",
+							},
+						},
+					},
+				},
+			},
 		},
 		{
 			name: "existing plugin not to be removed is not removed",
 			configTableUpdates: map[string][]ConfigTableUpdates{
 				"< 3.0.0": {
 					{
-						Name:   "plugin_1",
-						Type:   Plugin,
-						Remove: true,
+						Name:     "plugin_1",
+						Type:     Plugin,
+						Remove:   true,
+						ChangeID: "T101",
 					},
 				},
 			},
@@ -2137,6 +2628,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 				"config_table": {
 					"plugins": [
 						{
+							"id": "5441b100-f441-4d4b-bcc2-3bb153e2bd41",
 							"name": "plugin_1",
 							"config": {
 								"plugin_field_1": "value"
@@ -2150,6 +2642,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 				"config_table": {
 					"plugins": [
 						{
+							"id": "5441b100-f441-4d4b-bcc2-3bb153e2bd41",
 							"name": "plugin_1",
 							"config": {
 								"plugin_field_1": "value"
@@ -2158,15 +2651,17 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 					]
 				}
 			}`,
+			expectedChanges: TrackedChanges{},
 		},
 		{
 			name: "ensure multiple plugins are removed from multiple configured plugins",
 			configTableUpdates: map[string][]ConfigTableUpdates{
 				"< 3.0.0": {
 					{
-						Name:   "plugin_1",
-						Type:   Plugin,
-						Remove: true,
+						Name:     "plugin_1",
+						Type:     Plugin,
+						Remove:   true,
+						ChangeID: "T101",
 					},
 				},
 			},
@@ -2174,24 +2669,28 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 				"config_table": {
 					"plugins": [
 						{
+							"id": "5441b100-f441-4d4b-bcc2-3bb153e2bd41",
 							"name": "plugin_2",
 							"config": {
 								"plugin_2_field_1": "element"
 							}
 						},
 						{
+							"id": "5441b100-f441-4d4b-bcc2-3bb153e2bd42",
 							"name": "plugin_1",
 							"config": {
 								"plugin_1_field_1": "element"
 							}
 						},
 						{
+							"id": "5441b100-f441-4d4b-bcc2-3bb153e2bd43",
 							"name": "plugin_3",
 							"config": {
 								"plugin_3_field_1": "element"
 							}
 						},
 						{
+							"id": "5441b100-f441-4d4b-bcc2-3bb153e2bd44",
 							"name": "plugin_1",
 							"config": {
 								"plugin_1_field_1": "element"
@@ -2205,12 +2704,14 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 				"config_table": {
 					"plugins": [
 						{
+							"id": "5441b100-f441-4d4b-bcc2-3bb153e2bd41",
 							"name": "plugin_2",
 							"config": {
 								"plugin_2_field_1": "element"
 							}
 						},
 						{
+							"id": "5441b100-f441-4d4b-bcc2-3bb153e2bd43",
 							"name": "plugin_3",
 							"config": {
 								"plugin_3_field_1": "element"
@@ -2219,6 +2720,23 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 					]
 				}
 			}`,
+			expectedChanges: TrackedChanges{
+				ChangeDetails: []ChangeDetail{
+					{
+						ID: "T101",
+						Resources: []ResourceInfo{
+							{
+								Type: "plugin",
+								ID:   "5441b100-f441-4d4b-bcc2-3bb153e2bd42",
+							},
+							{
+								Type: "plugin",
+								ID:   "5441b100-f441-4d4b-bcc2-3bb153e2bd44",
+							},
+						},
+					},
+				},
+			},
 		},
 		{
 			name: "drop single service field",
@@ -2230,6 +2748,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 						RemoveFields: []string{
 							"service_field_1",
 						},
+						ChangeID: "T101",
 					},
 				},
 			},
@@ -2237,6 +2756,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 				"config_table": {
 					"services": [
 						{
+							"id": "5441b100-f441-4d4b-bcc2-3bb153e2bd41",
 							"name": "service_1",
 							"service_field_1": "element",
 							"service_field_2": "element"
@@ -2249,12 +2769,26 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 				"config_table": {
 					"services": [
 						{
+							"id": "5441b100-f441-4d4b-bcc2-3bb153e2bd41",
 							"name": "service_1",
 							"service_field_2": "element"
 						}
 					]
 				}
 			}`,
+			expectedChanges: TrackedChanges{
+				ChangeDetails: []ChangeDetail{
+					{
+						ID: "T101",
+						Resources: []ResourceInfo{
+							{
+								Type: "service",
+								ID:   "5441b100-f441-4d4b-bcc2-3bb153e2bd41",
+							},
+						},
+					},
+				},
+			},
 		},
 		{
 			name: "drop multiple service fields",
@@ -2267,6 +2801,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 							"service_field_1",
 							"service_field_2",
 						},
+						ChangeID: "T101",
 					},
 				},
 			},
@@ -2274,6 +2809,8 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 				"config_table": {
 					"services": [
 						{
+
+							"id": "f0a3858b-e411-4b56-b415-b8018ac92369",
 							"name": "service_1",
 							"service_field_1": "element",
 							"service_field_2": "element",
@@ -2287,12 +2824,26 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 				"config_table": {
 					"services": [
 						{
+							"id": "f0a3858b-e411-4b56-b415-b8018ac92369",
 							"name": "service_1",
 							"service_field_3": "element"
 						}
 					]
 				}
 			}`,
+			expectedChanges: TrackedChanges{
+				ChangeDetails: []ChangeDetail{
+					{
+						ID: "T101",
+						Resources: []ResourceInfo{
+							{
+								Type: "service",
+								ID:   "f0a3858b-e411-4b56-b415-b8018ac92369",
+							},
+						},
+					},
+				},
+			},
 		},
 		{
 			name: "drop multiple service fields from multiple services",
@@ -2306,6 +2857,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 							"service_field_2",
 							"service_field_4",
 						},
+						ChangeID: "T101",
 					},
 				},
 			},
@@ -2313,12 +2865,14 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 				"config_table": {
 					"services": [
 						{
+							"id": "47e46c41-e781-49d1-b4b8-d02e419b7ef5",
 							"name": "service_1",
 							"service_field_1": "element",
 							"service_field_2": "element",
 							"service_field_3": "element"
 						},
 						{
+							"id": "47e46c41-e781-49d1-b4b8-d02e419b7ef6",
 							"name": "service_2",
 							"service_field_1": "element",
 							"service_field_3": "element",
@@ -2332,16 +2886,35 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 				"config_table": {
 					"services": [
 						{
+							"id": "47e46c41-e781-49d1-b4b8-d02e419b7ef5",
 							"name": "service_1",
 							"service_field_3": "element"
 						},
 						{
+							"id": "47e46c41-e781-49d1-b4b8-d02e419b7ef6",
 							"name": "service_2",
 							"service_field_3": "element"
 						}
 					]
 				}
 			}`,
+			expectedChanges: TrackedChanges{
+				ChangeDetails: []ChangeDetail{
+					{
+						ID: "T101",
+						Resources: []ResourceInfo{
+							{
+								Type: "service",
+								ID:   "47e46c41-e781-49d1-b4b8-d02e419b7ef5",
+							},
+							{
+								Type: "service",
+								ID:   "47e46c41-e781-49d1-b4b8-d02e419b7ef6",
+							},
+						},
+					},
+				},
+			},
 		},
 		{
 			name: "drop services and plugins' fields",
@@ -2355,11 +2928,13 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 							"service_field_2",
 							"service_field_4",
 						},
+						ChangeID: "T101",
 					},
 					{
-						Name:   "plugin_1",
-						Type:   Plugin,
-						Remove: true,
+						Name:     "plugin_1",
+						Type:     Plugin,
+						Remove:   true,
+						ChangeID: "T102",
 					},
 				},
 			},
@@ -2367,24 +2942,28 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 				"config_table": {
 					"plugins": [
 						{
+							"id": "47e46c41-e781-49d1-b4b8-d02e419b7ef6",
 							"name": "plugin_2",
 							"config": {
 								"plugin_2_field_1": "element"
 							}
 						},
 						{
+							"id": "5441b100-f441-4d4b-bcc2-3bb153e2bd40",
 							"name": "plugin_1",
 							"config": {
 								"plugin_1_field_1": "element"
 							}
 						},
 						{
+							"id": "2f303641-37dd-4757-a189-bdebe357fd23",
 							"name": "plugin_3",
 							"config": {
 								"plugin_3_field_1": "element"
 							}
 						},
 						{
+							"id": "ab3b5a6d-923e-4e71-83b4-77e4b68d3e55",
 							"name": "plugin_1",
 							"config": {
 								"plugin_1_field_1": "element"
@@ -2393,12 +2972,14 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 					],
 					"services": [
 						{
+							"id": "af1ab105-c9a3-42c8-9b12-442e3fd87a7f",
 							"name": "service_1",
 							"service_field_1": "element",
 							"service_field_2": "element",
 							"service_field_3": "element"
 						},
 						{
+							"id": "c50e912c-873c-45da-9f7c-f12a19fd56d1",
 							"name": "service_2",
 							"service_field_1": "element",
 							"service_field_3": "element",
@@ -2412,12 +2993,14 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 				"config_table": {
 					"plugins": [
 						{
+							"id": "47e46c41-e781-49d1-b4b8-d02e419b7ef6",
 							"name": "plugin_2",
 							"config": {
 								"plugin_2_field_1": "element"
 							}
 						},
 						{
+							"id": "2f303641-37dd-4757-a189-bdebe357fd23",
 							"name": "plugin_3",
 							"config": {
 								"plugin_3_field_1": "element"
@@ -2426,16 +3009,48 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 					],
 					"services": [
 						{
+							"id": "af1ab105-c9a3-42c8-9b12-442e3fd87a7f",
 							"name": "service_1",
 							"service_field_3": "element"
 						},
 						{
+							"id": "c50e912c-873c-45da-9f7c-f12a19fd56d1",
 							"name": "service_2",
 							"service_field_3": "element"
 						}
 					]
 				}
 			}`,
+			expectedChanges: TrackedChanges{
+				ChangeDetails: []ChangeDetail{
+					{
+						ID: "T101",
+						Resources: []ResourceInfo{
+							{
+								Type: "service",
+								ID:   "af1ab105-c9a3-42c8-9b12-442e3fd87a7f",
+							},
+							{
+								Type: "service",
+								ID:   "c50e912c-873c-45da-9f7c-f12a19fd56d1",
+							},
+						},
+					},
+					{
+						ID: "T102",
+						Resources: []ResourceInfo{
+							{
+								Type: "plugin",
+								ID:   "5441b100-f441-4d4b-bcc2-3bb153e2bd40",
+							},
+							{
+								Type: "plugin",
+								ID:   "ab3b5a6d-923e-4e71-83b4-77e4b68d3e55",
+							},
+						},
+					},
+				},
+			},
 		},
 		{
 			name: "ensure plugin field is removed because of newer version",
@@ -2447,6 +3062,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 						RemoveFields: []string{
 							"plugin_1_field_1",
 						},
+						ChangeID: "T101",
 					},
 				},
 			},
@@ -2454,12 +3070,14 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 				"config_table": {
 					"plugins": [
 						{
+							"id": "c50e912c-873c-45da-9f7c-f12a19fd56d1",
 							"name": "plugin_2",
 							"config": {
 								"plugin_2_field_1": "element"
 							}
 						},
 						{
+							"id": "f239e435-b1fa-4f0f-8d0c-6c317b8ec606",
 							"name": "plugin_1",
 							"config": {
 								"plugin_1_field_1": "element",
@@ -2467,6 +3085,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 							}
 						},
 						{
+							"id": "b79f9024-e2b5-43b0-b16b-28d14c3bca90y",
 							"name": "plugin_3",
 							"config": {
 								"plugin_3_field_1": "element"
@@ -2480,18 +3099,21 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 				"config_table": {
 					"plugins": [
 						{
+							"id": "c50e912c-873c-45da-9f7c-f12a19fd56d1",
 							"name": "plugin_2",
 							"config": {
 								"plugin_2_field_1": "element"
 							}
 						},
 						{
+							"id": "f239e435-b1fa-4f0f-8d0c-6c317b8ec606",
 							"name": "plugin_1",
 							"config": {
 								"plugin_1_field_2": "element"
 							}
 						},
 						{
+							"id": "b79f9024-e2b5-43b0-b16b-28d14c3bca90y",
 							"name": "plugin_3",
 							"config": {
 								"plugin_3_field_1": "element"
@@ -2500,6 +3122,19 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 					]
 				}
 			}`,
+			expectedChanges: TrackedChanges{
+				ChangeDetails: []ChangeDetail{
+					{
+						ID: "T101",
+						Resources: []ResourceInfo{
+							{
+								Type: "plugin",
+								ID:   "f239e435-b1fa-4f0f-8d0c-6c317b8ec606",
+							},
+						},
+					},
+				},
+			},
 		},
 		{
 			name: "ensure plugin field is removed because of newer version (enterprise format)",
@@ -2511,6 +3146,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 						RemoveFields: []string{
 							"plugin_1_field_1",
 						},
+						ChangeID: "T102",
 					},
 				},
 			},
@@ -2518,12 +3154,14 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 				"config_table": {
 					"plugins": [
 						{
+							"id": "f239e435-b1fa-4f0f-8d0c-6c317b8ec606",
 							"name": "plugin_2",
 							"config": {
 								"plugin_2_field_1": "element"
 							}
 						},
 						{
+							"id": "b79f9024-e2b5-43b0-b16b-28d14c3bca90y",
 							"name": "plugin_1",
 							"config": {
 								"plugin_1_field_1": "element",
@@ -2531,6 +3169,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 							}
 						},
 						{
+							"id": "c50e912c-873c-45da-9f7c-f12a19fd56d1",
 							"name": "plugin_3",
 							"config": {
 								"plugin_3_field_1": "element"
@@ -2544,18 +3183,21 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 				"config_table": {
 					"plugins": [
 						{
+							"id": "f239e435-b1fa-4f0f-8d0c-6c317b8ec606",
 							"name": "plugin_2",
 							"config": {
 								"plugin_2_field_1": "element"
 							}
 						},
 						{
+							"id": "b79f9024-e2b5-43b0-b16b-28d14c3bca90y",
 							"name": "plugin_1",
 							"config": {
 								"plugin_1_field_2": "element"
 							}
 						},
 						{
+							"id": "c50e912c-873c-45da-9f7c-f12a19fd56d1",
 							"name": "plugin_3",
 							"config": {
 								"plugin_3_field_1": "element"
@@ -2564,6 +3206,19 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 					]
 				}
 			}`,
+			expectedChanges: TrackedChanges{
+				ChangeDetails: []ChangeDetail{
+					{
+						ID: "T102",
+						Resources: []ResourceInfo{
+							{
+								Type: "plugin",
+								ID:   "b79f9024-e2b5-43b0-b16b-28d14c3bca90y",
+							},
+						},
+					},
+				},
+			},
 		},
 		{
 			name: "ensure plugin field is removed because of older version (enterprise format)",
@@ -2575,6 +3230,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 						RemoveFields: []string{
 							"plugin_1_field_1",
 						},
+						ChangeID: "T103",
 					},
 				},
 			},
@@ -2582,12 +3238,14 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 				"config_table": {
 					"plugins": [
 						{
+							"id": "f239e435-b1fa-4f0f-8d0c-6c317b8ec606",
 							"name": "plugin_2",
 							"config": {
 								"plugin_2_field_1": "element"
 							}
 						},
 						{
+							"id": "b79f9024-e2b5-43b0-b16b-28d14c3bca90y",
 							"name": "plugin_1",
 							"config": {
 								"plugin_1_field_1": "element",
@@ -2595,6 +3253,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 							}
 						},
 						{
+							"id": "c50e912c-873c-45da-9f7c-f12a19fd56d1",
 							"name": "plugin_3",
 							"config": {
 								"plugin_3_field_1": "element"
@@ -2608,18 +3267,21 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 				"config_table": {
 					"plugins": [
 						{
+							"id": "f239e435-b1fa-4f0f-8d0c-6c317b8ec606",
 							"name": "plugin_2",
 							"config": {
 								"plugin_2_field_1": "element"
 							}
 						},
 						{
+							"id": "b79f9024-e2b5-43b0-b16b-28d14c3bca90y",
 							"name": "plugin_1",
 							"config": {
 								"plugin_1_field_2": "element"
 							}
 						},
 						{
+							"id": "c50e912c-873c-45da-9f7c-f12a19fd56d1",
 							"name": "plugin_3",
 							"config": {
 								"plugin_3_field_1": "element"
@@ -2628,6 +3290,66 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 					]
 				}
 			}`,
+			expectedChanges: TrackedChanges{
+				ChangeDetails: []ChangeDetail{
+					{
+						ID: "T103",
+						Resources: []ResourceInfo{
+							{
+								Type: "plugin",
+								ID:   "b79f9024-e2b5-43b0-b16b-28d14c3bca90y",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "ensure changes are not tracked if disabled",
+			configTableUpdates: map[string][]ConfigTableUpdates{
+				"< 3.0.0": {
+					{
+						Name: "plugin_1",
+						Type: Plugin,
+						RemoveFields: []string{
+							"plugin_1_field_1",
+						},
+						ChangeID: "T103",
+						DisableChangeTracking: func(_ string) bool {
+							return true
+						},
+					},
+				},
+			},
+			uncompressedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"id": "b79f9024-e2b5-43b0-b16b-28d14c3bca90y",
+							"name": "plugin_1",
+							"config": {
+								"plugin_1_field_1": "element",
+								"plugin_1_field_2": "element"
+							}
+						}
+					]
+				}
+			}`,
+			dataPlaneVersion: "2.8.0",
+			expectedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"id": "b79f9024-e2b5-43b0-b16b-28d14c3bca90y",
+							"name": "plugin_1",
+							"config": {
+								"plugin_1_field_2": "element"
+							}
+						}
+					]
+				}
+			}`,
+			expectedChanges: TrackedChanges{},
 		},
 	}
 
@@ -2641,10 +3363,13 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 			err = wsvc.AddConfigTableUpdates(test.configTableUpdates)
 			require.NoError(t, err)
 
+			tracker := NewChangeTracker()
 			processedPayload, err := wsvc.processConfigTableUpdates(test.uncompressedPayload,
-				test.dataPlaneVersion)
+				test.dataPlaneVersion, tracker)
 			require.Nil(t, err)
 			require.JSONEq(t, test.expectedPayload, processedPayload)
+
+			require.Equal(t, test.expectedChanges, tracker.Get())
 		})
 	}
 
@@ -2658,8 +3383,9 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 		payload := `{"config_table": {"extra_processing": "unprocessed"}, "type": "reconfigure"}`
 		expectedPayload, err := CompressPayload([]byte(payload))
 		require.Nil(t, err)
-		processedPayloadCompressed, err := wsvc.ProcessConfigTableUpdates("2.8.0", expectedPayload)
+		processedPayloadCompressed, tracker, err := wsvc.ProcessConfigTableUpdates("2.8.0", expectedPayload)
 		require.Nil(t, err)
+		require.NotNil(t, tracker)
 
 		require.Equal(t, expectedPayload, processedPayloadCompressed)
 	})
@@ -2698,7 +3424,7 @@ func TestVersionCompatibility_PerformExtraProcessing(t *testing.T) {
 				Logger:        log.Logger,
 				KongCPVersion: "2.8.0",
 				ExtraProcessor: func(uncompressedPayload string, dataPlaneVersion string, isEnterprise bool,
-					logger *zap.Logger,
+					tracker *ChangeTracker, logger *zap.Logger,
 				) (string, error) {
 					if test.wantsErr {
 						return "", fmt.Errorf("extra processing error")
@@ -2714,7 +3440,8 @@ func TestVersionCompatibility_PerformExtraProcessing(t *testing.T) {
 			})
 			require.Nil(t, err)
 
-			processedPayload, err := wsvc.performExtraProcessing("{}", "2.8.0", test.isEnterprise)
+			processedPayload, err := wsvc.performExtraProcessing("{}",
+				"2.8.0", test.isEnterprise, nil)
 			if test.wantsErr || test.wantsInvalidJSON {
 				require.NotNil(t, err)
 				if test.wantsErr {
@@ -2734,7 +3461,7 @@ func TestVersionCompatibility_PerformExtraProcessing(t *testing.T) {
 			Logger:        log.Logger,
 			KongCPVersion: "2.8.0",
 			ExtraProcessor: func(uncompressedPayload string, dataPlaneVersion string, isEnterprise bool,
-				logger *zap.Logger,
+				tracker *ChangeTracker, logger *zap.Logger,
 			) (string, error) {
 				return sjson.Set(uncompressedPayload, "config_table.extra_processing", "processed")
 			},
@@ -2744,8 +3471,9 @@ func TestVersionCompatibility_PerformExtraProcessing(t *testing.T) {
 		payload := `{"config_table": {"extra_processing": "unprocessed"}, "type": "reconfigure"}`
 		compressedPayload, err := CompressPayload([]byte(payload))
 		require.Nil(t, err)
-		processedPayloadCompressed, err := wsvc.ProcessConfigTableUpdates("2.8.0", compressedPayload)
+		processedPayloadCompressed, tracker, err := wsvc.ProcessConfigTableUpdates("2.8.0", compressedPayload)
 		require.Nil(t, err)
+		require.NotNil(t, tracker)
 		uncompressedPayload, err := UncompressPayload(processedPayloadCompressed)
 		require.Nil(t, err)
 

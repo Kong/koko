@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/kong/koko/internal/log"
+	"github.com/kong/koko/internal/server/kong/ws/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/tidwall/sjson"
@@ -12,9 +13,10 @@ import (
 
 func TestExtraProcessing_CorrectAWSLambdaMutuallyExclusiveFields(t *testing.T) {
 	tests := []struct {
-		name                string
-		uncompressedPayload string
-		expectedPayload     string
+		name                   string
+		uncompressedPayload    string
+		expectedPayload        string
+		expectedTrackedChanges config.TrackedChanges
 	}{
 		{
 			name: "ensure 'host' is dropped when both 'aws_region' and 'host' are set",
@@ -22,6 +24,7 @@ func TestExtraProcessing_CorrectAWSLambdaMutuallyExclusiveFields(t *testing.T) {
 				"config_table": {
 					"plugins": [
 						{
+							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
 							"name": "aws-lambda",
 							"config": {
 								"aws_region": "test",
@@ -35,6 +38,7 @@ func TestExtraProcessing_CorrectAWSLambdaMutuallyExclusiveFields(t *testing.T) {
 				"config_table": {
 					"plugins": [
 						{
+							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
 							"name": "aws-lambda",
 							"config": {
 								"aws_region": "test"
@@ -43,6 +47,19 @@ func TestExtraProcessing_CorrectAWSLambdaMutuallyExclusiveFields(t *testing.T) {
 					]
 				}
 			}`,
+			expectedTrackedChanges: config.TrackedChanges{
+				ChangeDetails: []config.ChangeDetail{
+					{
+						ID: awsLambdaExclusiveFieldChangeID,
+						Resources: []config.ResourceInfo{
+							{
+								Type: "plugin",
+								ID:   "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							},
+						},
+					},
+				},
+			},
 		},
 		{
 			name: "ensure 'host' is not dropped when 'aws_region' is not set",
@@ -50,6 +67,7 @@ func TestExtraProcessing_CorrectAWSLambdaMutuallyExclusiveFields(t *testing.T) {
 				"config_table": {
 					"plugins": [
 						{
+							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
 							"name": "aws-lambda",
 							"config": {
 								"host": "192.168.1.1"
@@ -62,6 +80,7 @@ func TestExtraProcessing_CorrectAWSLambdaMutuallyExclusiveFields(t *testing.T) {
 				"config_table": {
 					"plugins": [
 						{
+							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
 							"name": "aws-lambda",
 							"config": {
 								"host": "192.168.1.1"
@@ -77,6 +96,7 @@ func TestExtraProcessing_CorrectAWSLambdaMutuallyExclusiveFields(t *testing.T) {
 				"config_table": {
 					"plugins": [
 						{
+							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
 							"name": "aws-lambda",
 							"config": {
 								"aws_region": "test"
@@ -89,6 +109,7 @@ func TestExtraProcessing_CorrectAWSLambdaMutuallyExclusiveFields(t *testing.T) {
 				"config_table": {
 					"plugins": [
 						{
+							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
 							"name": "aws-lambda",
 							"config": {
 								"aws_region": "test"
@@ -102,8 +123,12 @@ func TestExtraProcessing_CorrectAWSLambdaMutuallyExclusiveFields(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			processedPayload := correctAWSLambdaMutuallyExclusiveFields(test.uncompressedPayload, "< 2.6.0", log.Logger)
+			tracker := config.NewChangeTracker()
+			processedPayload := correctAWSLambdaMutuallyExclusiveFields(test.
+				uncompressedPayload, versionsPre260, tracker, log.Logger)
 			require.JSONEq(t, test.expectedPayload, processedPayload)
+			trackedChanged := tracker.Get()
+			require.Equal(t, test.expectedTrackedChanges, trackedChanged)
 		})
 	}
 }
@@ -319,10 +344,13 @@ func TestExtraProcessing_EnsureExtraProcessing(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			for _, version := range []string{"2.6.0", "2.6.0.0"} {
+				tracker := config.NewChangeTracker()
 				processedPayload, err := VersionCompatibilityExtraProcessing(test.uncompressedPayload, version,
-					false, log.Logger)
+					false, tracker, log.Logger)
 				require.NoError(t, err)
 				require.JSONEq(t, test.expectedPayload, processedPayload)
+				// TODO(hbagdi): add code and assertions for tracked changes
+				// in extra processors
 			}
 		})
 	}

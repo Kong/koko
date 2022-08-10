@@ -149,6 +149,7 @@ func (c *compatChangeRegistryImpl) GetMetadata(id ChangeID) (ChangeMetadata, err
 func (c *compatChangeRegistryImpl) GetUpdates() VersionedConfigUpdates {
 	res := make(VersionedConfigUpdates, len(c.changes))
 	for _, change := range c.changes {
+		change.Update.ChangeID = change.Metadata.ID
 		res[change.SemverRange] = append(res[change.SemverRange], change.Update)
 	}
 	return res

@@ -9,6 +9,7 @@ import (
 	"github.com/blang/semver/v4"
 	"github.com/kong/go-kong/kong"
 	"github.com/kong/koko/internal/json"
+	_ "github.com/kong/koko/internal/resource" // ensure resources registered
 	"github.com/tidwall/gjson"
 	"github.com/tidwall/sjson"
 	"go.uber.org/zap"
@@ -31,7 +32,7 @@ type VersionedConfigUpdates map[string][]ConfigTableUpdates
 
 type VersionCompatibility interface {
 	AddConfigTableUpdates(configTableUpdates VersionedConfigUpdates) error
-	ProcessConfigTableUpdates(dataPlaneVersionStr string, compressedPayload []byte) ([]byte, error)
+	ProcessConfigTableUpdates(dataPlaneVersionStr string, compressedPayload []byte) ([]byte, TrackedChanges, error)
 }
 
 type VersionCompatibilityOpts struct {
@@ -48,6 +49,10 @@ const (
 )
 
 func (u UpdateType) String() string {
+	return [...]string{"plugin", "service"}[u]
+}
+
+func (u UpdateType) ConfigTableKey() string {
 	return [...]string{"plugins", "services"}[u]
 }
 
@@ -106,10 +111,24 @@ type ConfigTableUpdates struct {
 	FieldUpdates []ConfigTableFieldCondition
 	// Remove indicates whether the whole entity should be removed or not.
 	Remove bool
+
+	// ChangeID is a unique identifier for every schema update.
+	ChangeID ChangeID
+
+	// DisableChangeTracking takes in JSON encoded string representation of
+	// UpdateType denoted by Type defined above.
+	// This callback gives an opportunity to the change to dynamically disable
+	// change tracking.
+	//
+	// An example use-case is when a newly added field with a backwards-compatible
+	// default value is dropped from the configuration. In this case, the user
+	// doesn't need to be notified of a benign change.
+	// When unspecified, the change is always emitted.
+	DisableChangeTracking func(rawJSON string) bool
 }
 
 type Processor func(uncompressedPayload string, dataPlaneVersion string,
-	isEnterprise bool, logger *zap.Logger) (string, error)
+	isEnterprise bool, tracker *ChangeTracker, logger *zap.Logger) (string, error)
 
 type WSVersionCompatibility struct {
 	logger             *zap.Logger
@@ -149,6 +168,10 @@ func (vc *WSVersionCompatibility) AddConfigTableUpdates(payloadUpdates Versioned
 					}
 				}
 			}
+
+			if update.ChangeID == "" {
+				return fmt.Errorf("invalid update with no change ID")
+			}
 		}
 		version = translateVersionFormat(version)
 		vc.configTableUpdates[version] = append(vc.configTableUpdates[version], updates...)
@@ -158,32 +181,37 @@ func (vc *WSVersionCompatibility) AddConfigTableUpdates(payloadUpdates Versioned
 
 func (vc *WSVersionCompatibility) ProcessConfigTableUpdates(dataPlaneVersionStr string,
 	compressedPayload []byte,
-) ([]byte, error) {
+) ([]byte, TrackedChanges, error) {
 	dataPlaneVersion, err := ParseSemanticVersion(dataPlaneVersionStr)
 	if err != nil {
-		return nil, fmt.Errorf("unable to parse data plane version: %v", err)
+		return nil, TrackedChanges{}, fmt.Errorf("unable to parse data plane version: %w", err)
 	}
+
+	tracker := NewChangeTracker()
 
 	uncompressedPayloadBytes, err := UncompressPayload(compressedPayload)
 	if err != nil {
-		return nil, fmt.Errorf("unable to uncompress payload: %v", err)
+		return nil, TrackedChanges{},
+			fmt.Errorf("unable to uncompress payload: %w", err)
 	}
 	// TODO(fero) perf use bytes
 	uncompressedPayload := string(uncompressedPayloadBytes)
 
-	processedPayload, err := vc.processConfigTableUpdates(
-		uncompressedPayload, dataPlaneVersion)
+	processedPayload, err := vc.processConfigTableUpdates(uncompressedPayload, dataPlaneVersion, tracker)
 	if err != nil {
-		return nil, err
+		return nil, TrackedChanges{}, err
 	}
 	isEnterprise := strings.Contains(dataPlaneVersionStr, "enterprise")
-	processedPayload, err = vc.performExtraProcessing(processedPayload,
-		dataPlaneVersion, isEnterprise)
+	processedPayload, err = vc.performExtraProcessing(processedPayload, dataPlaneVersion, isEnterprise, tracker)
 	if err != nil {
-		return nil, err
+		return nil, TrackedChanges{}, err
 	}
 
-	return CompressPayload([]byte(processedPayload))
+	compatibleCompressedPayload, err := CompressPayload([]byte(processedPayload))
+	if err != nil {
+		return nil, TrackedChanges{}, err
+	}
+	return compatibleCompressedPayload, tracker.Get(), nil
 }
 
 // translateVersionFormat leaves the input version string untouched if
@@ -199,11 +227,10 @@ func translateVersionFormat(version string) string {
 }
 
 func (vc *WSVersionCompatibility) performExtraProcessing(uncompressedPayload string, dataPlaneVersion string,
-	isEnterprise bool,
+	isEnterprise bool, tracker *ChangeTracker,
 ) (string, error) {
 	if vc.extraProcessor != nil {
-		processedPayload, err := vc.extraProcessor(uncompressedPayload, dataPlaneVersion,
-			isEnterprise, vc.logger)
+		processedPayload, err := vc.extraProcessor(uncompressedPayload, dataPlaneVersion, isEnterprise, tracker, vc.logger)
 		if err != nil {
 			return "", err
 		}
@@ -228,7 +255,7 @@ func (vc *WSVersionCompatibility) getConfigTableUpdates(dataPlaneVersion semver.
 }
 
 func (vc *WSVersionCompatibility) processConfigTableUpdates(uncompressedPayload string,
-	dataPlaneVersion string,
+	dataPlaneVersion string, tracker *ChangeTracker,
 ) (string, error) {
 	processedPayload := uncompressedPayload
 
@@ -244,10 +271,10 @@ func (vc *WSVersionCompatibility) processConfigTableUpdates(uncompressedPayload 
 		switch configTableUpdate.Type {
 		case Plugin:
 			processedPayload = vc.processPluginUpdates(processedPayload,
-				configTableUpdate, dataPlaneVersion)
+				configTableUpdate, dataPlaneVersion, tracker)
 		case Service:
 			processedPayload = vc.processCoreEntityUpdates(processedPayload,
-				configTableUpdate, dataPlaneVersion)
+				configTableUpdate, dataPlaneVersion, tracker)
 		default:
 			return "", fmt.Errorf("unsupported value type: %d", configTableUpdate.Type)
 		}
@@ -338,6 +365,8 @@ func (vc *WSVersionCompatibility) removePlugin(
 	processedPayload string,
 	pluginName string,
 	dataPlaneVersion string,
+	changeID ChangeID,
+	tracker *ChangeTracker,
 ) string {
 	plugins := gjson.Get(processedPayload, "config_table.plugins")
 	if plugins.IsArray() {
@@ -346,6 +375,16 @@ func (vc *WSVersionCompatibility) removePlugin(
 			pluginCondition := fmt.Sprintf("..#(name=%s)", pluginName)
 			if gjson.Get(res.Raw, pluginCondition).Exists() {
 				var err error
+				pluginID := res.Get("id").String()
+				err = tracker.TrackForResource(changeID, ResourceInfo{
+					Type: "plugin",
+					ID:   pluginID,
+				})
+				if err != nil {
+					vc.logger.Error("failed to track version compatibility change",
+						zap.String("change-id", string(changeID)),
+						zap.String("resource-type", "plugin"))
+				}
 				pluginDelete := fmt.Sprintf("config_table.plugins.%d", i-removeCount)
 				if processedPayload, err = sjson.Delete(processedPayload, pluginDelete); err != nil {
 					vc.logger.With(zap.String("plugin", pluginName)).
@@ -366,7 +405,7 @@ func (vc *WSVersionCompatibility) removePlugin(
 
 func (vc *WSVersionCompatibility) processPluginUpdates(payload string,
 	configTableUpdate ConfigTableUpdates,
-	dataPlaneVersion string,
+	dataPlaneVersion string, tracker *ChangeTracker,
 ) string {
 	pluginName := configTableUpdate.Name
 	processedPayload := payload
@@ -374,13 +413,20 @@ func (vc *WSVersionCompatibility) processPluginUpdates(payload string,
 	if len(results.Indexes) > 0 {
 		indexUpdate := 0
 		for _, res := range results.Array() {
+			originalRaw := res.Raw
 			updatedRaw := res.Raw
-			var err error
+			var (
+				err error
+				// updated must be changed to true if there is a change to
+				// configuration
+				updated bool
+			)
 
 			// Field removal
 			for _, field := range configTableUpdate.RemoveFields {
 				configField := fmt.Sprintf("config.%s", field)
 				if gjson.Get(updatedRaw, configField).Exists() {
+					updated = true
 					if updatedRaw, err = sjson.Delete(updatedRaw, configField); err != nil {
 						vc.logger.With(zap.String("plugin", pluginName)).
 							With(zap.String("field", configField)).
@@ -413,6 +459,7 @@ func (vc *WSVersionCompatibility) processPluginUpdates(payload string,
 					for i, arrayIndex := range arrayRemovalIndexes {
 						fieldArrayWithIndex := fmt.Sprintf("config.%s.%d", array.Field, arrayIndex-i)
 						var err error
+						updated = true
 						if updatedRaw, err = sjson.Delete(updatedRaw, fieldArrayWithIndex); err != nil {
 							vc.logger.With(zap.String("plugin", pluginName)).
 								With(zap.String("field", configField)).
@@ -443,6 +490,7 @@ func (vc *WSVersionCompatibility) processPluginUpdates(payload string,
 							conditionUpdate := fmt.Sprintf("config.%s", fieldUpdate.Field)
 							if fieldUpdate.Value == nil && len(fieldUpdate.ValueFromField) == 0 {
 								// Handle field removal
+								updated = true
 								if updatedRaw, err = sjson.Delete(updatedRaw, conditionUpdate); err != nil {
 									vc.logger.With(zap.String("plugin", pluginName)).
 										With(zap.String("field", conditionUpdate)).
@@ -479,6 +527,7 @@ func (vc *WSVersionCompatibility) processPluginUpdates(payload string,
 								}
 
 								// Handle field update from value of value of field
+								updated = true
 								if updatedRaw, err = sjson.Set(updatedRaw, conditionUpdate, value); err != nil {
 									vc.logger.With(zap.String("plugin", pluginName)).
 										With(zap.String("field", configField)).
@@ -507,44 +556,64 @@ func (vc *WSVersionCompatibility) processPluginUpdates(payload string,
 				processedPayload[resIndex+len(res.Raw):]
 			indexUpdate = len(processedPayload) - len(updatedPayload)
 			processedPayload = updatedPayload
+
+			if updated && shouldTrackChange(configTableUpdate, originalRaw) {
+				pluginID := gjson.Get(updatedRaw, "id").String()
+				err := tracker.TrackForResource(configTableUpdate.ChangeID, ResourceInfo{
+					Type: "plugin",
+					ID:   pluginID,
+				})
+				if err != nil {
+					vc.logger.Error("failed to track version compatibility change",
+						zap.String("change-id", string(configTableUpdate.ChangeID)),
+						zap.String("resource-type", "plugin"))
+				}
+			}
 		}
 	}
 
 	if configTableUpdate.Remove && results.Exists() {
 		processedPayload = vc.removePlugin(processedPayload, pluginName,
-			dataPlaneVersion)
+			dataPlaneVersion, configTableUpdate.ChangeID, tracker)
 	}
 	return processedPayload
 }
 
 func (vc *WSVersionCompatibility) processCoreEntityUpdates(payload string,
 	configTableUpdate ConfigTableUpdates,
-	dataPlaneVersion string,
+	dataPlaneVersion string, tracker *ChangeTracker,
 ) string {
-	entityName := configTableUpdate.Type.String()
+	entityType := configTableUpdate.Type.String()
+	configTableKey := configTableUpdate.Type.ConfigTableKey()
+
 	processedPayload := payload
-	results := gjson.Get(processedPayload, fmt.Sprintf("config_table.%s", entityName))
+	results := gjson.Get(processedPayload, fmt.Sprintf("config_table.%s", configTableKey))
 	var (
 		updates = []interface{}{}
 		err     error
 	)
 	for _, res := range results.Array() {
-		var entityJSON map[string]interface{}
-		updatedRaw := res.Raw
-		name := res.Get("name").Raw
+		var (
+			entityJSON  map[string]interface{}
+			originalRaw = res.Raw
+			updatedRaw  = res.Raw
+			name        = res.Get("name").Raw
+			updated     bool
+		)
 
 		// Field removal
 		for _, field := range configTableUpdate.RemoveFields {
 			if gjson.Get(updatedRaw, field).Exists() {
+				updated = true
 				if updatedRaw, err = sjson.Delete(updatedRaw, field); err != nil {
-					vc.logger.With(zap.String("entity", entityName)).
+					vc.logger.With(zap.String("entity", entityType)).
 						With(zap.String("name", name)).
 						With(zap.String("field", field)).
 						With(zap.String("data-plane", dataPlaneVersion)).
 						With(zap.Error(err)).
 						Error("entity field was not removed from configuration")
 				} else {
-					vc.logger.With(zap.String("entity", entityName)).
+					vc.logger.With(zap.String("entity", entityType)).
 						With(zap.String("name", name)).
 						With(zap.String("field", field)).
 						With(zap.String("data-plane", dataPlaneVersion)).
@@ -553,7 +622,7 @@ func (vc *WSVersionCompatibility) processCoreEntityUpdates(payload string,
 			}
 		}
 		if err = json.Unmarshal([]byte(updatedRaw), &entityJSON); err != nil {
-			vc.logger.With(zap.String("entity", entityName)).
+			vc.logger.With(zap.String("entity", entityType)).
 				With(zap.String("name", name)).
 				With(zap.String("config", updatedRaw)).
 				With(zap.String("data-plane", dataPlaneVersion)).
@@ -562,14 +631,34 @@ func (vc *WSVersionCompatibility) processCoreEntityUpdates(payload string,
 		} else {
 			updates = append(updates, entityJSON)
 		}
+
+		if updated && shouldTrackChange(configTableUpdate, originalRaw) {
+			entityID := gjson.Get(updatedRaw, "id").String()
+			err := tracker.TrackForResource(configTableUpdate.ChangeID, ResourceInfo{
+				Type: entityType,
+				ID:   entityID,
+			})
+			if err != nil {
+				vc.logger.Error("failed to track version compatibility change",
+					zap.String("change-id", string(configTableUpdate.ChangeID)),
+					zap.String("resource-type", entityType))
+			}
+		}
 	}
 	if processedPayload, err = sjson.Set(
-		processedPayload, fmt.Sprintf("config_table.%s", entityName), updates,
+		processedPayload, fmt.Sprintf("config_table.%s", configTableKey), updates,
 	); err != nil {
-		vc.logger.With(zap.String("entity", entityName)).
+		vc.logger.With(zap.String("entity", entityType)).
 			With(zap.String("data-plane", dataPlaneVersion)).
 			With(zap.Error(err)).
 			Error("error while updating entities")
 	}
 	return processedPayload
+}
+
+func shouldTrackChange(updates ConfigTableUpdates, entityJSON string) bool {
+	if updates.DisableChangeTracking == nil {
+		return true
+	}
+	return !updates.DisableChangeTracking(entityJSON)
 }
