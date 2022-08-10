@@ -76,6 +76,10 @@ func TestAllTypes(t *testing.T) {
 	require.ElementsMatch(t, []Type{"foo", "bar", "baz"}, AllTypes())
 }
 
+func TestValidType(t *testing.T) {
+	require.False(t, ValidType("foobarbaz"))
+}
+
 func TestObjectFromProto(t *testing.T) {
 	defer resetTypes()
 

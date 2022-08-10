@@ -55,6 +55,11 @@ func AllTypes() []Type {
 	return res
 }
 
+func ValidType(typ Type) bool {
+	_, ok := types[typ]
+	return ok
+}
+
 // ObjectFromProto returns the relevant model object from the given Protobuf message, while retaining
 // all provided fields that are set. When the relevant object cannot be found, an error is returned.
 func ObjectFromProto(p proto.Message) (Object, error) {
