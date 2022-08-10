@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+package kong.nonpublic.v1;
+
+import "kong/admin/model/v1/node.proto";
+
+option go_package = "github.com/kong/koko/internal/gen/grpc/kong/nonpublic/v1";
+
+message NodeStatus {
+  string id = 1;
+  int32 created_at = 2;
+  int32 updated_at = 3;
+  repeated kong.admin.model.v1.CompatibilityIssue issues = 4;
+}
