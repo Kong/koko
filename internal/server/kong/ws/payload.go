@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/kong/koko/internal/metrics"
 	"github.com/kong/koko/internal/server/kong/ws/config"
 	"go.uber.org/zap"
 )
@@ -75,7 +76,10 @@ func (p *Payload) configForVersion(version string) (cacheEntry, error) {
 			return cacheEntry{}, err
 		}
 		// build the config for version
-		updatedPayload, err := p.vc.ProcessConfigTableUpdates(version, unversionedConfig.CompressedPayload)
+		updatedPayload, changes, err := p.vc.ProcessConfigTableUpdates(
+			version,
+			unversionedConfig.CompressedPayload,
+		)
 		entry := cacheEntry{
 			Content: config.Content{
 				CompressedPayload: updatedPayload,
@@ -90,6 +94,25 @@ func (p *Payload) configForVersion(version string) (cacheEntry, error) {
 				zap.Error(err),
 				zap.String("kong-dp-version", version),
 			)
+		} else {
+			resourcesUpdated := 0
+			changeCount := len(changes.ChangeDetails)
+			for _, detail := range changes.ChangeDetails {
+				resourcesUpdated += len(detail.Resources)
+			}
+			p.logger.Warn("version compatibility changes detected",
+				zap.Int("change-count", changeCount),
+				zap.Int("total-resource-changes", resourcesUpdated))
+			metrics.Gauge("version_compatibility_configuration_change_count",
+				int64(changeCount), metrics.Tag{
+					Key:   "kong-dp-version",
+					Value: version,
+				})
+			metrics.Gauge("version_compatibility_configuration_resource_change_count",
+				int64(resourcesUpdated), metrics.Tag{
+					Key:   "kong-dp-version",
+					Value: version,
+				})
 		}
 		// cache it
 		err = p.configCache.store(version, entry)

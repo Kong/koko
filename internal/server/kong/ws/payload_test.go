@@ -23,6 +23,7 @@ func TestConfigPayload_Cache(t *testing.T) {
 				RemoveFields: []string{
 					"plugin_1_field_1",
 				},
+				ChangeID: "T042",
 			},
 		},
 	})
@@ -32,6 +33,7 @@ func TestConfigPayload_Cache(t *testing.T) {
 		"config_table": {
 			"plugins": [
 				{
+					"id": "08d4dbf0-0962-4e07-8843-e885d1b558e3",
 					"name": "plugin_1",
 					"config": {
 						"plugin_1_field_1": "element_1",
@@ -39,6 +41,7 @@ func TestConfigPayload_Cache(t *testing.T) {
 					}
 				},
 				{
+					"id": "4063da9d-0652-4124-9290-7d9a8428e5c6",
 					"name": "plugin_2",
 					"config": {
 						"plugin_2_field_1": "element_1"
@@ -53,12 +56,14 @@ func TestConfigPayload_Cache(t *testing.T) {
 		"config_table": {
 			"plugins": [
 				{
+					"id": "08d4dbf0-0962-4e07-8843-e885d1b558e3",
 					"name": "plugin_1",
 					"config": {
 						"plugin_1_field_2": "element_2"
 					}
 				},
 				{
+					"id": "4063da9d-0652-4124-9290-7d9a8428e5c6",
 					"name": "plugin_2",
 					"config": {
 						"plugin_2_field_1": "element_1"
@@ -73,6 +78,7 @@ func TestConfigPayload_Cache(t *testing.T) {
 	t.Run("ensure payload can be retrieved for single version", func(t *testing.T) {
 		payload, err := NewPayload(PayloadOpts{
 			VersionCompatibilityProcessor: wsvc,
+			Logger:                        log.Logger,
 		})
 		require.Nil(t, err)
 		err = payload.UpdateBinary(context.Background(), config.Content{
@@ -93,6 +99,7 @@ func TestConfigPayload_Cache(t *testing.T) {
 	t.Run("ensure payload can be retrieved using multiple versions", func(t *testing.T) {
 		payload, err := NewPayload(PayloadOpts{
 			VersionCompatibilityProcessor: wsvc,
+			Logger:                        log.Logger,
 		})
 		require.Nil(t, err)
 		err = payload.UpdateBinary(context.Background(), config.Content{
@@ -121,6 +128,7 @@ func TestConfigPayload_Cache(t *testing.T) {
 	t.Run("ensure payload configCache is cleared when updated", func(t *testing.T) {
 		payload, err := NewPayload(PayloadOpts{
 			VersionCompatibilityProcessor: wsvc,
+			Logger:                        log.Logger,
 		})
 		require.Nil(t, err)
 		err = payload.UpdateBinary(context.Background(), config.Content{
