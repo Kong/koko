@@ -145,7 +145,7 @@ func TestVersionCompatibility_ParseSemanticVersion(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		version, err := parseSemanticVersion(test.versionStr)
+		version, err := ParseSemanticVersion(test.versionStr)
 		if test.wantsErr {
 			require.NotNil(t, err)
 			require.EqualError(t, err, test.expectedErr)
