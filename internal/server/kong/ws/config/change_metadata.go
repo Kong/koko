@@ -89,7 +89,7 @@ func (c *Change) valid() error {
 		return fmt.Errorf("invalid version range '%v'", c.SemverRange)
 	}
 
-	if _, err := semver.ParseRange(c.SemverRange); err != nil {
+	if _, err := semver.ParseRange(translateVersionFormat(c.SemverRange)); err != nil {
 		return fmt.Errorf("invalid range format '%v': %w", c.SemverRange, err)
 	}
 	return nil

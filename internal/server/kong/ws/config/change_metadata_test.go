@@ -97,6 +97,19 @@ func TestChange_valid(t *testing.T) {
 		err := change.valid()
 		require.ErrorContains(t, err, "invalid range")
 	})
+	t.Run("change with enterprise version returns no error", func(t *testing.T) {
+		change := Change{
+			Metadata: ChangeMetadata{
+				ID:          "F123",
+				Severity:    ChangeSeverityWarning,
+				Description: "some description",
+				Resolution:  "some resolution",
+			},
+			SemverRange: "< 3.0.0.0",
+		}
+		err := change.valid()
+		require.NoError(t, err)
+	})
 }
 
 func TestCompatChangeRegistryImpl_Register(t *testing.T) {

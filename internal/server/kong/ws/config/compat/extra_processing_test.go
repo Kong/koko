@@ -242,3 +242,88 @@ func repeatJSONObject(key string, count int, jsonData ...*string) error {
 
 	return nil
 }
+
+// TestExtraProcessing_EnsureExtraProcessing ensures the
+// VersionCompatibilityExtraProcessing function works as expected for
+// both OSS and EE version formats.
+func TestExtraProcessing_EnsureExtraProcessing(t *testing.T) {
+	tests := []struct {
+		name                string
+		uncompressedPayload string
+		expectedPayload     string
+	}{
+		{
+			name: "ensure 'host' is dropped when both 'aws_region' and 'host' are set for aws-lambda plugin",
+			uncompressedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"name": "aws-lambda",
+							"config": {
+								"aws_region": "test",
+								"host": "192.168.1.1"
+							}
+						}
+					]
+				}
+			}`,
+			expectedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"name": "aws-lambda",
+							"config": {
+								"aws_region": "test"
+							}
+						}
+					]
+				}
+			}`,
+		},
+		{
+			name: "correct http-log headers for a multiple header",
+			uncompressedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"name": "http-log",
+							"config": {
+								"headers": {
+									"header-1": "",
+									"header-2": "value-1",
+									"header-3": "value-2"
+								}
+							}
+						}
+					]
+				}
+			}`,
+			expectedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"name": "http-log",
+							"config": {
+								"headers": {
+									"header-2": ["value-1"],
+									"header-3": ["value-2"]
+								}
+							}
+						}
+					]
+				}
+			}`,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			for _, version := range []string{"2.6.0", "2.6.0.0"} {
+				processedPayload, err := VersionCompatibilityExtraProcessing(test.uncompressedPayload, version,
+					false, log.Logger)
+				require.NoError(t, err)
+				require.JSONEq(t, test.expectedPayload, processedPayload)
+			}
+		})
+	}
+}

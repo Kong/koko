@@ -125,7 +125,7 @@ func NewVersionCompatibilityProcessor(opts VersionCompatibilityOpts) (*WSVersion
 	if len(strings.TrimSpace(opts.KongCPVersion)) == 0 {
 		return nil, fmt.Errorf("opts.KongCPVersion required")
 	}
-	controlPlaneVersion, err := parseSemanticVersion(opts.KongCPVersion)
+	controlPlaneVersion, err := ParseSemanticVersion(opts.KongCPVersion)
 	if err != nil {
 		return nil, fmt.Errorf("unable to parse opts.KongCPVersion %v", err)
 	}
@@ -159,7 +159,7 @@ func (vc *WSVersionCompatibility) AddConfigTableUpdates(payloadUpdates Versioned
 func (vc *WSVersionCompatibility) ProcessConfigTableUpdates(dataPlaneVersionStr string,
 	compressedPayload []byte,
 ) ([]byte, error) {
-	dataPlaneVersion, err := parseSemanticVersion(dataPlaneVersionStr)
+	dataPlaneVersion, err := ParseSemanticVersion(dataPlaneVersionStr)
 	if err != nil {
 		return nil, fmt.Errorf("unable to parse data plane version: %v", err)
 	}
@@ -270,7 +270,7 @@ func addEnterpriseVersion(version, extra, num string) string {
 	return fmt.Sprintf("%s-%s", version, num)
 }
 
-// parseSemanticVersion parses a data plane version into something that
+// ParseSemanticVersion parses a data plane version into something that
 // follows Koko's convention allowing version ranges to be handled which are not
 // necessarily semver-compliant; this can be a parsing standard semver for the
 // case of a simple X.Y.Z format, but it can handle more expressive version
@@ -288,7 +288,7 @@ func addEnterpriseVersion(version, extra, num string) string {
 //
 // input:  0.33.3.3-enterprise   (enterprise build)
 // output: 0.33.3.3
-func parseSemanticVersion(versionStr string) (string, error) {
+func ParseSemanticVersion(versionStr string) (string, error) {
 	semVersion, err := kong.ParseSemanticVersion(versionStr)
 	if err != nil {
 		return "", err

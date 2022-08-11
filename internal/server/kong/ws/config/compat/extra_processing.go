@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/blang/semver/v4"
+	"github.com/kong/koko/internal/server/kong/ws/config"
 	"github.com/tidwall/gjson"
 	"github.com/tidwall/sjson"
 	"go.uber.org/zap"
@@ -99,9 +100,13 @@ func VersionCompatibilityExtraProcessing(payload string, dataPlaneVersion string
 ) (string, error) {
 	processedPayload := payload
 
-	dataPlaneSemVer, err := semver.Parse(dataPlaneVersion)
+	dataPlaneVersionParsed, err := config.ParseSemanticVersion(dataPlaneVersion)
 	if err != nil {
-		return "", fmt.Errorf("could not parse dataplane version %s: %w", dataPlaneVersion, err)
+		return "", fmt.Errorf("invalid data plane version %s: %w", dataPlaneVersion, err)
+	}
+	dataPlaneSemVer, err := semver.Parse(dataPlaneVersionParsed)
+	if err != nil {
+		return "", fmt.Errorf("could not parse data plane version %s: %w", dataPlaneVersion, err)
 	}
 
 	if versionOlderThan300(dataPlaneSemVer) {
