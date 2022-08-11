@@ -641,7 +641,6 @@ func TestServiceSync(t *testing.T) {
 func TestServiceWithEnabledFieldSync(t *testing.T) {
 	// ensure that services can be synced to Kong gateway
 	// and make sure the 'enabled' field is correctly set
-	kongClient.RunWhenKong(t, ">= 2.7.0")
 	cleanup := run.Koko(t)
 	defer cleanup()
 
@@ -667,6 +666,7 @@ func TestServiceWithEnabledFieldSync(t *testing.T) {
 	defer dpCleanup()
 
 	require.NoError(t, util.WaitForKongPort(t, 8001))
+	kongClient.RunWhenKong(t, ">= 2.7.0")
 
 	expectedConfig := &v1.TestingConfig{
 		Services: []*v1.Service{enabledService, disabledService},
@@ -742,26 +742,6 @@ func TestRouteHeaderWithRegex(t *testing.T) {
 	// so this test won't run on earlier versions
 	ctx := context.Background()
 
-	client, err := kongClient.NewClient(util.BasedKongAdminAPIAddr, nil)
-	if err != nil {
-		t.Errorf("create go client for kong: %v", err)
-	}
-
-	info, err := client.Root(ctx)
-	if err != nil {
-		t.Errorf("fetching Kong Gateway info: %v", err)
-	}
-
-	dataPlaneVersion, err := kongClient.ParseSemanticVersion(kongClient.VersionFromInfo(info))
-	if err != nil {
-		t.Errorf("parsing Kong Gateway version: %v", err)
-	}
-
-	// check whether kong dp version is < 2.8.0
-	if v := semver.MustParse("2.8.0"); dataPlaneVersion.LT(v) {
-		return
-	}
-
 	cleanup := run.Koko(t)
 	defer cleanup()
 
@@ -794,6 +774,26 @@ func TestRouteHeaderWithRegex(t *testing.T) {
 	defer dpCleanup()
 
 	require.Nil(t, util.WaitForKongPort(t, 8001))
+
+	client, err := kongClient.NewClient(util.BasedKongAdminAPIAddr, nil)
+	if err != nil {
+		t.Errorf("create go client for kong: %v", err)
+	}
+
+	info, err := client.Root(ctx)
+	if err != nil {
+		t.Errorf("fetching Kong Gateway info: %v", err)
+	}
+
+	dataPlaneVersion, err := kongClient.ParseSemanticVersion(kongClient.VersionFromInfo(info))
+	if err != nil {
+		t.Errorf("parsing Kong Gateway version: %v", err)
+	}
+
+	// check whether kong dp version is < 2.8.0
+	if v := semver.MustParse("2.8.0"); dataPlaneVersion.LT(v) {
+		return
+	}
 
 	util.WaitFunc(t, func() error {
 		routes, err := client.Routes.ListAll(ctx)
