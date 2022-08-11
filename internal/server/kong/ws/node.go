@@ -257,7 +257,8 @@ func (n *Node) writeConfig(_ context.Context, c config.Content) error {
 		return err
 	}
 
-	n.Logger.Info("successfully sent payload to node")
+	n.Logger.Info("successfully sent payload to node",
+		zap.Int("payload-size-byte", len(c.CompressedPayload)))
 	return nil
 }
 
@@ -297,7 +298,8 @@ func (n *Node) writeWRPCConfig(ctx context.Context, c config.Content, configVers
 			return
 		}
 
-		n.Logger.Info("successfully sent payload to node")
+		n.Logger.Info("successfully sent payload to node",
+			zap.Int("payload-size-byte", len(c.CompressedPayload)))
 	}()
 
 	return nil
