@@ -127,7 +127,11 @@ func KongDP(input kong.DockerInput) func() {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		_ = kong.RunDP(ctx, input)
+		if err := kong.RunDP(ctx, input); err != nil {
+			// TODO(tjasko): Update KongDP() function to return an error, to allow callers to properly handle
+			//  the error. Luckily, an error here is usually not expected unless bad input was provided.
+			panic(err)
+		}
 	}()
 	return func() {
 		cancel()

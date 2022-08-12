@@ -7,6 +7,7 @@ require (
 	github.com/Masterminds/squirrel v1.5.3
 	github.com/blang/semver/v4 v4.0.0
 	github.com/bufbuild/buf v1.7.0
+	github.com/caarlos0/env/v6 v6.9.3
 	github.com/cenkalti/backoff/v4 v4.1.3
 	github.com/cespare/xxhash/v2 v2.1.2
 	github.com/gavv/httpexpect/v2 v2.3.1

@@ -4,116 +4,60 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
+	"io"
+	"net"
 	"os"
 	"os/exec"
+	"path"
+	"path/filepath"
+	"runtime"
+	"strconv"
 	"strings"
 	"sync"
+	"syscall"
 	"testing"
-	"text/template"
 
+	"github.com/caarlos0/env/v6"
 	"github.com/kong/koko/internal/test/certs"
+	"github.com/samber/lo"
 )
 
-var (
-	newLineChar  = []byte{'\n'}
-	stdoutPrefix = []byte("dp-stdout: ")
-	stderrPrefix = []byte("dp-stderr: ")
+// Various files that will be created on the DP.
+const (
+	fileAdminConf     = "/conf/admin.conf"
+	fileClusterCACert = "/certs/cluster-ca.crt"
+	fileClusterCert   = "/certs/cluster.crt"
+	fileClusterKey    = "/certs/cluster.key"
 )
 
-type AuthMode string
-
-var (
-	AuthModeMTLSPKI    AuthMode = "pki"
-	AuthModeMTLSShared AuthMode = "shared"
-)
-
-type Computed struct {
-	CPHostname string
-}
-
-type DockerInput struct {
-	Image      string
-	EnvVars    map[string]string
-	AuthMode   AuthMode
-	ClientCert []byte
-	ClientKey  []byte
-	CACert     []byte
-	CPAddr     string
-	Computed   Computed
-}
-
-var defaultEnvVars = map[string]string{
-	"KONG_VITALS":                 "off",
-	"KONG_NGINX_WORKER_PROCESSES": "1",
-	"KONG_CLUSTER_CONTROL_PLANE":  "localhost:3100",
-	"KONG_ANONYMOUS_REPORTS":      "off",
-	"KONG_NGINX_HTTP_INCLUDE":     "/conf/admin.conf",
-}
-
-var scripTemplate = `#!/bin/bash
-set -x
-cleanup () {
-  echo "interrupt received, exiting now"
-  docker rm -f koko-dp
-}
-DIR=$(dirname "$0")
-trap cleanup INT
-docker run \
-  --rm \
-  --name koko-dp \
-  -e "KONG_DATABASE=off" \
-  -e "KONG_ROLE=data_plane" \
-  -e "KONG_CLUSTER_CERT=/certs/cluster.crt" \
-  -e "KONG_CLUSTER_CERT_KEY=/certs/cluster.key" \
-  -e "KONG_LUA_SSL_TRUSTED_CERTIFICATE=/certs/cluster-ca.crt" \
-  -e "KONG_CLUSTER_CA_CERT=/certs/cluster-ca.crt" \
-{{- range $k, $v := $.EnvVars }}
-  -e "{{ $k }}={{ $v }}" \
-{{- end -}}
-  -v "$DIR/cluster.crt:/certs/cluster.crt" \
-  -v "$DIR/cluster-ca.crt:/certs/cluster-ca.crt" \
-  -v "$DIR/cluster.key:/certs/cluster.key" \
-  -v "$DIR/admin.conf:/conf/admin.conf" \
-{{- if .Computed.CPHostname }}
-  --add-host "{{- .Computed.CPHostname -}}:host-gateway" \
-{{- end -}}
-  --network host {{ .Image }} &
-wait
-`
-
-var t *template.Template
-
-func init() {
-	t = template.Must(template.New("run").Parse(scripTemplate))
-}
+// Internal script that exists on the host for running the DP in Docker.
+const fileRunSh = "run.sh"
 
 func RunDP(ctx context.Context, input DockerInput) error {
-	c := exec.Command("docker", "rm", "-f", "koko-dp")
-	err := c.Start()
-	if err != nil {
-		return fmt.Errorf("removing docker container: %v", err)
-	}
-	err = c.Wait()
-	if err != nil {
-		return fmt.Errorf("removing docker container: %v", err)
-	}
-	dockerInput := addDefaults(input)
-	dir, err := os.MkdirTemp("", "koko-dp-*")
-	if err != nil {
-		return err
-	}
-	defer func() {
-		_ = os.RemoveAll(dir)
-	}()
-	err = setup(dir, dockerInput)
+	dockerInput, err := addDefaults(&input)
 	if err != nil {
 		return err
 	}
 
-	cmd := &exec.Cmd{
-		Path: dir + "/run.sh",
+	dir, cleanup, err := createFiles(dockerInput)
+	if err != nil {
+		return err
 	}
+	defer cleanup() //nolint:errcheck
+
+	// Ideally the container should always be cleaned up, but it may not always be, especially when
+	// `go tool test2json` is being used, as it can't properly catch signals as of this writing.
+	//
+	// Read more:
+	// - https://github.com/golang/go/pull/53506
+	// - https://go-review.googlesource.com/c/go/+/419295
+	if err := removeDockerContainer(input.ContainerName); err != nil {
+		return err
+	}
+
+	cmd := &exec.Cmd{Path: path.Join(dir, fileRunSh)}
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
 		return err
@@ -122,147 +66,312 @@ func RunDP(ctx context.Context, input DockerInput) error {
 	if err != nil {
 		return err
 	}
-	err = cmd.Start()
-	if err != nil {
+	if err := cmd.Start(); err != nil {
 		return err
 	}
 	var wg sync.WaitGroup
 	const goroutineCount = 3
 	wg.Add(goroutineCount)
-	go func() {
-		defer wg.Done()
-		sc := bufio.NewScanner(stdout)
-		for sc.Scan() {
-			_, _ = os.Stdout.Write(stdoutPrefix)
-			_, _ = os.Stdout.Write(sc.Bytes())
-			_, _ = os.Stdout.Write(newLineChar)
-		}
-	}()
-	go func() {
-		defer wg.Done()
-		sc := bufio.NewScanner(stderr)
-		for sc.Scan() {
-			_, _ = os.Stdout.Write(stderrPrefix)
-			_, _ = os.Stdout.Write(sc.Bytes())
-			_, _ = os.Stdout.Write(newLineChar)
-		}
-	}()
+
+	// Redirect logs from container to relevant output.
+	go streamLogs(&wg, stdout, false)
+	go streamLogs(&wg, stderr, true)
+
 	go func() {
 		defer wg.Done()
 		<-ctx.Done()
 		_ = cmd.Process.Signal(os.Interrupt)
 	}()
 
-	err = cmd.Wait()
-	if err != nil {
-		return err
+	if err := cmd.Wait(); err != nil {
+		// Ignore any errors due to the script exiting by result of a signal.
+		if err, ok := err.(*exec.ExitError); ok {
+			if status, ok := err.Sys().(syscall.WaitStatus); ok && status.Signaled() {
+				return nil
+			}
+		}
+
+		// Script produced a non-zero exit code.
+		return fmt.Errorf("unexpected error when running the DP, read logs for more detail: %w", err)
 	}
 
 	wg.Wait()
 	return nil
 }
 
-var adminServerConf = []byte(`
-server {
-  listen 8001;
-  location / {
-    default_type application/json;
-    content_by_lua_block {
-      Kong.admin_content()
-    }
-    header_filter_by_lua_block {
-      Kong.admin_header_filter()
-    }
-  }
-}
-`)
-
-func setup(dir string, input DockerInput) (err error) {
-	err = os.WriteFile(dir+"/cluster.key", input.ClientKey, os.ModePerm)
-	if err != nil {
-		return
-	}
-	err = os.WriteFile(dir+"/cluster.crt", input.ClientCert, os.ModePerm)
-	if err != nil {
-		return
-	}
-	err = os.WriteFile(dir+"/cluster-ca.crt", input.CACert, os.ModePerm)
-	if err != nil {
-		return
-	}
-	err = os.WriteFile(dir+"/admin.conf", adminServerConf, os.ModePerm)
-	if err != nil {
-		return
-	}
+func createFiles(input *DockerInput) (dir string, cleanup func() error, err error) {
 	var buf bytes.Buffer
-	err = t.ExecuteTemplate(&buf, "run", &input)
-	if err != nil {
-		return
+	if err := t.ExecuteTemplate(&buf, "run", &input); err != nil {
+		return "", nil, err
 	}
 
-	err = os.WriteFile(dir+"/run.sh", buf.Bytes(), os.ModePerm)
-	if err != nil {
-		return
+	// We're forcing the `koko-` prefix, as this is to ensure that there is
+	// a common glob for all directories that are created via the tests.
+	const tmpDirPrefix = "koko-"
+	tmpDir := input.ContainerName + "-*"
+	if !strings.HasPrefix(tmpDir, tmpDirPrefix) {
+		tmpDir = tmpDirPrefix + tmpDir
 	}
-	return
+
+	if dir, err = os.MkdirTemp("", tmpDir); err != nil {
+		return "", nil, err
+	}
+
+	cleanupFn := func() error { return os.RemoveAll(dir) }
+	defer func() {
+		if err != nil {
+			_ = cleanupFn()
+		}
+	}()
+
+	for v := range input.Internal.Volumes {
+		if err = os.MkdirAll(path.Join(dir, filepath.Base(v)), os.ModePerm); err != nil {
+			return "", nil, err
+		}
+	}
+
+	for p, content := range map[string][]byte{
+		path.Join(dir, fileAdminConf):     adminServerConf,
+		path.Join(dir, fileClusterCACert): input.CACert,
+		path.Join(dir, fileClusterCert):   input.ClientCert,
+		path.Join(dir, fileClusterKey):    input.ClientKey,
+		path.Join(dir, fileRunSh):         buf.Bytes(),
+	} {
+		if err = os.WriteFile(p, content, os.ModePerm); err != nil {
+			return "", nil, err
+		}
+	}
+
+	return dir, cleanupFn, err
 }
 
-func addDefaults(input DockerInput) DockerInput {
+// addDefaults generates the required input to the `docker run` command.
+//
+// By default, for the given host OSes, the Kong DP will run as follows:
+// - macOS
+//   - Environment variables:
+//     1. `KONG_CLUSTER_CONTROL_PLANE=host.docker.internal:3100`
+//   - Ports bound to host OS:
+//     1. 8000:8000
+//     2. 8001:8001
+//     3. 8443:8443
+//
+// - Linux
+//   - Environment variables:
+//     1. `KONG_CLUSTER_CONTROL_PLANE=localhost:3100`
+//   - Networking:
+//     Attached to the host interface's (meaning, all ports on the Kong DP are exposed to the host).
+//     Additionally, a host record for `host.docker.internal` is created, so that you may hit the
+//     host OS from the container without binding the container to the host's networking interface.
+//
+// See the DockerInput type for more environment variables that can be passed in.
+//
+// Environment variables passed to the DP will be set in the following order of precedence:
+// 1. Environment variables set on DockerInput.EnvVars.
+// 2. `KONG_*` environment variables provided on process (only when DockerInput.EnableAutoDPEnv is true).
+// 3. Default value based on host OS
+// 4. Default values defined in defaultEnvVars.
+//
+// For both environment variables provided on the process & DockerInput.EnvVars, such environment variables
+// will be dropped if they contain an empty value.
+//
+// In the event a Go test is being executed with verbose logging, the `KONG_LOG_LEVEL` environment variable
+// will be set to `DEBUG`.
+func addDefaults(input *DockerInput) (*DockerInput, error) {
 	res := input
 
-	if res.Image == "" {
-		panic("no version set")
+	if res.Internal.Hosts == nil {
+		res.Internal.Hosts = make(map[string]string)
 	}
-	if res.EnvVars == nil {
-		res.EnvVars = map[string]string{}
-	}
-	for k, v := range defaultEnvVars {
-		if _, ok := res.EnvVars[k]; !ok {
-			res.EnvVars[k] = v
-		}
-	}
+
+	// In the event the control plane address is being provided part of the input & not an
+	// environment variable, we'll want to assume they want it to route to the host.
+	//
+	// This is required as some tests specifically set DockerInput.CPAddr & must be done before
+	// `env.Parse()` is called (as else an environment variable on the process can override it).
 	if res.CPAddr != "" {
-		res.EnvVars["KONG_CLUSTER_CONTROL_PLANE"] = res.CPAddr
-		i := strings.Index(res.CPAddr, ":")
-		if i == -1 {
-			panic("incorrect")
+		cpHostname, _, err := net.SplitHostPort(res.CPAddr)
+		if err != nil {
+			return nil, fmt.Errorf("invalid DockerInput.CPAddr address %q: %w", res.CPAddr, err)
 		}
-		res.Computed.CPHostname = res.CPAddr[:i]
+		res.Internal.Hosts[cpHostname] = dockerHostGWName
 	}
-	return res
+
+	// Set up the environment variables that will be passed to the Kong DP container.
+	if err := setupEnv(res); err != nil {
+		return nil, err
+	}
+
+	// Set up the control plane address, ports, etc. that will be configured for the Kong DP container.
+	if err := setupNetworking(res); err != nil {
+		return nil, err
+	}
+
+	// Allow the Kong DP access to the control plane certs & Nginx admin config directories.
+	res.Internal.Volumes = map[string]string{
+		"certs": "/certs",
+		"conf":  "/conf",
+	}
+
+	return res, nil
 }
 
 func GetKongConfForShared() DockerInput {
-	kongImage := os.Getenv("KOKO_TEST_KONG_DP_IMAGE")
-	if kongImage == "" {
-		panic("no KOKO_TEST_KONG_DP_IMAGE set")
-	}
-	res := DockerInput{
+	return DockerInput{
 		EnvVars: map[string]string{
 			"KONG_CLUSTER_MTLS": "shared",
 		},
-		Image: kongImage,
+		ClientKey:  certs.DefaultSharedKey,
+		ClientCert: certs.DefaultSharedCert,
+		CACert:     certs.DefaultSharedCert,
 	}
-	if testing.Verbose() {
-		k := "KONG_LOG_LEVEL"
-		v := "debug"
-		if _, ok := res.EnvVars[k]; !ok {
-			res.EnvVars[k] = v
-		}
-	}
-	res.ClientKey = certs.DefaultSharedKey
-	res.ClientCert = certs.DefaultSharedCert
-	res.CACert = certs.DefaultSharedCert
-	return res
 }
 
 func GetKongConf() DockerInput {
 	res := GetKongConfForShared()
 	res.EnvVars["KONG_CLUSTER_SERVER_NAME"] = "cp.example.com"
 	res.EnvVars["KONG_CLUSTER_MTLS"] = "pki"
-	res.CPAddr = "localhost:3100"
 	res.CACert = certs.CPCACert
 	res.ClientKey = certs.DPTree1Key
 	res.ClientCert = certs.DPTree1Cert
 	return res
+}
+
+func removeDockerContainer(containerName string) error {
+	c := exec.Command("docker", "rm", "-f", containerName)
+	var err error
+	if err = c.Start(); err == nil {
+		if err = c.Wait(); err == nil {
+			return nil
+		}
+	}
+
+	return fmt.Errorf("unable to remove Docker container: %w", err)
+}
+
+func streamLogs(wg *sync.WaitGroup, r io.ReadCloser, isStdErr bool) {
+	defer wg.Done()
+
+	prefix, f := "stdout", os.Stdout
+	if isStdErr {
+		prefix, f = "stderr", os.Stderr
+	}
+	prefix = "dp-" + prefix + ": "
+
+	sc := bufio.NewScanner(r)
+	for sc.Scan() {
+		_, _ = f.WriteString(prefix + sc.Text() + "\n")
+	}
+}
+
+func setupEnv(input *DockerInput) error {
+	if input.EnvVars == nil {
+		input.EnvVars = make(map[string]string)
+	}
+
+	// Fetch & validate the environment variables from the Koko process.
+	input.Internal.HostEnvVars = getHostEnv()
+	if err := validateHostEnv(input.Internal.HostEnvVars); err != nil {
+		return err
+	}
+
+	if testing.Verbose() {
+		input.EnvVars["KONG_LOG_LEVEL"] = "debug"
+	}
+
+	// Ignore the provided `KONG_*` from the host environment when required.
+	if val, _ := strconv.ParseBool(input.Internal.HostEnvVars[envEnableAutoDPEnv]); !val {
+		input.Internal.HostEnvVars = lo.PickBy(input.Internal.HostEnvVars, func(key, _ string) bool {
+			return !isKongEnvVar(key)
+		})
+	}
+
+	// Parse the given environment variables & set them for use on the Kong DP container.
+	newEnv := lo.Assign(defaultEnvVars, input.Internal.HostEnvVars, input.EnvVars)
+	input.EnvVars = lo.PickBy(newEnv, filterEnvVars(true, isKongEnvVar))
+	return env.Parse(input, env.Options{Environment: newEnv})
+}
+
+func setupNetworking(input *DockerInput) error {
+	// Depending on the host OS, we'll set different defaults for the CP listen address.
+	//
+	// TODO(tjasko): By default, we should be setting the CP & DP ports (that are published to the host) to be free,
+	//  random ports. However due to all the hard-coding going on, this is easier said than done. Once those changes
+	//  are in, we'll be able to then update this tooling to return the info needed to access the DP.
+	var defaultCPAddr, defaultNetwork string
+	var ports map[int]int
+	switch runtime.GOOS {
+	case "linux":
+		// As we're already running on Linux, just give the container access to the host's networking.
+		defaultCPAddr, defaultNetwork = "localhost:3100", dockerHostNetwork
+
+		// Let Linux users be able to talk to the host in case they don't want to bind to the host's
+		// networking interface. This hostname is automatically added by Docker for non-Linux hosts.
+		input.Internal.Hosts[dockerHostGWHostname] = dockerHostGWName
+	case "darwin":
+		// By default, let the DP reach out to the CP running on the host system.
+		defaultCPAddr, ports = net.JoinHostPort(dockerHostGWHostname, "3100"), defaultDockerPorts
+	default:
+		// Yes, we can likely support Windows w/ Docker+WSL2 just fine, however it's currently untested.
+		return fmt.Errorf("unsupported host OS: %s", runtime.GOOS)
+	}
+
+	// The control plane address that's passed to the DP will be set in the following order of precedence:
+	// 1. `KONG_CLUSTER_CONTROL_PLANE` environment variable provided on process.
+	// 2. Control plane address set on DockerInput.
+	// 3. Default value based on host OS.
+	if input.CPAddr == "" {
+		input.CPAddr = defaultCPAddr
+	}
+
+	// There's no easy way with the `env` library we're using to go back to a slice of
+	// environment variables. As this is the only environment variable that we override
+	// part of this logic, we don't need to do anything too sophisticated right now.
+	input.EnvVars["KONG_CLUSTER_CONTROL_PLANE"] = input.CPAddr
+
+	// Any environment variables that were
+	// When no explicit Docker network has been set via the provided
+	// environment variable, set the default based on the host OS.
+	if input.Network == "" {
+		input.Network = defaultNetwork
+	}
+
+	// When no explicit Docker ports have been set, provide the default based on the host OS.
+	// On Linux, providing ports when the DP container is being bounded to the host is unnecessary.
+	if input.Network != dockerHostNetwork {
+		input.Internal.Ports = ports
+	}
+
+	return nil
+}
+
+func validateHostEnv(e map[string]string) error {
+	if e["DOCKER_HOST"] != "" {
+		return errors.New("using DOCKER_HOST is unsupported until DP hostnames & ports are customizable")
+	}
+
+	return nil
+}
+
+func getHostEnv() map[string]string {
+	return lo.Associate(os.Environ(), func(val string) (string, string) {
+		parts := strings.SplitN(val, "=", 2) //nolint:gomnd
+		return strings.ToUpper(parts[0]), parts[1]
+	})
+}
+
+func isKongEnvVar(name string) bool {
+	return strings.HasPrefix(name, "KONG_")
+}
+
+func filterEnvVars(filterEmpty bool, keyFilter func(string) bool) func(key, val string) bool {
+	return func(key, val string) bool {
+		if filterEmpty && val == "" {
+			return false
+		}
+		if !keyFilter(key) {
+			return false
+		}
+		return true
+	}
 }
