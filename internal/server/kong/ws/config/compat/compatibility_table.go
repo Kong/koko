@@ -437,6 +437,120 @@ var (
 				},
 			},
 		},
+		{
+			Metadata: config.ChangeMetadata{
+				ID:       config.ChangeID("P122"),
+				Severity: config.ChangeSeverityError,
+				Description: "For the 'pre-function' plugin, " +
+					"'config.functions' field has been used. " +
+					"This is not supported in Kong Gateway versions >= 3.0. " +
+					"The plugin configuration has been updated to rename " +
+					"'config.functions' to 'config.access' in the data-plane.",
+				Resolution: "Please update the configuration to use " +
+					"'config.access' field instead of 'config.functions'.",
+			},
+			SemverRange: versions300AndAbove,
+			Update: config.ConfigTableUpdates{
+				Name: "pre-function",
+				Type: config.Plugin,
+				FieldUpdates: []config.ConfigTableFieldCondition{
+					{
+						Field:     "functions",
+						Condition: "functions",
+						Updates: []config.ConfigTableFieldUpdate{
+							{
+								Field:          "access",
+								ValueFromField: "functions",
+							},
+							{
+								Field: "functions",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			Metadata: config.ChangeMetadata{
+				ID:       config.ChangeID("P123"),
+				Severity: config.ChangeSeverityError,
+				Description: "For the 'post-function' plugin, " +
+					"'config.functions' field has been used. " +
+					"This is not supported in Kong Gateway versions >= 3.0. " +
+					"The plugin configuration has been updated to rename " +
+					"'config.functions' to 'config.access' in the data-plane.",
+				Resolution: "Please update the configuration to use " +
+					"'config.access' field instead of 'config.functions'.",
+			},
+			SemverRange: versions300AndAbove,
+			Update: config.ConfigTableUpdates{
+				Name: "post-function",
+				Type: config.Plugin,
+				FieldUpdates: []config.ConfigTableFieldCondition{
+					{
+						Field:     "functions",
+						Condition: "functions",
+						Updates: []config.ConfigTableFieldUpdate{
+							{
+								Field:          "access",
+								ValueFromField: "functions",
+							},
+							{
+								Field: "functions",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			Metadata: config.ChangeMetadata{
+				ID:       config.ChangeID("P124"),
+				Severity: config.ChangeSeverityWarning,
+				Description: "For the 'pre-function' plugin, " +
+					"'config.functions' field has been used. " +
+					"This field is deprecated and it is no longer supported " +
+					"in Kong Gateway versions >= 3.0.",
+				Resolution: "Please update the plugin configuration to use " +
+					"'config.access' field in place of 'config.functions' field",
+			},
+			SemverRange: versionsPre300,
+			Update: config.ConfigTableUpdates{
+				Name: "pre-function",
+				Type: config.Plugin,
+				FieldUpdates: []config.ConfigTableFieldCondition{
+					{
+						Field:     "functions",
+						Condition: "functions",
+					},
+				},
+			},
+		},
+		{
+			Metadata: config.ChangeMetadata{
+				ID:       config.ChangeID("P125"),
+				Severity: config.ChangeSeverityWarning,
+				Description: "For the 'post-function' plugin, " +
+					"'config.functions' field has been used. " +
+					"This field is deprecated and it is no longer supported " +
+					"in Kong Gateway versions >= 3.0.",
+				Resolution: "Please update the plugin configuration to use " +
+					"'config.access' field in place of 'config.functions' field",
+			},
+			SemverRange: versionsPre300,
+			Update: config.ConfigTableUpdates{
+				Name: "post-function",
+				Type: config.Plugin,
+				// TODO(hbagdi) figure out a mechanism to introduce warnings
+				// without this wasteful update
+				FieldUpdates: []config.ConfigTableFieldCondition{
+					{
+						Field:     "functions",
+						Condition: "functions",
+					},
+				},
+			},
+		},
 	}
 )
 
