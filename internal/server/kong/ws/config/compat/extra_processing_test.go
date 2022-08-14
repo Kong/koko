@@ -30,6 +30,14 @@ func TestExtraProcessing_CorrectAWSLambdaMutuallyExclusiveFields(t *testing.T) {
 								"aws_region": "test",
 								"host": "192.168.1.1"
 							}
+						},
+						{
+							"name": "plugin",
+							"config": {
+								"object": {
+									"key": "value"
+								}
+							}
 						}
 					]
 				}
@@ -42,6 +50,14 @@ func TestExtraProcessing_CorrectAWSLambdaMutuallyExclusiveFields(t *testing.T) {
 							"name": "aws-lambda",
 							"config": {
 								"aws_region": "test"
+							}
+						},
+						{
+							"name": "plugin",
+							"config": {
+								"object": {
+									"key": "value"
+								}
 							}
 						}
 					]
@@ -67,6 +83,14 @@ func TestExtraProcessing_CorrectAWSLambdaMutuallyExclusiveFields(t *testing.T) {
 				"config_table": {
 					"plugins": [
 						{
+							"name": "plugin",
+							"config": {
+								"object": {
+									"key": "value"
+								}
+							}
+						},
+						{
 							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
 							"name": "aws-lambda",
 							"config": {
@@ -79,6 +103,14 @@ func TestExtraProcessing_CorrectAWSLambdaMutuallyExclusiveFields(t *testing.T) {
 			expectedPayload: `{
 				"config_table": {
 					"plugins": [
+						{
+							"name": "plugin",
+							"config": {
+								"object": {
+									"key": "value"
+								}
+							}
+						},
 						{
 							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
 							"name": "aws-lambda",
@@ -101,6 +133,14 @@ func TestExtraProcessing_CorrectAWSLambdaMutuallyExclusiveFields(t *testing.T) {
 							"config": {
 								"aws_region": "test"
 							}
+						},
+						{
+							"name": "plugin",
+							"config": {
+								"object": {
+									"key": "value"
+								}
+							}
 						}
 					]
 				}
@@ -114,10 +154,107 @@ func TestExtraProcessing_CorrectAWSLambdaMutuallyExclusiveFields(t *testing.T) {
 							"config": {
 								"aws_region": "test"
 							}
+						},
+						{
+							"name": "plugin",
+							"config": {
+								"object": {
+									"key": "value"
+								}
+							}
 						}
 					]
 				}
 			}`,
+		},
+		{
+			name: "ensure 'host' is dropped when 'aws_region' is set for multiple configured 'aws-lambda' plugins",
+			uncompressedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							"name": "aws-lambda",
+							"config": {
+								"aws_region": "test",
+								"host": "192.168.1.1"
+							}
+						},
+						{
+							"name": "plugin",
+							"config": {
+								"object": {
+									"key": "value"
+								}
+							}
+						},
+						{
+							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							"name": "aws-lambda",
+							"config": {
+								"aws_region": "test",
+								"host": "192.168.1.1"
+							}
+						},
+						{
+							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							"name": "aws-lambda",
+							"config": {
+								"aws_region": "test",
+								"host": "192.168.1.1"
+							}
+						}
+					]
+				}
+			}`,
+			expectedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							"name": "aws-lambda",
+							"config": {
+								"aws_region": "test"
+							}
+						},
+						{
+							"name": "plugin",
+							"config": {
+								"object": {
+									"key": "value"
+								}
+							}
+						},
+						{
+							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							"name": "aws-lambda",
+							"config": {
+								"aws_region": "test"
+							}
+						},
+						{
+							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							"name": "aws-lambda",
+							"config": {
+								"aws_region": "test"
+							}
+						}
+					]
+				}
+			}`,
+			expectedTrackedChanges: config.TrackedChanges{
+				ChangeDetails: []config.ChangeDetail{
+					{
+						ID: awsLambdaExclusiveFieldChangeID,
+						Resources: []config.ResourceInfo{
+							{
+								Type: "plugin",
+								ID:   "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							},
+						},
+					},
+				},
+			},
 		},
 	}
 

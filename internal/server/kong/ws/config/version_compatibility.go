@@ -554,7 +554,7 @@ func (vc *WSVersionCompatibility) processPluginUpdates(payload string,
 			resIndex := res.Index - indexUpdate
 			updatedPayload := processedPayload[:resIndex] + updatedRaw +
 				processedPayload[resIndex+len(res.Raw):]
-			indexUpdate = len(processedPayload) - len(updatedPayload)
+			indexUpdate += len(processedPayload) - len(updatedPayload)
 			processedPayload = updatedPayload
 
 			if updated && shouldTrackChange(configTableUpdate, originalRaw) {
