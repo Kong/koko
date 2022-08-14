@@ -1,0 +1,369 @@
+package e2e
+
+// FieldUpdateCheck represents the validation or expected value for a given field in a plugin
+// configuration.
+type FieldUpdateCheck struct {
+	// Field is the field to check
+	Field string
+	// Value is the value of the field
+	Value interface{}
+}
+
+// VersionCompatibilityPlugins represents a plugin configuration to test and validate.
+type VersionCompatibilityPlugins struct {
+	// Name is the name of the plugin
+	Name string
+	// Config is the JSON configuration for the plugin
+	Config string
+	// VersionRange is used to determine when a plugin is not to be expected on a data plane
+	VersionRange string
+	// FieldUpdateChecks are the values to validate
+	FieldUpdateChecks map[string][]FieldUpdateCheck
+	// ConfigureForService toggles whether the plugin should be configured for a service
+	ConfigureForService bool
+	// ConfigureForService toggles whether the plugin should be configured for a route
+	ConfigureForRoute bool
+	// ExpectedConfig is the expected plugin configuration
+	ExpectedConfig string
+}
+
+// VersionCompatibilityOSSPluginConfigurationTests are the OSS plugins schemas to test in order to
+// validate version compatibility layer.
+var VersionCompatibilityOSSPluginConfigurationTests = []VersionCompatibilityPlugins{
+	{
+		Name: "acl",
+		Config: `{
+			"allow": [
+				"kongers"
+			]
+		}`,
+		ConfigureForService: true,
+		ConfigureForRoute:   true,
+	},
+	// DP < 2.6
+	//   - remove 'preferred_chain', 'storage_config.vault.auth_method',
+	//     'storage_config.vault.auth_path', 'storage_config.vault.auth_role',
+	//     'storage_config.vault.jwt_path'
+	//
+	// DP < 3.0:
+	//   - remove 'allow_any_domain'
+	{
+		Name: "acme",
+		Config: `{
+			"account_email": "example@example.com",
+			"allow_any_domain": true
+		}`,
+	},
+	// DP < 2.6
+	//   - remove 'base64_encode_body'
+	//
+	// DP < 3.0
+	//   - if both 'aws_region' and 'host' are set
+	//     just drop 'host' and keep 'aws_region'
+	//     since these used to be  mutually exclusive
+	{
+		Name: "aws-lambda",
+		Config: `{
+			"aws_region": "AWS_REGION",
+			"host": "192.168.1.1",
+			"function_name": "FUNCTION_NAME"
+		}`,
+		ConfigureForService: true,
+		ConfigureForRoute:   true,
+	},
+	{
+		Name: "azure-functions",
+		Config: `{
+			"functionname": "FUNCTIONNAME",
+			"appname": "APPNAME"
+		}`,
+		ConfigureForService: true,
+		ConfigureForRoute:   true,
+	},
+	{
+		Name:                "basic-auth",
+		ConfigureForService: true,
+		ConfigureForRoute:   true,
+	},
+	{
+		Name:                "bot-detection",
+		ConfigureForService: true,
+		ConfigureForRoute:   true,
+	},
+	{
+		Name:                "correlation-id",
+		ConfigureForService: true,
+		ConfigureForRoute:   true,
+	},
+	{
+		Name:                "cors",
+		ConfigureForService: true,
+		ConfigureForRoute:   true,
+	},
+	{
+		Name: "datadog",
+		Config: `{
+			"service_name_tag": "SERVICE_NAME_TAG",
+			"status_tag": "STATUS_TAG",
+			"consumer_tag": "CONSUMER_TAG",
+			"metrics": [
+				{
+					"name": "latency",
+					"stat_type": "distribution",
+					"sample_rate": 1
+				}
+			]
+		}`,
+		ConfigureForService: true,
+		ConfigureForRoute:   true,
+	},
+	{
+		Name: "file-log",
+		Config: `{
+			"path": "path/to/file.log"
+		}`,
+		ConfigureForService: true,
+		ConfigureForRoute:   true,
+	},
+	{
+		Name: "grpc-gateway",
+		Config: `{
+			"proto": "path/to/file.proto"
+		}`,
+		ConfigureForService: true,
+		ConfigureForRoute:   true,
+	},
+	{
+		Name: "grpc-web",
+		Config: `{
+			"proto": "path/to/file.proto"
+		}`,
+		ConfigureForService: true,
+		ConfigureForRoute:   true,
+	},
+	{
+		Name:                "hmac-auth",
+		ConfigureForService: true,
+		ConfigureForRoute:   true,
+	},
+	// DP <= 2.8
+	//   - Convert header values from `string` to `[]string`.
+	//     e.g.: `"value-1"` -> `[]string{"value-1"}`
+	//
+	// DP >= 3.0
+	//   - Default behavior, use `string` header values as-is.
+	{
+		Name: "http-log",
+		Config: `{
+			"http_endpoint": "http://example.com/logs",
+			"headers": {
+				"header-1": "value-1",
+				"header-2": "value-2"
+			}
+		}`,
+		ConfigureForService: true,
+		ConfigureForRoute:   true,
+	},
+	{
+		Name: "ip-restriction",
+		Config: `{
+			"allow": [
+				"1.2.3.4"
+			],
+			"status": 200,
+			"message": "MESSAGE"
+		}`,
+		ConfigureForService: true,
+		ConfigureForRoute:   true,
+	},
+	{
+		Name:                "jwt",
+		ConfigureForService: true,
+		ConfigureForRoute:   true,
+	},
+	{
+		Name:                "key-auth",
+		ConfigureForService: true,
+		ConfigureForRoute:   true,
+	},
+	{
+		Name: "ldap-auth",
+		Config: `{
+			"ldap_host": "example.com",
+			"ldap_port": 389,
+			"base_dn": "dc=example,dc=com",
+			"attribute": "cn"
+		}`,
+		ConfigureForService: true,
+		ConfigureForRoute:   true,
+	},
+	{
+		Name: "loggly",
+		Config: `{
+			"key": "KEY"
+		}`,
+		ConfigureForService: true,
+		ConfigureForRoute:   true,
+	},
+	{
+		Name: "opentelemetry",
+		Config: `{
+			"endpoint": "http://example.dev"
+		}`,
+		VersionRange: ">= 3.0.0",
+	},
+	{
+		Name: "post-function",
+		Config: `{
+			"access": [
+				"kong.log.err('Goodbye Koko!')"
+			]
+		}`,
+		ConfigureForService: true,
+		ConfigureForRoute:   true,
+	},
+	{
+		Name: "pre-function",
+		Config: `{
+			"access": [
+				"kong.log.err('Hello Koko!')"
+			]
+		}`,
+		ConfigureForService: true,
+		ConfigureForRoute:   true,
+	},
+	// DP < 2.4
+	//   - remove 'per_consumer' field (default: false)
+	//
+	// DP < 3.0
+	//   - remove 'status_code_metrics', 'latency_metrics'
+	//     'bandwidth_metrics', 'upstream_health_metrics'
+	{
+		Name: "prometheus",
+		Config: `{
+			"status_code_metrics": true,
+			"latency_metrics": true,
+			"bandwidth_metrics": true,
+			"upstream_health_metrics": true
+		}`,
+		ConfigureForService: true,
+		ConfigureForRoute:   true,
+	},
+	{
+		Name: "proxy-cache",
+		Config: `{
+			"strategy": "memory"
+		}`,
+		ConfigureForService: true,
+		ConfigureForRoute:   true,
+	},
+	{
+		Name: "rate-limiting",
+		Config: `{
+			"hour": 1,
+			"redis_ssl": true,
+			"redis_ssl_verify": true,
+			"redis_server_name": "redis.example.com",
+			"redis_username": "REDIS_USERNAME",
+			"redis_password": "REDIS_PASSWORD"
+		}`,
+		ConfigureForService: true,
+		ConfigureForRoute:   true,
+	},
+	{
+		Name:                "request-size-limiting",
+		ConfigureForService: true,
+		ConfigureForRoute:   true,
+	},
+	{
+		Name:                "request-termination",
+		ConfigureForService: true,
+		ConfigureForRoute:   true,
+	},
+	{
+		Name:                "request-transformer",
+		ConfigureForService: true,
+		ConfigureForRoute:   true,
+	},
+	{
+		Name: "response-ratelimiting",
+		Config: `{
+			"limits": {
+				"sms": {
+					"minute": 20
+				}
+			},
+			"redis_username": "REDIS_USERNAME"
+		}`,
+		ConfigureForService: true,
+		ConfigureForRoute:   true,
+	},
+	{
+		Name:                "response-transformer",
+		ConfigureForService: true,
+		ConfigureForRoute:   true,
+	},
+	{
+		Name:                "session",
+		ConfigureForService: true,
+		ConfigureForRoute:   true,
+	},
+	{
+		Name:                "statsd",
+		ConfigureForService: true,
+		ConfigureForRoute:   true,
+	},
+	{
+		Name:                "syslog",
+		ConfigureForService: true,
+		ConfigureForRoute:   true,
+	},
+	{
+		Name: "tcp-log",
+		Config: `{
+			"host": "localhost",
+			"port": 1234
+		}`,
+		ConfigureForService: true,
+		ConfigureForRoute:   true,
+	},
+	{
+		Name: "udp-log",
+		Config: `{
+			"host": "localhost",
+			"port": 1234
+		}`,
+		ConfigureForService: true,
+		ConfigureForRoute:   true,
+	},
+	// DP < 2.4:
+	//   - remove 'tags_header' field (default: Zipkin-Tags)
+	//
+	// DP < 2.7:
+	//   - change 'header_type' from 'ignore' to 'preserve'
+	//
+	// DP < 3.0:
+	//   - remove 'http_span_name', 'connect_timeout'
+	//     'send_timeout', 'read_timeout'
+	{
+		Name: "zipkin",
+		Config: `{
+			"local_service_name": "LOCAL_SERVICE_NAME",
+			"header_type": "ignore",
+			"http_span_name": "method_path",
+			"connect_timeout": 2001,
+			"send_timeout": 2001,
+			"read_timeout": 2001
+		}`,
+		FieldUpdateChecks: map[string][]FieldUpdateCheck{
+			"< 2.7.0": {
+				{
+					Field: "header_type",
+					Value: "preserve",
+				},
+			},
+		},
+		ConfigureForService: true,
+		ConfigureForRoute:   true,
+	},
+}
