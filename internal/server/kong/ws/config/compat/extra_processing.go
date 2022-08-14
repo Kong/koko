@@ -90,7 +90,7 @@ func correctAWSLambdaMutuallyExclusiveFields(
 		resIndex := res.Index - indexUpdate
 		updatedPayload := processedPayload[:resIndex] + updatedRaw +
 			processedPayload[resIndex+len(res.Raw):]
-		indexUpdate = len(processedPayload) - len(updatedPayload)
+		indexUpdate += len(processedPayload) - len(updatedPayload)
 		processedPayload = updatedPayload
 	}
 	return processedPayload

@@ -886,11 +886,28 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 						},
 						ChangeID: "T101",
 					},
+					{
+						Name: "plugin_2",
+						Type: Plugin,
+						RemoveFields: []string{
+							"plugin_2_field_1",
+						},
+						ChangeID: "T102",
+					},
 				},
 			},
 			uncompressedPayload: `{
 				"config_table": {
 					"plugins": [
+						{
+							"id": "76a1d3aa-3eb5-4684-a626-6ce0f5afd380",
+							"name": "plugin_2",
+							"config": {
+								"plugin_2_field_2": "element",
+								"plugin_2_field_1": "element",
+								"plugin_2_field_4": "element"
+							}
+						},
 						{
 							"id": "ab3b5a6d-923e-4e71-83b4-77e4b68d3e55",
 							"name": "plugin_1",
@@ -905,6 +922,48 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 								"plugin_1_field_2": "element",
 								"plugin_1_field_1": "element"
 							}
+						},
+						{
+							"id": "81295196-8963-4abd-9daa-4d39bf763e40",
+							"name": "plugin_1",
+							"config": {
+								"plugin_1_field_2": "element",
+								"plugin_1_field_1": "element",
+								"plugin_1_field_4": "element"
+							}
+						},
+						{
+							"id": "76a1d3aa-3eb5-4684-a626-6ce0f5afd381",
+							"name": "plugin_2",
+							"config": {
+								"plugin_2_field_2": "element"
+							}
+						},
+						{
+							"id": "81295196-8963-4abd-9daa-4d39bf763e41",
+							"name": "plugin_1",
+							"config": {
+								"plugin_1_field_2": "element",
+								"plugin_1_field_1": "element",
+								"plugin_1_field_3": "element"
+							}
+						},
+						{
+							"id": "76a1d3aa-3eb5-4684-a626-6ce0f5afd382",
+							"name": "plugin_2",
+							"config": {
+								"plugin_2_field_2": "element",
+								"plugin_2_field_1": "element"
+							}
+						},
+						{
+							"id": "76a1d3aa-3eb5-4684-a626-6ce0f5afd383",
+							"name": "plugin_2",
+							"config": {
+								"plugin_2_field_2": "element",
+								"plugin_2_field_1": "element",
+								"plugin_2_field_3": "element"
+							}
 						}
 					]
 				}
@@ -913,6 +972,14 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 			expectedPayload: `{
 				"config_table": {
 					"plugins": [
+						{
+							"id": "76a1d3aa-3eb5-4684-a626-6ce0f5afd380",
+							"name": "plugin_2",
+							"config": {
+								"plugin_2_field_2": "element",
+								"plugin_2_field_4": "element"
+							}
+						},
 						{
 							"id": "ab3b5a6d-923e-4e71-83b4-77e4b68d3e55",
 							"name": "plugin_1",
@@ -923,6 +990,44 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 							"name": "plugin_1",
 							"config": {
 								"plugin_1_field_2": "element"
+							}
+						},
+						{
+							"id": "81295196-8963-4abd-9daa-4d39bf763e40",
+							"name": "plugin_1",
+							"config": {
+								"plugin_1_field_2": "element",
+								"plugin_1_field_4": "element"
+							}
+						},
+						{
+							"id": "76a1d3aa-3eb5-4684-a626-6ce0f5afd381",
+							"name": "plugin_2",
+							"config": {
+								"plugin_2_field_2": "element"
+							}
+						},
+						{
+							"id": "81295196-8963-4abd-9daa-4d39bf763e41",
+							"name": "plugin_1",
+							"config": {
+								"plugin_1_field_2": "element",
+								"plugin_1_field_3": "element"
+							}
+						},
+						{
+							"id": "76a1d3aa-3eb5-4684-a626-6ce0f5afd382",
+							"name": "plugin_2",
+							"config": {
+								"plugin_2_field_2": "element"
+							}
+						},
+						{
+							"id": "76a1d3aa-3eb5-4684-a626-6ce0f5afd383",
+							"name": "plugin_2",
+							"config": {
+								"plugin_2_field_2": "element",
+								"plugin_2_field_3": "element"
 							}
 						}
 					]
@@ -939,7 +1044,32 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 							},
 							{
 								Type: "plugin",
+								ID:   "81295196-8963-4abd-9daa-4d39bf763e40",
+							},
+							{
+								Type: "plugin",
+								ID:   "81295196-8963-4abd-9daa-4d39bf763e41",
+							},
+							{
+								Type: "plugin",
 								ID:   "ab3b5a6d-923e-4e71-83b4-77e4b68d3e55",
+							},
+						},
+					},
+					{
+						ID: "T102",
+						Resources: []ResourceInfo{
+							{
+								Type: "plugin",
+								ID:   "76a1d3aa-3eb5-4684-a626-6ce0f5afd380",
+							},
+							{
+								Type: "plugin",
+								ID:   "76a1d3aa-3eb5-4684-a626-6ce0f5afd382",
+							},
+							{
+								Type: "plugin",
+								ID:   "76a1d3aa-3eb5-4684-a626-6ce0f5afd383",
 							},
 						},
 					},
@@ -2654,7 +2784,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 			expectedChanges: TrackedChanges{},
 		},
 		{
-			name: "ensure multiple plugins are removed from multiple configured plugins",
+			name: "ensure multiple plugins are removed and process field updates occur for multiple configured plugins",
 			configTableUpdates: map[string][]ConfigTableUpdates{
 				"< 3.0.0": {
 					{
@@ -2662,6 +2792,23 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 						Type:     Plugin,
 						Remove:   true,
 						ChangeID: "T101",
+					},
+					{
+						Name: "plugin_2",
+						Type: Plugin,
+						FieldUpdates: []ConfigTableFieldCondition{
+							{
+								Field:     "plugin_2_field_1",
+								Condition: "plugin_2_field_1",
+								Updates: []ConfigTableFieldUpdate{
+									{
+										Field:          "plugin_2_field_2",
+										ValueFromField: "plugin_2_field_1",
+									},
+								},
+							},
+						},
+						ChangeID: "T102",
 					},
 				},
 			},
@@ -2672,7 +2819,8 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 							"id": "5441b100-f441-4d4b-bcc2-3bb153e2bd41",
 							"name": "plugin_2",
 							"config": {
-								"plugin_2_field_1": "element"
+								"plugin_2_field_1": "plugin_2_field_1_value",
+								"plugin_2_field_2": "value"
 							}
 						},
 						{
@@ -2693,7 +2841,14 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 							"id": "5441b100-f441-4d4b-bcc2-3bb153e2bd44",
 							"name": "plugin_1",
 							"config": {
-								"plugin_1_field_1": "element"
+								"plugin_3_field_1": "element"
+							}
+						},
+						{
+							"id": "5441b100-f441-4d4b-bcc2-3bb153e2bd45",
+							"name": "plugin_3",
+							"config": {
+								"plugin_3_field_1": "element"
 							}
 						}
 					]
@@ -2707,11 +2862,19 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 							"id": "5441b100-f441-4d4b-bcc2-3bb153e2bd41",
 							"name": "plugin_2",
 							"config": {
-								"plugin_2_field_1": "element"
+								"plugin_2_field_1": "plugin_2_field_1_value",
+								"plugin_2_field_2": "plugin_2_field_1_value"
 							}
 						},
 						{
 							"id": "5441b100-f441-4d4b-bcc2-3bb153e2bd43",
+							"name": "plugin_3",
+							"config": {
+								"plugin_3_field_1": "element"
+							}
+						},
+						{
+							"id": "5441b100-f441-4d4b-bcc2-3bb153e2bd45",
 							"name": "plugin_3",
 							"config": {
 								"plugin_3_field_1": "element"
@@ -2732,6 +2895,15 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 							{
 								Type: "plugin",
 								ID:   "5441b100-f441-4d4b-bcc2-3bb153e2bd44",
+							},
+						},
+					},
+					{
+						ID: "T102",
+						Resources: []ResourceInfo{
+							{
+								Type: "plugin",
+								ID:   "5441b100-f441-4d4b-bcc2-3bb153e2bd41",
 							},
 						},
 					},
