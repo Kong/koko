@@ -4,9 +4,7 @@ package e2e
 
 import (
 	"context"
-	"fmt"
 	"net/http"
-	"strings"
 	"testing"
 
 	"github.com/blang/semver/v4"
@@ -19,25 +17,14 @@ import (
 	"github.com/kong/koko/internal/test/run"
 	"github.com/kong/koko/internal/test/util"
 	"github.com/stretchr/testify/require"
-	"github.com/tidwall/gjson"
 	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
-type update struct {
-	field string
-	value interface{}
-}
-
-type vcPlugins struct {
-	name              string
-	id                string
-	config            string
-	versionRange      string
-	fieldUpdateChecks map[string][]update
-	expectedConfig    string
-}
-
+// TestVersionCompatibility tests multiple plugins to ensure that the version compatibility layer
+// is processing multiple versions of the plugins configured globally, on the service, and on the
+// route. Plugin IDs are generated during configuration of the plugin and used to validate when
+// ensuring the configuration on the data plane is equivalent.
 func TestVersionCompatibility(t *testing.T) {
 	cleanup := run.Koko(t)
 	defer cleanup()
@@ -47,347 +34,72 @@ func TestVersionCompatibility(t *testing.T) {
 	util.WaitForKong(t)
 	util.WaitForKongAdminAPI(t)
 
-	admin := httpexpect.New(t, "http://localhost:3000")
+	// Determine the data plane version for removal of plugins that are not expected to be present
+	// in the configuration.
+	// Note: These plugins will be configured on the control plane, but will be removed during the
+	// version compatibility during payload transmission to the data plane.
+	kongAdmin, err := kongClient.NewClient(util.BasedKongAdminAPIAddr, nil)
+	require.NoError(t, err)
+	ctx := context.Background()
+	info, err := kongAdmin.Root(ctx)
+	require.NoError(t, err)
+	dataPlaneVersion, err := kongClient.ParseSemanticVersion(kongClient.VersionFromInfo(info))
+	require.NoError(t, err)
 
-	tests := []vcPlugins{
-		{
-			name: "acl",
-			id:   uuid.NewString(),
-			config: `{
-				"allow": [
-					"kongers"
-				]
-			}`,
-		},
-		// DP < 2.6
-		//   - remove 'preferred_chain', 'storage_config.vault.auth_method',
-		//     'storage_config.vault.auth_path', 'storage_config.vault.auth_role',
-		//     'storage_config.vault.jwt_path'
-		//
-		// DP < 3.0:
-		//   - remove 'allow_any_domain'
-		{
-			name: "acme",
-			id:   uuid.NewString(),
-			config: `{
-				"account_email": "example@example.com",
-				"allow_any_domain": true
-			}`,
-		},
-		// DP < 2.6
-		//   - remove 'base64_encode_body'
-		//
-		// DP < 3.0
-		//   - if both 'aws_region' and 'host' are set
-		//     just drop 'host' and keep 'aws_region'
-		//     since these used to be  mutually exclusive
-		{
-			name: "aws-lambda",
-			id:   uuid.NewString(),
-			config: `{
-				"aws_region": "AWS_REGION",
-				"host": "192.168.1.1",
-				"function_name": "FUNCTION_NAME"
-			}`,
-		},
-		{
-			name: "azure-functions",
-			id:   uuid.NewString(),
-			config: `{
-				"functionname": "FUNCTIONNAME",
-				"appname": "APPNAME"
-			}`,
-		},
-		{
-			name: "basic-auth",
-			id:   uuid.NewString(),
-		},
-		{
-			name: "bot-detection",
-			id:   uuid.NewString(),
-		},
-		{
-			name: "correlation-id",
-			id:   uuid.NewString(),
-		},
-		{
-			name: "cors",
-			id:   uuid.NewString(),
-		},
-		{
-			name: "datadog",
-			id:   uuid.NewString(),
-			config: `{
-				"service_name_tag": "SERVICE_NAME_TAG",
-				"status_tag": "STATUS_TAG",
-				"consumer_tag": "CONSUMER_TAG",
-				"metrics": [
-					{
-						"name": "latency",
-						"stat_type": "distribution",
-						"sample_rate": 1
-					}
-				]
-			}`,
-		},
-		{
-			name: "file-log",
-			id:   uuid.NewString(),
-			config: `{
-				"path": "path/to/file.log"
-			}`,
-		},
-		{
-			name: "grpc-gateway",
-			id:   uuid.NewString(),
-			config: `{
-				"proto": "path/to/file.proto"
-			}`,
-		},
-		{
-			name: "grpc-web",
-			id:   uuid.NewString(),
-			config: `{
-				"proto": "path/to/file.proto"
-			}`,
-		},
-		{
-			name: "hmac-auth",
-			id:   uuid.NewString(),
-		},
-		// DP <= 2.8
-		//   - Convert header values from `string` to `[]string`.
-		//     e.g.: `"value-1"` -> `[]string{"value-1"}`
-		//
-		// DP >= 3.0
-		//   - Default behavior, use `string` header values as-is.
-		{
-			name: "http-log",
-			id:   uuid.NewString(),
-			config: `{
-				"http_endpoint": "http://example.com/logs",
-				"headers": {
-					"header-1": "value-1",
-					"header-2": "value-2"
-				}
-			}`,
-		},
-		{
-			name: "ip-restriction",
-			id:   uuid.NewString(),
-			config: `{
-				"allow": [
-					"1.2.3.4"
-				],
-				"status": 200,
-				"message": "MESSAGE"
-			}`,
-		},
-		{
-			name: "jwt",
-			id:   uuid.NewString(),
-		},
-		{
-			name: "key-auth",
-			id:   uuid.NewString(),
-		},
-		{
-			name: "ldap-auth",
-			id:   uuid.NewString(),
-			config: `{
-				"ldap_host": "example.com",
-				"ldap_port": 389,
-				"base_dn": "dc=example,dc=com",
-				"attribute": "cn"
-			}`,
-		},
-		{
-			name: "loggly",
-			id:   uuid.NewString(),
-			config: `{
-				"key": "KEY"
-			}`,
-		},
-		// DP >= 3.0
-		//   - replace 'functions' with 'access'
-		{
-			name: "post-function",
-			id:   uuid.NewString(),
-			config: `{
-				"functions": [
-					"kong.log.err('Goodbye Koko!')"
-				]
-			}`,
-			fieldUpdateChecks: map[string][]update{
-				">= 3.0.0": {
-					{
-						field: "access",
-						value: `[
-							"kong.log.err('Goodbye Koko!')"
-						]`,
-					},
-				},
-			},
-		},
-		// DP >= 3.0
-		//   - replace 'functions' with 'access'
-		{
-			name: "pre-function",
-			id:   uuid.NewString(),
-			config: `{
-				"functions": [
-					"kong.log.err('Hello Koko!')"
-				]
-			}`,
-			fieldUpdateChecks: map[string][]update{
-				">= 3.0.0": {
-					{
-						field: "access",
-						value: `[
-							"kong.log.err('Hello Koko!')"
-						]`,
-					},
-				},
-			},
-		},
-		// DP < 2.4
-		//   - remove 'per_consumer' field (default: false)
-		//
-		// DP < 3.0
-		//   - remove 'status_code_metrics', 'latency_metrics'
-		//     'bandwidth_metrics', 'upstream_health_metrics'
-		{
-			name: "prometheus",
-			id:   uuid.NewString(),
-			config: `{
-				"status_code_metrics": true,
-				"latency_metrics": true,
-				"bandwidth_metrics": true,
-				"upstream_health_metrics": true
-			}`,
-		},
-		{
-			name: "proxy-cache",
-			id:   uuid.NewString(),
-			config: `{
-				"strategy": "memory"
-			}`,
-		},
-		{
-			name: "rate-limiting",
-			id:   uuid.NewString(),
-			config: `{
-				"hour": 1,
-				"redis_ssl": true,
-				"redis_ssl_verify": true,
-				"redis_server_name": "redis.example.com",
-				"redis_username": "REDIS_USERNAME",
-				"redis_password": "REDIS_PASSWORD"
-			}`,
-		},
-		{
-			name: "request-size-limiting",
-			id:   uuid.NewString(),
-		},
-		{
-			name: "request-termination",
-			id:   uuid.NewString(),
-		},
-		{
-			name: "request-transformer",
-			id:   uuid.NewString(),
-		},
-		{
-			name: "response-ratelimiting",
-			id:   uuid.NewString(),
-			config: `{
-				"limits": {
-					"sms": {
-						"minute": 20
-					}
-				},
-				"redis_username": "REDIS_USERNAME"
-			}`,
-		},
-		{
-			name: "response-transformer",
-			id:   uuid.NewString(),
-		},
-		{
-			name: "session",
-			id:   uuid.NewString(),
-		},
-		{
-			name: "statsd",
-			id:   uuid.NewString(),
-		},
-		{
-			name: "syslog",
-			id:   uuid.NewString(),
-		},
-		{
-			name: "tcp-log",
-			id:   uuid.NewString(),
-			config: `{
-				"host": "localhost",
-				"port": 1234
-			}`,
-		},
-		{
-			name: "udp-log",
-			id:   uuid.NewString(),
-			config: `{
-				"host": "localhost",
-				"port": 1234
-			}`,
-		},
-		// DP < 2.4:
-		//   - remove 'tags_header' field (default: Zipkin-Tags)
-		//
-		// DP < 2.7:
-		//   - change 'header_type' from 'ignore' to 'preserve'
-		//
-		// DP < 3.0:
-		//   - remove 'http_span_name', 'connect_timeout'
-		//     'send_timeout', 'read_timeout'
-		{
-			name: "zipkin",
-			id:   uuid.NewString(),
-			config: `{
-				"local_service_name": "LOCAL_SERVICE_NAME",
-				"header_type": "ignore",
-				"http_span_name": "method_path",
-				"connect_timeout": 2001,
-				"send_timeout": 2001,
-				"read_timeout": 2001
-			}`,
-			fieldUpdateChecks: map[string][]update{
-				"< 2.7.0": {
-					{
-						field: "header_type",
-						value: "preserve",
-					},
-				},
-			},
-		},
-		{
-			name: "opentelemetry",
-			id:   uuid.NewString(),
-			config: `{
-				"endpoint": "http://example.dev"
-			}`,
-			versionRange: ">= 3.0.0",
+	admin := httpexpect.New(t, "http://localhost:3000")
+	expectedConfig := &v1.TestingConfig{
+		Services: make([]*v1.Service, 1),
+		Routes:   make([]*v1.Route, 1),
+		Plugins:  []*v1.Plugin{},
+	}
+
+	// Create a service
+	service := &v1.Service{
+		Id:   uuid.NewString(),
+		Name: "foo",
+		Host: "httpbin.org",
+		Path: "/",
+	}
+	res := admin.POST("/v1/services").WithJSON(service).Expect()
+	res.Status(http.StatusCreated)
+	expectedConfig.Services[0] = service
+
+	// Create a route
+	route := &v1.Route{
+		Id:    uuid.NewString(),
+		Name:  "bar",
+		Paths: []string{"/"},
+		Service: &v1.Service{
+			Id: service.Id,
 		},
 	}
-	for _, test := range tests {
+	res = admin.POST("/v1/routes").WithJSON(route).Expect()
+	res.Status(http.StatusCreated)
+	expectedConfig.Routes[0] = route
+
+	// Handle configuration of the plugins and determine the expected plugin configurations
+	// Note: All plugin configurations will be removed from the expected configuration due to
+	// version compatibility layer transforming the configuration during transmission of the
+	// payload to the data plane.
+	for _, test := range VersionCompatibilityOSSPluginConfigurationTests {
 		var config structpb.Struct
-		if len(test.config) > 0 {
-			require.Nil(t, json.ProtoJSONUnmarshal([]byte(test.config), &config))
+		if len(test.Config) > 0 {
+			require.Nil(t, json.ProtoJSONUnmarshal([]byte(test.Config), &config))
 		}
 
+		// Determine if the plugin should be added to the expected plugin configurations
+		addExpectedPlugin := true
+		if len(test.VersionRange) > 0 {
+			version := semver.MustParseRange(test.VersionRange)
+			if !version(dataPlaneVersion) {
+				addExpectedPlugin = false
+			}
+		}
+
+		// Configure plugins globally and add to expected plugins configuration
 		plugin := &v1.Plugin{
-			Id:        test.id,
-			Name:      test.name,
+			Id:        uuid.NewString(),
+			Name:      test.Name,
 			Config:    &config,
 			Enabled:   wrapperspb.Bool(true),
 			Protocols: []string{"http", "https"},
@@ -396,100 +108,64 @@ func TestVersionCompatibility(t *testing.T) {
 		require.Nil(t, err)
 		res := admin.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
 		res.Status(http.StatusCreated)
+		if addExpectedPlugin {
+			expectedConfig.Plugins = append(expectedConfig.Plugins, &v1.Plugin{
+				Id:        plugin.Id,
+				Name:      plugin.Name,
+				Enabled:   plugin.Enabled,
+				Protocols: plugin.Protocols,
+			})
+		}
+
+		// Configure plugin on service and add to expected plugins configuration
+		if test.ConfigureForService {
+			// Generate a new plugin ID and associate it with the service
+			plugin.Id = uuid.NewString()
+			plugin.Service = &v1.Service{Id: service.Id}
+			pluginBytes, err = json.ProtoJSONMarshal(plugin)
+			require.Nil(t, err)
+			res := admin.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
+			res.Status(http.StatusCreated)
+			if addExpectedPlugin {
+				expectedConfig.Plugins = append(expectedConfig.Plugins, &v1.Plugin{
+					Id:        plugin.Id,
+					Name:      plugin.Name,
+					Enabled:   plugin.Enabled,
+					Protocols: plugin.Protocols,
+				})
+			}
+		}
+
+		// Configure plugin on route and add to expected plugins configuration
+		if test.ConfigureForRoute {
+			// Generate a new plugin ID and associate it with the route; resetting the possible associated
+			// service
+			plugin.Id = uuid.NewString()
+			plugin.Service = nil
+			plugin.Route = &v1.Route{Id: route.Id}
+			pluginBytes, err = json.ProtoJSONMarshal(plugin)
+			require.Nil(t, err)
+			res := admin.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
+			res.Status(http.StatusCreated)
+			if addExpectedPlugin {
+				expectedConfig.Plugins = append(expectedConfig.Plugins, &v1.Plugin{
+					Id:        plugin.Id,
+					Name:      plugin.Name,
+					Enabled:   plugin.Enabled,
+					Protocols: plugin.Protocols,
+				})
+			}
+		}
 	}
 
+	// Validate the service, route, and plugin configurations
 	util.WaitFunc(t, func() error {
-		err := ensurePlugins(tests)
-		t.Log("plugin validation failed", err)
+		err := util.EnsureConfig(expectedConfig)
+		if err != nil {
+			t.Log("config validation failed", err)
+		}
 		return err
 	})
-}
-
-func ensurePlugins(plugins []vcPlugins) error {
-	kongAdmin, err := kongClient.NewClient(util.BasedKongAdminAPIAddr, nil)
-	if err != nil {
-		return fmt.Errorf("create go client for kong: %v", err)
-	}
-	ctx := context.Background()
-	info, err := kongAdmin.Root(ctx)
-	if err != nil {
-		return fmt.Errorf("fetching Kong Gateway info: %v", err)
-	}
-	dataPlaneVersion, err := kongClient.ParseSemanticVersion(kongClient.VersionFromInfo(info))
-	if err != nil {
-		return fmt.Errorf("parsing Kong Gateway version: %v", err)
-	}
-	dataPlanePlugins, err := kongAdmin.Plugins.ListAll(ctx)
-	if err != nil {
-		return fmt.Errorf("fetching plugins: %v", err)
-	}
-
-	// Remove plugins that may not be expected due to data plane version
-	var expectedPlugins []vcPlugins
-	for _, plugin := range plugins {
-		addPlugin := true
-		if len(plugin.versionRange) > 0 {
-			version := semver.MustParseRange(plugin.versionRange)
-			if !version(dataPlaneVersion) {
-				addPlugin = false
-			}
-		}
-		if addPlugin {
-			expectedPlugins = append(expectedPlugins, plugin)
-		}
-	}
-
-	// Because configurations may vary validation occurs via the name and ID for
-	// removal items and a special test for updates will be performed which
-	// verifies update occurred properly based on versions
-	if len(expectedPlugins) != len(dataPlanePlugins) {
-		return fmt.Errorf("plugins configured count does not match [%d != %d]", len(expectedPlugins), len(dataPlanePlugins))
-	}
-	var failedPlugins []string
-	var missingPlugins []string
-	for _, plugin := range expectedPlugins {
-		found := false
-		for _, dataPlanePlugin := range dataPlanePlugins {
-			if plugin.name == *dataPlanePlugin.Name && plugin.id == *dataPlanePlugin.ID {
-				// Ensure field updates occurred and validate
-				if len(plugin.fieldUpdateChecks) > 0 {
-					config, err := json.ProtoJSONMarshal(dataPlanePlugin.Config)
-					if err != nil {
-						return fmt.Errorf("marshal %s plugin config: %v", plugin.name, err)
-					}
-					configStr := string(config)
-
-					for version, updates := range plugin.fieldUpdateChecks {
-						version := semver.MustParseRange(version)
-						if version(dataPlaneVersion) {
-							for _, update := range updates {
-								res := gjson.Get(configStr, update.field)
-								if !res.Exists() || res.Value() != update.value {
-									failedPlugins = append(failedPlugins, plugin.name)
-									break
-								}
-							}
-						}
-					}
-				}
-
-				found = true
-				break
-			}
-		}
-		if !found {
-			missingPlugins = append(missingPlugins, plugin.name)
-		}
-	}
-
-	if len(missingPlugins) > 0 {
-		return fmt.Errorf("failed to discover plugins %s", strings.Join(missingPlugins, ","))
-	}
-	if len(failedPlugins) > 0 {
-		return fmt.Errorf("failed to validate plugin updates %s", strings.Join(failedPlugins, ","))
-	}
-
-	return nil
 }
 
 func TestVersionCompatibilitySyslogFacilityField(t *testing.T) {
@@ -503,12 +179,12 @@ func TestVersionCompatibilitySyslogFacilityField(t *testing.T) {
 
 	admin := httpexpect.New(t, "http://localhost:3000")
 
-	tests := []vcPlugins{
+	tests := []VersionCompatibilityPlugins{
 		{
 			// make sure facility is set to 'user' for all DP versions
-			name:   "syslog",
-			config: `{}`,
-			expectedConfig: `{
+			Name:   "syslog",
+			Config: `{}`,
+			ExpectedConfig: `{
 				"client_errors_severity": "info",
 				"custom_fields_by_lua": null,
 				"facility": "user",
@@ -525,11 +201,11 @@ func TestVersionCompatibilitySyslogFacilityField(t *testing.T) {
 
 	for _, test := range tests {
 		var config structpb.Struct
-		require.NoError(t, json.ProtoJSONUnmarshal([]byte(test.config), &config))
+		require.NoError(t, json.ProtoJSONUnmarshal([]byte(test.Config), &config))
 
 		plugin := &v1.Plugin{
 			Id:        uuid.NewString(),
-			Name:      test.name,
+			Name:      test.Name,
 			Config:    &config,
 			Enabled:   wrapperspb.Bool(true),
 			Protocols: []string{"http", "https"},
@@ -540,7 +216,7 @@ func TestVersionCompatibilitySyslogFacilityField(t *testing.T) {
 		res.Status(http.StatusCreated)
 
 		var expected structpb.Struct
-		require.NoError(t, json.ProtoJSONUnmarshal([]byte(test.expectedConfig), &expected))
+		require.NoError(t, json.ProtoJSONUnmarshal([]byte(test.ExpectedConfig), &expected))
 		expectedConfig.Plugins = append(expectedConfig.Plugins, &v1.Plugin{
 			Id:        plugin.Id,
 			Name:      plugin.Name,
