@@ -28,7 +28,8 @@ var (
 
 const (
 	maxRetriesInTests = 30
-	defaultTimeout    = 5 * time.Second
+	retryTimeout      = 5 * time.Second
+	requestTimeout    = 30 * time.Second
 )
 
 func init() {
@@ -53,7 +54,7 @@ func WaitFor(t *testing.T, port int, method, path, component string,
 	wantHTTPCode int,
 ) error {
 	return backoff.RetryNotify(func() error {
-		ctx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
+		ctx, cancel := context.WithTimeout(context.Background(), requestTimeout)
 		defer cancel()
 		req, _ := http.NewRequestWithContext(
 			ctx,
@@ -99,7 +100,7 @@ func WaitForKongAdminAPI(t *testing.T) error {
 		http.StatusOK,
 	)
 	if err == nil {
-		time.Sleep(defaultTimeout)
+		time.Sleep(retryTimeout)
 	}
 	return err
 }
