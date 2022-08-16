@@ -13,6 +13,7 @@ import (
 	"github.com/kong/koko/internal/server/util"
 	"github.com/kong/koko/internal/store"
 	"go.uber.org/zap"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
@@ -171,4 +172,29 @@ func validateRef(ref *adminModel.EntityReference) error {
 		return fmt.Errorf("invalid type")
 	}
 	return nil
+}
+
+func (s StatusService) UpdateNodeStatus(
+	ctx context.Context,
+	req *relay.UpdateNodeStatusRequest,
+) (*relay.UpdateNodeStatusResponse, error) {
+	nodeStatus := req.Item
+	// node-status.id == node.id always
+	// ensure the caller provides an ID for an update operation
+	if nodeStatus.Id == "" {
+		return nil, status.Error(codes.InvalidArgument, "node-status ID is required")
+	}
+	res := resource.NewNodeStatus()
+	res.NodeStatus = nodeStatus
+
+	db, err := s.getDB(ctx, req.Cluster)
+	if err != nil {
+		return nil, util.HandleErr(ctx, s.logger, err)
+	}
+
+	err = db.Upsert(ctx, res)
+	if err != nil {
+		return nil, util.HandleErr(ctx, s.logger, err)
+	}
+	return &relay.UpdateNodeStatusResponse{}, nil
 }
