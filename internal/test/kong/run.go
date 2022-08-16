@@ -154,7 +154,6 @@ func createFiles(input *DockerInput) (dir string, cleanup func() error, err erro
 //   - Ports bound to host OS:
 //     1. 8000:8000
 //     2. 8001:8001
-//     3. 8443:8443
 //
 // - Linux
 //   - Environment variables:
