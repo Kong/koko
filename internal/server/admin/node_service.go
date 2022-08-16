@@ -2,13 +2,16 @@ package admin
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 
 	pbModel "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/service/v1"
+	nonPublic "github.com/kong/koko/internal/gen/grpc/kong/nonpublic/v1"
 	"github.com/kong/koko/internal/model"
 	"github.com/kong/koko/internal/resource"
+	"github.com/kong/koko/internal/server/kong/ws/config"
 	"github.com/kong/koko/internal/server/util"
 	"github.com/kong/koko/internal/store"
 	"go.uber.org/zap"
@@ -35,9 +38,70 @@ func (s *NodeService) GetNode(ctx context.Context,
 	if err != nil {
 		return nil, s.err(ctx, err)
 	}
+
+	status, err := s.statusForNode(ctx, db, req.Id)
+	if err != nil && !errors.Is(err, store.ErrNotFound) {
+		return nil, s.err(ctx, err)
+	}
+
+	var nodeStatus *nonPublic.NodeStatus
+	if status != nil {
+		nodeStatus = status.NodeStatus
+	}
+	result.Node.CompatibilityStatus = s.nodeStatusToCompatibilityStatus(ctx, nodeStatus)
 	return &v1.GetNodeResponse{
 		Item: result.Node,
 	}, nil
+}
+
+func (s *NodeService) statusForNode(ctx context.Context, db store.Store, nodeID string) (*resource.NodeStatus, error) {
+	result := resource.NewNodeStatus()
+	err := db.Read(ctx, result, store.GetByID(nodeID))
+	if err != nil {
+		return nil, err
+	}
+	return &result, nil
+}
+
+func (s *NodeService) nodeStatusToCompatibilityStatus(ctx context.Context,
+	nodeStatus *nonPublic.NodeStatus,
+) *pbModel.CompatibilityStatus {
+	if nodeStatus == nil {
+		// no tracked status
+		return &pbModel.CompatibilityStatus{
+			State: pbModel.CompatibilityState_COMPATIBILITY_STATE_UNKNOWN,
+		}
+	}
+	compatIssues := make([]*pbModel.CompatibilityIssue, len(nodeStatus.Issues))
+	for i, issue := range nodeStatus.Issues {
+		metadata, err := config.ChangeRegistry.GetMetadata(config.ChangeID(issue.GetCode()))
+		if err != nil {
+			s.logger(ctx).Error("failed to get change metadata",
+				zap.String("change-id", issue.GetCode()),
+			)
+			return &pbModel.CompatibilityStatus{
+				State: pbModel.CompatibilityState_COMPATIBILITY_STATE_UNKNOWN,
+			}
+		}
+		issue.Severity = string(metadata.Severity)
+		issue.Resolution = metadata.Resolution
+		issue.Description = metadata.Description
+		compatIssues[i] = &pbModel.CompatibilityIssue{
+			Code:              issue.GetCode(),
+			Severity:          string(metadata.Severity),
+			Description:       metadata.Description,
+			Resolution:        metadata.Resolution,
+			AffectedResources: issue.AffectedResources,
+		}
+	}
+	state := pbModel.CompatibilityState_COMPATIBILITY_STATE_FULLY_COMPATIBLE
+	if len(compatIssues) > 0 {
+		state = pbModel.CompatibilityState_COMPATIBILITY_STATE_INCOMPATIBLE
+	}
+	return &pbModel.CompatibilityStatus{
+		State:  state,
+		Issues: compatIssues,
+	}
 }
 
 func (s *NodeService) CreateNode(ctx context.Context,
@@ -90,6 +154,14 @@ func (s *NodeService) DeleteNode(ctx context.Context,
 	if err != nil {
 		return nil, s.err(ctx, err)
 	}
+
+	err = db.Delete(ctx, store.DeleteByID(req.Id),
+		store.DeleteByType(resource.TypeNodeStatus))
+	// node-status may not be present and that is okay
+	if err != nil && !errors.Is(err, store.ErrNotFound) {
+		return nil, s.err(ctx, err)
+	}
+
 	util.SetHeader(ctx, http.StatusNoContent)
 	return &v1.DeleteNodeResponse{}, nil
 }
@@ -109,11 +181,51 @@ func (s *NodeService) ListNodes(ctx context.Context,
 	if err := db.List(ctx, list, listOptFns...); err != nil {
 		return nil, s.err(ctx, err)
 	}
-
+	nodeStatuses, err := s.listAllNodeStatus(ctx, db)
+	if err != nil {
+		return nil, s.err(ctx, err)
+	}
+	nodes := nodesFromObjects(list.GetAll())
+	s.addStatusToNodes(ctx, nodes, nodeStatuses)
 	return &v1.ListNodesResponse{
-		Items: nodesFromObjects(list.GetAll()),
+		Items: nodes,
 		Page:  getPaginationResponse(list.GetTotalCount(), list.GetNextPage()),
 	}, nil
+}
+
+func (s *NodeService) addStatusToNodes(ctx context.Context, nodes []*pbModel.Node, statuses []*nonPublic.NodeStatus) {
+	for _, node := range nodes {
+		var nodeStatus *nonPublic.NodeStatus
+		for _, status := range statuses {
+			if status.Id == node.Id {
+				nodeStatus = status
+				break
+			}
+		}
+		node.CompatibilityStatus = s.nodeStatusToCompatibilityStatus(ctx, nodeStatus)
+	}
+}
+
+// listAllNodeStatus fetches all node-statuses.
+// For most clusters, this should result in a single page of instances since
+// the number of Kong gateway nodes are fewer than 100 for most clusters.
+// This is an optimization to avoid N queries for node status.
+func (s *NodeService) listAllNodeStatus(ctx context.Context, db store.Store) ([]*nonPublic.NodeStatus, error) {
+	var allNodeStatuses []*nonPublic.NodeStatus
+
+	page := 1
+	for page != 0 {
+		list := resource.NewList(resource.TypeNodeStatus)
+		if err := db.List(ctx, list,
+			store.ListWithPageSize(store.MaxPageSize),
+			store.ListWithPageNum(page)); err != nil {
+			return nil, s.err(ctx, err)
+		}
+		page = list.GetNextPage()
+		allNodeStatuses = append(allNodeStatuses,
+			nodeStatusesFromObjects(list.GetAll())...)
+	}
+	return allNodeStatuses, nil
 }
 
 func (s *NodeService) err(ctx context.Context, err error) error {
@@ -133,6 +245,19 @@ func nodesFromObjects(objects []model.Object) []*pbModel.Node {
 				&pbModel.Node{}, object.Resource()))
 		}
 		res = append(res, node)
+	}
+	return res
+}
+
+func nodeStatusesFromObjects(objects []model.Object) []*nonPublic.NodeStatus {
+	res := make([]*nonPublic.NodeStatus, len(objects))
+	for i, object := range objects {
+		nodeStatus, ok := object.Resource().(*nonPublic.NodeStatus)
+		if !ok {
+			panic(fmt.Sprintf("expected type '%T' but got '%T'",
+				&nonPublic.NodeStatus{}, object.Resource()))
+		}
+		res[i] = nodeStatus
 	}
 	return res
 }
