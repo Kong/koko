@@ -589,9 +589,12 @@ func (vc *WSVersionCompatibility) processCoreEntityUpdates(payload string,
 	processedPayload := payload
 	results := gjson.Get(processedPayload, fmt.Sprintf("config_table.%s", configTableKey))
 	var (
-		updates = []interface{}{}
+		updates []interface{}
 		err     error
 	)
+	if !results.Exists() {
+		return processedPayload
+	}
 	for _, res := range results.Array() {
 		var (
 			entityJSON  map[string]interface{}

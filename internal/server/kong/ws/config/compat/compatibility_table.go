@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/kong/koko/internal/server/kong/ws/config"
+	"github.com/tidwall/gjson"
 )
 
 func standardUpgradeMessage(version string) string {
@@ -100,6 +101,13 @@ var (
 				RemoveFields: []string{
 					"base64_encode_body",
 				},
+				DisableChangeTracking: func(rawJSON string) bool {
+					// do not emit change if config.base64_encode_body is
+					// set to the default of 'true'
+					plugin := gjson.Parse(rawJSON)
+					base64EncodeBody := plugin.Get("config.base64_encode_body")
+					return base64EncodeBody.Bool()
+				},
 			},
 		},
 		{
@@ -116,6 +124,11 @@ var (
 				Type: config.Plugin,
 				RemoveFields: []string{
 					"allow_origin_header",
+				},
+				DisableChangeTracking: func(rawJSON string) bool {
+					plugin := gjson.Parse(rawJSON)
+					base64EncodeBody := plugin.Get("config.allow_origin_header")
+					return base64EncodeBody.String() == "*"
 				},
 			},
 		},
@@ -134,6 +147,15 @@ var (
 				RemoveFields: []string{
 					"echo",
 					"trigger",
+				},
+				DisableChangeTracking: func(rawJSON string) bool {
+					// do not emit change if echo is set to default value of false
+					// and trigger is not set
+					plugin := gjson.Parse(rawJSON)
+					echo := plugin.Get("config.echo").Bool()
+					trigger := plugin.Get("config.trigger").Type
+
+					return !echo && trigger == gjson.Null
 				},
 			},
 		},
@@ -157,6 +179,23 @@ var (
 					"service_name_tag",
 					"status_tag",
 					"consumer_tag",
+				},
+				DisableChangeTracking: func(rawJSON string) bool {
+					// do not emit change if all are set to default value
+					plugin := gjson.Parse(rawJSON)
+
+					serviceNameTag := plugin.Get("config.service_name_tag")
+					if serviceNameTag.String() != "name" {
+						return false
+					}
+
+					statusTag := plugin.Get("config.status_tag")
+					if statusTag.String() != "status" {
+						return false
+					}
+
+					consumerTag := plugin.Get("config.consumer_tag")
+					return consumerTag.String() == "consumer"
 				},
 			},
 		},
@@ -217,6 +256,31 @@ var (
 					"redis_ssl_verify",
 					"redis_server_name",
 				},
+				DisableChangeTracking: func(rawJSON string) bool {
+					plugin := gjson.Parse(rawJSON)
+
+					redisSSl := plugin.Get("config.redis_ssl")
+					if redisSSl.Bool() {
+						// redis_ssl is set to non-default
+						return false
+					}
+
+					redisSSLVerify := plugin.Get("config.redis_ssl_verify")
+					if redisSSLVerify.Bool() {
+						// redis_ssl_verify is set to non-default
+						return false
+					}
+
+					redisServerName := plugin.Get("config.redis_server_name")
+					if redisServerName.Exists() &&
+						redisServerName.String() != "" {
+						// redis_server_name is set
+						return false
+					}
+
+					// all values are set to default, disable change tracking
+					return true
+				},
 			},
 		},
 		{
@@ -263,6 +327,12 @@ var (
 				RemoveFields: []string{
 					"local_service_name",
 				},
+				DisableChangeTracking: func(rawJSON string) bool {
+					plugin := gjson.Parse(rawJSON)
+
+					localServiceName := plugin.Get("config.local_service_name")
+					return localServiceName.String() == "kong"
+				},
 			},
 		},
 		{
@@ -279,6 +349,13 @@ var (
 				Type: config.Plugin,
 				RemoveFields: []string{
 					"rsa_key_size",
+				},
+				DisableChangeTracking: func(rawJSON string) bool {
+					plugin := gjson.Parse(rawJSON)
+
+					rsaKeySize := plugin.Get("config.rsa_key_size")
+					const defaultRSASize = 4096
+					return rsaKeySize.Int() == defaultRSASize
 				},
 			},
 		},
@@ -359,6 +436,35 @@ var (
 				Name:         "zipkin",
 				Type:         config.Plugin,
 				RemoveFields: zipkin30Fields,
+				DisableChangeTracking: func(rawJSON string) bool {
+					plugin := gjson.Parse(rawJSON)
+
+					spanName := plugin.Get("config.http_span_name")
+					if spanName.Exists() &&
+						spanName.String() != "method" {
+						return false
+					}
+
+					connectTimeout := plugin.Get("config.connect_timeout")
+					if connectTimeout.Exists() &&
+						connectTimeout.Int() != 2000 {
+						return false
+					}
+
+					sendTimeout := plugin.Get("config.send_timeout")
+					if sendTimeout.Exists() &&
+						sendTimeout.Int() != 5000 {
+						return false
+					}
+
+					readTimeout := plugin.Get("config.read_timeout")
+					if readTimeout.Exists() &&
+						readTimeout.Int() != 5000 {
+						return false
+					}
+
+					return true
+				},
 			},
 		},
 		{
@@ -375,6 +481,11 @@ var (
 				Name:         "prometheus",
 				Type:         config.Plugin,
 				RemoveFields: prometheus30Fields,
+				DisableChangeTracking: func(_ string) bool {
+					// always emit change because the default values are
+					// breaking in their nature and are bound to surprise users
+					return false
+				},
 			},
 		},
 		{
@@ -392,6 +503,16 @@ var (
 				Type: config.Plugin,
 				RemoveFields: []string{
 					"allow_any_domain",
+				},
+				DisableChangeTracking: func(rawJSON string) bool {
+					plugin := gjson.Parse(rawJSON)
+
+					allowAnyDomain := plugin.Get("config.allow_any_domain")
+					if allowAnyDomain.Exists() &&
+						allowAnyDomain.Bool() {
+						return false
+					}
+					return true
 				},
 			},
 		},
@@ -416,6 +537,16 @@ var (
 				Type: config.Service,
 				RemoveFields: []string{
 					"enabled",
+				},
+				DisableChangeTracking: func(rawJSON string) bool {
+					service := gjson.Parse(rawJSON)
+
+					enabled := service.Get("enabled")
+					if enabled.Exists() &&
+						!enabled.Bool() {
+						return false
+					}
+					return true
 				},
 			},
 		},
