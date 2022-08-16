@@ -241,6 +241,15 @@ func (v *LuaValidator) ProcessDefaults(ctx context.Context, plugin *grpcModel.Pl
 	return nil
 }
 
+func (v *LuaValidator) LoadPatch(pgkName string) error {
+	_, err := v.goksV.Execute("require(...)", pgkName)
+	if err != nil {
+		return fmt.Errorf("failed to load %s: %w", pgkName, err)
+	}
+
+	return nil
+}
+
 func (v *LuaValidator) LoadSchemasFromEmbed(fs embed.FS, dirName string) error {
 	dirEntries, err := fs.ReadDir(dirName)
 	if err != nil {
