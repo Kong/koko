@@ -44,7 +44,8 @@ message UpdateExpectedHashRequest {
 message UpdateExpectedHashResponse {}
 
 message UpdateNodeStatusRequest {
-  nonpublic.v1.NodeStatus node_status = 1;
+  nonpublic.v1.NodeStatus item = 1;
+  admin.model.v1.RequestCluster cluster = 2;
 }
 
 message UpdateNodeStatusResponse {}
