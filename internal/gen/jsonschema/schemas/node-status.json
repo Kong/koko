@@ -1,0 +1,67 @@
+{
+  "required": [
+    "id"
+  ],
+  "properties": {
+    "created_at": {
+      "minimum": 1,
+      "type": "integer"
+    },
+    "id": {
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+      "type": "string",
+      "description": "must be a valid UUID"
+    },
+    "issues": {
+      "items": {
+        "required": [
+          "code"
+        ],
+        "properties": {
+          "affected_resources": {
+            "items": {
+              "required": [
+                "id",
+                "type"
+              ],
+              "properties": {
+                "id": {
+                  "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+                  "type": "string",
+                  "description": "must be a valid UUID"
+                },
+                "type": {
+                  "maxLength": 32,
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false,
+              "type": "object"
+            },
+            "maxItems": 128,
+            "type": "array"
+          },
+          "code": {
+            "maxLength": 4,
+            "minLength": 4,
+            "pattern": "^[A-Z][A-Z\\d]{3}$",
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object"
+      },
+      "maxItems": 128,
+      "type": "array"
+    },
+    "updated_at": {
+      "minimum": 1,
+      "type": "integer"
+    }
+  },
+  "additionalProperties": false,
+  "type": "object",
+  "x-koko-config": {
+    "disableValidateEndpoint": true
+  }
+}
