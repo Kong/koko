@@ -21,16 +21,7 @@ const (
 	OrderingRuleTitle = "ordering"
 )
 
-var (
-	validator           plugin.Validator
-	pluginNameMaxLength = 128
-	pluginName          = &generator.Schema{
-		Type:      "string",
-		Pattern:   `^[0-9a-zA-Z\-]*$`,
-		MinLength: 1,
-		MaxLength: pluginNameMaxLength,
-	}
-)
+var validator plugin.Validator
 
 func SetValidator(v plugin.Validator) {
 	validator = v
@@ -174,7 +165,7 @@ func init() {
 		Type: "object",
 		Properties: map[string]*generator.Schema{
 			"id":         typedefs.ID,
-			"name":       pluginName,
+			"name":       typedefs.PluginName,
 			"created_at": typedefs.UnixEpoch,
 			"updated_at": typedefs.UnixEpoch,
 			"enabled": {
