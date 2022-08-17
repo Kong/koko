@@ -3,7 +3,10 @@ package ws
 import (
 	"fmt"
 	"net/http"
+	"strconv"
+	"strings"
 
+	"github.com/blang/semver/v4"
 	"github.com/gorilla/websocket"
 	"github.com/kong/go-wrpc/wrpc"
 	"github.com/kong/koko/internal/json"
@@ -14,6 +17,8 @@ const (
 	nodeIDKey       = "node_id"
 	nodeHostnameKey = "node_hostname"
 	nodeVersionKey  = "node_version"
+
+	minimalAcceptableDPVersion = "2.5.0"
 )
 
 var upgrader = websocket.Upgrader{}
@@ -55,6 +60,30 @@ type websocketHandler struct {
 	authenticator Authenticator
 }
 
+func popnum(s string) (n uint64, tail string) {
+	const (
+		decimal     = 0
+		uint64width = 64
+	)
+
+	head, tail, _ := strings.Cut(s, ".")
+	n, err := strconv.ParseUint(head, decimal, uint64width)
+	if err != nil {
+		return 0, ""
+	}
+	return
+}
+
+// trivialVersionParse tries to parse up to the three first segments
+// of a version string.
+// The first non-number-like segment is considered zero and stops the parse.
+func trivialVersionParse(s string) (vers semver.Version) {
+	vers.Major, s = popnum(s)
+	vers.Minor, s = popnum(s)
+	vers.Patch, _ = popnum(s)
+	return
+}
+
 func validateRequest(r *http.Request) error {
 	queryParams := r.URL.Query()
 	if queryParams.Get(nodeIDKey) == "" {
@@ -64,10 +93,15 @@ func validateRequest(r *http.Request) error {
 		return fmt.Errorf("invalid request, " +
 			"missing node_hostname query parameter")
 	}
-	if queryParams.Get(nodeVersionKey) == "" {
+	nodeVersion := queryParams.Get(nodeVersionKey)
+	if nodeVersion == "" {
 		return fmt.Errorf("invalid request, " +
 			"missing node_version query parameter")
 	}
+	if trivialVersionParse(nodeVersion).LT(trivialVersionParse(minimalAcceptableDPVersion)) {
+		return fmt.Errorf("unsupported dataplane version")
+	}
+
 	return nil
 }
 
