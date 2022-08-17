@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"math/big"
 	"net/http"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -166,4 +167,15 @@ func GenerateCertificate(bits int) (publicKey string, privateKey string, err err
 	}
 
 	return certPEM.String(), pkPEM.String(), nil
+}
+
+// SkipWhenEnterpriseTests skips OSS tests with enterprise features
+// when running enterprise code.
+func SkipWhenEnterpriseTests(t *testing.T, enterpriseFeature bool) {
+	if enterpriseFeature && strings.EqualFold(
+		os.Getenv("SKIP_ENTERPRISE_TESTS_FROM_OSS"),
+		"true",
+	) {
+		t.Skip("Skipping testing for Enterprise features in OSS codebase")
+	}
 }

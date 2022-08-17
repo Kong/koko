@@ -16,6 +16,9 @@ import (
 
 const (
 	TypePlugin = model.Type("plugin")
+
+	// OrderingRuleTitle denotes the title of the ordering-related rule.
+	OrderingRuleTitle = "ordering"
 )
 
 var (
@@ -190,6 +193,10 @@ func init() {
 			"service":  typedefs.ReferenceObject,
 			"route":    typedefs.ReferenceObject,
 			"consumer": typedefs.ReferenceObject,
+			"ordering": {
+				Type:                 "object",
+				AdditionalProperties: &truthy,
+			},
 		},
 		AdditionalProperties: &falsy,
 		Required: []string{
@@ -197,6 +204,16 @@ func init() {
 		},
 		XKokoConfig: &extension.Config{
 			ResourceAPIPath: "plugins",
+		},
+		AllOf: []*generator.Schema{
+			{
+				Title: OrderingRuleTitle,
+				Description: "'ordering' is a Kong Enterprise only feature. Please contact your " +
+					"administrator to upgrade to Enterprise and start using the 'ordering' field",
+				Not: &generator.Schema{
+					Required: []string{"ordering"},
+				},
+			},
 		},
 	}
 	err = generator.Register(string(TypePlugin), pluginSchema)

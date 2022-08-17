@@ -39,6 +39,10 @@
       "pattern": "^[0-9a-zA-Z\\-]*$",
       "type": "string"
     },
+    "ordering": {
+      "additionalProperties": true,
+      "type": "object"
+    },
     "protocols": {
       "items": {
         "enum": [
@@ -102,6 +106,17 @@
   },
   "additionalProperties": false,
   "type": "object",
+  "allOf": [
+    {
+      "not": {
+        "required": [
+          "ordering"
+        ]
+      },
+      "title": "ordering",
+      "description": "'ordering' is a Kong Enterprise only feature. Please contact your administrator to upgrade to Enterprise and start using the 'ordering' field"
+    }
+  ],
   "x-koko-config": {
     "disableValidateEndpoint": false,
     "resourceAPIPath": "plugins"
