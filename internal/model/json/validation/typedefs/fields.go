@@ -166,4 +166,11 @@ var CIDRPort = &generator.Schema{
 	},
 }
 
+var PluginName = &generator.Schema{
+	Type:      "string",
+	Pattern:   `^[0-9a-zA-Z\-]*$`,
+	MinLength: 1,
+	MaxLength: maxNameLength,
+}
+
 func intP(i int) *int { return &i }
