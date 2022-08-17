@@ -60,28 +60,32 @@ type websocketHandler struct {
 	authenticator Authenticator
 }
 
-func popnum(s string) (n uint64, tail string) {
+// getFrontNumber returns the first from a string of numbers
+// separated by dots.
+// The rest of the string is returned too for further processing.
+// Any non-number is considered zero and ends the sequence.
+func getFrontNumber(s string) (uint64, string) {
 	const (
-		decimal     = 0
-		uint64width = 64
+		decimalBase   = 10
+		uint64BitSize = 64
 	)
 
 	head, tail, _ := strings.Cut(s, ".")
-	n, err := strconv.ParseUint(head, decimal, uint64width)
+	n, err := strconv.ParseUint(head, decimalBase, uint64BitSize)
 	if err != nil {
 		return 0, ""
 	}
-	return
+	return n, tail
 }
 
 // trivialVersionParse tries to parse up to the three first segments
 // of a version string.
-// The first non-number-like segment is considered zero and stops the parse.
-func trivialVersionParse(s string) (vers semver.Version) {
-	vers.Major, s = popnum(s)
-	vers.Minor, s = popnum(s)
-	vers.Patch, _ = popnum(s)
-	return
+func trivialVersionParse(s string) semver.Version {
+	var version semver.Version
+	version.Major, s = getFrontNumber(s)
+	version.Minor, s = getFrontNumber(s)
+	version.Patch, _ = getFrontNumber(s)
+	return version
 }
 
 func validateRequest(r *http.Request) error {
