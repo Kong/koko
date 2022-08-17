@@ -19,6 +19,15 @@ func Register(name string, schema *Schema) error {
 	return nil
 }
 
+func Unregister(name string) (*Schema, error) {
+	schema, ok := globalSchema.Definitions[name]
+	if !ok {
+		return nil, fmt.Errorf("type not registered yet: '%v'", name)
+	}
+	delete(globalSchema.Definitions, name)
+	return schema, nil
+}
+
 func GlobalSchema() *Schema {
 	return globalSchema
 }
