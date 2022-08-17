@@ -22,4 +22,15 @@ message Plugin {
   Route route = 9;
   google.protobuf.Struct config = 10;
   Consumer consumer = 11;
+  // EE only
+  Ordering ordering = 12;
+}
+
+message Ordering {
+  Order before = 1;
+  Order after = 2;
+}
+
+message Order {
+  repeated string access = 1;
 }

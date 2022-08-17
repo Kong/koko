@@ -1470,6 +1470,10 @@
                 },
                 "consumer": {
                   "$ref": "#/definitions/kong.admin.model.v1.Consumer"
+                },
+                "ordering": {
+                  "$ref": "#/definitions/kong.admin.model.v1.Ordering",
+                  "title": "EE only"
                 }
               }
             }
@@ -3663,6 +3667,28 @@
         }
       }
     },
+    "kong.admin.model.v1.Order": {
+      "type": "object",
+      "properties": {
+        "access": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "kong.admin.model.v1.Ordering": {
+      "type": "object",
+      "properties": {
+        "before": {
+          "$ref": "#/definitions/kong.admin.model.v1.Order"
+        },
+        "after": {
+          "$ref": "#/definitions/kong.admin.model.v1.Order"
+        }
+      }
+    },
     "kong.admin.model.v1.PaginationRequest": {
       "type": "object",
       "properties": {
@@ -3790,6 +3816,10 @@
         },
         "consumer": {
           "$ref": "#/definitions/kong.admin.model.v1.Consumer"
+        },
+        "ordering": {
+          "$ref": "#/definitions/kong.admin.model.v1.Ordering",
+          "title": "EE only"
         }
       }
     },

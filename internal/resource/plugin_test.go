@@ -14,6 +14,7 @@ import (
 	"github.com/kong/koko/internal/plugin"
 	"github.com/kong/koko/internal/plugin/validators"
 	"github.com/kong/koko/internal/resource"
+	"github.com/kong/koko/internal/test/util"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/proto"
@@ -84,10 +85,11 @@ func TestPlugin_ProcessDefaults(t *testing.T) {
 func TestPlugin_Validate(t *testing.T) {
 	setupLuaValidator(t)
 	tests := []struct {
-		name    string
-		Plugin  func() resource.Plugin
-		wantErr bool
-		Errs    []*model.ErrorDetail
+		name              string
+		Plugin            func() resource.Plugin
+		wantErr           bool
+		enterpriseFeature bool
+		Errs              []*model.ErrorDetail
 	}{
 		{
 			name: "valid plugin returns no errors",
@@ -211,8 +213,33 @@ func TestPlugin_Validate(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "setting Enterprise field 'ordering' throws an error",
+			Plugin: func() resource.Plugin {
+				res := resource.NewPlugin()
+				res.Plugin.Name = "http-log"
+				res.Plugin.Ordering = &model.Ordering{
+					Before: &model.Order{
+						Access: []string{"foo"},
+					},
+				}
+				return res
+			},
+			wantErr:           true,
+			enterpriseFeature: true,
+			Errs: []*model.ErrorDetail{
+				{
+					Type: model.ErrorType_ERROR_TYPE_ENTITY,
+					Messages: []string{
+						"'ordering' is a Kong Enterprise only feature. Please contact your " +
+							"administrator to upgrade to Enterprise and start using the 'ordering' field",
+					},
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
+		util.SkipWhenEnterpriseTests(t, tt.enterpriseFeature)
 		t.Run(tt.name, func(t *testing.T) {
 			err := tt.Plugin().Validate(context.Background())
 			if (err != nil) != tt.wantErr {

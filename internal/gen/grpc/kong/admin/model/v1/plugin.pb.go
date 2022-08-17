@@ -38,6 +38,8 @@ type Plugin struct {
 	Route     *Route                `protobuf:"bytes,9,opt,name=route,proto3" json:"route,omitempty"`
 	Config    *structpb.Struct      `protobuf:"bytes,10,opt,name=config,proto3" json:"config,omitempty"`
 	Consumer  *Consumer             `protobuf:"bytes,11,opt,name=consumer,proto3" json:"consumer,omitempty"`
+	// EE only
+	Ordering *Ordering `protobuf:"bytes,12,opt,name=ordering,proto3" json:"ordering,omitempty"`
 }
 
 func (x *Plugin) Reset() {
@@ -149,6 +151,115 @@ func (x *Plugin) GetConsumer() *Consumer {
 	return nil
 }
 
+func (x *Plugin) GetOrdering() *Ordering {
+	if x != nil {
+		return x.Ordering
+	}
+	return nil
+}
+
+type Ordering struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Before *Order `protobuf:"bytes,1,opt,name=before,proto3" json:"before,omitempty"`
+	After  *Order `protobuf:"bytes,2,opt,name=after,proto3" json:"after,omitempty"`
+}
+
+func (x *Ordering) Reset() {
+	*x = Ordering{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_kong_admin_model_v1_plugin_proto_msgTypes[1]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *Ordering) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Ordering) ProtoMessage() {}
+
+func (x *Ordering) ProtoReflect() protoreflect.Message {
+	mi := &file_kong_admin_model_v1_plugin_proto_msgTypes[1]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Ordering.ProtoReflect.Descriptor instead.
+func (*Ordering) Descriptor() ([]byte, []int) {
+	return file_kong_admin_model_v1_plugin_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *Ordering) GetBefore() *Order {
+	if x != nil {
+		return x.Before
+	}
+	return nil
+}
+
+func (x *Ordering) GetAfter() *Order {
+	if x != nil {
+		return x.After
+	}
+	return nil
+}
+
+type Order struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Access []string `protobuf:"bytes,1,rep,name=access,proto3" json:"access,omitempty"`
+}
+
+func (x *Order) Reset() {
+	*x = Order{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_kong_admin_model_v1_plugin_proto_msgTypes[2]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *Order) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Order) ProtoMessage() {}
+
+func (x *Order) ProtoReflect() protoreflect.Message {
+	mi := &file_kong_admin_model_v1_plugin_proto_msgTypes[2]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Order.ProtoReflect.Descriptor instead.
+func (*Order) Descriptor() ([]byte, []int) {
+	return file_kong_admin_model_v1_plugin_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *Order) GetAccess() []string {
+	if x != nil {
+		return x.Access
+	}
+	return nil
+}
+
 var File_kong_admin_model_v1_plugin_proto protoreflect.FileDescriptor
 
 var file_kong_admin_model_v1_plugin_proto_rawDesc = []byte{
@@ -165,7 +276,7 @@ var file_kong_admin_model_v1_plugin_proto_rawDesc = []byte{
 	0x61, 0x64, 0x6d, 0x69, 0x6e, 0x2f, 0x6d, 0x6f, 0x64, 0x65, 0x6c, 0x2f, 0x76, 0x31, 0x2f, 0x72,
 	0x6f, 0x75, 0x74, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x1a, 0x21, 0x6b, 0x6f, 0x6e, 0x67,
 	0x2f, 0x61, 0x64, 0x6d, 0x69, 0x6e, 0x2f, 0x6d, 0x6f, 0x64, 0x65, 0x6c, 0x2f, 0x76, 0x31, 0x2f,
-	0x73, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x22, 0xa8, 0x03,
+	0x73, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x22, 0xe3, 0x03,
 	0x0a, 0x06, 0x50, 0x6c, 0x75, 0x67, 0x69, 0x6e, 0x12, 0x0e, 0x0a, 0x02, 0x69, 0x64, 0x18, 0x01,
 	0x20, 0x01, 0x28, 0x09, 0x52, 0x02, 0x69, 0x64, 0x12, 0x12, 0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65,
 	0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x12, 0x1d, 0x0a, 0x0a,
@@ -192,12 +303,24 @@ var file_kong_admin_model_v1_plugin_proto_rawDesc = []byte{
 	0x08, 0x63, 0x6f, 0x6e, 0x73, 0x75, 0x6d, 0x65, 0x72, 0x18, 0x0b, 0x20, 0x01, 0x28, 0x0b, 0x32,
 	0x1d, 0x2e, 0x6b, 0x6f, 0x6e, 0x67, 0x2e, 0x61, 0x64, 0x6d, 0x69, 0x6e, 0x2e, 0x6d, 0x6f, 0x64,
 	0x65, 0x6c, 0x2e, 0x76, 0x31, 0x2e, 0x43, 0x6f, 0x6e, 0x73, 0x75, 0x6d, 0x65, 0x72, 0x52, 0x08,
-	0x63, 0x6f, 0x6e, 0x73, 0x75, 0x6d, 0x65, 0x72, 0x42, 0x3f, 0x5a, 0x3d, 0x67, 0x69, 0x74, 0x68,
-	0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x6b, 0x6f, 0x6e, 0x67, 0x2f, 0x6b, 0x6f, 0x6b, 0x6f,
-	0x2f, 0x69, 0x6e, 0x74, 0x65, 0x72, 0x6e, 0x61, 0x6c, 0x2f, 0x67, 0x65, 0x6e, 0x2f, 0x67, 0x72,
-	0x70, 0x63, 0x2f, 0x6b, 0x6f, 0x6e, 0x67, 0x2f, 0x61, 0x64, 0x6d, 0x69, 0x6e, 0x2f, 0x6d, 0x6f,
-	0x64, 0x65, 0x6c, 0x2f, 0x76, 0x31, 0x3b, 0x76, 0x31, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f,
-	0x33,
+	0x63, 0x6f, 0x6e, 0x73, 0x75, 0x6d, 0x65, 0x72, 0x12, 0x39, 0x0a, 0x08, 0x6f, 0x72, 0x64, 0x65,
+	0x72, 0x69, 0x6e, 0x67, 0x18, 0x0c, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1d, 0x2e, 0x6b, 0x6f, 0x6e,
+	0x67, 0x2e, 0x61, 0x64, 0x6d, 0x69, 0x6e, 0x2e, 0x6d, 0x6f, 0x64, 0x65, 0x6c, 0x2e, 0x76, 0x31,
+	0x2e, 0x4f, 0x72, 0x64, 0x65, 0x72, 0x69, 0x6e, 0x67, 0x52, 0x08, 0x6f, 0x72, 0x64, 0x65, 0x72,
+	0x69, 0x6e, 0x67, 0x22, 0x70, 0x0a, 0x08, 0x4f, 0x72, 0x64, 0x65, 0x72, 0x69, 0x6e, 0x67, 0x12,
+	0x32, 0x0a, 0x06, 0x62, 0x65, 0x66, 0x6f, 0x72, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32,
+	0x1a, 0x2e, 0x6b, 0x6f, 0x6e, 0x67, 0x2e, 0x61, 0x64, 0x6d, 0x69, 0x6e, 0x2e, 0x6d, 0x6f, 0x64,
+	0x65, 0x6c, 0x2e, 0x76, 0x31, 0x2e, 0x4f, 0x72, 0x64, 0x65, 0x72, 0x52, 0x06, 0x62, 0x65, 0x66,
+	0x6f, 0x72, 0x65, 0x12, 0x30, 0x0a, 0x05, 0x61, 0x66, 0x74, 0x65, 0x72, 0x18, 0x02, 0x20, 0x01,
+	0x28, 0x0b, 0x32, 0x1a, 0x2e, 0x6b, 0x6f, 0x6e, 0x67, 0x2e, 0x61, 0x64, 0x6d, 0x69, 0x6e, 0x2e,
+	0x6d, 0x6f, 0x64, 0x65, 0x6c, 0x2e, 0x76, 0x31, 0x2e, 0x4f, 0x72, 0x64, 0x65, 0x72, 0x52, 0x05,
+	0x61, 0x66, 0x74, 0x65, 0x72, 0x22, 0x1f, 0x0a, 0x05, 0x4f, 0x72, 0x64, 0x65, 0x72, 0x12, 0x16,
+	0x0a, 0x06, 0x61, 0x63, 0x63, 0x65, 0x73, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x09, 0x52, 0x06,
+	0x61, 0x63, 0x63, 0x65, 0x73, 0x73, 0x42, 0x3f, 0x5a, 0x3d, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62,
+	0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x6b, 0x6f, 0x6e, 0x67, 0x2f, 0x6b, 0x6f, 0x6b, 0x6f, 0x2f, 0x69,
+	0x6e, 0x74, 0x65, 0x72, 0x6e, 0x61, 0x6c, 0x2f, 0x67, 0x65, 0x6e, 0x2f, 0x67, 0x72, 0x70, 0x63,
+	0x2f, 0x6b, 0x6f, 0x6e, 0x67, 0x2f, 0x61, 0x64, 0x6d, 0x69, 0x6e, 0x2f, 0x6d, 0x6f, 0x64, 0x65,
+	0x6c, 0x2f, 0x76, 0x31, 0x3b, 0x76, 0x31, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -212,26 +335,31 @@ func file_kong_admin_model_v1_plugin_proto_rawDescGZIP() []byte {
 	return file_kong_admin_model_v1_plugin_proto_rawDescData
 }
 
-var file_kong_admin_model_v1_plugin_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
+var file_kong_admin_model_v1_plugin_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
 var file_kong_admin_model_v1_plugin_proto_goTypes = []interface{}{
 	(*Plugin)(nil),               // 0: kong.admin.model.v1.Plugin
-	(*wrapperspb.BoolValue)(nil), // 1: google.protobuf.BoolValue
-	(*Service)(nil),              // 2: kong.admin.model.v1.Service
-	(*Route)(nil),                // 3: kong.admin.model.v1.Route
-	(*structpb.Struct)(nil),      // 4: google.protobuf.Struct
-	(*Consumer)(nil),             // 5: kong.admin.model.v1.Consumer
+	(*Ordering)(nil),             // 1: kong.admin.model.v1.Ordering
+	(*Order)(nil),                // 2: kong.admin.model.v1.Order
+	(*wrapperspb.BoolValue)(nil), // 3: google.protobuf.BoolValue
+	(*Service)(nil),              // 4: kong.admin.model.v1.Service
+	(*Route)(nil),                // 5: kong.admin.model.v1.Route
+	(*structpb.Struct)(nil),      // 6: google.protobuf.Struct
+	(*Consumer)(nil),             // 7: kong.admin.model.v1.Consumer
 }
 var file_kong_admin_model_v1_plugin_proto_depIdxs = []int32{
-	1, // 0: kong.admin.model.v1.Plugin.enabled:type_name -> google.protobuf.BoolValue
-	2, // 1: kong.admin.model.v1.Plugin.service:type_name -> kong.admin.model.v1.Service
-	3, // 2: kong.admin.model.v1.Plugin.route:type_name -> kong.admin.model.v1.Route
-	4, // 3: kong.admin.model.v1.Plugin.config:type_name -> google.protobuf.Struct
-	5, // 4: kong.admin.model.v1.Plugin.consumer:type_name -> kong.admin.model.v1.Consumer
-	5, // [5:5] is the sub-list for method output_type
-	5, // [5:5] is the sub-list for method input_type
-	5, // [5:5] is the sub-list for extension type_name
-	5, // [5:5] is the sub-list for extension extendee
-	0, // [0:5] is the sub-list for field type_name
+	3, // 0: kong.admin.model.v1.Plugin.enabled:type_name -> google.protobuf.BoolValue
+	4, // 1: kong.admin.model.v1.Plugin.service:type_name -> kong.admin.model.v1.Service
+	5, // 2: kong.admin.model.v1.Plugin.route:type_name -> kong.admin.model.v1.Route
+	6, // 3: kong.admin.model.v1.Plugin.config:type_name -> google.protobuf.Struct
+	7, // 4: kong.admin.model.v1.Plugin.consumer:type_name -> kong.admin.model.v1.Consumer
+	1, // 5: kong.admin.model.v1.Plugin.ordering:type_name -> kong.admin.model.v1.Ordering
+	2, // 6: kong.admin.model.v1.Ordering.before:type_name -> kong.admin.model.v1.Order
+	2, // 7: kong.admin.model.v1.Ordering.after:type_name -> kong.admin.model.v1.Order
+	8, // [8:8] is the sub-list for method output_type
+	8, // [8:8] is the sub-list for method input_type
+	8, // [8:8] is the sub-list for extension type_name
+	8, // [8:8] is the sub-list for extension extendee
+	0, // [0:8] is the sub-list for field type_name
 }
 
 func init() { file_kong_admin_model_v1_plugin_proto_init() }
@@ -255,6 +383,30 @@ func file_kong_admin_model_v1_plugin_proto_init() {
 				return nil
 			}
 		}
+		file_kong_admin_model_v1_plugin_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*Ordering); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_kong_admin_model_v1_plugin_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*Order); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -262,7 +414,7 @@ func file_kong_admin_model_v1_plugin_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_kong_admin_model_v1_plugin_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   1,
+			NumMessages:   3,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
