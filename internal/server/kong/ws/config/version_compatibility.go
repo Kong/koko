@@ -44,8 +44,13 @@ type VersionCompatibilityOpts struct {
 type UpdateType uint8
 
 const (
+	// Plugin is the UpdateType referring to plugins' config schema updates
+	// e.g.: `$.config_table.plugins[?(@.name == '(PLUGIN_NAME)')].config`.
 	Plugin UpdateType = iota
+	// CorePlugin is the UpdateType referring to plugins's core schema updates
+	// e.g.: `$.config_table.plugins[?(@.name == '(PLUGIN_NAME)')]`.
 	CorePlugin
+
 	Service
 )
 
