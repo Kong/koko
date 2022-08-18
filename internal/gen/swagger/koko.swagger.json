@@ -1472,8 +1472,7 @@
                   "$ref": "#/definitions/kong.admin.model.v1.Consumer"
                 },
                 "ordering": {
-                  "$ref": "#/definitions/kong.admin.model.v1.Ordering",
-                  "title": "EE only"
+                  "$ref": "#/definitions/kong.admin.model.v1.Ordering"
                 }
               }
             }
@@ -3818,8 +3817,7 @@
           "$ref": "#/definitions/kong.admin.model.v1.Consumer"
         },
         "ordering": {
-          "$ref": "#/definitions/kong.admin.model.v1.Ordering",
-          "title": "EE only"
+          "$ref": "#/definitions/kong.admin.model.v1.Ordering"
         }
       }
     },

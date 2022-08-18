@@ -22,7 +22,6 @@ message Plugin {
   Route route = 9;
   google.protobuf.Struct config = 10;
   Consumer consumer = 11;
-  // EE only
   Ordering ordering = 12;
 }
 

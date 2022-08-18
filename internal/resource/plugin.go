@@ -168,8 +168,8 @@ func init() {
 		AllOf: []*generator.Schema{
 			{
 				Title: OrderingRuleTitle,
-				Description: "'ordering' is a Kong Enterprise only feature. Please contact your " +
-					"administrator to upgrade to Enterprise and start using the 'ordering' field",
+				Description: "'ordering' is a Kong Enterprise-only feature. " +
+					"Please upgrade to Kong Enterprise to use this feature.",
 				Not: &generator.Schema{
 					Required: []string{"ordering"},
 				},
