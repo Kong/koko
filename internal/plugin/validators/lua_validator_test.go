@@ -118,6 +118,28 @@ func TestNewLuaValidator(t *testing.T) {
 	})
 }
 
+func TestLuaValidator_LoadPatch(t *testing.T) {
+	validator, err := NewLuaValidator(Opts{
+		Logger:   log.Logger,
+		InjectFS: &testdata.LuaTree,
+	})
+	require.NoError(t, err)
+
+	// let's use a "standard" module
+	v, err := validator.goksV.Execute(`return require "version"`)
+	require.NoError(t, err)
+	require.Equal(t, "0.0.1", v)
+
+	// now load a patch
+	err = validator.LoadPatch("bump_version")
+	require.NoError(t, err)
+
+	// and verify that any new use gets the patched content
+	v, err = validator.goksV.Execute(`return require "version"`)
+	require.NoError(t, err)
+	require.Equal(t, "0.1-extra-plus", v)
+}
+
 func TestLoadSchemasFromEmbed(t *testing.T) {
 	validator, err := NewLuaValidator(Opts{Logger: log.Logger})
 	require.Nil(t, err)
