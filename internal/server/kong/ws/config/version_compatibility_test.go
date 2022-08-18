@@ -3089,6 +3089,184 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 			},
 		},
 		{
+			name: "drop single plugin core field",
+			configTableUpdates: map[string][]ConfigTableUpdates{
+				"< 3.0.0": {
+					{
+						Name: CorePlugin.String(),
+						Type: CorePlugin,
+						RemoveFields: []string{
+							"plugin_field_1",
+						},
+						ChangeID: "T101",
+					},
+				},
+			},
+			uncompressedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"id": "5441b100-f441-4d4b-bcc2-3bb153e2bd41",
+							"name": "plugin_1",
+							"plugin_field_1": "element",
+							"plugin_field_2": "element"
+						}
+					]
+				}
+			}`,
+			dataPlaneVersion: "2.7.0",
+			expectedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"id": "5441b100-f441-4d4b-bcc2-3bb153e2bd41",
+							"name": "plugin_1",
+							"plugin_field_2": "element"
+						}
+					]
+				}
+			}`,
+			expectedChanges: TrackedChanges{
+				ChangeDetails: []ChangeDetail{
+					{
+						ID: "T101",
+						Resources: []ResourceInfo{
+							{
+								Type: "plugin",
+								ID:   "5441b100-f441-4d4b-bcc2-3bb153e2bd41",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "drop multiple plugin core fields",
+			configTableUpdates: map[string][]ConfigTableUpdates{
+				"< 3.0.0": {
+					{
+						Name: CorePlugin.String(),
+						Type: CorePlugin,
+						RemoveFields: []string{
+							"plugin_field_1",
+							"plugin_field_2",
+						},
+						ChangeID: "T101",
+					},
+				},
+			},
+			uncompressedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+
+							"id": "f0a3858b-e411-4b56-b415-b8018ac92369",
+							"name": "plugin_1",
+							"plugin_field_1": "element",
+							"plugin_field_2": "element",
+							"plugin_field_3": "element"
+						}
+					]
+				}
+			}`,
+			dataPlaneVersion: "2.7.0",
+			expectedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"id": "f0a3858b-e411-4b56-b415-b8018ac92369",
+							"name": "plugin_1",
+							"plugin_field_3": "element"
+						}
+					]
+				}
+			}`,
+			expectedChanges: TrackedChanges{
+				ChangeDetails: []ChangeDetail{
+					{
+						ID: "T101",
+						Resources: []ResourceInfo{
+							{
+								Type: "plugin",
+								ID:   "f0a3858b-e411-4b56-b415-b8018ac92369",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "drop multiple plugins core fields from multiple plugins",
+			configTableUpdates: map[string][]ConfigTableUpdates{
+				"< 3.0.0": {
+					{
+						Name: CorePlugin.String(),
+						Type: CorePlugin,
+						RemoveFields: []string{
+							"plugin_field_1",
+							"plugin_field_2",
+							"plugin_field_4",
+						},
+						ChangeID: "T101",
+					},
+				},
+			},
+			uncompressedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"id": "47e46c41-e781-49d1-b4b8-d02e419b7ef5",
+							"name": "plugin_1",
+							"plugin_field_1": "element",
+							"plugin_field_2": "element",
+							"plugin_field_3": "element"
+						},
+						{
+							"id": "47e46c41-e781-49d1-b4b8-d02e419b7ef6",
+							"name": "plugin_2",
+							"plugin_field_1": "element",
+							"plugin_field_3": "element",
+							"plugin_field_4": "element"
+						}
+					]
+				}
+			}`,
+			dataPlaneVersion: "2.7.0",
+			expectedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"id": "47e46c41-e781-49d1-b4b8-d02e419b7ef5",
+							"name": "plugin_1",
+							"plugin_field_3": "element"
+						},
+						{
+							"id": "47e46c41-e781-49d1-b4b8-d02e419b7ef6",
+							"name": "plugin_2",
+							"plugin_field_3": "element"
+						}
+					]
+				}
+			}`,
+			expectedChanges: TrackedChanges{
+				ChangeDetails: []ChangeDetail{
+					{
+						ID: "T101",
+						Resources: []ResourceInfo{
+							{
+								Type: "plugin",
+								ID:   "47e46c41-e781-49d1-b4b8-d02e419b7ef5",
+							},
+							{
+								Type: "plugin",
+								ID:   "47e46c41-e781-49d1-b4b8-d02e419b7ef6",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
 			name: "drop services and plugins' fields",
 			configTableUpdates: map[string][]ConfigTableUpdates{
 				"< 3.0.0": {
@@ -3108,6 +3286,14 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 						Remove:   true,
 						ChangeID: "T102",
 					},
+					{
+						Name: CorePlugin.String(),
+						Type: CorePlugin,
+						RemoveFields: []string{
+							"core_plugin_field_1",
+						},
+						ChangeID: "T103",
+					},
 				},
 			},
 			uncompressedPayload: `{
@@ -3118,14 +3304,16 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 							"name": "plugin_2",
 							"config": {
 								"plugin_2_field_1": "element"
-							}
+							},
+							"core_plugin_field_1": "value"
 						},
 						{
 							"id": "5441b100-f441-4d4b-bcc2-3bb153e2bd40",
 							"name": "plugin_1",
 							"config": {
 								"plugin_1_field_1": "element"
-							}
+							},
+							"core_plugin_field_1": "value"
 						},
 						{
 							"id": "2f303641-37dd-4757-a189-bdebe357fd23",
@@ -3218,6 +3406,15 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 							{
 								Type: "plugin",
 								ID:   "ab3b5a6d-923e-4e71-83b4-77e4b68d3e55",
+							},
+						},
+					},
+					{
+						ID: "T103",
+						Resources: []ResourceInfo{
+							{
+								Type: "plugin",
+								ID:   "47e46c41-e781-49d1-b4b8-d02e419b7ef6",
 							},
 						},
 					},
