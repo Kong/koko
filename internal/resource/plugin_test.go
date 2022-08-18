@@ -237,7 +237,7 @@ func TestPlugin_Validate(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		util.SkipWhenEnterpriseTests(t, tt.enterpriseFeature)
+		util.SkipForEnterpriseTests(t, tt.enterpriseFeature)
 		t.Run(tt.name, func(t *testing.T) {
 			err := tt.Plugin().Validate(context.Background())
 			if (err != nil) != tt.wantErr {
