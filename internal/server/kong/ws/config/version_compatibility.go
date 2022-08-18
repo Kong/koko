@@ -45,15 +45,16 @@ type UpdateType uint8
 
 const (
 	Plugin UpdateType = iota
+	CorePlugin
 	Service
 )
 
 func (u UpdateType) String() string {
-	return [...]string{"plugin", "service"}[u]
+	return [...]string{"plugin", "plugin", "service"}[u]
 }
 
 func (u UpdateType) ConfigTableKey() string {
-	return [...]string{"plugins", "services"}[u]
+	return [...]string{"plugins", "plugins", "services"}[u]
 }
 
 //nolint:revive
@@ -272,7 +273,7 @@ func (vc *WSVersionCompatibility) processConfigTableUpdates(uncompressedPayload 
 		case Plugin:
 			processedPayload = vc.processPluginUpdates(processedPayload,
 				configTableUpdate, dataPlaneVersion, tracker)
-		case Service:
+		case Service, CorePlugin:
 			processedPayload = vc.processCoreEntityUpdates(processedPayload,
 				configTableUpdate, dataPlaneVersion, tracker)
 		default:
