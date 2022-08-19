@@ -8,6 +8,8 @@ import (
 	"github.com/gavv/httpexpect/v2"
 	"github.com/google/uuid"
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
+	"github.com/kong/koko/internal/model/json/validation/typedefs"
+	"github.com/kong/koko/internal/test/util"
 	"github.com/stretchr/testify/require"
 )
 
@@ -41,6 +43,38 @@ func TestRouteCreate(t *testing.T) {
 		res.Header("grpc-metadata-koko-status-code").Empty()
 		body := res.JSON().Path("$.item").Object()
 		validateGoodRoute(body)
+	})
+	t.Run("creating a route with ws protocol fails", func(t *testing.T) {
+		util.SkipForEnterpriseTests(t, true)
+		route := goodRoute()
+		route.Protocols = []string{typedefs.ProtocolWS}
+		res := c.POST("/v1/routes").WithJSON(route).Expect()
+		res.Status(http.StatusBadRequest)
+		body := res.JSON().Object()
+		body.ValueEqual("message", "validation error")
+		body.Value("details").Array().Length().Equal(1)
+		resErr := body.Value("details").Array().Element(0)
+		resErr.Object().ValueEqual("type", v1.ErrorType_ERROR_TYPE_ENTITY.String())
+		resErr.Object().ValueEqual("messages", []string{
+			"'ws' and 'wss' protocols are Kong Enterprise-only features. " +
+				"Please upgrade to Kong Enterprise to use this feature.",
+		})
+	})
+	t.Run("creating a route with wss protocol fails", func(t *testing.T) {
+		util.SkipForEnterpriseTests(t, true)
+		route := goodRoute()
+		route.Protocols = []string{typedefs.ProtocolWSS}
+		res := c.POST("/v1/routes").WithJSON(route).Expect()
+		res.Status(http.StatusBadRequest)
+		body := res.JSON().Object()
+		body.ValueEqual("message", "validation error")
+		body.Value("details").Array().Length().Equal(1)
+		resErr := body.Value("details").Array().Element(0)
+		resErr.Object().ValueEqual("type", v1.ErrorType_ERROR_TYPE_ENTITY.String())
+		resErr.Object().ValueEqual("messages", []string{
+			"'ws' and 'wss' protocols are Kong Enterprise-only features. " +
+				"Please upgrade to Kong Enterprise to use this feature.",
+		})
 	})
 	t.Run("recreating the same route fails", func(t *testing.T) {
 		route := goodRoute()

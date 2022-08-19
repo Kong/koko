@@ -21,6 +21,13 @@ const (
 
 	maxMatchElements     = 16
 	maxHeaderValueLength = 64
+
+	// RouteSNIRuleTitle denotes the name of the schema rule to apply
+	// when using SNIs.
+	RouteSNIRuleTitle = "sni_rule"
+	// WSProtocolsRuleTitle denotes the name of the schema rule to apply
+	// to ws protocols.
+	WSProtocolsRuleTitle = "ws_protocols_rule"
 )
 
 var (
@@ -120,7 +127,7 @@ func init() {
 			"name": typedefs.Name,
 			"protocols": {
 				Type:  "array",
-				Items: typedefs.Protocol,
+				Items: typedefs.AllProtocols,
 				AnyOf: []*generator.Schema{
 					{
 						Description: "must contain only one subset [ http" +
@@ -162,6 +169,16 @@ func init() {
 							Type: "string",
 							Enum: []interface{}{
 								typedefs.ProtocolTLSPassthrough,
+							},
+						},
+					},
+					{
+						Description: "must contain only one subset [ ws wss ]",
+						Items: &generator.Schema{
+							Type: "string",
+							Enum: []interface{}{
+								typedefs.ProtocolWS,
+								typedefs.ProtocolWSS,
 							},
 						},
 					},
@@ -271,6 +288,7 @@ func init() {
 		},
 		AllOf: []*generator.Schema{
 			{
+				Title: RouteSNIRuleTitle,
 				Description: "'snis' can be set only when protocols has one of" +
 					" 'https', 'grpcs', 'tls' or 'tls_passthrough'",
 				If: &generator.Schema{
@@ -592,6 +610,30 @@ func init() {
 					AnyOf: []*generator.Schema{
 						{
 							Required: []string{"snis"},
+						},
+					},
+				},
+			},
+			{
+				Title: WSProtocolsRuleTitle,
+				Description: "'ws' and 'wss' protocols are Kong Enterprise-only features. " +
+					"Please upgrade to Kong Enterprise to use this feature.",
+				Not: &generator.Schema{
+					Required: []string{"protocols"},
+					Properties: map[string]*generator.Schema{
+						"protocols": {
+							Contains: &generator.Schema{
+								AnyOf: []*generator.Schema{
+									{
+										Type:  "string",
+										Const: typedefs.ProtocolWS,
+									},
+									{
+										Type:  "string",
+										Const: typedefs.ProtocolWSS,
+									},
+								},
+							},
 						},
 					},
 				},

@@ -156,7 +156,9 @@
           "tcp",
           "udp",
           "tls",
-          "tls_passthrough"
+          "tls_passthrough",
+          "ws",
+          "wss"
         ],
         "type": "string"
       },
@@ -201,6 +203,16 @@
             "type": "string"
           },
           "description": "must contain only one subset [ tls_passthrough ]"
+        },
+        {
+          "items": {
+            "enum": [
+              "ws",
+              "wss"
+            ],
+            "type": "string"
+          },
+          "description": "must contain only one subset [ ws wss ]"
         }
       ]
     },
@@ -302,6 +314,7 @@
   "type": "object",
   "allOf": [
     {
+      "title": "sni_rule",
       "description": "'snis' can be set only when protocols has one of 'https', 'grpcs', 'tls' or 'tls_passthrough'",
       "if": {
         "required": [
@@ -697,6 +710,31 @@
           }
         ]
       }
+    },
+    {
+      "not": {
+        "required": [
+          "protocols"
+        ],
+        "properties": {
+          "protocols": {
+            "contains": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "const": "ws"
+                },
+                {
+                  "type": "string",
+                  "const": "wss"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "title": "ws_protocols_rule",
+      "description": "'ws' and 'wss' protocols are Kong Enterprise-only features. Please upgrade to Kong Enterprise to use this feature."
     }
   ],
   "x-koko-config": {
