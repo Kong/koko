@@ -69,6 +69,22 @@ var Protocol = &generator.Schema{
 	},
 }
 
+var AllProtocols = &generator.Schema{
+	Type: "string",
+	Enum: []interface{}{
+		ProtocolHTTP,
+		ProtocolHTTPS,
+		ProtocolGRPC,
+		ProtocolGRPCS,
+		ProtocolTCP,
+		ProtocolUDP,
+		ProtocolTLS,
+		ProtocolTLSPassthrough,
+		ProtocolWS,
+		ProtocolWSS,
+	},
+}
+
 var Host = &generator.Schema{
 	Description: "must be a valid hostname",
 	Type:        "string",

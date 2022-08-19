@@ -9,4 +9,6 @@ const (
 	ProtocolTCP            = "tcp"
 	ProtocolTLS            = "tls"
 	ProtocolTLSPassthrough = "tls_passthrough"
+	ProtocolWS             = "ws"
+	ProtocolWSS            = "wss"
 )
