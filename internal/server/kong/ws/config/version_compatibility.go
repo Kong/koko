@@ -631,6 +631,120 @@ func (vc *WSVersionCompatibility) processCoreEntityUpdates(payload string,
 				}
 			}
 		}
+
+		// Field element array removal
+		for _, array := range configTableUpdate.RemoveElementsFromArray {
+			configField := array.Field
+			fieldArray := gjson.Get(updatedRaw, configField)
+			// Gather indexes to remove from array
+			var arrayRemovalIndexes []int
+			for i, arrayRes := range fieldArray.Array() {
+				conditionField := fmt.Sprintf("..#(%s)", array.Condition)
+				if gjson.Get(arrayRes.Raw, conditionField).Exists() {
+					arrayRemovalIndexes = append(arrayRemovalIndexes, i)
+				}
+			}
+
+			for i, arrayIndex := range arrayRemovalIndexes {
+				fieldArrayWithIndex := fmt.Sprintf("%s.%d", array.Field, arrayIndex-i)
+				var err error
+				updated = true
+				if updatedRaw, err = sjson.Delete(updatedRaw, fieldArrayWithIndex); err != nil {
+					vc.logger.With(zap.String("entity", entityType)).
+						With(zap.String("name", name)).
+						With(zap.String("field", configField)).
+						With(zap.String("condition", array.Condition)).
+						With(zap.Int("index", arrayIndex)).
+						With(zap.String("data-plane", dataPlaneVersion)).
+						With(zap.Error(err)).
+						Error("plugin configuration array item was not removed from configuration")
+				} else {
+					vc.logger.With(zap.String("entity", entityType)).
+						With(zap.String("name", name)).
+						With(zap.String("field", configField)).
+						With(zap.String("condition", array.Condition)).
+						With(zap.Int("index", arrayIndex)).
+						With(zap.String("data-plane", dataPlaneVersion)).
+						Warn("removing plugin configuration array item which is incompatible with data plane")
+				}
+			}
+		}
+
+		// Field update
+		for _, update := range configTableUpdate.FieldUpdates {
+			configField := update.Field
+			if gjson.Get(updatedRaw, configField).Exists() {
+				conditionField := fmt.Sprintf("[@this].#(%s)", update.Condition)
+				if gjson.Get(updatedRaw, conditionField).Exists() {
+					for _, fieldUpdate := range update.Updates {
+						conditionUpdate := fieldUpdate.Field
+						if fieldUpdate.Value == nil && len(fieldUpdate.ValueFromField) == 0 {
+							// Handle field removal
+							updated = true
+							if updatedRaw, err = sjson.Delete(updatedRaw, conditionUpdate); err != nil {
+								vc.logger.With(zap.String("entity", entityType)).
+									With(zap.String("name", name)).
+									With(zap.String("field", conditionUpdate)).
+									With(zap.String("data-plane", dataPlaneVersion)).
+									With(zap.Error(err)).
+									Error("entity item was not removed from configuration")
+							} else {
+								vc.logger.With(zap.String("entity", entityType)).
+									With(zap.String("name", name)).
+									With(zap.String("field", configField)).
+									With(zap.String("condition", conditionUpdate)).
+									With(zap.String("data-plane", dataPlaneVersion)).
+									Warn("removing entity item which is incompatible with data plane")
+							}
+						} else {
+							// Get the field value if "Value" is a field
+							var value interface{}
+							if fieldUpdate.Value != nil {
+								value = fieldUpdate.Value
+							} else {
+								valueFromField := fieldUpdate.ValueFromField
+								res := gjson.Get(updatedRaw, valueFromField)
+								if res.Exists() {
+									value = res.Value()
+								} else {
+									vc.logger.With(zap.String("entity", entityType)).
+										With(zap.String("name", name)).
+										With(zap.String("field", configField)).
+										With(zap.String("condition", update.Condition)).
+										With(zap.Any("new-value", fieldUpdate.Value)).
+										With(zap.String("data-plane", dataPlaneVersion)).
+										With(zap.Error(err)).
+										Error("entity does not contain field value")
+									break
+								}
+							}
+
+							// Handle field update from value of value of field
+							updated = true
+							if updatedRaw, err = sjson.Set(updatedRaw, conditionUpdate, value); err != nil {
+								vc.logger.With(zap.String("entity", entityType)).
+									With(zap.String("name", name)).
+									With(zap.String("field", configField)).
+									With(zap.String("condition", update.Condition)).
+									With(zap.Any("new-value", fieldUpdate.Value)).
+									With(zap.String("data-plane", dataPlaneVersion)).
+									With(zap.Error(err)).
+									Error("entity field was not updated int configuration")
+							} else {
+								vc.logger.With(zap.String("entity", entityType)).
+									With(zap.String("name", name)).
+									With(zap.String("field", configField)).
+									With(zap.String("condition", update.Condition)).
+									With(zap.Any("new-value", fieldUpdate.Value)).
+									With(zap.String("data-plane", dataPlaneVersion)).
+									Warn("updating entity field which is incompatible with data plane")
+							}
+						}
+					}
+				}
+			}
+		}
+
 		if err = json.Unmarshal([]byte(updatedRaw), &entityJSON); err != nil {
 			vc.logger.With(zap.String("entity", entityType)).
 				With(zap.String("name", name)).
