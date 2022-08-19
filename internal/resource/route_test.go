@@ -10,6 +10,7 @@ import (
 	model "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
 	"github.com/kong/koko/internal/model/json/validation"
 	"github.com/kong/koko/internal/model/json/validation/typedefs"
+	"github.com/kong/koko/internal/test/util"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )
@@ -82,11 +83,12 @@ func goodRoute() Route {
 
 func TestRoute_Validate(t *testing.T) {
 	tests := []struct {
-		name    string
-		Route   func() Route
-		wantErr bool
-		Errs    []*model.ErrorDetail
-		Skip    bool
+		name              string
+		Route             func() Route
+		wantErr           bool
+		Errs              []*model.ErrorDetail
+		Skip              bool
+		enterpriseFeature bool
 	}{
 		{
 			name: "empty route throws an error",
@@ -266,11 +268,12 @@ func TestRoute_Validate(t *testing.T) {
 					Field: "protocols[0]",
 					Messages: []string{
 						`value must be one of "http", "https", "grpc", ` +
-							`"grpcs", "tcp", "udp", "tls", "tls_passthrough"`,
+							`"grpcs", "tcp", "udp", "tls", "tls_passthrough", "ws", "wss"`,
 						"must contain only one subset [ http https ]",
 						"must contain only one subset [ tcp udp tls ]",
 						"must contain only one subset [ grpc grpcs ]",
 						"must contain only one subset [ tls_passthrough ]",
+						"must contain only one subset [ ws wss ]",
 					},
 				},
 			},
@@ -1198,8 +1201,51 @@ func TestRoute_Validate(t *testing.T) {
 			},
 			wantErr: false,
 		},
+		{
+			name: "setting ws protocol errors",
+			Route: func() Route {
+				r := goodRoute()
+				r.Route.Protocols = []string{
+					typedefs.ProtocolWS,
+				}
+				return r
+			},
+			wantErr:           true,
+			enterpriseFeature: true,
+			Errs: []*model.ErrorDetail{
+				{
+					Type: model.ErrorType_ERROR_TYPE_ENTITY,
+					Messages: []string{
+						"'ws' and 'wss' protocols are Kong Enterprise-only features. " +
+							"Please upgrade to Kong Enterprise to use this feature.",
+					},
+				},
+			},
+		},
+		{
+			name: "setting wss protocol errors",
+			Route: func() Route {
+				r := goodRoute()
+				r.Route.Protocols = []string{
+					typedefs.ProtocolWS,
+				}
+				return r
+			},
+			wantErr:           true,
+			enterpriseFeature: true,
+			Errs: []*model.ErrorDetail{
+				{
+					Type: model.ErrorType_ERROR_TYPE_ENTITY,
+					Messages: []string{
+						"'ws' and 'wss' protocols are Kong Enterprise-only features. " +
+							"Please upgrade to Kong Enterprise to use this feature.",
+					},
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
+		util.SkipForEnterpriseTests(t, tt.enterpriseFeature)
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.Skip {
 				t.Skip()
