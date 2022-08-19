@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"regexp"
 
-	"github.com/blang/semver/v4"
+	"github.com/kong/koko/internal/versioning"
 )
 
 type ChangeSeverity string
@@ -89,7 +89,7 @@ func (c *Change) valid() error {
 		return fmt.Errorf("invalid version range '%v'", c.SemverRange)
 	}
 
-	if _, err := semver.ParseRange(translateVersionFormat(c.SemverRange)); err != nil {
+	if _, err := versioning.NewRange(c.SemverRange); err != nil {
 		return fmt.Errorf("invalid range format '%v': %w", c.SemverRange, err)
 	}
 	return nil

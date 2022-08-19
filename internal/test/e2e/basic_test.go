@@ -10,7 +10,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/blang/semver/v4"
 	"github.com/cenkalti/backoff/v4"
 	"github.com/gavv/httpexpect/v2"
 	"github.com/google/uuid"
@@ -772,27 +771,12 @@ func TestRouteHeaderWithRegex(t *testing.T) {
 
 	dpCleanup := run.KongDP(kong.GetKongConfForShared())
 	defer dpCleanup()
-
 	require.Nil(t, util.WaitForKongPort(t, 8001))
+	kongClient.RunWhenKong(t, ">= 2.8.0")
 
 	client, err := kongClient.NewClient(util.BasedKongAdminAPIAddr, nil)
 	if err != nil {
 		t.Errorf("create go client for kong: %v", err)
-	}
-
-	info, err := client.Root(ctx)
-	if err != nil {
-		t.Errorf("fetching Kong Gateway info: %v", err)
-	}
-
-	dataPlaneVersion, err := kongClient.ParseSemanticVersion(kongClient.VersionFromInfo(info))
-	if err != nil {
-		t.Errorf("parsing Kong Gateway version: %v", err)
-	}
-
-	// check whether kong dp version is < 2.8.0
-	if v := semver.MustParse("2.8.0"); dataPlaneVersion.LT(v) {
-		return
 	}
 
 	util.WaitFunc(t, func() error {

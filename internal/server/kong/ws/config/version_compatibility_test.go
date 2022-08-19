@@ -5,8 +5,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/blang/semver/v4"
 	"github.com/kong/koko/internal/log"
+	"github.com/kong/koko/internal/versioning"
 	"github.com/stretchr/testify/require"
 	"github.com/tidwall/sjson"
 	"go.uber.org/zap"
@@ -72,89 +72,6 @@ func TestVersionCompatibility_NewVersionCompatibilityProcessor(t *testing.T) {
 			}
 		}
 	})
-}
-
-func TestVersionCompatibility_ParseSemanticVersion(t *testing.T) {
-	tests := []struct {
-		versionStr      string
-		wantsErr        bool
-		expectedErr     string
-		expectedVersion string
-	}{
-		{
-			versionStr:      "0.33.3",
-			expectedVersion: "0.33.3",
-		},
-		{
-			versionStr:      "0.33.3-3-enterprise-edition",
-			expectedVersion: "0.33.3.3",
-		},
-		{
-			versionStr:      "0.33.3-3-enterprise",
-			expectedVersion: "0.33.3.3",
-		},
-		{
-			// go-kong won't parse build without suffix containing enterprise
-			versionStr:      "0.33.3-3-build-will-not-be-parsed",
-			expectedVersion: "0.33.3-3",
-		},
-		{
-			versionStr:      "2.3.3-2",
-			expectedVersion: "2.3.3-2",
-		},
-		{
-			versionStr:      "2.3.2",
-			expectedVersion: "2.3.2",
-		},
-		{
-			versionStr:      "2.3.2-rc1",
-			expectedVersion: "2.3.2",
-		},
-		{
-			versionStr:      "2.3.3-alpha",
-			expectedVersion: "2.3.3",
-		},
-		{
-			versionStr:      "2.3.4-beta1",
-			expectedVersion: "2.3.4",
-		},
-		{
-			versionStr:      "2.3.3.2-enterprise-edition",
-			expectedVersion: "2.3.3.2",
-		},
-		{
-			versionStr:  "two.three.four",
-			wantsErr:    true,
-			expectedErr: "unknown Kong version : 'two.three.four'",
-		},
-		{
-			versionStr:  "2.1234.1",
-			wantsErr:    true,
-			expectedErr: "minor version must not be >= 1000",
-		},
-		{
-			versionStr:  "2.1.1234",
-			wantsErr:    true,
-			expectedErr: "patch version must not be >= 1000",
-		},
-		{
-			versionStr:  "2.1.1.1234-enterprise",
-			wantsErr:    true,
-			expectedErr: "build version must not be >= 1000",
-		},
-	}
-
-	for _, test := range tests {
-		version, err := ParseSemanticVersion(test.versionStr)
-		if test.wantsErr {
-			require.NotNil(t, err)
-			require.EqualError(t, err, test.expectedErr)
-			require.EqualValues(t, "", version)
-		} else {
-			require.Nil(t, err)
-			require.Equal(t, test.expectedVersion, version)
-		}
-	}
 }
 
 func TestVersionCompatibility_AddConfigTableUpdates(t *testing.T) {
@@ -565,7 +482,7 @@ func TestVersionCompatibility_GetConfigTableUpdates(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			version, err := semver.Parse(test.dataPlaneVersion)
+			version, err := versioning.NewVersion(test.dataPlaneVersion)
 			require.NoError(t, err)
 			pluginPayloadUpdates := wsvc.getConfigTableUpdates(version)
 			require.ElementsMatch(t, test.expectedConfigTableUpdates(), pluginPayloadUpdates)
@@ -5119,8 +5036,9 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 			require.NoError(t, err)
 
 			tracker := NewChangeTracker()
+			dataPlaneVersion := versioning.ForceNewVersion(test.dataPlaneVersion)
 			processedPayload, err := wsvc.processConfigTableUpdates(test.uncompressedPayload,
-				test.dataPlaneVersion, tracker)
+				dataPlaneVersion, tracker)
 			require.Nil(t, err)
 			require.JSONEq(t, test.expectedPayload, processedPayload)
 
@@ -5178,7 +5096,7 @@ func TestVersionCompatibility_PerformExtraProcessing(t *testing.T) {
 			wsvc, err := NewVersionCompatibilityProcessor(VersionCompatibilityOpts{
 				Logger:        log.Logger,
 				KongCPVersion: "2.8.0",
-				ExtraProcessor: func(uncompressedPayload string, dataPlaneVersion string, isEnterprise bool,
+				ExtraProcessor: func(uncompressedPayload string, dataPlaneVersion versioning.Version,
 					tracker *ChangeTracker, logger *zap.Logger,
 				) (string, error) {
 					if test.wantsErr {
@@ -5187,7 +5105,7 @@ func TestVersionCompatibility_PerformExtraProcessing(t *testing.T) {
 					if test.wantsInvalidJSON {
 						return "invalid JSON", nil
 					}
-					if isEnterprise {
+					if dataPlaneVersion.IsKongGatewayEnterprise() {
 						return `{"extra_processing": "enterprise-edition"}`, nil
 					}
 					return `{"extra_processing": "oss"}`, nil
@@ -5195,8 +5113,11 @@ func TestVersionCompatibility_PerformExtraProcessing(t *testing.T) {
 			})
 			require.Nil(t, err)
 
-			processedPayload, err := wsvc.performExtraProcessing("{}",
-				"2.8.0", test.isEnterprise, nil)
+			dataPlaneVersion := versioning.ForceNewVersion("2.8.0")
+			if test.isEnterprise {
+				dataPlaneVersion = versioning.ForceNewVersion("2.8.0.0")
+			}
+			processedPayload, err := wsvc.performExtraProcessing("{}", dataPlaneVersion, nil)
 			if test.wantsErr || test.wantsInvalidJSON {
 				require.NotNil(t, err)
 				if test.wantsErr {
@@ -5215,7 +5136,7 @@ func TestVersionCompatibility_PerformExtraProcessing(t *testing.T) {
 		wsvc, err := NewVersionCompatibilityProcessor(VersionCompatibilityOpts{
 			Logger:        log.Logger,
 			KongCPVersion: "2.8.0",
-			ExtraProcessor: func(uncompressedPayload string, dataPlaneVersion string, isEnterprise bool,
+			ExtraProcessor: func(uncompressedPayload string, dataPlaneVersion versioning.Version,
 				tracker *ChangeTracker, logger *zap.Logger,
 			) (string, error) {
 				return sjson.Set(uncompressedPayload, "config_table.extra_processing", "processed")

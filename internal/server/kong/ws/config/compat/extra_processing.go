@@ -3,15 +3,15 @@ package compat
 import (
 	"fmt"
 
-	"github.com/blang/semver/v4"
 	"github.com/kong/koko/internal/resource"
 	"github.com/kong/koko/internal/server/kong/ws/config"
+	"github.com/kong/koko/internal/versioning"
 	"github.com/tidwall/gjson"
 	"github.com/tidwall/sjson"
 	"go.uber.org/zap"
 )
 
-var versionOlderThan300 = semver.MustParseRange("< 3.0.0")
+var versionOlderThan300 = versioning.ForceNewRange("< 3.0.0")
 
 const (
 	awsLambdaExclusiveFieldChangeID = "P121"
@@ -44,7 +44,7 @@ func init() {
 // with DPs < 3.x, the 'host' field will be dropped in order to prevent a failure in the DP.
 func correctAWSLambdaMutuallyExclusiveFields(
 	payload string,
-	dataPlaneVersion string,
+	dataPlaneVersionStr string,
 	tracker *config.ChangeTracker,
 	logger *zap.Logger,
 ) string {
@@ -75,13 +75,13 @@ func correctAWSLambdaMutuallyExclusiveFields(
 			if updatedRaw, err = sjson.Delete(updatedRaw, "config.host"); err != nil {
 				logger.With(zap.String("plugin", pluginName)).
 					With(zap.String("field", "host")).
-					With(zap.String("data-plane", dataPlaneVersion)).
+					With(zap.String("data-plane", dataPlaneVersionStr)).
 					With(zap.Error(err)).
 					Error("plugin configuration field was not removed from configuration")
 			} else {
 				logger.With(zap.String("plugin", pluginName)).
 					With(zap.String("field", "host")).
-					With(zap.String("data-plane", dataPlaneVersion)).
+					With(zap.String("data-plane", dataPlaneVersionStr)).
 					Warn("removing plugin configuration field which is incompatible with data plane")
 			}
 		}
@@ -141,27 +141,20 @@ func correctHTTPLogHeadersField(payload string) (string, error) {
 	return payload, nil
 }
 
-func VersionCompatibilityExtraProcessing(payload string, dataPlaneVersion string, isEnterprise bool,
+func VersionCompatibilityExtraProcessing(payload string, dataPlaneVersion versioning.Version,
 	tracker *config.ChangeTracker, logger *zap.Logger,
 ) (string, error) {
+	dataPlaneVersionStr := dataPlaneVersion.String()
 	processedPayload := payload
 
-	dataPlaneVersionParsed, err := config.ParseSemanticVersion(dataPlaneVersion)
-	if err != nil {
-		return "", fmt.Errorf("invalid data plane version %s: %w", dataPlaneVersion, err)
-	}
-	dataPlaneSemVer, err := semver.Parse(dataPlaneVersionParsed)
-	if err != nil {
-		return "", fmt.Errorf("could not parse data plane version %s: %w", dataPlaneVersion, err)
-	}
-
-	if versionOlderThan300(dataPlaneSemVer) {
+	if versionOlderThan300(dataPlaneVersion) {
 		// 'aws_region' and 'host' are mutually exclusive for DP < 3.x
 		processedPayload = correctAWSLambdaMutuallyExclusiveFields(
-			processedPayload, dataPlaneVersion, tracker, logger)
+			processedPayload, dataPlaneVersionStr, tracker, logger)
 
 		// The `headers` field on the `http-log` plugin changed from an array of strings to just a single string
 		// for DP's >= 3.0. As such, we need to transform the headers back to a single string within an array.
+		var err error
 		if processedPayload, err = correctHTTPLogHeadersField(processedPayload); err != nil {
 			return "", err
 		}

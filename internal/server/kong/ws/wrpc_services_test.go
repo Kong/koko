@@ -42,7 +42,7 @@ func wprcConn(t *testing.T) *wrpc.Conn {
 		RawQuery: url.Values{
 			"node_id":       {nodeID},
 			"node_hostname": {"localhost"},
-			"node_version":  {"3.0"},
+			"node_version":  {"3.0.0"},
 		}.Encode(),
 	}
 	c, _, err := dialer.Dial(context.Background(), u.String(), nil)

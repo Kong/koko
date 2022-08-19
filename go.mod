@@ -5,7 +5,6 @@ go 1.19
 require (
 	github.com/DataDog/datadog-go/v5 v5.1.1
 	github.com/Masterminds/squirrel v1.5.3
-	github.com/blang/semver/v4 v4.0.0
 	github.com/bufbuild/buf v1.7.0
 	github.com/caarlos0/env/v6 v6.9.3
 	github.com/cenkalti/backoff/v4 v4.1.3
@@ -26,6 +25,7 @@ require (
 	github.com/kong/go-kong v0.31.0
 	github.com/kong/go-wrpc v0.0.0-20220713182016-0ac0ed43d830
 	github.com/kong/goks v0.4.10
+	github.com/kong/semver/v4 v4.0.1
 	github.com/mattn/go-sqlite3 v1.14.15
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/prometheus/client_golang v1.13.0
@@ -55,6 +55,7 @@ require (
 	github.com/andybalholm/brotli v1.0.4 // indirect
 	github.com/antlr/antlr4/runtime/Go/antlr v0.0.0-20220418222510-f25a4f6275ed // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
+	github.com/blang/semver/v4 v4.0.0 // indirect
 	github.com/bufbuild/connect-go v0.2.0 // indirect
 	github.com/containerd/containerd v1.6.6 // indirect
 	github.com/containerd/typeurl v1.0.2 // indirect
