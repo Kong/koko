@@ -52,14 +52,15 @@ const (
 	CorePlugin
 
 	Service
+	Route
 )
 
 func (u UpdateType) String() string {
-	return [...]string{"plugin", "plugin", "service"}[u]
+	return [...]string{"plugin", "plugin", "service", "route"}[u]
 }
 
 func (u UpdateType) ConfigTableKey() string {
-	return [...]string{"plugins", "plugins", "services"}[u]
+	return [...]string{"plugins", "plugins", "services", "routes"}[u]
 }
 
 //nolint:revive
@@ -278,7 +279,7 @@ func (vc *WSVersionCompatibility) processConfigTableUpdates(uncompressedPayload 
 		case Plugin:
 			processedPayload = vc.processPluginUpdates(processedPayload,
 				configTableUpdate, dataPlaneVersion, tracker)
-		case Service, CorePlugin:
+		case Service, CorePlugin, Route:
 			processedPayload = vc.processCoreEntityUpdates(processedPayload,
 				configTableUpdate, dataPlaneVersion, tracker)
 		default:
