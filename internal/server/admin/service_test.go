@@ -10,6 +10,8 @@ import (
 	"github.com/google/uuid"
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
 	"github.com/kong/koko/internal/json"
+	"github.com/kong/koko/internal/model/json/validation/typedefs"
+	"github.com/kong/koko/internal/test/util"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )
@@ -49,6 +51,38 @@ func TestServiceCreate(t *testing.T) {
 		res.Header("grpc-metadata-koko-status-code").Empty()
 		body := res.JSON().Path("$.item").Object()
 		validateGoodService(body)
+	})
+	t.Run("creating a service with protocol=ws fails", func(t *testing.T) {
+		util.SkipForEnterpriseTests(t, true)
+		service := goodService()
+		service.Protocol = typedefs.ProtocolWS
+		res := c.POST("/v1/services").WithJSON(service).Expect()
+		res.Status(http.StatusBadRequest)
+		body := res.JSON().Object()
+		body.ValueEqual("message", "validation error")
+		body.Value("details").Array().Length().Equal(1)
+		resErr := body.Value("details").Array().Element(0)
+		resErr.Object().ValueEqual("type", v1.ErrorType_ERROR_TYPE_ENTITY.String())
+		resErr.Object().ValueEqual("messages", []string{
+			"'ws' and 'wss' protocols are Kong Enterprise-only features. " +
+				"Please upgrade to Kong Enterprise to use this feature.",
+		})
+	})
+	t.Run("creating a service with protocol=wss fails", func(t *testing.T) {
+		util.SkipForEnterpriseTests(t, true)
+		service := goodService()
+		service.Protocol = typedefs.ProtocolWSS
+		res := c.POST("/v1/services").WithJSON(service).Expect()
+		res.Status(http.StatusBadRequest)
+		body := res.JSON().Object()
+		body.ValueEqual("message", "validation error")
+		body.Value("details").Array().Length().Equal(1)
+		resErr := body.Value("details").Array().Element(0)
+		resErr.Object().ValueEqual("type", v1.ErrorType_ERROR_TYPE_ENTITY.String())
+		resErr.Object().ValueEqual("messages", []string{
+			"'ws' and 'wss' protocols are Kong Enterprise-only features. " +
+				"Please upgrade to Kong Enterprise to use this feature.",
+		})
 	})
 	t.Run("creates a valid service with enabled=false", func(t *testing.T) {
 		service := goodService()
@@ -134,7 +168,7 @@ func TestServiceCreate(t *testing.T) {
 			String())
 		gotErr.Object().ValueEqual("messages", []string{
 			`value must be one of "http", "https", "grpc", ` +
-				`"grpcs", "tcp", "udp", "tls", "tls_passthrough"`,
+				`"grpcs", "tcp", "udp", "tls", "tls_passthrough", "ws", "wss"`,
 		})
 	})
 	t.Run("creates a service with url set but missing path successfully", func(t *testing.T) {
