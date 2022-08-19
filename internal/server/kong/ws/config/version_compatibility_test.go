@@ -3267,7 +3267,185 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 			},
 		},
 		{
-			name: "drop services and plugins' fields",
+			name: "drop single route field",
+			configTableUpdates: map[string][]ConfigTableUpdates{
+				"< 3.0.0": {
+					{
+						Name: Route.String(),
+						Type: Route,
+						RemoveFields: []string{
+							"route_field_1",
+						},
+						ChangeID: "T101",
+					},
+				},
+			},
+			uncompressedPayload: `{
+				"config_table": {
+					"routes": [
+						{
+							"id": "5441b100-f441-4d4b-bcc2-3bb153e2bd41",
+							"name": "route_1",
+							"route_field_1": "element",
+							"route_field_2": "element"
+						}
+					]
+				}
+			}`,
+			dataPlaneVersion: "2.7.0",
+			expectedPayload: `{
+				"config_table": {
+					"routes": [
+						{
+							"id": "5441b100-f441-4d4b-bcc2-3bb153e2bd41",
+							"name": "route_1",
+							"route_field_2": "element"
+						}
+					]
+				}
+			}`,
+			expectedChanges: TrackedChanges{
+				ChangeDetails: []ChangeDetail{
+					{
+						ID: "T101",
+						Resources: []ResourceInfo{
+							{
+								Type: "route",
+								ID:   "5441b100-f441-4d4b-bcc2-3bb153e2bd41",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "drop multiple route fields",
+			configTableUpdates: map[string][]ConfigTableUpdates{
+				"< 3.0.0": {
+					{
+						Name: Route.String(),
+						Type: Route,
+						RemoveFields: []string{
+							"route_field_1",
+							"route_field_2",
+						},
+						ChangeID: "T101",
+					},
+				},
+			},
+			uncompressedPayload: `{
+				"config_table": {
+					"routes": [
+						{
+
+							"id": "f0a3858b-e411-4b56-b415-b8018ac92369",
+							"name": "route_1",
+							"route_field_1": "element",
+							"route_field_2": "element",
+							"route_field_3": "element"
+						}
+					]
+				}
+			}`,
+			dataPlaneVersion: "2.7.0",
+			expectedPayload: `{
+				"config_table": {
+					"routes": [
+						{
+							"id": "f0a3858b-e411-4b56-b415-b8018ac92369",
+							"name": "route_1",
+							"route_field_3": "element"
+						}
+					]
+				}
+			}`,
+			expectedChanges: TrackedChanges{
+				ChangeDetails: []ChangeDetail{
+					{
+						ID: "T101",
+						Resources: []ResourceInfo{
+							{
+								Type: "route",
+								ID:   "f0a3858b-e411-4b56-b415-b8018ac92369",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "drop multiple route fields from multiple routes",
+			configTableUpdates: map[string][]ConfigTableUpdates{
+				"< 3.0.0": {
+					{
+						Name: Route.String(),
+						Type: Route,
+						RemoveFields: []string{
+							"route_field_1",
+							"route_field_2",
+							"route_field_4",
+						},
+						ChangeID: "T101",
+					},
+				},
+			},
+			uncompressedPayload: `{
+				"config_table": {
+					"routes": [
+						{
+							"id": "47e46c41-e781-49d1-b4b8-d02e419b7ef5",
+							"name": "route_1",
+							"route_field_1": "element",
+							"route_field_2": "element",
+							"route_field_3": "element"
+						},
+						{
+							"id": "47e46c41-e781-49d1-b4b8-d02e419b7ef6",
+							"name": "route_2",
+							"route_field_1": "element",
+							"route_field_3": "element",
+							"route_field_4": "element"
+						}
+					]
+				}
+			}`,
+			dataPlaneVersion: "2.7.0",
+			expectedPayload: `{
+				"config_table": {
+					"routes": [
+						{
+							"id": "47e46c41-e781-49d1-b4b8-d02e419b7ef5",
+							"name": "route_1",
+							"route_field_3": "element"
+						},
+						{
+							"id": "47e46c41-e781-49d1-b4b8-d02e419b7ef6",
+							"name": "route_2",
+							"route_field_3": "element"
+						}
+					]
+				}
+			}`,
+			expectedChanges: TrackedChanges{
+				ChangeDetails: []ChangeDetail{
+					{
+						ID: "T101",
+						Resources: []ResourceInfo{
+							{
+								Type: "route",
+								ID:   "47e46c41-e781-49d1-b4b8-d02e419b7ef5",
+							},
+							{
+								Type: "route",
+								ID:   "47e46c41-e781-49d1-b4b8-d02e419b7ef6",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "drop services, routes and plugins' fields",
 			configTableUpdates: map[string][]ConfigTableUpdates{
 				"< 3.0.0": {
 					{
@@ -3293,6 +3471,16 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 							"core_plugin_field_1",
 						},
 						ChangeID: "T103",
+					},
+					{
+						Name: Route.String(),
+						Type: Route,
+						RemoveFields: []string{
+							"route_field_1",
+							"route_field_2",
+							"route_field_4",
+						},
+						ChangeID: "T104",
 					},
 				},
 			},
@@ -3345,6 +3533,22 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 							"service_field_3": "element",
 							"service_field_4": "element"
 						}
+					],
+					"routes": [
+						{
+							"id": "bbbba698-1fae-11ed-861d-0242ac120002",
+							"name": "route_1",
+							"route_field_1": "element",
+							"route_field_2": "element",
+							"route_field_3": "element"
+						},
+						{
+							"id": "c1460cc0-1fae-11ed-861d-0242ac120002",
+							"name": "route_2",
+							"route_field_1": "element",
+							"route_field_3": "element",
+							"route_field_4": "element"
+						}
 					]
 				}
 			}`,
@@ -3377,6 +3581,18 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 							"id": "c50e912c-873c-45da-9f7c-f12a19fd56d1",
 							"name": "service_2",
 							"service_field_3": "element"
+						}
+					],
+					"routes": [
+						{
+							"id": "bbbba698-1fae-11ed-861d-0242ac120002",
+							"name": "route_1",
+							"route_field_3": "element"
+						},
+						{
+							"id": "c1460cc0-1fae-11ed-861d-0242ac120002",
+							"name": "route_2",
+							"route_field_3": "element"
 						}
 					]
 				}
@@ -3415,6 +3631,19 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 							{
 								Type: "plugin",
 								ID:   "47e46c41-e781-49d1-b4b8-d02e419b7ef6",
+							},
+						},
+					},
+					{
+						ID: "T104",
+						Resources: []ResourceInfo{
+							{
+								Type: "route",
+								ID:   "bbbba698-1fae-11ed-861d-0242ac120002",
+							},
+							{
+								Type: "route",
+								ID:   "c1460cc0-1fae-11ed-861d-0242ac120002",
 							},
 						},
 					},
@@ -3723,7 +3952,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		t.Run(fmt.Sprintf("plugin update for %s", test.name), func(t *testing.T) {
+		t.Run(fmt.Sprintf("entity update for %s", test.name), func(t *testing.T) {
 			wsvc, err := NewVersionCompatibilityProcessor(VersionCompatibilityOpts{
 				Logger:        log.Logger,
 				KongCPVersion: "2.8.0",
