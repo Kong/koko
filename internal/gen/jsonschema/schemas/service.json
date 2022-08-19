@@ -93,7 +93,9 @@
         "tcp",
         "udp",
         "tls",
-        "tls_passthrough"
+        "tls_passthrough",
+        "ws",
+        "wss"
       ],
       "type": "string"
     },
@@ -143,6 +145,7 @@
   "type": "object",
   "allOf": [
     {
+      "title": "client_certificate_rule",
       "description": "client_certificate can be set only when protocol is `https`",
       "if": {
         "required": [
@@ -161,6 +164,7 @@
       }
     },
     {
+      "title": "tls_verify_rule",
       "description": "tls_verify can be set only when protocol is `https`",
       "if": {
         "required": [
@@ -262,6 +266,29 @@
         ]
       },
       "description": "url should not be set"
+    },
+    {
+      "not": {
+        "required": [
+          "protocol"
+        ],
+        "properties": {
+          "protocol": {
+            "oneOf": [
+              {
+                "type": "string",
+                "const": "ws"
+              },
+              {
+                "type": "string",
+                "const": "wss"
+              }
+            ]
+          }
+        }
+      },
+      "title": "ws_protocols_rule",
+      "description": "'ws' and 'wss' protocols are Kong Enterprise-only features. Please upgrade to Kong Enterprise to use this feature."
     }
   ],
   "x-koko-config": {

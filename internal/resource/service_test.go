@@ -9,6 +9,7 @@ import (
 	model "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
 	"github.com/kong/koko/internal/model/json/validation"
 	"github.com/kong/koko/internal/model/json/validation/typedefs"
+	"github.com/kong/koko/internal/test/util"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )
@@ -118,10 +119,11 @@ func goodService() Service {
 
 func TestService_Validate(t *testing.T) {
 	tests := []struct {
-		name    string
-		Service func() Service
-		wantErr bool
-		Errs    []*model.ErrorDetail
+		name              string
+		Service           func() Service
+		wantErr           bool
+		enterpriseFeature bool
+		Errs              []*model.ErrorDetail
 	}{
 		{
 			name: "empty service throws an error",
@@ -352,7 +354,7 @@ func TestService_Validate(t *testing.T) {
 					Field: "protocol",
 					Messages: []string{
 						`value must be one of "http", "https", "grpc", ` +
-							`"grpcs", "tcp", "udp", "tls", "tls_passthrough"`,
+							`"grpcs", "tcp", "udp", "tls", "tls_passthrough", "ws", "wss"`,
 					},
 				},
 			},
@@ -539,7 +541,7 @@ func TestService_Validate(t *testing.T) {
 					Field: "protocol",
 					Messages: []string{
 						`value must be one of "http", "https", "grpc", ` +
-							`"grpcs", "tcp", "udp", "tls", "tls_passthrough"`,
+							`"grpcs", "tcp", "udp", "tls", "tls_passthrough", "ws", "wss"`,
 					},
 				},
 			},
@@ -596,8 +598,47 @@ func TestService_Validate(t *testing.T) {
 			},
 			wantErr: false,
 		},
+		{
+			name: "setting ws protocol errors",
+			Service: func() Service {
+				s := goodService()
+				s.Service.Protocol = typedefs.ProtocolWS
+				return s
+			},
+			wantErr:           true,
+			enterpriseFeature: true,
+			Errs: []*model.ErrorDetail{
+				{
+					Type: model.ErrorType_ERROR_TYPE_ENTITY,
+					Messages: []string{
+						"'ws' and 'wss' protocols are Kong Enterprise-only features. " +
+							"Please upgrade to Kong Enterprise to use this feature.",
+					},
+				},
+			},
+		},
+		{
+			name: "setting wss protocol errors",
+			Service: func() Service {
+				s := goodService()
+				s.Service.Protocol = typedefs.ProtocolWSS
+				return s
+			},
+			wantErr:           true,
+			enterpriseFeature: true,
+			Errs: []*model.ErrorDetail{
+				{
+					Type: model.ErrorType_ERROR_TYPE_ENTITY,
+					Messages: []string{
+						"'ws' and 'wss' protocols are Kong Enterprise-only features. " +
+							"Please upgrade to Kong Enterprise to use this feature.",
+					},
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
+		util.SkipForEnterpriseTests(t, tt.enterpriseFeature)
 		t.Run(tt.name, func(t *testing.T) {
 			err := tt.Service().Validate(context.Background())
 			if (err != nil) != tt.wantErr {

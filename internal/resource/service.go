@@ -22,6 +22,13 @@ const (
 	maxVerifyDepth = 64
 	// TypeService denotes the Service type.
 	TypeService = model.Type("service")
+
+	// ClientCertificateRuleTitle denotes the name of the schema rule to apply
+	// when using client_certificates.
+	ClientCertificateRuleTitle = "client_certificate_rule"
+	// TLSVerifyRuleTitle denotes the name of the schema rule to apply
+	// when using tls_verify.
+	TLSVerifyRuleTitle = "tls_verify_rule"
 )
 
 var (
@@ -135,7 +142,7 @@ func init() {
 				Minimum: intP(1),
 				Maximum: maxRetries,
 			},
-			"protocol":        typedefs.Protocol,
+			"protocol":        typedefs.AllProtocols,
 			"host":            typedefs.Host,
 			"port":            typedefs.Port,
 			"path":            typedefs.Path,
@@ -177,6 +184,7 @@ func init() {
 		},
 		AllOf: []*generator.Schema{
 			{
+				Title: ClientCertificateRuleTitle,
 				Description: "client_certificate can be set only when protocol" +
 					" is `https`",
 				If: &generator.Schema{
@@ -192,6 +200,7 @@ func init() {
 				},
 			},
 			{
+				Title: TLSVerifyRuleTitle,
 				Description: "tls_verify can be set only when protocol is" +
 					" `https`",
 				If: &generator.Schema{
@@ -278,6 +287,28 @@ func init() {
 				Description: "url should not be set",
 				Not: &generator.Schema{
 					Required: []string{"url"},
+				},
+			},
+			{
+				Title: WSProtocolsRuleTitle,
+				Description: "'ws' and 'wss' protocols are Kong Enterprise-only features. " +
+					"Please upgrade to Kong Enterprise to use this feature.",
+				Not: &generator.Schema{
+					Required: []string{"protocol"},
+					Properties: map[string]*generator.Schema{
+						"protocol": {
+							OneOf: []*generator.Schema{
+								{
+									Type:  "string",
+									Const: typedefs.ProtocolWS,
+								},
+								{
+									Type:  "string",
+									Const: typedefs.ProtocolWSS,
+								},
+							},
+						},
+					},
 				},
 			},
 		},
