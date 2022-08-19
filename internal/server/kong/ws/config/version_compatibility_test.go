@@ -1523,7 +1523,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 							"id": "29b2b210-3a3a-4344-8208-36c698aa9f5a",
 							"name": "plugin_1",
 							"config": {
-								"plugin_1_field_1": "element"
+								"plugin_1_field_1": "element",
 								"plugin_field_array_2": [
 									{
 										"array_element_1": "value_index_1",
@@ -3948,6 +3948,1163 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 				}
 			}`,
 			expectedChanges: TrackedChanges{},
+		},
+		{
+			name: "single field update with single item",
+			configTableUpdates: map[string][]ConfigTableUpdates{
+				"< 2.8.0": {
+					{
+						Name: "service_1",
+						Type: Service,
+						FieldUpdates: []ConfigTableFieldCondition{
+							{
+								Field:     "service_field_1",
+								Condition: "service_field_1=condition",
+								Updates: []ConfigTableFieldUpdate{
+									{
+										Field: "service_field_1",
+										Value: "value_updated",
+									},
+								},
+							},
+						},
+						ChangeID: "T101",
+					},
+				},
+			},
+			uncompressedPayload: `{
+				"config_table": {
+					"services": [
+						{
+							"id": "c50e912c-873c-45da-9f7c-f12a19fd56d1",
+							"name": "service_1",
+							"service_field_1": "condition"
+						}
+					]
+				}
+			}`,
+			dataPlaneVersion: "2.7.0",
+			expectedPayload: `{
+				"config_table": {
+					"services": [
+						{
+							"id": "c50e912c-873c-45da-9f7c-f12a19fd56d1",
+							"name": "service_1",
+							"service_field_1": "value_updated"
+						}
+					]
+				}
+			}`,
+			expectedChanges: TrackedChanges{
+				ChangeDetails: []ChangeDetail{
+					{
+						ID: "T101",
+						Resources: []ResourceInfo{
+							{
+								Type: "service",
+								ID:   "c50e912c-873c-45da-9f7c-f12a19fd56d1",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "field updates with multiple data types",
+			configTableUpdates: map[string][]ConfigTableUpdates{
+				"< 2.8.0": {
+					{
+						Name: "service_1",
+						Type: Service,
+						FieldUpdates: []ConfigTableFieldCondition{
+							{
+								Field:     "service_field_string",
+								Condition: "service_field_string=old",
+								Updates: []ConfigTableFieldUpdate{
+									{
+										Field: "service_field_string",
+										Value: "new",
+									},
+								},
+							},
+							{
+								Field:     "service_field_number",
+								Condition: "service_field_number=9",
+								Updates: []ConfigTableFieldUpdate{
+									{
+										Field: "service_field_number",
+										Value: 28,
+									},
+								},
+							},
+							{
+								Field:     "service_field_bool",
+								Condition: "service_field_bool=true",
+								Updates: []ConfigTableFieldUpdate{
+									{
+										Field: "service_field_bool",
+										Value: false,
+									},
+								},
+							},
+						},
+						ChangeID: "T101",
+					},
+				},
+			},
+			uncompressedPayload: `{
+				"config_table": {
+					"services": [
+						{
+							"id": "47e46c41-e781-49d1-b4b8-d02e419b7ef5",
+							"name": "service_1",
+							"service_field_string": "old",
+							"service_field_number": 9,
+							"service_field_bool": true
+						}
+					]
+				}
+			}`,
+			dataPlaneVersion: "2.7.0",
+			expectedPayload: `{
+				"config_table": {
+					"services": [
+						{
+							"id": "47e46c41-e781-49d1-b4b8-d02e419b7ef5",
+							"name": "service_1",
+							"service_field_string": "new",
+							"service_field_number": 28,
+							"service_field_bool": false
+						}
+					]
+				}
+			}`,
+			expectedChanges: TrackedChanges{
+				ChangeDetails: []ChangeDetail{
+					{
+						ID: "T101",
+						Resources: []ResourceInfo{
+							{
+								Type: "service",
+								ID:   "47e46c41-e781-49d1-b4b8-d02e419b7ef5",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "field update with multiple value updates",
+			configTableUpdates: map[string][]ConfigTableUpdates{
+				"< 2.8.0": {
+					{
+						Name: "service_1",
+						Type: Service,
+						FieldUpdates: []ConfigTableFieldCondition{
+							{
+								Field:     "service_field_1",
+								Condition: "service_field_1=condition",
+								Updates: []ConfigTableFieldUpdate{
+									{
+										Field: "service_field_1",
+										Value: "value_updated",
+									},
+									{
+										Field: "service_field_3",
+										Value: "value_updated",
+									},
+								},
+							},
+						},
+						ChangeID: "T101",
+					},
+				},
+			},
+			uncompressedPayload: `{
+				"config_table": {
+					"services": [
+						{
+							"id": "47e46c41-e781-49d1-b4b8-d02e419b7ef5",
+							"name": "service_1",
+							"service_field_1": "condition",
+							"service_field_2": "value",
+							"service_field_3": "value",
+							"service_field_4": "value"
+						}
+					]
+				}
+			}`,
+			dataPlaneVersion: "2.7.0",
+			expectedPayload: `{
+				"config_table": {
+					"services": [
+						{
+							"id": "47e46c41-e781-49d1-b4b8-d02e419b7ef5",
+							"name": "service_1",
+							"service_field_1": "value_updated",
+							"service_field_2": "value",
+							"service_field_3": "value_updated",
+							"service_field_4": "value"
+						}
+					]
+				}
+			}`,
+			expectedChanges: TrackedChanges{
+				ChangeDetails: []ChangeDetail{
+					{
+						ID: "T101",
+						Resources: []ResourceInfo{
+							{
+								Type: "service",
+								ID:   "47e46c41-e781-49d1-b4b8-d02e419b7ef5",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "nested field update",
+			configTableUpdates: map[string][]ConfigTableUpdates{
+				"< 2.8.0": {
+					{
+						Name: "service_1",
+						Type: Service,
+						FieldUpdates: []ConfigTableFieldCondition{
+							{
+								Field:     "service_field_1.nested_field_1",
+								Condition: "service_field_1.nested_field_1=condition",
+								Updates: []ConfigTableFieldUpdate{
+									{
+										Field: "service_field_1.nested_field_1",
+										Value: "value_updated",
+									},
+								},
+							},
+						},
+						ChangeID: "T101",
+					},
+				},
+			},
+			uncompressedPayload: `{
+				"config_table": {
+					"services": [
+						{
+							"id": "47e46c41-e781-49d1-b4b8-d02e419b7ef5",
+							"name": "service_1",
+							"service_field_1": {
+								"nested_field_1": "condition"
+							}
+						}
+					]
+				}
+			}`,
+			dataPlaneVersion: "2.7.0",
+			expectedPayload: `{
+				"config_table": {
+					"services": [
+						{
+							"id": "47e46c41-e781-49d1-b4b8-d02e419b7ef5",
+							"name": "service_1",
+							"service_field_1": {
+								"nested_field_1": "value_updated"
+							}
+						}
+					]
+				}
+			}`,
+			expectedChanges: TrackedChanges{
+				ChangeDetails: []ChangeDetail{
+					{
+						ID: "T101",
+						Resources: []ResourceInfo{
+							{
+								Type: "service",
+								ID:   "47e46c41-e781-49d1-b4b8-d02e419b7ef5",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "field update with additional nested field update",
+			configTableUpdates: map[string][]ConfigTableUpdates{
+				"< 2.8.0": {
+					{
+						Name: "service_1",
+						Type: Service,
+						FieldUpdates: []ConfigTableFieldCondition{
+							{
+								Field:     "service_field_1",
+								Condition: "service_field_1=condition",
+								Updates: []ConfigTableFieldUpdate{
+									{
+										Field: "service_field_1",
+										Value: "value_updated",
+									},
+									{
+										Field: "service_field_2.nested_field_1",
+										Value: "value_updated",
+									},
+								},
+							},
+						},
+						ChangeID: "T101",
+					},
+				},
+			},
+			uncompressedPayload: `{
+				"config_table": {
+					"services": [
+						{
+							"id": "47e46c41-e781-49d1-b4b8-d02e419b7ef5",
+							"name": "service_1",
+							"service_field_1": "condition",
+							"service_field_2": {
+								"nested_field_1": "value"
+							}
+						}
+					]
+				}
+			}`,
+			dataPlaneVersion: "2.7.0",
+			expectedPayload: `{
+				"config_table": {
+					"services": [
+						{
+							"id": "47e46c41-e781-49d1-b4b8-d02e419b7ef5",
+							"name": "service_1",
+							"service_field_1": "value_updated",
+							"service_field_2": {
+								"nested_field_1": "value_updated"
+							}
+						}
+					]
+				}
+			}`,
+			expectedChanges: TrackedChanges{
+				ChangeDetails: []ChangeDetail{
+					{
+						ID: "T101",
+						Resources: []ResourceInfo{
+							{
+								Type: "service",
+								ID:   "47e46c41-e781-49d1-b4b8-d02e419b7ef5",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "no field updates",
+			configTableUpdates: map[string][]ConfigTableUpdates{
+				"< 2.8.0": {
+					{
+						Name: "service_1",
+						Type: Service,
+						FieldUpdates: []ConfigTableFieldCondition{
+							{
+								Field:     "service_field_1",
+								Condition: "service_field_1=condition",
+								Updates: []ConfigTableFieldUpdate{
+									{
+										Field: "service_field_1",
+										Value: "value_updated",
+									},
+									{
+										Field: "service_field_2",
+										Value: "value_updated",
+									},
+								},
+							},
+						},
+						ChangeID: "T101",
+					},
+				},
+			},
+			uncompressedPayload: `{
+				"config_table": {
+					"services": [
+						{
+							"id": "47e46c41-e781-49d1-b4b8-d02e419b7ef5",
+							"name": "service_1",
+							"service_field_1": "value",
+							"service_field_2": "condition",
+							"service_field_3": "condition",
+							"service_field_4": "value"
+						}
+					]
+				}
+			}`,
+			dataPlaneVersion: "2.7.0",
+			expectedPayload: `{
+				"config_table": {
+					"services": [
+						{
+							"id": "47e46c41-e781-49d1-b4b8-d02e419b7ef5",
+							"name": "service_1",
+							"service_field_1": "value",
+							"service_field_2": "condition",
+							"service_field_3": "condition",
+							"service_field_4": "value"
+						}
+					]
+				}
+			}`,
+			expectedChanges: TrackedChanges{},
+		},
+		{
+			name: "field removal and field update",
+			configTableUpdates: map[string][]ConfigTableUpdates{
+				"< 2.8.0": {
+					{
+						Name: "service_1",
+						Type: Service,
+						RemoveFields: []string{
+							"service_1_field_1",
+						},
+						FieldUpdates: []ConfigTableFieldCondition{
+							{
+								Field:     "service_1_field_3",
+								Condition: "service_1_field_3=condition",
+								Updates: []ConfigTableFieldUpdate{
+									{
+										Field: "service_1_field_3",
+										Value: "value_updated",
+									},
+								},
+							},
+						},
+						ChangeID: "T101",
+					},
+				},
+			},
+			uncompressedPayload: `{
+				"config_table": {
+					"services": [
+						{
+							"id": "47e46c41-e781-49d1-b4b8-d02e419b7ef5",
+							"name": "service_1",
+							"service_1_field_1": "element",
+							"service_1_field_3": "condition",
+							"service_1_field_4": "value"
+						}
+					]
+				}
+			}`,
+			dataPlaneVersion: "2.7.0",
+			expectedPayload: `{
+				"config_table": {
+					"services": [
+						{
+							"id": "47e46c41-e781-49d1-b4b8-d02e419b7ef5",
+							"name": "service_1",
+							"service_1_field_3": "value_updated",
+							"service_1_field_4": "value"
+						}
+					]
+				}
+			}`,
+			expectedChanges: TrackedChanges{
+				ChangeDetails: []ChangeDetail{
+					{
+						ID: "T101",
+						Resources: []ResourceInfo{
+							{
+								Type: "service",
+								ID:   "47e46c41-e781-49d1-b4b8-d02e419b7ef5",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "service field value create based on other field and delete",
+			configTableUpdates: map[string][]ConfigTableUpdates{
+				"< 2.8.0": {
+					{
+						Name: "service_1",
+						Type: Service,
+						FieldUpdates: []ConfigTableFieldCondition{
+							{
+								Field:     "service_field_1",
+								Condition: "service_field_1",
+								Updates: []ConfigTableFieldUpdate{
+									{
+										Field:          "service_field_2",
+										ValueFromField: "service_field_1",
+									},
+									{
+										Field: "service_field_1",
+									},
+								},
+							},
+						},
+						ChangeID: "T101",
+					},
+				},
+			},
+			uncompressedPayload: `{
+				"config_table": {
+					"services": [
+						{
+							"id": "47e46c41-e781-49d1-b4b8-d02e419b7ef5",
+							"name": "service_1",
+							"service_field_1": "value"
+						}
+					]
+				}
+			}`,
+			dataPlaneVersion: "2.7.0",
+			expectedPayload: `{
+				"config_table": {
+					"services": [
+						{
+							"id": "47e46c41-e781-49d1-b4b8-d02e419b7ef5",
+							"name": "service_1",
+							"service_field_2": "value"
+						}
+					]
+				}
+			}`,
+			expectedChanges: TrackedChanges{
+				ChangeDetails: []ChangeDetail{
+					{
+						ID: "T101",
+						Resources: []ResourceInfo{
+							{
+								Type: "service",
+								ID:   "47e46c41-e781-49d1-b4b8-d02e419b7ef5",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "field value update based on other field and delete",
+			configTableUpdates: map[string][]ConfigTableUpdates{
+				"< 2.8.0": {
+					{
+						Name: "service_1",
+						Type: Service,
+						FieldUpdates: []ConfigTableFieldCondition{
+							{
+								Field:     "service_field_1",
+								Condition: "service_field_1",
+								Updates: []ConfigTableFieldUpdate{
+									{
+										Field:          "service_field_2",
+										ValueFromField: "service_field_1",
+									},
+									{
+										Field: "service_field_1",
+									},
+								},
+							},
+						},
+						ChangeID: "T101",
+					},
+				},
+			},
+			uncompressedPayload: `{
+				"config_table": {
+					"services": [
+						{
+							"id": "47e46c41-e781-49d1-b4b8-d02e419b7ef5",
+							"name": "service_1",
+							"service_field_1": "service_field_1_value",
+							"service_field_2": "value"
+						}
+					]
+				}
+			}`,
+			dataPlaneVersion: "2.7.0",
+			expectedPayload: `{
+				"config_table": {
+					"services": [
+						{
+							"id": "47e46c41-e781-49d1-b4b8-d02e419b7ef5",
+							"name": "service_1",
+							"service_field_2": "service_field_1_value"
+						}
+					]
+				}
+			}`,
+			expectedChanges: TrackedChanges{
+				ChangeDetails: []ChangeDetail{
+					{
+						ID: "T101",
+						Resources: []ResourceInfo{
+							{
+								Type: "service",
+								ID:   "47e46c41-e781-49d1-b4b8-d02e419b7ef5",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "field value based on non-existing field; ensure no change",
+			configTableUpdates: map[string][]ConfigTableUpdates{
+				"< 2.8.0": {
+					{
+						Name: "service_1",
+						Type: Service,
+						FieldUpdates: []ConfigTableFieldCondition{
+							{
+								Field:     "service_field_1",
+								Condition: "service_field_1",
+								Updates: []ConfigTableFieldUpdate{
+									{
+										Field:          "service_field_2",
+										ValueFromField: "service_field_2",
+									},
+								},
+							},
+						},
+						ChangeID: "T101",
+					},
+				},
+			},
+			uncompressedPayload: `{
+				"config_table": {
+					"services": [
+						{
+							"id": "47e46c41-e781-49d1-b4b8-d02e419b7ef5",
+							"name": "service_1",
+							"service_field_1": "value"
+						}
+					]
+				}
+			}`,
+			dataPlaneVersion: "2.7.0",
+			expectedPayload: `{
+				"config_table": {
+					"services": [
+						{
+							"id": "47e46c41-e781-49d1-b4b8-d02e419b7ef5",
+							"name": "service_1",
+							"service_field_1": "value"
+						}
+					]
+				}
+			}`,
+			expectedChanges: TrackedChanges{},
+		},
+
+		{
+			name: "single entity field array removal with single item in array",
+			configTableUpdates: map[string][]ConfigTableUpdates{
+				"< 2.8.0": {
+					{
+						Name: "route_1",
+						Type: Route,
+						RemoveElementsFromArray: []ConfigTableFieldCondition{
+							{
+								Field:     "route_field_1_array_1",
+								Condition: "array_element_1=condition",
+							},
+						},
+						ChangeID: "T101",
+					},
+				},
+			},
+			uncompressedPayload: `{
+				"config_table": {
+					"routes": [
+						{
+							"id": "ab3b5a6d-923e-4e71-83b4-77e4b68d3e55",
+							"name": "route_1",
+							"route_field_1_array_1": [
+								{
+									"array_element_1": "condition"
+								}
+							]
+						}
+					]
+				}
+			}`,
+			dataPlaneVersion: "2.7.0",
+			expectedPayload: `{
+				"config_table": {
+					"routes": [
+						{
+							"id": "ab3b5a6d-923e-4e71-83b4-77e4b68d3e55",
+							"name": "route_1",
+							"route_field_1_array_1": []
+						}
+					]
+				}
+			}`,
+			expectedChanges: TrackedChanges{
+				ChangeDetails: []ChangeDetail{
+					{
+						ID: "T101",
+						Resources: []ResourceInfo{
+							{
+								Type: "route",
+								ID:   "ab3b5a6d-923e-4e71-83b4-77e4b68d3e55",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "single nested entity field array removal with single item in array",
+			configTableUpdates: map[string][]ConfigTableUpdates{
+				"< 2.8.0": {
+					{
+						Name: "route_1",
+						Type: Route,
+						RemoveElementsFromArray: []ConfigTableFieldCondition{
+							{
+								Field:     "route_field_1_1.route_field_1_array_1",
+								Condition: "array_element_1=condition",
+							},
+						},
+						ChangeID: "T101",
+					},
+				},
+			},
+			uncompressedPayload: `{
+				"config_table": {
+					"routes": [
+						{
+							"id": "29b2b210-3a3a-4344-8208-36c698aa9f5a",
+							"name": "route_1",
+							"route_field_1_1": {
+								"route_field_1_array_1": [
+									{
+										"array_element_1": "condition"
+									}
+								]
+							}
+						}
+					]
+				}
+			}`,
+			dataPlaneVersion: "2.7.0",
+			expectedPayload: `{
+				"config_table": {
+					"routes": [
+						{
+							"id": "29b2b210-3a3a-4344-8208-36c698aa9f5a",
+							"name": "route_1",
+							"route_field_1_1": {
+								"route_field_1_array_1": []
+							}
+						}
+					]
+				}
+			}`,
+			expectedChanges: TrackedChanges{
+				ChangeDetails: []ChangeDetail{
+					{
+						ID: "T101",
+						Resources: []ResourceInfo{
+							{
+								Type: "route",
+								ID:   "29b2b210-3a3a-4344-8208-36c698aa9f5a",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "single entity field array removal with multiple items in array",
+			configTableUpdates: map[string][]ConfigTableUpdates{
+				"< 2.8.0": {
+					{
+						Name: "route_1",
+						Type: Route,
+						RemoveElementsFromArray: []ConfigTableFieldCondition{
+							{
+								Field:     "route_field_1_array_1",
+								Condition: "array_element_1=condition",
+							},
+						},
+						ChangeID: "T101",
+					},
+				},
+			},
+			uncompressedPayload: `{
+				"config_table": {
+					"routes": [
+						{
+							"id": "29b2b210-3a3a-4344-8208-36c698aa9f5a",
+							"name": "route_1",
+							"route_field_1_array_1": [
+								{
+									"array_element_1": "value_index_1",
+									"array_element_2": "value_index_1",
+									"array_element_3": "value_index_1"
+								},
+								{
+									"array_element_1": "value_index_2",
+									"array_element_2": "value_index_2",
+									"array_element_3": "value_index_2"
+								},
+								{
+									"array_element_1": "condition",
+									"array_element_2": "value_index_3",
+									"array_element_3": "value_index_3"
+								},
+								{
+									"array_element_1": "value_index_4",
+									"array_element_2": "value_index_4",
+									"array_element_3": "value_index_4"
+								}
+							]
+						}
+					]
+				}
+			}`,
+			dataPlaneVersion: "2.7.0",
+			expectedPayload: `{
+				"config_table": {
+					"routes": [
+						{
+							"id": "29b2b210-3a3a-4344-8208-36c698aa9f5a",
+							"name": "route_1",
+							"route_field_1_array_1": [
+								{
+									"array_element_1": "value_index_1",
+									"array_element_2": "value_index_1",
+									"array_element_3": "value_index_1"
+								},
+								{
+									"array_element_1": "value_index_2",
+									"array_element_2": "value_index_2",
+									"array_element_3": "value_index_2"
+								},
+								{
+									"array_element_1": "value_index_4",
+									"array_element_2": "value_index_4",
+									"array_element_3": "value_index_4"
+								}
+							]
+						}
+					]
+				}
+			}`,
+			expectedChanges: TrackedChanges{
+				ChangeDetails: []ChangeDetail{
+					{
+						ID: "T101",
+						Resources: []ResourceInfo{
+							{
+								Type: "route",
+								ID:   "29b2b210-3a3a-4344-8208-36c698aa9f5a",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "entity field and array removal with multiple array removals",
+			configTableUpdates: map[string][]ConfigTableUpdates{
+				"< 2.8.0": {
+					{
+						Name: "route_1",
+						Type: Route,
+						RemoveFields: []string{
+							"route_1_field_1",
+						},
+						RemoveElementsFromArray: []ConfigTableFieldCondition{
+							{
+								Field:     "route_field_1_array_2",
+								Condition: "array_element_3=condition",
+							},
+						},
+						ChangeID: "T101",
+					},
+				},
+			},
+			uncompressedPayload: `{
+				"config_table": {
+					"routes": [
+						{
+							"id": "29b2b210-3a3a-4344-8208-36c698aa9f5a",
+							"name": "route_1",
+							"route_1_field_1": "element",
+							"route_field_1_array_2": [
+								{
+									"array_element_1": "value_index_1",
+									"array_element_2": "value_index_1",
+									"array_element_3": "value_index_1"
+								},
+								{
+									"array_element_1": "value_index_2",
+									"array_element_2": "value_index_2",
+									"array_element_3": "condition"
+								},
+								{
+									"array_element_1": "condition",
+									"array_element_2": "value_index_3",
+									"array_element_3": "value_index_3"
+								},
+								{
+									"array_element_1": "value_index_4",
+									"array_element_2": "value_index_4",
+									"array_element_3": "condition"
+								}
+							],
+							"route_1_field_3": "element"
+						}
+					]
+				}
+			}`,
+			dataPlaneVersion: "2.7.0",
+			expectedPayload: `{
+				"config_table": {
+					"routes": [
+						{
+							"id": "29b2b210-3a3a-4344-8208-36c698aa9f5a",
+							"name": "route_1",
+							"route_field_1_array_2": [
+								{
+									"array_element_1": "value_index_1",
+									"array_element_2": "value_index_1",
+									"array_element_3": "value_index_1"
+								},
+								{
+									"array_element_1": "condition",
+									"array_element_2": "value_index_3",
+									"array_element_3": "value_index_3"
+								}
+							],
+							"route_1_field_3": "element"
+						}
+					]
+				}
+			}`,
+			expectedChanges: TrackedChanges{
+				ChangeDetails: []ChangeDetail{
+					{
+						ID: "T101",
+						Resources: []ResourceInfo{
+							{
+								Type: "route",
+								ID:   "29b2b210-3a3a-4344-8208-36c698aa9f5a",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "no array removal for entity ",
+			configTableUpdates: map[string][]ConfigTableUpdates{
+				"< 2.8.0": {
+					{
+						Name: "route_1",
+						Type: Route,
+						RemoveFields: []string{
+							"route_1_field_1",
+						},
+						RemoveElementsFromArray: []ConfigTableFieldCondition{
+							{
+								Field:     "route_field_1_array_2",
+								Condition: "array_element_3=condition",
+							},
+						},
+						ChangeID: "T101",
+					},
+				},
+			},
+			uncompressedPayload: `{
+				"config_table": {
+					"routes": [
+						{
+							"id": "29b2b210-3a3a-4344-8208-36c698aa9f5a",
+							"name": "route_1",
+							"route_1_field_1": "element",
+							"route_field_1_array_2": [
+								{
+									"array_element_1": "condition",
+									"array_element_2": "value_index_1",
+									"array_element_3": "value_index_1"
+								},
+								{
+									"array_element_1": "value_index_2",
+									"array_element_2": "condition",
+									"array_element_3": "value_index_2"
+								}
+							],
+							"route_1_field_3": "element"
+						}
+					]
+				}
+			}`,
+			dataPlaneVersion: "2.7.0",
+			expectedPayload: `{
+				"config_table": {
+					"routes": [
+						{
+							"id": "29b2b210-3a3a-4344-8208-36c698aa9f5a",
+							"name": "route_1",
+							"route_field_1_array_2": [
+								{
+									"array_element_1": "condition",
+									"array_element_2": "value_index_1",
+									"array_element_3": "value_index_1"
+								},
+								{
+									"array_element_1": "value_index_2",
+									"array_element_2": "condition",
+									"array_element_3": "value_index_2"
+								}
+							],
+							"route_1_field_3": "element"
+						}
+					]
+				}
+			}`,
+			expectedChanges: TrackedChanges{
+				ChangeDetails: []ChangeDetail{
+					{
+						ID: "T101",
+						Resources: []ResourceInfo{
+							{
+								Type: "route",
+								ID:   "29b2b210-3a3a-4344-8208-36c698aa9f5a",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "no entity array removal with multiple versions defined",
+			configTableUpdates: map[string][]ConfigTableUpdates{
+				"< 2.8.0": {
+					{
+						Name: "route_1",
+						Type: Route,
+						RemoveFields: []string{
+							"route_1_field_1",
+						},
+						RemoveElementsFromArray: []ConfigTableFieldCondition{
+							{
+								Field:     "route_field_1_array_2",
+								Condition: "array_element_3=condition",
+							},
+						},
+						ChangeID: "T101",
+					},
+				},
+				"< 2.7.0": {
+					{
+						Name: "route_1",
+						Type: Route,
+						RemoveFields: []string{
+							"route_1_field_4",
+						},
+						RemoveElementsFromArray: []ConfigTableFieldCondition{
+							{
+								Field:     "route_field_1_array_2",
+								Condition: "array_element_2=condition",
+							},
+							{
+								Field:     "route_field_1_array_5",
+								Condition: "array_element_1=condition",
+							},
+						},
+						ChangeID: "T102",
+					},
+				},
+			},
+			uncompressedPayload: `{
+				"config_table": {
+					"routes": [
+						{
+							"id": "29b2b210-3a3a-4344-8208-36c698aa9f5a",
+							"name": "route_1",
+							"route_1_field_1": "element",
+							"route_field_1_array_2": [
+								{
+									"array_element_1": "condition",
+									"array_element_2": "value_index_1",
+									"array_element_3": "value_index_1"
+								},
+								{
+									"array_element_1": "condition",
+									"array_element_2": "value_index_2",
+									"array_element_3": "value_index_2",
+									"array_element_4": "condition"
+								}
+							],
+							"route_1_field_3": "element",
+							"route_1_field_4": "element",
+							"route_field_1_array_5": [
+								{
+									"array_element_1": "value_index_1"
+								}
+							]
+						}
+					]
+				}
+			}`,
+			dataPlaneVersion: "2.6.0",
+			expectedPayload: `{
+				"config_table": {
+					"routes": [
+						{
+							"id": "29b2b210-3a3a-4344-8208-36c698aa9f5a",
+							"name": "route_1",
+							"route_field_1_array_2": [
+								{
+									"array_element_1": "condition",
+									"array_element_2": "value_index_1",
+									"array_element_3": "value_index_1"
+								},
+								{
+									"array_element_1": "condition",
+									"array_element_2": "value_index_2",
+									"array_element_3": "value_index_2",
+									"array_element_4": "condition"
+								}
+							],
+							"route_1_field_3": "element",
+							"route_field_1_array_5": [
+								{
+									"array_element_1": "value_index_1"
+								}
+							]
+						}
+					]
+				}
+			}`,
+			expectedChanges: TrackedChanges{
+				ChangeDetails: []ChangeDetail{
+					{
+						ID: "T101",
+						Resources: []ResourceInfo{
+							{
+								Type: "route",
+								ID:   "29b2b210-3a3a-4344-8208-36c698aa9f5a",
+							},
+						},
+					},
+					{
+						ID: "T102",
+						Resources: []ResourceInfo{
+							{
+								Type: "route",
+								ID:   "29b2b210-3a3a-4344-8208-36c698aa9f5a",
+							},
+						},
+					},
+				},
+			},
 		},
 	}
 
