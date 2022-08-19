@@ -38,8 +38,7 @@ type Plugin struct {
 	Route     *Route                `protobuf:"bytes,9,opt,name=route,proto3" json:"route,omitempty"`
 	Config    *structpb.Struct      `protobuf:"bytes,10,opt,name=config,proto3" json:"config,omitempty"`
 	Consumer  *Consumer             `protobuf:"bytes,11,opt,name=consumer,proto3" json:"consumer,omitempty"`
-	// EE only
-	Ordering *Ordering `protobuf:"bytes,12,opt,name=ordering,proto3" json:"ordering,omitempty"`
+	Ordering  *Ordering             `protobuf:"bytes,12,opt,name=ordering,proto3" json:"ordering,omitempty"`
 }
 
 func (x *Plugin) Reset() {

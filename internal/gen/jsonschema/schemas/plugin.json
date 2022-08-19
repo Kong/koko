@@ -114,7 +114,7 @@
         ]
       },
       "title": "ordering",
-      "description": "'ordering' is a Kong Enterprise only feature. Please contact your administrator to upgrade to Enterprise and start using the 'ordering' field"
+      "description": "'ordering' is a Kong Enterprise-only feature. Please upgrade to Kong Enterprise to use this feature."
     }
   ],
   "x-koko-config": {

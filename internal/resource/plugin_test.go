@@ -229,15 +229,15 @@ func TestPlugin_Validate(t *testing.T) {
 				{
 					Type: model.ErrorType_ERROR_TYPE_ENTITY,
 					Messages: []string{
-						"'ordering' is a Kong Enterprise only feature. Please contact your " +
-							"administrator to upgrade to Enterprise and start using the 'ordering' field",
+						"'ordering' is a Kong Enterprise-only feature. " +
+							"Please upgrade to Kong Enterprise to use this feature.",
 					},
 				},
 			},
 		},
 	}
 	for _, tt := range tests {
-		util.SkipWhenEnterpriseTests(t, tt.enterpriseFeature)
+		util.SkipForEnterpriseTests(t, tt.enterpriseFeature)
 		t.Run(tt.name, func(t *testing.T) {
 			err := tt.Plugin().Validate(context.Background())
 			if (err != nil) != tt.wantErr {

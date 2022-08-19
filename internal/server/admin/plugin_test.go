@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
 	"github.com/kong/koko/internal/json"
+	"github.com/kong/koko/internal/test/util"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/types/known/structpb"
@@ -53,6 +54,30 @@ func TestPluginCreate(t *testing.T) {
 		res.Header("grpc-metadata-koko-status-code").Empty()
 		body := res.JSON().Path("$.item").Object()
 		validateKeyAuthPlugin(body)
+	})
+	t.Run("creating a plugin with 'ordering' set fails", func(t *testing.T) {
+		util.SkipForEnterpriseTests(t, true)
+		plugin := &v1.Plugin{
+			Name: "prometheus",
+			Ordering: &v1.Ordering{
+				Before: &v1.Order{
+					Access: []string{"pre-function"},
+				},
+			},
+		}
+		pluginBytes, err := json.ProtoJSONMarshal(plugin)
+		require.NoError(t, err)
+		res := c.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
+		res.Status(http.StatusBadRequest)
+		body := res.JSON().Object()
+		body.ValueEqual("message", "validation error")
+		body.Value("details").Array().Length().Equal(1)
+		resErr := body.Value("details").Array().Element(0)
+		resErr.Object().ValueEqual("type", v1.ErrorType_ERROR_TYPE_ENTITY.String())
+		resErr.Object().ValueEqual("messages", []string{
+			"'ordering' is a Kong Enterprise-only feature. " +
+				"Please upgrade to Kong Enterprise to use this feature.",
+		})
 	})
 	t.Run("recreating the same plugin fails", func(t *testing.T) {
 		pluginBytes, err := json.ProtoJSONMarshal(goodKeyAuthPlugin())

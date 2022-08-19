@@ -18,7 +18,16 @@ const (
 
 	// OrderingRuleTitle denotes the title of the ordering-related rule.
 	OrderingRuleTitle = "ordering"
+
+	maxPluginNameLength = 128
 )
+
+var PluginName = &generator.Schema{
+	Type:      "string",
+	Pattern:   `^[0-9a-zA-Z\-]*$`,
+	MinLength: 1,
+	MaxLength: maxPluginNameLength,
+}
 
 var validator plugin.Validator
 
@@ -134,7 +143,7 @@ func init() {
 		Type: "object",
 		Properties: map[string]*generator.Schema{
 			"id":         typedefs.ID,
-			"name":       typedefs.PluginName,
+			"name":       PluginName,
 			"created_at": typedefs.UnixEpoch,
 			"updated_at": typedefs.UnixEpoch,
 			"enabled": {
@@ -168,8 +177,8 @@ func init() {
 		AllOf: []*generator.Schema{
 			{
 				Title: OrderingRuleTitle,
-				Description: "'ordering' is a Kong Enterprise only feature. Please contact your " +
-					"administrator to upgrade to Enterprise and start using the 'ordering' field",
+				Description: "'ordering' is a Kong Enterprise-only feature. " +
+					"Please upgrade to Kong Enterprise to use this feature.",
 				Not: &generator.Schema{
 					Required: []string{"ordering"},
 				},
