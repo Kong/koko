@@ -4,49 +4,8 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/blang/semver/v4"
 	"github.com/stretchr/testify/assert"
 )
-
-func TestTrivialVersionParse(t *testing.T) {
-	for _, test := range []struct {
-		given  string
-		wanted semver.Version
-	}{
-		{
-			given:  "2",
-			wanted: semver.Version{Major: 2},
-		},
-		{
-			given:  "2.8",
-			wanted: semver.Version{Major: 2, Minor: 8},
-		},
-		{
-			given:  "2.10.3",
-			wanted: semver.Version{Major: 2, Minor: 10, Patch: 3},
-		},
-		{
-			given:  "2.32.19.12",
-			wanted: semver.Version{Major: 2, Minor: 32, Patch: 19},
-		},
-		{
-			given:  "2.32.19.12-superjuiced",
-			wanted: semver.Version{Major: 2, Minor: 32, Patch: 19},
-		},
-		{
-			given:  "2.32.19-alfa",
-			wanted: semver.Version{Major: 2, Minor: 32},
-		},
-		{
-			given:  "2.12a.4",
-			wanted: semver.Version{Major: 2},
-		},
-	} {
-		t.Run("parseversion "+test.given, func(t *testing.T) {
-			assert.Equal(t, test.wanted, trivialVersionParse(test.given))
-		})
-	}
-}
 
 func TestValidateRequest(t *testing.T) {
 	t.Run("no parameters, fail", func(t *testing.T) {

@@ -3,13 +3,11 @@ package ws
 import (
 	"fmt"
 	"net/http"
-	"strconv"
-	"strings"
 
-	"github.com/blang/semver/v4"
 	"github.com/gorilla/websocket"
 	"github.com/kong/go-wrpc/wrpc"
 	"github.com/kong/koko/internal/json"
+	"github.com/kong/koko/internal/versioning"
 	"go.uber.org/zap"
 )
 
@@ -17,8 +15,6 @@ const (
 	nodeIDKey       = "node_id"
 	nodeHostnameKey = "node_hostname"
 	nodeVersionKey  = "node_version"
-
-	minimalAcceptableDPVersion = "2.5.0"
 )
 
 var upgrader = websocket.Upgrader{}
@@ -60,33 +56,7 @@ type websocketHandler struct {
 	authenticator Authenticator
 }
 
-// getFrontNumber returns the first from a string of numbers
-// separated by dots.
-// The rest of the string is returned too for further processing.
-// Any non-number is considered zero and ends the sequence.
-func getFrontNumber(s string) (uint64, string) {
-	const (
-		decimalBase   = 10
-		uint64BitSize = 64
-	)
-
-	head, tail, _ := strings.Cut(s, ".")
-	n, err := strconv.ParseUint(head, decimalBase, uint64BitSize)
-	if err != nil {
-		return 0, ""
-	}
-	return n, tail
-}
-
-// trivialVersionParse tries to parse up to the three first segments
-// of a version string.
-func trivialVersionParse(s string) semver.Version {
-	var version semver.Version
-	version.Major, s = getFrontNumber(s)
-	version.Minor, s = getFrontNumber(s)
-	version.Patch, _ = getFrontNumber(s)
-	return version
-}
+var minimumSupportedDataPlane = versioning.MustNewRange(">=2.5.0")
 
 func validateRequest(r *http.Request) error {
 	queryParams := r.URL.Query()
@@ -97,12 +67,17 @@ func validateRequest(r *http.Request) error {
 		return fmt.Errorf("invalid request, " +
 			"missing node_hostname query parameter")
 	}
-	nodeVersion := queryParams.Get(nodeVersionKey)
-	if nodeVersion == "" {
+	nodeVersionStr := queryParams.Get(nodeVersionKey)
+	if nodeVersionStr == "" {
 		return fmt.Errorf("invalid request, " +
 			"missing node_version query parameter")
 	}
-	if trivialVersionParse(nodeVersion).LT(trivialVersionParse(minimalAcceptableDPVersion)) {
+	nodeVersion, err := versioning.NewVersion(nodeVersionStr)
+	if err != nil {
+		return fmt.Errorf("invalid request, %w", err)
+	}
+
+	if !minimumSupportedDataPlane(nodeVersion) {
 		return fmt.Errorf("unsupported dataplane version")
 	}
 
