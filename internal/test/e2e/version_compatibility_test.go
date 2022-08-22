@@ -90,7 +90,7 @@ func TestVersionCompatibility(t *testing.T) {
 		// Determine if the plugin should be added to the expected plugin configurations
 		addExpectedPlugin := true
 		if len(test.VersionRange) > 0 {
-			version := versioning.ForceNewRange(test.VersionRange)
+			version := versioning.MustNewRange(test.VersionRange)
 			if !version(dataPlaneVersion) {
 				addExpectedPlugin = false
 			}

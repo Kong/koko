@@ -5036,7 +5036,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 			require.NoError(t, err)
 
 			tracker := NewChangeTracker()
-			dataPlaneVersion := versioning.ForceNewVersion(test.dataPlaneVersion)
+			dataPlaneVersion := versioning.MustNewVersion(test.dataPlaneVersion)
 			processedPayload, err := wsvc.processConfigTableUpdates(test.uncompressedPayload,
 				dataPlaneVersion, tracker)
 			require.Nil(t, err)
@@ -5113,9 +5113,9 @@ func TestVersionCompatibility_PerformExtraProcessing(t *testing.T) {
 			})
 			require.Nil(t, err)
 
-			dataPlaneVersion := versioning.ForceNewVersion("2.8.0")
+			dataPlaneVersion := versioning.MustNewVersion("2.8.0")
 			if test.isEnterprise {
-				dataPlaneVersion = versioning.ForceNewVersion("2.8.0.0")
+				dataPlaneVersion = versioning.MustNewVersion("2.8.0.0")
 			}
 			processedPayload, err := wsvc.performExtraProcessing("{}", dataPlaneVersion, nil)
 			if test.wantsErr || test.wantsInvalidJSON {

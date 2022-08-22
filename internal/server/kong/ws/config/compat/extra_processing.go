@@ -11,7 +11,7 @@ import (
 	"go.uber.org/zap"
 )
 
-var versionOlderThan300 = versioning.ForceNewRange("< 3.0.0")
+var versionOlderThan300 = versioning.MustNewRange("< 3.0.0")
 
 const (
 	awsLambdaExclusiveFieldChangeID = "P121"

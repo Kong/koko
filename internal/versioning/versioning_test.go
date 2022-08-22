@@ -213,7 +213,7 @@ func TestVersioning_ForceNewVersion(t *testing.T) {
 			"1.2.3.4",
 		}
 		for _, test := range tests {
-			version := ForceNewVersion(test)
+			version := MustNewVersion(test)
 			require.Equal(t, test, version.String())
 		}
 	})
@@ -224,7 +224,7 @@ func TestVersioning_ForceNewVersion(t *testing.T) {
 				t.Error("panic test did not panic")
 			}
 		}()
-		_ = ForceNewVersion("invalid.version")
+		_ = MustNewVersion("invalid.version")
 	})
 }
 
@@ -266,6 +266,20 @@ func TestVersioning_Range(t *testing.T) {
 				expectedThreeDigitResult: true,
 				expectedFourDigitResult:  true,
 			},
+			{
+				rangeStr:                 ">= 1.2.3+build.metadata",
+				expectedThreeDigitResult: true,
+				expectedFourDigitResult:  true,
+			},
+			// Note: Pre-release versions are concerned less than normal versions
+			{
+				rangeStr: "== 1.2.3-alpha",
+			},
+			{
+				rangeStr:                 "> 1.2.3-alpha",
+				expectedThreeDigitResult: true,
+				expectedFourDigitResult:  true,
+			},
 			// Four digit version ranges
 			{
 				rangeStr:                 "<= 2.0.0.0",
@@ -292,6 +306,20 @@ func TestVersioning_Range(t *testing.T) {
 				expectedThreeDigitResult: true,
 				expectedFourDigitResult:  true,
 			},
+			{
+				rangeStr:                 ">= 1.2.3.4+build.metadata",
+				expectedThreeDigitResult: true,
+				expectedFourDigitResult:  true,
+			},
+			// Note: Pre-release versions are concerned less than normal versions
+			{
+				rangeStr: "== 1.2.3.4-alpha",
+			},
+			{
+				rangeStr:                 "> 1.2.3.4-beta",
+				expectedThreeDigitResult: true,
+				expectedFourDigitResult:  true,
+			},
 			// Ensure v2 is within range, but three digit v1 is not satisfied
 			{
 				rangeStr:                 ">= 1.2.3 < 1.2.3.5",
@@ -309,6 +337,14 @@ func TestVersioning_Range(t *testing.T) {
 				rangeStr:                 ">= 1.2.3.5 < 1.2.5 != 1.2.3",
 				expectedThreeDigitResult: false,
 				expectedFourDigitResult:  false,
+			},
+			// Ensure v1 is excluded by build meta range and four digit v2 is satisfied
+			// since as range is valid for 1.2.3.4 using pre-release and build metadata
+			// in ranges; pre-releases are considered less than normal/finalized versions
+			{
+				rangeStr:                 "> 1.2.3.4-alpha < 1.2.5 != 1.2.3.5+build.metadata",
+				expectedThreeDigitResult: false,
+				expectedFourDigitResult:  true,
 			},
 		}
 
@@ -347,7 +383,7 @@ func TestVersioning_ForceNewRange(t *testing.T) {
 			"<= 1.2.3.4",
 		}
 		for _, test := range tests {
-			rng := ForceNewRange(test)
+			rng := MustNewRange(test)
 			require.NotNil(t, rng)
 		}
 	})
@@ -358,6 +394,6 @@ func TestVersioning_ForceNewRange(t *testing.T) {
 				t.Error("panic test did not panic")
 			}
 		}()
-		_ = ForceNewRange("<= invalid.range")
+		_ = MustNewRange("<= invalid.range")
 	})
 }

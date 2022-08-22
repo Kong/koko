@@ -225,7 +225,7 @@ func (vc *WSVersionCompatibility) performExtraProcessing(uncompressedPayload str
 func (vc *WSVersionCompatibility) getConfigTableUpdates(dataPlaneVersion versioning.Version) []ConfigTableUpdates {
 	configTableUpdates := []ConfigTableUpdates{}
 	for versionRange, updates := range vc.configTableUpdates {
-		versionRangeFunc := versioning.ForceNewRange(versionRange)
+		versionRangeFunc := versioning.MustNewRange(versionRange)
 		if versionRangeFunc(dataPlaneVersion) {
 			configTableUpdates = append(configTableUpdates, updates...)
 		}

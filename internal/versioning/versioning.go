@@ -33,9 +33,9 @@ func NewVersion(versionStr string) (Version, error) {
 	}, nil
 }
 
-// ForceNewVersion creates a new instance of a Version; however it will panic if it cannot
+// MustNewVersion creates a new instance of a Version; however it will panic if it cannot
 // be created.
-func ForceNewVersion(versionStr string) Version {
+func MustNewVersion(versionStr string) Version {
 	version, err := NewVersion(versionStr)
 	if err != nil {
 		panic(err)
@@ -141,9 +141,9 @@ func NewRange(rangeStr string) (Range, error) {
 	}), nil
 }
 
-// ForceNewRange creates a new instance of a Version; however it will panic if it cannot
+// MustNewRange creates a new instance of a Version; however it will panic if it cannot
 // be created.
-func ForceNewRange(rangeStr string) Range {
+func MustNewRange(rangeStr string) Range {
 	rng, err := NewRange(rangeStr)
 	if err != nil {
 		panic(err)

@@ -483,7 +483,7 @@ func TestExtraProcessing_EnsureExtraProcessing(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			for _, version := range []string{"2.6.0", "2.6.0.0"} {
 				tracker := config.NewChangeTracker()
-				dataPlaneVersion := versioning.ForceNewVersion(version)
+				dataPlaneVersion := versioning.MustNewVersion(version)
 				processedPayload, err := VersionCompatibilityExtraProcessing(test.uncompressedPayload, dataPlaneVersion,
 					tracker, log.Logger)
 				require.NoError(t, err)
