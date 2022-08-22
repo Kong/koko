@@ -855,8 +855,8 @@ github.com/klauspost/compress v1.15.9 h1:wKRjX6JRtDdrE9qwa4b/Cip7ACOshUI4smpCQan
 github.com/klauspost/compress v1.15.9/go.mod h1:PhcZ0MbTNciWF3rruxRgKxI5NkcHHrHUDtV4Yw2GlzU=
 github.com/klauspost/pgzip v1.2.5 h1:qnWYvvKqedOF2ulHpMG72XQol4ILEJ8k2wwRl/Km8oE=
 github.com/klauspost/pgzip v1.2.5/go.mod h1:Ch1tH69qFZu15pkjo5kYi6mth2Zzwzt50oCQKQE9RUs=
-github.com/kong/go-kong v0.30.0 h1:iD13//BnR5rkhJWsl1bA/X3n2dKDBYjXb14M6CYshcA=
-github.com/kong/go-kong v0.30.0/go.mod h1:DREJ1lzBSOV8d7VHhMweTCkZrv4eyx3YgbXQcdOxBvk=
+github.com/kong/go-kong v0.31.0 h1:m+0pMyTbyHPKKIXf7jPz5aqbWvOr9ahsyDtkYh4VGPM=
+github.com/kong/go-kong v0.31.0/go.mod h1:CNUTSvX9mfYVQvb08d+uJfkbjxv7M6RdkLXK8XJ9fL8=
 github.com/kong/go-wrpc v0.0.0-20220713182016-0ac0ed43d830 h1:KKUStSi53GgOWWnIqQx2RIYcORQX75z1t0jWTR8n4NA=
 github.com/kong/go-wrpc v0.0.0-20220713182016-0ac0ed43d830/go.mod h1:y0xoS99VcKjQ7Q0p8y3ppSLIeKOF7apHLv3TdpThqnY=
 github.com/kong/goks v0.4.10 h1:mt5LbP3w1dxtgER37n3SbRYOtw89WtgsgMeqRD3cLII=
