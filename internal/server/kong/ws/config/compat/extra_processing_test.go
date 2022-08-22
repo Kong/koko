@@ -6,6 +6,7 @@ import (
 
 	"github.com/kong/koko/internal/log"
 	"github.com/kong/koko/internal/server/kong/ws/config"
+	"github.com/kong/koko/internal/versioning"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/tidwall/sjson"
@@ -482,8 +483,9 @@ func TestExtraProcessing_EnsureExtraProcessing(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			for _, version := range []string{"2.6.0", "2.6.0.0"} {
 				tracker := config.NewChangeTracker()
-				processedPayload, err := VersionCompatibilityExtraProcessing(test.uncompressedPayload, version,
-					false, tracker, log.Logger)
+				dataPlaneVersion := versioning.MustNewVersion(version)
+				processedPayload, err := VersionCompatibilityExtraProcessing(test.uncompressedPayload, dataPlaneVersion,
+					tracker, log.Logger)
 				require.NoError(t, err)
 				require.JSONEq(t, test.expectedPayload, processedPayload)
 				// TODO(hbagdi): add code and assertions for tracked changes

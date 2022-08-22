@@ -861,6 +861,8 @@ github.com/kong/go-wrpc v0.0.0-20220713182016-0ac0ed43d830 h1:KKUStSi53GgOWWnIqQ
 github.com/kong/go-wrpc v0.0.0-20220713182016-0ac0ed43d830/go.mod h1:y0xoS99VcKjQ7Q0p8y3ppSLIeKOF7apHLv3TdpThqnY=
 github.com/kong/goks v0.4.10 h1:mt5LbP3w1dxtgER37n3SbRYOtw89WtgsgMeqRD3cLII=
 github.com/kong/goks v0.4.10/go.mod h1:3bpw439i+AlBeRiDcSgaltu2KM/rFgMkr4tggFUbEYE=
+github.com/kong/semver/v4 v4.0.1 h1:DIcNR8W3gfx0KabFBADPalxxsp+q/5COwIFkkhrFQ2Y=
+github.com/kong/semver/v4 v4.0.1/go.mod h1:LImQ0oT15pJvSns/hs2laLca2zcYoHu5EsSNY0J6/QA=
 github.com/konsorten/go-windows-terminal-sequences v1.0.1/go.mod h1:T0+1ngSBFLxvqU3pZ+m/2kptfBszLMUkC4ZK/EgS/cQ=
 github.com/konsorten/go-windows-terminal-sequences v1.0.2/go.mod h1:T0+1ngSBFLxvqU3pZ+m/2kptfBszLMUkC4ZK/EgS/cQ=
 github.com/konsorten/go-windows-terminal-sequences v1.0.3/go.mod h1:T0+1ngSBFLxvqU3pZ+m/2kptfBszLMUkC4ZK/EgS/cQ=

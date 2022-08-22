@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/blang/semver/v4"
 	"github.com/gavv/httpexpect/v2"
 	"github.com/google/uuid"
 	kongClient "github.com/kong/go-kong/kong"
@@ -16,6 +15,7 @@ import (
 	"github.com/kong/koko/internal/test/kong"
 	"github.com/kong/koko/internal/test/run"
 	"github.com/kong/koko/internal/test/util"
+	"github.com/kong/koko/internal/versioning"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
@@ -43,7 +43,7 @@ func TestVersionCompatibility(t *testing.T) {
 	ctx := context.Background()
 	info, err := kongAdmin.Root(ctx)
 	require.NoError(t, err)
-	dataPlaneVersion, err := kongClient.ParseSemanticVersion(kongClient.VersionFromInfo(info))
+	dataPlaneVersion, err := versioning.NewVersion(kongClient.VersionFromInfo(info))
 	require.NoError(t, err)
 
 	admin := httpexpect.New(t, "http://localhost:3000")
@@ -90,7 +90,7 @@ func TestVersionCompatibility(t *testing.T) {
 		// Determine if the plugin should be added to the expected plugin configurations
 		addExpectedPlugin := true
 		if len(test.VersionRange) > 0 {
-			version := semver.MustParseRange(test.VersionRange)
+			version := versioning.MustNewRange(test.VersionRange)
 			if !version(dataPlaneVersion) {
 				addExpectedPlugin = false
 			}
