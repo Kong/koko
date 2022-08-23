@@ -7,6 +7,7 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/kong/go-wrpc/wrpc"
 	"github.com/kong/koko/internal/json"
+	"github.com/kong/koko/internal/versioning"
 	"go.uber.org/zap"
 )
 
@@ -55,6 +56,8 @@ type websocketHandler struct {
 	authenticator Authenticator
 }
 
+var minimumSupportedDataPlane = versioning.MustNewRange(">=2.5.0")
+
 func validateRequest(r *http.Request) error {
 	queryParams := r.URL.Query()
 	if queryParams.Get(nodeIDKey) == "" {
@@ -64,10 +67,20 @@ func validateRequest(r *http.Request) error {
 		return fmt.Errorf("invalid request, " +
 			"missing node_hostname query parameter")
 	}
-	if queryParams.Get(nodeVersionKey) == "" {
+	nodeVersionStr := queryParams.Get(nodeVersionKey)
+	if nodeVersionStr == "" {
 		return fmt.Errorf("invalid request, " +
 			"missing node_version query parameter")
 	}
+	nodeVersion, err := versioning.NewVersion(nodeVersionStr)
+	if err != nil {
+		return fmt.Errorf("invalid request, %w", err)
+	}
+
+	if !minimumSupportedDataPlane(nodeVersion) {
+		return fmt.Errorf("unsupported dataplane version")
+	}
+
 	return nil
 }
 
