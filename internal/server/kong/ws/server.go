@@ -192,7 +192,7 @@ func (h wrpcHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.baseServices.Register(node.peer)
+	err = h.baseServices.Register(node.peer, m)
 	if err != nil {
 		node.Logger.Error("register base wRPC services", zap.Error(err))
 		return
