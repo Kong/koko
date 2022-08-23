@@ -7,7 +7,6 @@ import (
 	"github.com/kong/go-wrpc/wrpc"
 	"github.com/kong/koko/internal/gen/wrpc/kong/model"
 	nego "github.com/kong/koko/internal/gen/wrpc/kong/services/negotiation/v1"
-	"github.com/kong/koko/internal/log"
 	"go.uber.org/zap"
 )
 
@@ -24,7 +23,7 @@ const (
 // information the service will need to instantiate the service object,
 // except from the Manager, which is provided on the Register method call.
 type Registerer interface {
-	// The Register method will be called when the negotiator chooses
+	// Register should be called when the negotiator chooses
 	// a specific service.
 	Register(peer *wrpc.Peer, m *Manager) error
 }
@@ -37,16 +36,25 @@ type serviceVersion struct {
 
 // NegotiationRegisterer holds a map of services, each with a list of
 // known versions and respective registerers.
-type NegotiationRegisterer struct {
+type negotiationRegisterer struct {
 	Logger        *zap.Logger
 	knownVersions map[string][]serviceVersion
+}
+
+func NewNegotiationRegisterer(logger *zap.Logger) (*negotiationRegisterer, error) {
+	if logger == nil {
+		return nil, fmt.Errorf("NegotiationRegisterer requires a logger")
+	}
+	return &negotiationRegisterer{
+		Logger: logger,
+	}, nil
 }
 
 // AddService associates a service name and version
 // with a registerer object and a descriptive message.
 // To be used during startup to define which
 // services are available on a server.
-func (n *NegotiationRegisterer) AddService(
+func (n *negotiationRegisterer) AddService(
 	serviceName, version, message string,
 	register Registerer,
 ) error {
@@ -75,7 +83,7 @@ func (n *NegotiationRegisterer) AddService(
 }
 
 // Register adds the version negotiation service to the peer.
-func (n *NegotiationRegisterer) Register(peer *wrpc.Peer, m *Manager) error {
+func (n *negotiationRegisterer) Register(peer *wrpc.Peer, m *Manager) error {
 	return peer.Register(
 		&nego.NegotiationServiceServer{
 			NegotiationService: &negotiationService{
@@ -89,7 +97,7 @@ func (n *NegotiationRegisterer) Register(peer *wrpc.Peer, m *Manager) error {
 // Keeps a link to the NegotiationRegisterer with the map of services.
 type negotiationService struct {
 	manager    *Manager
-	registerer *NegotiationRegisterer
+	registerer *negotiationRegisterer
 }
 
 // chooseVersion selects the best version for a requested service.
@@ -131,11 +139,7 @@ func (ns *negotiationService) NegotiateServices(
 		ServicesRejected: []*model.RejectedService{},
 	}
 
-	logger := ns.registerer.Logger
-	if logger == nil {
-		logger = log.Logger
-	}
-	logger = logger.With(zap.String("cluster-id", cpNodeID))
+	logger := ns.registerer.Logger.With(zap.String("cluster-id", cpNodeID))
 
 	if req.Node == nil {
 		logger.Error("Missing Node information")

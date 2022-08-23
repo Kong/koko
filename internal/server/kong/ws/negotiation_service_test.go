@@ -7,6 +7,7 @@ import (
 
 	"github.com/kong/go-wrpc/wrpc"
 	"github.com/kong/koko/internal/gen/wrpc/kong/model"
+	"github.com/kong/koko/internal/log"
 	"github.com/kong/koko/internal/server/kong/ws/config"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -50,7 +51,7 @@ func TestChooseServiceVersionUnknown(t *testing.T) {
 	testRegisterer := new(MockRegisterer)
 	testRegisterer.On("Register", testPeer)
 
-	negotiationReg := &NegotiationRegisterer{}
+	negotiationReg := &negotiationRegisterer{}
 	negotiationReg.AddService("infundibulum", "chrono-synclastic", "So it goes", testRegisterer)
 	negotiator := negotiationService{registerer: negotiationReg}
 
@@ -66,7 +67,7 @@ func TestChooseServiceVersionEmpty(t *testing.T) {
 	testRegisterer := new(MockRegisterer)
 	testRegisterer.On("Register", testPeer)
 
-	negotiationReg := &NegotiationRegisterer{}
+	negotiationReg := &negotiationRegisterer{}
 	negotiationReg.AddService("infundibulum", "chrono-synclastic", "So it goes", testRegisterer)
 	negotiator := negotiationService{registerer: negotiationReg}
 
@@ -82,7 +83,7 @@ func TestChooseServiceVersionMismatch(t *testing.T) {
 	testRegisterer := new(MockRegisterer)
 	testRegisterer.On("Register", testPeer)
 
-	negotiationReg := &NegotiationRegisterer{}
+	negotiationReg := &negotiationRegisterer{}
 	negotiationReg.AddService("infundibulum", "chrono-synclastic", "So it goes", testRegisterer)
 	negotiator := negotiationService{registerer: negotiationReg}
 
@@ -101,7 +102,7 @@ func TestChooseServiceVersionFirst(t *testing.T) {
 	testRegisterer := new(MockRegisterer)
 	testRegisterer.On("Register", testPeer)
 
-	negotiationReg := &NegotiationRegisterer{}
+	negotiationReg := &negotiationRegisterer{}
 	negotiationReg.AddService("infundibulum", "chrono-synclastic", "So it goes", testRegisterer)
 	negotiator := negotiationService{registerer: negotiationReg}
 
@@ -122,7 +123,9 @@ func TestNegotiationInvalid(t *testing.T) {
 	testRegisterer := new(MockRegisterer)
 	testRegisterer.On("Register", testPeer)
 
-	negotiationReg := &NegotiationRegisterer{}
+	negotiationReg, err := NewNegotiationRegisterer(log.Logger)
+	require.NoError(t, err)
+
 	negotiationReg.AddService("infundibulum", "chrono-synclastic", "So it goes", testRegisterer)
 	manager, err := NewManager(ManagerOpts{
 		DPVersionCompatibility: MockVersionCompatibility{},
@@ -163,7 +166,9 @@ func TestNegotiation(t *testing.T) {
 		testRegisterer := new(MockRegisterer)
 		testRegisterer.On("Register", testPeer)
 
-		negotiationReg := &NegotiationRegisterer{}
+		negotiationReg, err := NewNegotiationRegisterer(log.Logger)
+		require.NoError(t, err)
+
 		negotiationReg.AddService("infundibulum", "chrono-synclastic", "So it goes", testRegisterer)
 		negotiator := negotiationService{manager: manager, registerer: negotiationReg}
 
@@ -186,7 +191,8 @@ func TestNegotiation(t *testing.T) {
 		testRegisterer := new(MockRegisterer)
 		testRegisterer.On("Register", testPeer)
 
-		negotiationReg := &NegotiationRegisterer{}
+		negotiationReg, err := NewNegotiationRegisterer(log.Logger)
+		require.NoError(t, err)
 		negotiationReg.AddService("infundibulum", "chrono-synclastic", "So it goes", testRegisterer)
 		negotiator := negotiationService{manager: manager, registerer: negotiationReg}
 
@@ -216,7 +222,8 @@ func TestNegotiation(t *testing.T) {
 		testRegisterer := new(MockRegisterer)
 		testRegisterer.On("Register", testPeer)
 
-		negotiationReg := &NegotiationRegisterer{}
+		negotiationReg, err := NewNegotiationRegisterer(log.Logger)
+		require.NoError(t, err)
 		negotiationReg.AddService("infundibulum", "chrono-synclastic", "So it goes", testRegisterer)
 		negotiator := negotiationService{manager: manager, registerer: negotiationReg}
 
@@ -249,7 +256,8 @@ func TestNegotiation(t *testing.T) {
 		testRegisterer := new(MockRegisterer)
 		testRegisterer.On("Register", testPeer).Return(nil)
 
-		negotiationReg := &NegotiationRegisterer{}
+		negotiationReg, err := NewNegotiationRegisterer(log.Logger)
+		require.NoError(t, err)
 		negotiationReg.AddService("infundibulum", "chrono-synclastic", "So it goes", testRegisterer)
 		negotiator := negotiationService{manager: manager, registerer: negotiationReg}
 
@@ -283,7 +291,8 @@ func TestNegotiation(t *testing.T) {
 		testRegisterer := new(MockRegisterer)
 		testRegisterer.On("Register", testPeer).Return(nil)
 
-		negotiationReg := &NegotiationRegisterer{}
+		negotiationReg, err := NewNegotiationRegisterer(log.Logger)
+		require.NoError(t, err)
 		negotiationReg.AddService("infundibulum", "chrono-synclastic", "So it goes", testRegisterer)
 		negotiator := negotiationService{manager: manager, registerer: negotiationReg}
 
@@ -318,7 +327,8 @@ func TestNegotiation(t *testing.T) {
 			testRegisterer := new(MockRegisterer)
 			testRegisterer.On("Register", testPeer).Return(nil)
 
-			negotiationReg := &NegotiationRegisterer{}
+			negotiationReg, err := NewNegotiationRegisterer(log.Logger)
+			require.NoError(t, err)
 			negotiationReg.AddService("infundibulum", "chrono-synclastic", "So it goes", testRegisterer)
 			negotiationReg.AddService("infundibulum", "coquina", "arbitrii mihi jura mei", testRegisterer)
 			negotiator := negotiationService{manager: manager, registerer: negotiationReg}
@@ -353,7 +363,8 @@ func TestNegotiation(t *testing.T) {
 			testRegisterer := new(MockRegisterer)
 			testRegisterer.On("Register", testPeer).Return(nil)
 
-			negotiationReg := &NegotiationRegisterer{}
+			negotiationReg, err := NewNegotiationRegisterer(log.Logger)
+			require.NoError(t, err)
 			negotiationReg.AddService("infundibulum", "chrono-synclastic", "So it goes", testRegisterer)
 			negotiationReg.AddService("infundibulum", "coquina", "arbitrii mihi jura mei", testRegisterer)
 			negotiator := negotiationService{manager: manager, registerer: negotiationReg}
@@ -388,7 +399,8 @@ func TestNegotiation(t *testing.T) {
 			testRegisterer := new(MockRegisterer)
 			testRegisterer.On("Register", testPeer).Return(nil)
 
-			negotiationReg := &NegotiationRegisterer{}
+			negotiationReg, err := NewNegotiationRegisterer(log.Logger)
+			require.NoError(t, err)
 			negotiationReg.AddService("infundibulum", "coquina", "arbitrii mihi jura mei", testRegisterer)
 			negotiationReg.AddService("infundibulum", "chrono-synclastic", "So it goes", testRegisterer)
 			negotiator := negotiationService{manager: manager, registerer: negotiationReg}

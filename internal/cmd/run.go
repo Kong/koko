@@ -318,11 +318,11 @@ func Run(ctx context.Context, config ServerConfig) error {
 		AuthFn:  authFn,
 	}
 
-	negotiator := &ws.NegotiationRegisterer{
-		Logger: controlLogger.With(
-			zap.String("protocol", "wRPC"),
-			zap.String("wrpc-service", "negotiation"),
-		),
+	negotiator, err := ws.NewNegotiationRegisterer(controlLogger.With(
+		zap.String("protocol", "wRPC"),
+		zap.String("wrpc-service", "negotiation")))
+	if err != nil {
+		return err
 	}
 
 	err = negotiator.AddService("config", "v1", "wRPC configuration", &ws.ConfigRegisterer{})
