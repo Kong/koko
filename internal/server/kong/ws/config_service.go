@@ -10,28 +10,24 @@ import (
 	"go.uber.org/zap"
 )
 
-// Configurer is the Registerer to be added to a Negotiator object.
-// It also implements the ConfigService interface so it adds itself
-// as the wrpc.Service.  This allows the service to get a reference to
-// the Manager object.
-type Configurer struct {
+// ConfigRegisterer is the Registerer to be added to a Negotiator object.
+// Its only responsibility is to add a ConfigService to a peer.
+type ConfigRegisterer struct{}
+
+// Register the "v1" config service.
+func (c *ConfigRegisterer) Register(peer *wrpc.Peer, m *Manager) error {
+	return peer.Register(&config_service.ConfigServiceServer{
+		ConfigService: &configService{manager: m},
+	})
+}
+
+// configService implements the wrpc config service.
+type configService struct {
 	manager *Manager
 }
 
-// NewConfigurer creates a new configurer with the given manager.
-func NewConfigurer(m *Manager) *Configurer {
-	return &Configurer{
-		manager: m,
-	}
-}
-
-// Register the "v1" config service.
-func (c *Configurer) Register(peer *wrpc.Peer) error {
-	return peer.Register(&config_service.ConfigServiceServer{ConfigService: c})
-}
-
 // GetCapabilities is a wRPC method, should only be CP to DP.
-func (c *Configurer) GetCapabilities(
+func (c *configService) GetCapabilities(
 	ctx context.Context,
 	peer *wrpc.Peer,
 	req *config_service.GetCapabilitiesRequest,
@@ -45,7 +41,7 @@ func (c *Configurer) GetCapabilities(
 // PingCP handles the incoming ping method from the CP.
 // (Different from a websocket Ping frame)
 // Records the given hashes from CP.
-func (c *Configurer) PingCP(
+func (c *configService) PingCP(
 	_ context.Context,
 	peer *wrpc.Peer,
 	req *config_service.PingCPRequest,
@@ -85,7 +81,7 @@ func (c *Configurer) PingCP(
 // from the CP (currently the list of plugins it has available).
 // Then the manager can validate and promote the
 // node from "pending" to fully working.
-func (c *Configurer) ReportMetadata(
+func (c *configService) ReportMetadata(
 	ctx context.Context,
 	peer *wrpc.Peer,
 	req *config_service.ReportMetadataRequest,
@@ -119,7 +115,7 @@ func (c *Configurer) ReportMetadata(
 }
 
 // SyncConfig is a wRPC method, should only be CP to DP.
-func (c *Configurer) SyncConfig(
+func (c *configService) SyncConfig(
 	ctx context.Context,
 	peer *wrpc.Peer,
 	req *config_service.SyncConfigRequest,
