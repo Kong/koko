@@ -78,7 +78,7 @@ func validateRequest(r *http.Request) error {
 	}
 
 	if !minimumSupportedDataPlane(nodeVersion) {
-		return fmt.Errorf("unsupported dataplane version")
+		return fmt.Errorf("unsupported dataplane version: '%v'", nodeVersionStr)
 	}
 
 	return nil
@@ -86,14 +86,15 @@ func validateRequest(r *http.Request) error {
 
 func (h websocketHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if err := validateRequest(r); err != nil {
+		h.logger.Error("received invalid websocket upgrade request from DP",
+			zap.Error(err),
+		)
 		w.WriteHeader(http.StatusBadRequest)
 		_, err := w.Write([]byte(err.Error()))
 		if err != nil {
-			h.logger.With(zap.Error(err)).Error(
-				"write bad request response for websocket upgrade")
+			h.logger.Error("failed to write bad request response for"+
+				" websocket upgrade request", zap.Error(err))
 		}
-		h.logger.Info("received invalid websocket upgrade request from DP",
-			zap.Error(err))
 		return
 	}
 
@@ -165,12 +166,15 @@ type wrpcHandler struct {
 
 func (h wrpcHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if err := validateRequest(r); err != nil {
+		h.logger.Error("received invalid websocket upgrade request from DP",
+			zap.Error(err),
+		)
 		w.WriteHeader(http.StatusBadRequest)
 		_, err := w.Write([]byte(err.Error()))
 		if err != nil {
-			h.logger.Error("write bad request response for websocket upgrade", zap.Error(err))
+			h.logger.Error("failed to write bad request response for"+
+				" websocket upgrade request", zap.Error(err))
 		}
-		h.logger.Info("received invalid websocket upgrade request from DP", zap.Error(err))
 		return
 	}
 	m, err := h.authenticator.Authenticate(r)
