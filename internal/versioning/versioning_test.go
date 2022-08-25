@@ -10,167 +10,167 @@ func TestVersioning_Version(t *testing.T) {
 	t.Run("valid version string with three or four digits creates a version", func(t *testing.T) {
 		tests := []struct {
 			versionStr         string
+			expectedVersionStr string
 			expectedMajor      uint64
 			expectedMinor      uint64
 			expectedPatch      uint64
 			expectedRevision   uint64
-			expectedPreRelease string
-			expectedBuild      string
 			isEnterprise       bool
 			hasRevision        bool
 		}{
 			// Three digit versions OSS
 			{
-				versionStr:    "0.33.3",
-				expectedMajor: 0,
-				expectedMinor: 33,
-				expectedPatch: 3,
+				versionStr:         "0.33.3",
+				expectedVersionStr: "0.33.3",
+				expectedMajor:      0,
+				expectedMinor:      33,
+				expectedPatch:      3,
 			},
 			{
 				versionStr:         "1.2.0-alpha",
+				expectedVersionStr: "1.2.0",
 				expectedMajor:      1,
 				expectedMinor:      2,
-				expectedPreRelease: "-alpha",
 			},
 			{
-				versionStr:    "2.1.1+build.metadata",
-				expectedMajor: 2,
-				expectedMinor: 1,
-				expectedPatch: 1,
-				expectedBuild: "+build.metadata",
+				versionStr:         "2.1.1+build.metadata",
+				expectedVersionStr: "2.1.1",
+				expectedMajor:      2,
+				expectedMinor:      1,
+				expectedPatch:      1,
 			},
 			{
 				versionStr:         "2.6.10-alpha+build.metadata",
+				expectedVersionStr: "2.6.10",
 				expectedMajor:      2,
 				expectedMinor:      6,
 				expectedPatch:      10,
-				expectedPreRelease: "-alpha",
-				expectedBuild:      "+build.metadata",
 			},
 			{
-				versionStr:    "3.0.0+alpha-build.metadata",
-				expectedMajor: 3,
-				expectedMinor: 0,
-				expectedPatch: 0,
-				expectedBuild: "+alpha-build.metadata",
+				versionStr:         "3.0.0+alpha-build.metadata",
+				expectedVersionStr: "3.0.0",
+				expectedMajor:      3,
+				expectedMinor:      0,
+				expectedPatch:      0,
 			},
 			// Three digit versions enterprise
 			{
 				versionStr:         "0.33.3-enterprise",
+				expectedVersionStr: "0.33.3",
 				expectedMajor:      0,
 				expectedMinor:      33,
 				expectedPatch:      3,
-				expectedPreRelease: "-enterprise",
 				isEnterprise:       true,
 			},
 			{
 				versionStr:         "1.2.0-alpha-enterprise",
+				expectedVersionStr: "1.2.0",
 				expectedMajor:      1,
 				expectedMinor:      2,
-				expectedPreRelease: "-alpha-enterprise",
 				isEnterprise:       true,
 			},
 			{
-				versionStr:    "2.1.1+build.metadata-enterprise-edition",
-				expectedMajor: 2,
-				expectedMinor: 1,
-				expectedPatch: 1,
-				expectedBuild: "+build.metadata-enterprise-edition",
-				isEnterprise:  true,
+				versionStr:         "2.1.1+build.metadata-enterprise-edition",
+				expectedVersionStr: "2.1.1",
+				expectedMajor:      2,
+				expectedMinor:      1,
+				expectedPatch:      1,
+				isEnterprise:       true,
 			},
 			{
 				versionStr:         "2.6.10-alpha+build.metadataenterprise",
+				expectedVersionStr: "2.6.10",
 				expectedMajor:      2,
 				expectedMinor:      6,
 				expectedPatch:      10,
-				expectedPreRelease: "-alpha",
-				expectedBuild:      "+build.metadataenterprise",
 				isEnterprise:       true,
 			},
 			{
-				versionStr:    "3.0.0+alphaenterpriseedition-build.metadata",
-				expectedMajor: 3,
-				expectedMinor: 0,
-				expectedPatch: 0,
-				expectedBuild: "+alphaenterpriseedition-build.metadata",
-				isEnterprise:  true,
+				versionStr:         "3.0.0+alphaenterpriseedition-build.metadata",
+				expectedVersionStr: "3.0.0",
+				expectedMajor:      3,
+				expectedMinor:      0,
+				expectedPatch:      0,
+				isEnterprise:       true,
 			},
 
 			// Four digit versions enterprise
 			{
-				versionStr:       "0.33.3.1",
-				expectedMajor:    0,
-				expectedMinor:    33,
-				expectedPatch:    3,
-				expectedRevision: 1,
-				isEnterprise:     true,
-				hasRevision:      true,
+				versionStr:         "0.33.3.1",
+				expectedVersionStr: "0.33.3.1",
+				expectedMajor:      0,
+				expectedMinor:      33,
+				expectedPatch:      3,
+				expectedRevision:   1,
+				isEnterprise:       true,
+				hasRevision:        true,
 			},
 			{
 				versionStr:         "2.8.1.3-1",
+				expectedVersionStr: "2.8.1.3",
 				expectedMajor:      2,
 				expectedMinor:      8,
 				expectedPatch:      1,
 				expectedRevision:   3,
-				expectedPreRelease: "-1",
 				isEnterprise:       true,
 				hasRevision:        true,
 			},
 			{
-				versionStr:       "3.0.0.0",
-				expectedMajor:    3,
-				expectedMinor:    0,
-				expectedPatch:    0,
-				expectedRevision: 0,
-				isEnterprise:     true,
-				hasRevision:      true,
+				versionStr:         "3.0.0.0",
+				expectedVersionStr: "3.0.0.0",
+				expectedMajor:      3,
+				expectedMinor:      0,
+				expectedPatch:      0,
+				expectedRevision:   0,
+				isEnterprise:       true,
+				hasRevision:        true,
 			},
 			{
 				versionStr:         "1.2.0.0-alpha",
+				expectedVersionStr: "1.2.0.0",
 				expectedMajor:      1,
 				expectedMinor:      2,
 				expectedRevision:   0,
-				expectedPreRelease: "-alpha",
 				isEnterprise:       true,
 				hasRevision:        true,
 			},
 			{
-				versionStr:       "2.1.1.3+build.metadata",
-				expectedMajor:    2,
-				expectedMinor:    1,
-				expectedPatch:    1,
-				expectedRevision: 3,
-				expectedBuild:    "+build.metadata",
-				isEnterprise:     true,
-				hasRevision:      true,
+				versionStr:         "2.1.1.3+build.metadata",
+				expectedVersionStr: "2.1.1.3",
+				expectedMajor:      2,
+				expectedMinor:      1,
+				expectedPatch:      1,
+				expectedRevision:   3,
+				isEnterprise:       true,
+				hasRevision:        true,
 			},
 			{
 				versionStr:         "2.6.10.1234-alpha+build.metadata",
+				expectedVersionStr: "2.6.10.1234",
 				expectedMajor:      2,
 				expectedMinor:      6,
 				expectedPatch:      10,
 				expectedRevision:   1234,
-				expectedPreRelease: "-alpha",
-				expectedBuild:      "+build.metadata",
 				isEnterprise:       true,
 				hasRevision:        true,
 			},
 			{
-				versionStr:       "3.0.0.56+alpha-build.metadata",
-				expectedMajor:    3,
-				expectedMinor:    0,
-				expectedPatch:    0,
-				expectedRevision: 56,
-				expectedBuild:    "+alpha-build.metadata",
-				isEnterprise:     true,
-				hasRevision:      true,
+				versionStr:         "3.0.0.56+alpha-build.metadata",
+				expectedVersionStr: "3.0.0.56",
+				expectedMajor:      3,
+				expectedMinor:      0,
+				expectedPatch:      0,
+				expectedRevision:   56,
+				isEnterprise:       true,
+				hasRevision:        true,
 			},
 		}
 
 		for _, test := range tests {
 			version, err := NewVersion(test.versionStr)
 			require.NoError(t, err)
-			require.Equal(t, test.versionStr, version.String())
+			require.Equal(t, test.versionStr, version.str)
+			require.Equal(t, test.expectedVersionStr, version.String())
 			require.Equal(t, test.expectedMajor, version.Major())
 			require.Equal(t, test.expectedMinor, version.Minor())
 			require.Equal(t, test.expectedPatch, version.Patch())
@@ -180,9 +180,9 @@ func TestVersioning_Version(t *testing.T) {
 			} else {
 				require.EqualError(t, err, "revision is unavailable for version")
 			}
-			require.Equal(t, test.expectedPreRelease, version.PreRelease())
-			require.Equal(t, test.expectedBuild, version.Build())
 			require.Equal(t, test.isEnterprise, version.IsKongGatewayEnterprise())
+			require.Empty(t, version.PreRelease()) // Pre-release has been removed after parsing
+			require.Empty(t, version.Build())      // Build has been removed after parsing
 		}
 	})
 
@@ -249,6 +249,16 @@ func TestVersioning_Range(t *testing.T) {
 				expectedFourDigitResult:  true,
 			},
 			{
+				rangeStr:                 "<= 1.2.0",
+				expectedThreeDigitResult: false,
+				expectedFourDigitResult:  false,
+			},
+			{
+				rangeStr:                 ">= 1.2.0",
+				expectedThreeDigitResult: true,
+				expectedFourDigitResult:  true,
+			},
+			{
 				rangeStr:                 "<= 1.2.3",
 				expectedThreeDigitResult: true,
 				expectedFourDigitResult:  true,
@@ -283,6 +293,16 @@ func TestVersioning_Range(t *testing.T) {
 			// Four digit version ranges
 			{
 				rangeStr:                 "<= 2.0.0.0",
+				expectedThreeDigitResult: true,
+				expectedFourDigitResult:  true,
+			},
+			{
+				rangeStr:                 "<= 1.2.3.0",
+				expectedThreeDigitResult: true,
+				expectedFourDigitResult:  false,
+			},
+			{
+				rangeStr:                 ">= 1.2.3.0",
 				expectedThreeDigitResult: true,
 				expectedFourDigitResult:  true,
 			},
