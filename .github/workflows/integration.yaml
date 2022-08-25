@@ -13,8 +13,8 @@ jobs:
         - 'kong:2.7.0'
         - 'kong:2.8.0'
         include:
-          - kong_image: 'kong/kong:latest' # tracks mainline branch of kong/kong
-            experimental: true
+          - kong_image: 'kong/kong:master-alpine' # tracks mainline branch of kong/kong
+            experimental: false
     env:
       KOKO_TEST_KONG_DP_IMAGE: ${{ matrix.kong_image }}
     steps:
