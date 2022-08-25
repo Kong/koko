@@ -176,24 +176,6 @@ func TestRead(t *testing.T) {
 	err = s.Create(ctx, svc)
 	require.Nil(t, err)
 
-	rid := uuid.NewString()
-	status := resource.NewStatus()
-	status.Status = &v1.Status{
-		ContextReference: &v1.EntityReference{
-			Type: string(resource.TypeRoute),
-			Id:   rid,
-		},
-		Conditions: []*v1.Condition{
-			{
-				Code:     "R0023",
-				Message:  "foo bar",
-				Severity: resource.SeverityError,
-			},
-		},
-	}
-	err = s.Create(context.Background(), status)
-	require.Nil(t, err)
-
 	t.Run("reading an object by id succeeds", func(t *testing.T) {
 		svc := resource.NewService()
 		err := s.Read(context.Background(), svc, GetByID(sid))
@@ -222,22 +204,19 @@ func TestRead(t *testing.T) {
 		require.IsType(t, ErrNotFound, err)
 	})
 	t.Run("reading via an index returns the resource", func(t *testing.T) {
-		status := resource.NewStatus()
-		err := s.Read(context.Background(), status, GetByIndex("ctx_ref",
-			model.MultiValueIndex("route", rid)))
+		service := resource.NewService()
+		err := s.Read(context.Background(), service, GetByIndex("name", "s0"))
 		require.Nil(t, err)
-		require.Equal(t, "R0023", status.Status.Conditions[0].Code)
+		require.Equal(t, sid, service.Service.Id)
 	})
 	t.Run("reading a non-existent index returns ErrNotFound", func(t *testing.T) {
-		status := resource.NewStatus()
-		err := s.Read(context.Background(), status, GetByIndex("borked",
-			model.MultiValueIndex("route", rid)))
+		service := resource.NewService()
+		err := s.Read(context.Background(), service, GetByIndex("borked", "s0"))
 		require.IsType(t, ErrNotFound, err)
 	})
 	t.Run("reading a non-existent  value in an index returns ErrNotFound", func(t *testing.T) {
-		status := resource.NewStatus()
-		err := s.Read(context.Background(), status, GetByIndex("ctx_ref",
-			model.MultiValueIndex("route", uuid.NewString())))
+		service := resource.NewService()
+		err := s.Read(context.Background(), service, GetByIndex("ctx_ref", "borked"))
 		require.IsType(t, ErrNotFound, err)
 	})
 }

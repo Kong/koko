@@ -32,7 +32,6 @@ func TestSchemasGetEntity(t *testing.T) {
 			"plugin",
 			"route",
 			"service",
-			"status",
 		}
 
 		for _, p := range paths {

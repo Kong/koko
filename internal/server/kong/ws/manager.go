@@ -241,22 +241,6 @@ func (m *Manager) AddWebsocketNode(node *Node) {
 	// track each authenticated node
 	m.writeNode(node)
 
-	// check if node is compatible
-	err := m.validateNode(node)
-	if err != nil {
-		// node has failed to meet the pre-requisites, close the connection
-		// TODO(hbagdi): send an error to Kong DP once wRPC is supported
-		m.logger.With(
-			zap.Error(err),
-			zap.String("node-id", node.ID),
-		).Info("kong DP node rejected")
-		err := node.Close()
-		if err != nil {
-			m.logger.With(zap.Error(err)).Error(
-				"failed to close websocket connection")
-		}
-		return
-	}
 	m.setupPingHandler(node)
 	m.addToNodeList(node)
 	// spawn a goroutine for each data-plane node that connects.
@@ -343,15 +327,10 @@ func (m *Manager) AddPendingNode(node *Node) error {
 // does this after getting the list of plugins.  Here it's validated
 // and, if successful, moved from the `m.pendingNodes` to the
 // final `m.nodes` list.
-func (m *Manager) addWRPCNode(node *Node, pluginList []string) error {
+func (m *Manager) addWRPCNode(node *Node) error {
 	m.init.Do(m.startThreads)
 
-	err := m.doNodeValidation(node, pluginList)
-	if err != nil {
-		return err
-	}
-
-	err = m.pendingNodes.Remove(node)
+	err := m.pendingNodes.Remove(node)
 	if err != nil {
 		return fmt.Errorf("failed to remove node from pending list: %w", err)
 	}
@@ -586,48 +565,6 @@ type basicInfoPlugin struct {
 type basicInfo struct {
 	Type    string            `json:"type,omitempty"`
 	Plugins []basicInfoPlugin `json:"plugins,omitempty"`
-}
-
-type nodeAttributes struct {
-	Plugins []string
-	Version string
-}
-
-func (m *Manager) validateNode(node *Node) error {
-	pluginList, err := node.GetPluginList()
-	if err != nil {
-		return fmt.Errorf("(websocket) unable to read plugin list from DP: %w", err)
-	}
-	return m.doNodeValidation(node, pluginList)
-}
-
-func (m *Manager) doNodeValidation(node *Node, pluginList []string) error {
-	mConfig := m.ReadConfig()
-	conditions := checkPreReqs(nodeAttributes{
-		Plugins: pluginList,
-		Version: node.Version,
-	}, mConfig.DataPlaneRequisites)
-	if len(conditions) == 0 {
-		return nil
-	}
-	ctx, cancel := context.WithTimeout(context.Background(), defaultRequestTimeout)
-	defer cancel()
-	// update status before returning
-	_, err := m.configClient.Status.UpdateStatus(ctx,
-		&relay.UpdateStatusRequest{
-			Item: &model.Status{
-				ContextReference: &model.EntityReference{
-					Id:   node.ID,
-					Type: string(resource.TypeNode),
-				},
-				Conditions: conditions,
-			},
-			Cluster: m.reqCluster(),
-		})
-	if err != nil {
-		m.logger.Error("failed to update status of a node", zap.Error(err))
-	}
-	return fmt.Errorf("node failed to meet pre-requisites")
 }
 
 const (
