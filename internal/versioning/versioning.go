@@ -27,6 +27,11 @@ func NewVersion(versionStr string) (Version, error) {
 	if err != nil {
 		return Version{}, fmt.Errorf("unable to create version: %w", err)
 	}
+
+	// Remove pre-release and build metadata versioning for finalized version comparisons
+	version.Pre = []semver.PRVersion{}
+	version.Build = []string{}
+
 	return Version{
 		version: version,
 		str:     versionStr,
