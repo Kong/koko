@@ -36,17 +36,17 @@ type serviceVersion struct {
 
 // NegotiationRegisterer holds a map of services, each with a list of
 // known versions and respective registerers.
-type negotiationRegisterer struct {
-	Logger        *zap.Logger
+type NegotiationRegisterer struct {
+	logger        *zap.Logger
 	knownVersions map[string][]serviceVersion
 }
 
-func NewNegotiationRegisterer(logger *zap.Logger) (*negotiationRegisterer, error) {
+func NewNegotiationRegisterer(logger *zap.Logger) (*NegotiationRegisterer, error) {
 	if logger == nil {
 		return nil, fmt.Errorf("NegotiationRegisterer requires a logger")
 	}
-	return &negotiationRegisterer{
-		Logger: logger,
+	return &NegotiationRegisterer{
+		logger: logger,
 	}, nil
 }
 
@@ -54,7 +54,7 @@ func NewNegotiationRegisterer(logger *zap.Logger) (*negotiationRegisterer, error
 // with a registerer object and a descriptive message.
 // To be used during startup to define which
 // services are available on a server.
-func (n *negotiationRegisterer) AddService(
+func (n *NegotiationRegisterer) AddService(
 	serviceName, version, message string,
 	register Registerer,
 ) error {
@@ -83,7 +83,7 @@ func (n *negotiationRegisterer) AddService(
 }
 
 // Register adds the version negotiation service to the peer.
-func (n *negotiationRegisterer) Register(peer *wrpc.Peer, m *Manager) error {
+func (n *NegotiationRegisterer) Register(peer *wrpc.Peer, m *Manager) error {
 	return peer.Register(
 		&nego.NegotiationServiceServer{
 			NegotiationService: &negotiationService{
@@ -97,7 +97,7 @@ func (n *negotiationRegisterer) Register(peer *wrpc.Peer, m *Manager) error {
 // Keeps a link to the NegotiationRegisterer with the map of services.
 type negotiationService struct {
 	manager    *Manager
-	registerer *negotiationRegisterer
+	registerer *NegotiationRegisterer
 }
 
 // chooseVersion selects the best version for a requested service.
@@ -139,7 +139,7 @@ func (ns *negotiationService) NegotiateServices(
 		ServicesRejected: []*model.RejectedService{},
 	}
 
-	logger := ns.registerer.Logger.With(zap.String("cluster-id", cpNodeID))
+	logger := ns.registerer.logger.With(zap.String("cluster-id", cpNodeID))
 
 	if req.Node == nil {
 		logger.Error("Missing Node information")

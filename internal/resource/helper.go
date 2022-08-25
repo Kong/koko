@@ -43,12 +43,13 @@ func parseURL(s *v1.Service) error {
 		if err != nil {
 			return fmt.Errorf("unpack host and port: %v", err)
 		}
-		port, err := strconv.Atoi(portStr) //nolint:gosec
+		port, err := strconv.Atoi(portStr)
 		if err != nil {
 			return fmt.Errorf("convert port field to int: %v", err)
 		}
 
-		s.Port = int32(port)
+		// safe conversion since port range is validated already
+		s.Port = int32(port) //nolint:gosec
 	}
 	s.Host = host
 	s.Path = u.Path
