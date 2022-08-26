@@ -20,3 +20,61 @@ func TestTagPattern(t *testing.T) {
 		require.True(t, re.MatchString("foo:bar"))
 	})
 }
+
+func TestPathPattern(t *testing.T) {
+	// Path regex associated with fixed and the 3.0 regex path format.
+	pathRegex := regexp.MustCompile(Path.AllOf[0].Pattern)
+
+	tests := []struct {
+		name     string
+		paths    []string
+		expected bool
+	}{
+		{
+			name:     "must not be empty",
+			paths:    []string{""},
+			expected: false,
+		},
+		{
+			name: "must start with / for fixed paths",
+			paths: []string{
+				"/",
+				"/foo",
+				"/kong",
+				"/koko",
+				"/insomnia",
+				"/abcd~user~2",
+				"/abcd%aa%10%ff%AA%FF",
+				"/koko/",
+			},
+			expected: true,
+		},
+		{
+			name: "must start with ~/ for regex paths",
+			paths: []string{
+				"~/.*",
+				"~/[fF][oO]{2}",
+				"~/kong|koko|insomnia",
+			},
+			expected: true,
+		},
+		{
+			name: "fails for invalid paths",
+			paths: []string{
+				"     ",
+				"~kong",
+				"koko",
+				"#$%",
+				"%20",
+			},
+			expected: false,
+		},
+	}
+
+	for _, test := range tests {
+		for _, path := range test.paths {
+			valid := pathRegex.MatchString(path)
+			require.Equal(t, test.expected, valid)
+		}
+	}
+}

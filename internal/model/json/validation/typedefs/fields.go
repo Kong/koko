@@ -133,8 +133,8 @@ var Path = &generator.Schema{
 	Type: "string",
 	AllOf: []*generator.Schema{
 		{
-			Description: "must begin with `/`",
-			Pattern:     "^/.*",
+			Description: "must begin with `/` (fixed path) or `~/` (regex path)",
+			Pattern:     "^/.*|^~/.*",
 		},
 		{
 			Description: fmt.Sprintf("length must not exceed %d", maxPathLength),

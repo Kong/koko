@@ -385,6 +385,68 @@ func Test_correctHTTPLogHeadersField(t *testing.T) {
 	}
 }
 
+func TestExtraProcessing_CorrectRoutesPathField(t *testing.T) {
+	tests := []struct {
+		name                   string
+		uncompressedPayload    string
+		expectedPayload        string
+		expectedTrackedChanges config.TrackedChanges
+	}{
+		{
+			name: "ensure 'paths' is de-normalized when '~' prefix is used in single path",
+			uncompressedPayload: `{
+				"config_table": [
+					"routes": [
+						{
+							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							paths = [
+								"~/foo"
+							],
+						}
+					]
+				]
+			}`,
+			expectedPayload: `{
+				"config_table": [
+					"routes": [
+						{
+							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							paths = [
+								"~/foo"
+							],
+						}
+					]
+				]
+			}`,
+			expectedTrackedChanges: config.TrackedChanges{
+				ChangeDetails: []config.ChangeDetail{
+					{
+						ID: pathRegexFieldChangeID,
+						Resources: []config.ResourceInfo{
+							{
+								Type: "entity",
+								ID:   "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			tracker := config.NewChangeTracker()
+			processedPayload := correctRoutesPathField(test.
+				uncompressedPayload, versionsPre300, tracker, log.Logger)
+			fmt.Println(processedPayload)
+			// require.JSONEq(t, test.expectedPayload, processedPayload)
+			// trackedChanged := tracker.Get()
+			// require.Equal(t, test.expectedTrackedChanges, trackedChanged)
+		})
+	}
+}
+
 // repeatJSONObject allows you to pass in raw JSON messages (in `jsonData`) and
 // repeat that object `count` times, for the given JSON `key` path. It will replace
 // the `jsonData` pointer values with the newly generated JSON object.

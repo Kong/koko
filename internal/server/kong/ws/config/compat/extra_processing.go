@@ -15,10 +15,11 @@ var versionOlderThan300 = versioning.MustNewRange("< 3.0.0")
 
 const (
 	awsLambdaExclusiveFieldChangeID = "P121"
+	pathRegexFieldChangeID          = "P126"
 )
 
 func init() {
-	err := config.ChangeRegistry.Register(config.Change{
+	if err := config.ChangeRegistry.Register(config.Change{
 		Metadata: config.ChangeMetadata{
 			ID:       awsLambdaExclusiveFieldChangeID,
 			Severity: config.ChangeSeverityError,
@@ -33,8 +34,25 @@ func init() {
 		SemverRange: versionsPre300,
 		// none since the logic is hard-coded instead
 		Update: config.ConfigTableUpdates{},
-	})
-	if err != nil {
+	}); err != nil {
+		panic(err)
+	}
+
+	if err := config.ChangeRegistry.Register(config.Change{
+		Metadata: config.ChangeMetadata{
+			ID:       pathRegexFieldChangeID,
+			Severity: config.ChangeSeverityError,
+			Description: "For the `paths` field used in route a regex " +
+				"pattern usage was detected. This field has been de-normalized " +
+				"replacing '%%' with '%25' and stripping the prefix '~'. " +
+				"routes which rely on regex parsing may not work as intended.",
+			Resolution:       standardUpgradeMessage("3.0"),
+			DocumentationURL: "",
+		},
+		SemverRange: versionsPre300,
+		// none since the logic is hard-coded instead
+		Update: config.ConfigTableUpdates{},
+	}); err != nil {
 		panic(err)
 	}
 }
@@ -139,6 +157,57 @@ func correctHTTPLogHeadersField(payload string) (string, error) {
 	}
 
 	return payload, nil
+}
+
+func correctRoutesPathField(payload string,
+	dataPlaneVersion string,
+	tracker *config.ChangeTracker,
+	logger *zap.Logger,
+) string {
+	processedPayload := payload
+	results := gjson.Get(processedPayload, "config_table.routes.#.paths")
+	// indexUpdate := 0
+	for _, res := range results.Array() {
+		updatedRaw := res.Raw
+		fmt.Println(updatedRaw)
+		// if awsRegionResult.Exists() && hostResult.Exists() {
+		// 	var (
+		// 		err      error
+		// 		pluginID = res.Get("id").String()
+		// 	)
+		// 	err = tracker.TrackForResource(awsLambdaExclusiveFieldChangeID,
+		// 		config.ResourceInfo{
+		// 			Type: string(resource.TypePlugin),
+		// 			ID:   pluginID,
+		// 		})
+		// 	if err != nil {
+		// 		logger.Error("failed to track version compatibility"+
+		// 			" change",
+		// 			zap.String("change-id", awsLambdaExclusiveFieldChangeID),
+		// 			zap.String("resource-type", "plugin"))
+		// 	}
+		// 	if updatedRaw, err = sjson.Delete(updatedRaw, "config.host"); err != nil {
+		// 		logger.With(zap.String("plugin", pluginName)).
+		// 			With(zap.String("field", "host")).
+		// 			With(zap.String("data-plane", dataPlaneVersion)).
+		// 			With(zap.Error(err)).
+		// 			Error("plugin configuration field was not removed from configuration")
+		// 	} else {
+		// 		logger.With(zap.String("plugin", pluginName)).
+		// 			With(zap.String("field", "host")).
+		// 			With(zap.String("data-plane", dataPlaneVersion)).
+		// 			Warn("removing plugin configuration field which is incompatible with data plane")
+		// 	}
+		// }
+
+		// // Update the processed payload
+		// resIndex := res.Index - indexUpdate
+		// updatedPayload := processedPayload[:resIndex] + updatedRaw +
+		// 	processedPayload[resIndex+len(res.Raw):]
+		// indexUpdate += len(processedPayload) - len(updatedPayload)
+		// processedPayload = updatedPayload
+	}
+	return processedPayload
 }
 
 func VersionCompatibilityExtraProcessing(payload string, dataPlaneVersion versioning.Version,
