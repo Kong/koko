@@ -51,7 +51,7 @@ func TestChooseServiceVersionUnknown(t *testing.T) {
 	testRegisterer := new(MockRegisterer)
 	testRegisterer.On("Register", testPeer)
 
-	negotiationReg := &negotiationRegisterer{}
+	negotiationReg := &NegotiationRegisterer{}
 	negotiationReg.AddService("infundibulum", "chrono-synclastic", "So it goes", testRegisterer)
 	negotiator := negotiationService{registerer: negotiationReg}
 
@@ -67,7 +67,7 @@ func TestChooseServiceVersionEmpty(t *testing.T) {
 	testRegisterer := new(MockRegisterer)
 	testRegisterer.On("Register", testPeer)
 
-	negotiationReg := &negotiationRegisterer{}
+	negotiationReg := &NegotiationRegisterer{}
 	negotiationReg.AddService("infundibulum", "chrono-synclastic", "So it goes", testRegisterer)
 	negotiator := negotiationService{registerer: negotiationReg}
 
@@ -83,7 +83,7 @@ func TestChooseServiceVersionMismatch(t *testing.T) {
 	testRegisterer := new(MockRegisterer)
 	testRegisterer.On("Register", testPeer)
 
-	negotiationReg := &negotiationRegisterer{}
+	negotiationReg := &NegotiationRegisterer{}
 	negotiationReg.AddService("infundibulum", "chrono-synclastic", "So it goes", testRegisterer)
 	negotiator := negotiationService{registerer: negotiationReg}
 
@@ -102,7 +102,7 @@ func TestChooseServiceVersionFirst(t *testing.T) {
 	testRegisterer := new(MockRegisterer)
 	testRegisterer.On("Register", testPeer)
 
-	negotiationReg := &negotiationRegisterer{}
+	negotiationReg := &NegotiationRegisterer{}
 	negotiationReg.AddService("infundibulum", "chrono-synclastic", "So it goes", testRegisterer)
 	negotiator := negotiationService{registerer: negotiationReg}
 
