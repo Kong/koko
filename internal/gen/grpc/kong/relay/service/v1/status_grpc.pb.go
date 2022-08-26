@@ -22,11 +22,6 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type StatusServiceClient interface {
-	// UpdateStatus updates the status of the entity referenced within the status.
-	// If a status for the entity exists, then it is replaced with the new status.
-	UpdateStatus(ctx context.Context, in *UpdateStatusRequest, opts ...grpc.CallOption) (*UpdateStatusResponse, error)
-	// ClearStatus deletes any status associated with the entity in the request.
-	ClearStatus(ctx context.Context, in *ClearStatusRequest, opts ...grpc.CallOption) (*ClearStatusResponse, error)
 	UpdateExpectedHash(ctx context.Context, in *UpdateExpectedHashRequest, opts ...grpc.CallOption) (*UpdateExpectedHashResponse, error)
 	UpdateNodeStatus(ctx context.Context, in *UpdateNodeStatusRequest, opts ...grpc.CallOption) (*UpdateNodeStatusResponse, error)
 }
@@ -37,24 +32,6 @@ type statusServiceClient struct {
 
 func NewStatusServiceClient(cc grpc.ClientConnInterface) StatusServiceClient {
 	return &statusServiceClient{cc}
-}
-
-func (c *statusServiceClient) UpdateStatus(ctx context.Context, in *UpdateStatusRequest, opts ...grpc.CallOption) (*UpdateStatusResponse, error) {
-	out := new(UpdateStatusResponse)
-	err := c.cc.Invoke(ctx, "/kong.relay.service.v1.StatusService/UpdateStatus", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *statusServiceClient) ClearStatus(ctx context.Context, in *ClearStatusRequest, opts ...grpc.CallOption) (*ClearStatusResponse, error) {
-	out := new(ClearStatusResponse)
-	err := c.cc.Invoke(ctx, "/kong.relay.service.v1.StatusService/ClearStatus", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
 }
 
 func (c *statusServiceClient) UpdateExpectedHash(ctx context.Context, in *UpdateExpectedHashRequest, opts ...grpc.CallOption) (*UpdateExpectedHashResponse, error) {
@@ -79,11 +56,6 @@ func (c *statusServiceClient) UpdateNodeStatus(ctx context.Context, in *UpdateNo
 // All implementations must embed UnimplementedStatusServiceServer
 // for forward compatibility
 type StatusServiceServer interface {
-	// UpdateStatus updates the status of the entity referenced within the status.
-	// If a status for the entity exists, then it is replaced with the new status.
-	UpdateStatus(context.Context, *UpdateStatusRequest) (*UpdateStatusResponse, error)
-	// ClearStatus deletes any status associated with the entity in the request.
-	ClearStatus(context.Context, *ClearStatusRequest) (*ClearStatusResponse, error)
 	UpdateExpectedHash(context.Context, *UpdateExpectedHashRequest) (*UpdateExpectedHashResponse, error)
 	UpdateNodeStatus(context.Context, *UpdateNodeStatusRequest) (*UpdateNodeStatusResponse, error)
 	mustEmbedUnimplementedStatusServiceServer()
@@ -93,12 +65,6 @@ type StatusServiceServer interface {
 type UnimplementedStatusServiceServer struct {
 }
 
-func (UnimplementedStatusServiceServer) UpdateStatus(context.Context, *UpdateStatusRequest) (*UpdateStatusResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UpdateStatus not implemented")
-}
-func (UnimplementedStatusServiceServer) ClearStatus(context.Context, *ClearStatusRequest) (*ClearStatusResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ClearStatus not implemented")
-}
 func (UnimplementedStatusServiceServer) UpdateExpectedHash(context.Context, *UpdateExpectedHashRequest) (*UpdateExpectedHashResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateExpectedHash not implemented")
 }
@@ -116,42 +82,6 @@ type UnsafeStatusServiceServer interface {
 
 func RegisterStatusServiceServer(s grpc.ServiceRegistrar, srv StatusServiceServer) {
 	s.RegisterService(&StatusService_ServiceDesc, srv)
-}
-
-func _StatusService_UpdateStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UpdateStatusRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(StatusServiceServer).UpdateStatus(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/kong.relay.service.v1.StatusService/UpdateStatus",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(StatusServiceServer).UpdateStatus(ctx, req.(*UpdateStatusRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _StatusService_ClearStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ClearStatusRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(StatusServiceServer).ClearStatus(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/kong.relay.service.v1.StatusService/ClearStatus",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(StatusServiceServer).ClearStatus(ctx, req.(*ClearStatusRequest))
-	}
-	return interceptor(ctx, in, info, handler)
 }
 
 func _StatusService_UpdateExpectedHash_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -197,14 +127,6 @@ var StatusService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "kong.relay.service.v1.StatusService",
 	HandlerType: (*StatusServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
-		{
-			MethodName: "UpdateStatus",
-			Handler:    _StatusService_UpdateStatus_Handler,
-		},
-		{
-			MethodName: "ClearStatus",
-			Handler:    _StatusService_ClearStatus_Handler,
-		},
 		{
 			MethodName: "UpdateExpectedHash",
 			Handler:    _StatusService_UpdateExpectedHash_Handler,

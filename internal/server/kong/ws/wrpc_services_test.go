@@ -213,20 +213,10 @@ func TestConfigService(t *testing.T) {
 
 	configClient := config_service.ConfigServiceClient{Peer: peer}
 
-	t.Run("send empty initial report message, fail validation", func(t *testing.T) {
-		resp, err := configClient.ReportMetadata(context.Background(), &config_service.ReportMetadataRequest{})
-		require.ErrorContains(t, err, "node failed to meet pre-requisites")
-		require.Nil(t, resp)
-	})
-
-	t.Run("send some acceptable plugins, get an initial config", func(t *testing.T) {
+	t.Run("send some plugins, get an initial config", func(t *testing.T) {
 		configMock.reset()
 		resp, err := configClient.ReportMetadata(context.Background(), &config_service.ReportMetadataRequest{
-			Plugins: []*config_service.PluginVersion{
-				{
-					Name: "rate-limiting",
-				},
-			},
+			Plugins: []*config_service.PluginVersion{},
 		})
 		require.NoError(t, err)
 		require.EqualValues(t, &config_service.ReportMetadataResponse_Ok{Ok: "valid"}, resp.Response)

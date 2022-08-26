@@ -2675,139 +2675,6 @@
         ]
       }
     },
-    "/v1/statuses": {
-      "get": {
-        "operationId": "StatusService_ListStatuses",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/kong.admin.service.v1.ListStatusesResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/google.rpc.Status"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "cluster.id",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "ref_type",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "ref_id",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "page.size",
-            "in": "query",
-            "required": false,
-            "type": "integer",
-            "format": "int32"
-          },
-          {
-            "name": "page.number",
-            "in": "query",
-            "required": false,
-            "type": "integer",
-            "format": "int32"
-          },
-          {
-            "name": "page.filter",
-            "description": "Allows callers to provide a CEL expression to filter results on `list` API calls.\n\nFor example, given a resource with the following tags, `tag1` \u0026 `tag2`, the\nfollowing CEL expressions are supported:\n\n- Matches resources that have `tag1` as any tag:\n    - `\"tag1\" in tags`\n- Matches all resources that have both `tag1` \u0026 `tag2`:\n    - `[\"tag1\", \"tag2\"].all(x, x in tags)`\n    - `\"tag1\" in tags \u0026\u0026 \"tag2\" in tags`\n- Matches resources that have `tag1` or `tag2`:\n    - `[\"tag1\", \"tag2\"].exists(x, x in tags)`\n    - `\"tag1\" in tags || \"tag2\" in tags`\n\nLimitations:\nCurrently, it is only possible to filter on tags, and supported logical\noperators/macros are limited to only what is documented above.\n\nFor further information, you may view the CEL Specification:\nhttps://github.com/google/cel-spec",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          }
-        ],
-        "tags": [
-          "kong.admin.service.v1.StatusService"
-        ]
-      }
-    },
-    "/v1/statuses/{id}": {
-      "get": {
-        "operationId": "StatusService_GetStatus",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/kong.admin.service.v1.GetStatusResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/google.rpc.Status"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "name": "cluster.id",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          }
-        ],
-        "tags": [
-          "kong.admin.service.v1.StatusService"
-        ]
-      },
-      "delete": {
-        "operationId": "StatusService_DeleteStatus",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/kong.admin.service.v1.DeleteStatusResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/google.rpc.Status"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "type": "string"
-          },
-          {
-            "name": "cluster.id",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          }
-        ],
-        "tags": [
-          "kong.admin.service.v1.StatusService"
-        ]
-      }
-    },
     "/v1/targets": {
       "get": {
         "operationId": "TargetService_ListTargets",
@@ -3565,20 +3432,6 @@
         }
       }
     },
-    "kong.admin.model.v1.Condition": {
-      "type": "object",
-      "properties": {
-        "code": {
-          "type": "string"
-        },
-        "message": {
-          "type": "string"
-        },
-        "severity": {
-          "type": "string"
-        }
-      }
-    },
     "kong.admin.model.v1.Consumer": {
       "type": "object",
       "properties": {
@@ -3604,17 +3457,6 @@
           "items": {
             "type": "string"
           }
-        }
-      }
-    },
-    "kong.admin.model.v1.EntityReference": {
-      "type": "object",
-      "properties": {
-        "type": {
-          "type": "string"
-        },
-        "id": {
-          "type": "string"
         }
       }
     },
@@ -4075,31 +3917,6 @@
         }
       }
     },
-    "kong.admin.model.v1.Status": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string"
-        },
-        "context_reference": {
-          "$ref": "#/definitions/kong.admin.model.v1.EntityReference"
-        },
-        "conditions": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/kong.admin.model.v1.Condition"
-          }
-        },
-        "created_at": {
-          "type": "integer",
-          "format": "int32"
-        },
-        "updated_at": {
-          "type": "integer",
-          "format": "int32"
-        }
-      }
-    },
     "kong.admin.model.v1.Target": {
       "type": "object",
       "properties": {
@@ -4318,9 +4135,6 @@
     "kong.admin.service.v1.DeleteServiceResponse": {
       "type": "object"
     },
-    "kong.admin.service.v1.DeleteStatusResponse": {
-      "type": "object"
-    },
     "kong.admin.service.v1.DeleteTargetResponse": {
       "type": "object"
     },
@@ -4442,14 +4256,6 @@
       "properties": {
         "item": {
           "$ref": "#/definitions/kong.admin.model.v1.Service"
-        }
-      }
-    },
-    "kong.admin.service.v1.GetStatusResponse": {
-      "type": "object",
-      "properties": {
-        "item": {
-          "$ref": "#/definitions/kong.admin.model.v1.Status"
         }
       }
     },
@@ -4596,20 +4402,6 @@
           "type": "array",
           "items": {
             "$ref": "#/definitions/kong.admin.model.v1.Service"
-          }
-        },
-        "page": {
-          "$ref": "#/definitions/kong.admin.model.v1.PaginationResponse"
-        }
-      }
-    },
-    "kong.admin.service.v1.ListStatusesResponse": {
-      "type": "object",
-      "properties": {
-        "items": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/kong.admin.model.v1.Status"
           }
         },
         "page": {
@@ -4785,9 +4577,6 @@
         }
       }
     },
-    "kong.relay.service.v1.ClearStatusResponse": {
-      "type": "object"
-    },
     "kong.relay.service.v1.FetchReconfigureEventsResponse": {
       "type": "object"
     },
@@ -4796,14 +4585,6 @@
     },
     "kong.relay.service.v1.UpdateNodeStatusResponse": {
       "type": "object"
-    },
-    "kong.relay.service.v1.UpdateStatusResponse": {
-      "type": "object",
-      "properties": {
-        "item": {
-          "$ref": "#/definitions/kong.admin.model.v1.Status"
-        }
-      }
     }
   }
 }

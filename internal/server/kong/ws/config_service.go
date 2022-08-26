@@ -102,7 +102,7 @@ func (c *configService) ReportMetadata(
 	}
 	node.Logger.Debug("plugin list reported by the DP", zap.Strings("plugins", plugins))
 
-	err := c.manager.addWRPCNode(node, plugins)
+	err := c.manager.addWRPCNode(node)
 	if err != nil {
 		node.Logger.With(zap.Error(err)).Error("error when adding validated node")
 		return nil, err

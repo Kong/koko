@@ -14,7 +14,6 @@ import "kong/admin/model/v1/plugin.proto";
 import "kong/admin/model/v1/route.proto";
 import "kong/admin/model/v1/service.proto";
 import "kong/admin/model/v1/sni.proto";
-import "kong/admin/model/v1/status.proto";
 import "kong/admin/model/v1/target.proto";
 import "kong/admin/model/v1/upstream.proto";
 
@@ -165,10 +164,6 @@ message ValidateSNISchemaRequest {
   model.v1.SNI item = 1;
 }
 
-message ValidateStatusSchemaRequest {
-  model.v1.Status item = 1;
-}
-
 message ValidateTargetSchemaRequest {
   model.v1.Target item = 1;
 }
@@ -186,6 +181,5 @@ message ValidatePluginSchemaResponse {}
 message ValidateRouteSchemaResponse {}
 message ValidateServiceSchemaResponse {}
 message ValidateSNISchemaResponse {}
-message ValidateStatusSchemaResponse {}
 message ValidateTargetSchemaResponse {}
 message ValidateUpstreamSchemaResponse {}

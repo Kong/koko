@@ -22,9 +22,6 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type StatusServiceClient interface {
-	GetStatus(ctx context.Context, in *GetStatusRequest, opts ...grpc.CallOption) (*GetStatusResponse, error)
-	DeleteStatus(ctx context.Context, in *DeleteStatusRequest, opts ...grpc.CallOption) (*DeleteStatusResponse, error)
-	ListStatuses(ctx context.Context, in *ListStatusesRequest, opts ...grpc.CallOption) (*ListStatusesResponse, error)
 	GetHash(ctx context.Context, in *GetHashRequest, opts ...grpc.CallOption) (*GetHashResponse, error)
 }
 
@@ -34,33 +31,6 @@ type statusServiceClient struct {
 
 func NewStatusServiceClient(cc grpc.ClientConnInterface) StatusServiceClient {
 	return &statusServiceClient{cc}
-}
-
-func (c *statusServiceClient) GetStatus(ctx context.Context, in *GetStatusRequest, opts ...grpc.CallOption) (*GetStatusResponse, error) {
-	out := new(GetStatusResponse)
-	err := c.cc.Invoke(ctx, "/kong.admin.service.v1.StatusService/GetStatus", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *statusServiceClient) DeleteStatus(ctx context.Context, in *DeleteStatusRequest, opts ...grpc.CallOption) (*DeleteStatusResponse, error) {
-	out := new(DeleteStatusResponse)
-	err := c.cc.Invoke(ctx, "/kong.admin.service.v1.StatusService/DeleteStatus", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *statusServiceClient) ListStatuses(ctx context.Context, in *ListStatusesRequest, opts ...grpc.CallOption) (*ListStatusesResponse, error) {
-	out := new(ListStatusesResponse)
-	err := c.cc.Invoke(ctx, "/kong.admin.service.v1.StatusService/ListStatuses", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
 }
 
 func (c *statusServiceClient) GetHash(ctx context.Context, in *GetHashRequest, opts ...grpc.CallOption) (*GetHashResponse, error) {
@@ -76,9 +46,6 @@ func (c *statusServiceClient) GetHash(ctx context.Context, in *GetHashRequest, o
 // All implementations must embed UnimplementedStatusServiceServer
 // for forward compatibility
 type StatusServiceServer interface {
-	GetStatus(context.Context, *GetStatusRequest) (*GetStatusResponse, error)
-	DeleteStatus(context.Context, *DeleteStatusRequest) (*DeleteStatusResponse, error)
-	ListStatuses(context.Context, *ListStatusesRequest) (*ListStatusesResponse, error)
 	GetHash(context.Context, *GetHashRequest) (*GetHashResponse, error)
 	mustEmbedUnimplementedStatusServiceServer()
 }
@@ -87,15 +54,6 @@ type StatusServiceServer interface {
 type UnimplementedStatusServiceServer struct {
 }
 
-func (UnimplementedStatusServiceServer) GetStatus(context.Context, *GetStatusRequest) (*GetStatusResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetStatus not implemented")
-}
-func (UnimplementedStatusServiceServer) DeleteStatus(context.Context, *DeleteStatusRequest) (*DeleteStatusResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method DeleteStatus not implemented")
-}
-func (UnimplementedStatusServiceServer) ListStatuses(context.Context, *ListStatusesRequest) (*ListStatusesResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ListStatuses not implemented")
-}
 func (UnimplementedStatusServiceServer) GetHash(context.Context, *GetHashRequest) (*GetHashResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetHash not implemented")
 }
@@ -110,60 +68,6 @@ type UnsafeStatusServiceServer interface {
 
 func RegisterStatusServiceServer(s grpc.ServiceRegistrar, srv StatusServiceServer) {
 	s.RegisterService(&StatusService_ServiceDesc, srv)
-}
-
-func _StatusService_GetStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetStatusRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(StatusServiceServer).GetStatus(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/kong.admin.service.v1.StatusService/GetStatus",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(StatusServiceServer).GetStatus(ctx, req.(*GetStatusRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _StatusService_DeleteStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DeleteStatusRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(StatusServiceServer).DeleteStatus(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/kong.admin.service.v1.StatusService/DeleteStatus",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(StatusServiceServer).DeleteStatus(ctx, req.(*DeleteStatusRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _StatusService_ListStatuses_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ListStatusesRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(StatusServiceServer).ListStatuses(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/kong.admin.service.v1.StatusService/ListStatuses",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(StatusServiceServer).ListStatuses(ctx, req.(*ListStatusesRequest))
-	}
-	return interceptor(ctx, in, info, handler)
 }
 
 func _StatusService_GetHash_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -191,18 +95,6 @@ var StatusService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "kong.admin.service.v1.StatusService",
 	HandlerType: (*StatusServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
-		{
-			MethodName: "GetStatus",
-			Handler:    _StatusService_GetStatus_Handler,
-		},
-		{
-			MethodName: "DeleteStatus",
-			Handler:    _StatusService_DeleteStatus_Handler,
-		},
-		{
-			MethodName: "ListStatuses",
-			Handler:    _StatusService_ListStatuses_Handler,
-		},
 		{
 			MethodName: "GetHash",
 			Handler:    _StatusService_GetHash_Handler,
