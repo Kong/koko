@@ -56,7 +56,7 @@ func TestPluginCreate(t *testing.T) {
 		validateKeyAuthPlugin(body)
 	})
 	t.Run("creating a plugin with 'ordering' set fails", func(t *testing.T) {
-		util.SkipForEnterpriseTests(t, true)
+		util.SkipTestIfEnterpriseTesting(t, true)
 		plugin := &v1.Plugin{
 			Name: "prometheus",
 			Ordering: &v1.Ordering{

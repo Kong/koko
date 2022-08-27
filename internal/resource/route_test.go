@@ -83,12 +83,12 @@ func goodRoute() Route {
 
 func TestRoute_Validate(t *testing.T) {
 	tests := []struct {
-		name              string
-		Route             func() Route
-		wantErr           bool
-		Errs              []*model.ErrorDetail
-		Skip              bool
-		enterpriseFeature bool
+		name                    string
+		Route                   func() Route
+		wantErr                 bool
+		Errs                    []*model.ErrorDetail
+		Skip                    bool
+		skipIfEnterpriseTesting bool
 	}{
 		{
 			name: "empty route throws an error",
@@ -622,7 +622,8 @@ func TestRoute_Validate(t *testing.T) {
 				r.Route.Snis = []string{"foo.example.com"}
 				return r
 			},
-			wantErr: true,
+			wantErr:                 true,
+			skipIfEnterpriseTesting: true,
 			Errs: []*model.ErrorDetail{
 				{
 					Type: model.ErrorType_ERROR_TYPE_ENTITY,
@@ -672,7 +673,8 @@ func TestRoute_Validate(t *testing.T) {
 				r.Route.Snis = []string{"foo.example.com"}
 				return r
 			},
-			wantErr: true,
+			wantErr:                 true,
+			skipIfEnterpriseTesting: true,
 			Errs: []*model.ErrorDetail{
 				{
 					Type: model.ErrorType_ERROR_TYPE_ENTITY,
@@ -1050,7 +1052,8 @@ func TestRoute_Validate(t *testing.T) {
 				_ = r.ProcessDefaults(context.Background())
 				return r
 			},
-			wantErr: true,
+			wantErr:                 true,
+			skipIfEnterpriseTesting: true,
 			Errs: []*model.ErrorDetail{
 				{
 					Type: model.ErrorType_ERROR_TYPE_ENTITY,
@@ -1210,8 +1213,8 @@ func TestRoute_Validate(t *testing.T) {
 				}
 				return r
 			},
-			wantErr:           true,
-			enterpriseFeature: true,
+			wantErr:                 true,
+			skipIfEnterpriseTesting: true,
 			Errs: []*model.ErrorDetail{
 				{
 					Type: model.ErrorType_ERROR_TYPE_ENTITY,
@@ -1231,8 +1234,8 @@ func TestRoute_Validate(t *testing.T) {
 				}
 				return r
 			},
-			wantErr:           true,
-			enterpriseFeature: true,
+			wantErr:                 true,
+			skipIfEnterpriseTesting: true,
 			Errs: []*model.ErrorDetail{
 				{
 					Type: model.ErrorType_ERROR_TYPE_ENTITY,
@@ -1245,7 +1248,7 @@ func TestRoute_Validate(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		util.SkipForEnterpriseTests(t, tt.enterpriseFeature)
+		util.SkipTestIfEnterpriseTesting(t, tt.skipIfEnterpriseTesting)
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.Skip {
 				t.Skip()

@@ -45,7 +45,7 @@ func TestRouteCreate(t *testing.T) {
 		validateGoodRoute(body)
 	})
 	t.Run("creating a route with ws protocol fails", func(t *testing.T) {
-		util.SkipForEnterpriseTests(t, true)
+		util.SkipTestIfEnterpriseTesting(t, true)
 		route := goodRoute()
 		route.Protocols = []string{typedefs.ProtocolWS}
 		res := c.POST("/v1/routes").WithJSON(route).Expect()
@@ -61,7 +61,7 @@ func TestRouteCreate(t *testing.T) {
 		})
 	})
 	t.Run("creating a route with wss protocol fails", func(t *testing.T) {
-		util.SkipForEnterpriseTests(t, true)
+		util.SkipTestIfEnterpriseTesting(t, true)
 		route := goodRoute()
 		route.Protocols = []string{typedefs.ProtocolWSS}
 		res := c.POST("/v1/routes").WithJSON(route).Expect()

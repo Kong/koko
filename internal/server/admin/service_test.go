@@ -53,7 +53,7 @@ func TestServiceCreate(t *testing.T) {
 		validateGoodService(body)
 	})
 	t.Run("creating a service with protocol=ws fails", func(t *testing.T) {
-		util.SkipForEnterpriseTests(t, true)
+		util.SkipTestIfEnterpriseTesting(t, true)
 		service := goodService()
 		service.Protocol = typedefs.ProtocolWS
 		res := c.POST("/v1/services").WithJSON(service).Expect()
@@ -69,7 +69,7 @@ func TestServiceCreate(t *testing.T) {
 		})
 	})
 	t.Run("creating a service with protocol=wss fails", func(t *testing.T) {
-		util.SkipForEnterpriseTests(t, true)
+		util.SkipTestIfEnterpriseTesting(t, true)
 		service := goodService()
 		service.Protocol = typedefs.ProtocolWSS
 		res := c.POST("/v1/services").WithJSON(service).Expect()
@@ -343,6 +343,7 @@ func TestServiceCreate(t *testing.T) {
 		})
 	t.Run("ensure failure creating a service referencing a client cert without https",
 		func(t *testing.T) {
+			util.SkipTestIfEnterpriseTesting(t, true)
 			service := goodService()
 			service.Name = "with-bad-protocol-client-cert"
 			service.Protocol = "http"

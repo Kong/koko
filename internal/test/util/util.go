@@ -169,13 +169,10 @@ func GenerateCertificate(bits int) (publicKey string, privateKey string, err err
 	return certPEM.String(), pkPEM.String(), nil
 }
 
-// SkipForEnterpriseTests skips OSS tests with enterprise features
-// when running enterprise code.
-func SkipForEnterpriseTests(t *testing.T, enterpriseFeature bool) {
-	if enterpriseFeature && strings.EqualFold(
-		os.Getenv("KOKO_TEST_ENTERPRISE_TESTING"),
-		"true",
-	) {
-		t.Skip("Skipping testing for Enterprise features in OSS codebase")
+// SkipTestIfEnterpriseTesting skips OSS test when skip is true and KOKO_TEST_ENTERPRISE_TESTING
+// environment variable is set to true.
+func SkipTestIfEnterpriseTesting(t *testing.T, skip bool) {
+	if skip && strings.EqualFold(os.Getenv("KOKO_TEST_ENTERPRISE_TESTING"), "true") {
+		t.Skip("Skipping test for enterprise level testing")
 	}
 }
