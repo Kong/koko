@@ -53,7 +53,9 @@
           "tcp",
           "udp",
           "tls",
-          "tls_passthrough"
+          "tls_passthrough",
+          "ws",
+          "wss"
         ],
         "type": "string"
       },
@@ -115,6 +117,31 @@
       },
       "title": "ordering",
       "description": "'ordering' is a Kong Enterprise-only feature. Please upgrade to Kong Enterprise to use this feature."
+    },
+    {
+      "not": {
+        "required": [
+          "protocols"
+        ],
+        "properties": {
+          "protocols": {
+            "contains": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "const": "ws"
+                },
+                {
+                  "type": "string",
+                  "const": "wss"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "title": "ws_protocols_rule",
+      "description": "'ws' and 'wss' protocols are Kong Enterprise-only features. Please upgrade to Kong Enterprise to use this feature."
     }
   ],
   "x-koko-config": {
