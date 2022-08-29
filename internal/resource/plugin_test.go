@@ -206,7 +206,7 @@ func TestPlugin_Validate(t *testing.T) {
 					Field: "protocols[0]",
 					Messages: []string{
 						`value must be one of "http", "https", ` +
-							`"grpc", "grpcs", "tcp", "udp", "tls", "tls_passthrough"`,
+							`"grpc", "grpcs", "tcp", "udp", "tls", "tls_passthrough", "ws", "wss"`,
 					},
 				},
 			},
@@ -230,6 +230,46 @@ func TestPlugin_Validate(t *testing.T) {
 					Type: model.ErrorType_ERROR_TYPE_ENTITY,
 					Messages: []string{
 						"'ordering' is a Kong Enterprise-only feature. " +
+							"Please upgrade to Kong Enterprise to use this feature.",
+					},
+				},
+			},
+		},
+		{
+			name: "setting Enterprise ws protocol throws an error",
+			Plugin: func() resource.Plugin {
+				res := resource.NewPlugin()
+				res.Plugin.Name = "jwt"
+				res.Plugin.Protocols = []string{"ws"}
+				return res
+			},
+			wantErr:           true,
+			enterpriseFeature: true,
+			Errs: []*model.ErrorDetail{
+				{
+					Type: model.ErrorType_ERROR_TYPE_ENTITY,
+					Messages: []string{
+						"'ws' and 'wss' protocols are Kong Enterprise-only features. " +
+							"Please upgrade to Kong Enterprise to use this feature.",
+					},
+				},
+			},
+		},
+		{
+			name: "setting Enterprise wss protocol throws an error",
+			Plugin: func() resource.Plugin {
+				res := resource.NewPlugin()
+				res.Plugin.Name = "jwt"
+				res.Plugin.Protocols = []string{"wss"}
+				return res
+			},
+			wantErr:           true,
+			enterpriseFeature: true,
+			Errs: []*model.ErrorDetail{
+				{
+					Type: model.ErrorType_ERROR_TYPE_ENTITY,
+					Messages: []string{
+						"'ws' and 'wss' protocols are Kong Enterprise-only features. " +
 							"Please upgrade to Kong Enterprise to use this feature.",
 					},
 				},

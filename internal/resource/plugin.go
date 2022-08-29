@@ -152,7 +152,7 @@ func init() {
 			"tags": typedefs.Tags,
 			"protocols": {
 				Type:     "array",
-				Items:    typedefs.Protocol,
+				Items:    typedefs.AllProtocols,
 				MaxItems: maxProtocols,
 			},
 			"config": {
@@ -181,6 +181,30 @@ func init() {
 					"Please upgrade to Kong Enterprise to use this feature.",
 				Not: &generator.Schema{
 					Required: []string{"ordering"},
+				},
+			},
+			{
+				Title: WSProtocolsRuleTitle,
+				Description: "'ws' and 'wss' protocols are Kong Enterprise-only features. " +
+					"Please upgrade to Kong Enterprise to use this feature.",
+				Not: &generator.Schema{
+					Required: []string{"protocols"},
+					Properties: map[string]*generator.Schema{
+						"protocols": {
+							Contains: &generator.Schema{
+								AnyOf: []*generator.Schema{
+									{
+										Type:  "string",
+										Const: typedefs.ProtocolWS,
+									},
+									{
+										Type:  "string",
+										Const: typedefs.ProtocolWSS,
+									},
+								},
+							},
+						},
+					},
 				},
 			},
 		},
