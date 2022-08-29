@@ -3,6 +3,7 @@ package ws
 import (
 	"bytes"
 	"context"
+	"encoding/gob"
 	"fmt"
 	"net"
 	"strconv"
@@ -11,9 +12,11 @@ import (
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
+	"github.com/cespare/xxhash/v2"
 	"github.com/gorilla/websocket"
 	model "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
 	admin "github.com/kong/koko/internal/gen/grpc/kong/admin/service/v1"
+	nonPublic "github.com/kong/koko/internal/gen/grpc/kong/nonpublic/v1"
 	relay "github.com/kong/koko/internal/gen/grpc/kong/relay/service/v1"
 	grpcKongUtil "github.com/kong/koko/internal/gen/grpc/kong/util/v1"
 	"github.com/kong/koko/internal/metrics"
@@ -110,6 +113,8 @@ type Manager struct {
 	// removal.
 	nodeTrackingMu sync.Mutex
 	streamer       *streamer
+
+	nodeStatusCache sync.Map
 }
 
 // AddEventStream registers an EventStream for streaming events to the streamer.
@@ -165,6 +170,85 @@ func (m *Manager) writeNode(node *Node) {
 		m.logger.Error("update kong node resource", zap.Error(err),
 			zap.String("node-id", node.ID))
 	}
+
+	trackedChanges, err := m.payload.ChangesFor(node.hash.String(), node.Version)
+	if err != nil {
+		m.logger.Error("not found changes for key ", zap.String("hash",
+			node.hash.String()))
+	}
+
+	if !m.nodeStatusTracked(node.ID, trackedChanges) {
+		issues := trackedChangesToCompatIssues(trackedChanges)
+
+		_, err = m.configClient.Status.UpdateNodeStatus(ctx, &relay.UpdateNodeStatusRequest{
+			Item: &nonPublic.NodeStatus{
+				Id:     node.ID,
+				Issues: issues,
+			},
+			Cluster: m.reqCluster(),
+		})
+		if err != nil {
+			m.logger.Error("update kong node status resource", zap.Error(err),
+				zap.String("node-id", node.ID))
+		}
+	}
+}
+
+func hashTrackedChanges(changes config.TrackedChanges) (string, error) {
+	h := xxhash.New()
+	e := gob.NewEncoder(h)
+	if err := e.Encode(changes); err != nil {
+		return "", err
+	}
+	return string(h.Sum(nil)), nil
+}
+
+func (m *Manager) nodeStatusTracked(nodeID string, changes config.TrackedChanges) bool {
+	newHash, err := hashTrackedChanges(changes)
+	if err != nil {
+		m.logger.Error("failed to hash tracked changes", zap.Error(err))
+		// always assume the node status is not tracked
+		return false
+	}
+
+	previousHash := ""
+	value, loaded := m.nodeStatusCache.Load(nodeID)
+	if loaded {
+		var ok bool
+		previousHash, ok = value.(string)
+		if !ok {
+			panic(fmt.Sprintf("expected %T but got %T", "", value))
+		}
+	}
+	if previousHash == newHash {
+		return true
+	}
+	m.nodeStatusCache.Store(nodeID, newHash)
+	return false
+}
+
+func trackedChangesToCompatIssues(trackedChanges config.TrackedChanges) []*model.CompatibilityIssue {
+	issues := make([]*model.CompatibilityIssue, len(trackedChanges.ChangeDetails))
+	for i := 0; i < len(trackedChanges.ChangeDetails); i++ {
+		change := trackedChanges.ChangeDetails[i]
+
+		var affectedResources []*model.Resource
+		if len(change.Resources) > 0 {
+			affectedResources = make([]*model.Resource, len(change.Resources))
+			for i, affectedResource := range change.Resources {
+				affectedResources[i] = &model.Resource{
+					Id:   affectedResource.ID,
+					Type: affectedResource.Type,
+				}
+			}
+		}
+
+		issues[i] = &model.CompatibilityIssue{
+			Code:              string(change.ID),
+			AffectedResources: affectedResources,
+		}
+	}
+	return issues
 }
 
 func (m *Manager) setupPingHandler(node *Node) {

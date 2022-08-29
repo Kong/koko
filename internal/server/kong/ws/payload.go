@@ -23,6 +23,7 @@ type Payload struct {
 	configVersion uint64
 	vc            config.VersionCompatibility
 	logger        *zap.Logger
+	hashToChanges sync.Map
 }
 
 type PayloadOpts struct {
@@ -114,6 +115,8 @@ func (p *Payload) configForVersion(version string) (cacheEntry, error) {
 					Value: version,
 				})
 		}
+		// cache changes
+		p.hashToChanges.Store(unversionedConfig.Hash+version, changes)
 		// cache it
 		err = p.configCache.store(version, entry)
 		if err != nil {
@@ -129,6 +132,18 @@ func (p *Payload) configForVersion(version string) (cacheEntry, error) {
 
 	// other errors
 	return cacheEntry{}, err
+}
+
+func (p *Payload) ChangesFor(hash, version string) (config.TrackedChanges, error) {
+	value, ok := p.hashToChanges.Load(hash + version)
+	if !ok {
+		return config.TrackedChanges{}, errNotFound
+	}
+	trackedChanges, ok := value.(config.TrackedChanges)
+	if !ok {
+		panic(fmt.Sprintf("invalid type: expected %T, got %T", config.TrackedChanges{}, value))
+	}
+	return trackedChanges, nil
 }
 
 func (p *Payload) UpdateBinary(_ context.Context, c config.Content) error {

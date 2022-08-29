@@ -37,7 +37,7 @@ func standardPluginFieldsMessage(
 
 func standardPluginNotAvailableMessage(pluginName string, versionWithFeatureSupport string) string {
 	return fmt.Sprintf("Plugin '%s' is not available in Kong gateway versions "+
-		"< %s. '",
+		"< %s.",
 		pluginName,
 		versionWithFeatureSupport,
 	)
