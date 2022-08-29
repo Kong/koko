@@ -119,11 +119,11 @@ func goodService() Service {
 
 func TestService_Validate(t *testing.T) {
 	tests := []struct {
-		name              string
-		Service           func() Service
-		wantErr           bool
-		enterpriseFeature bool
-		Errs              []*model.ErrorDetail
+		name                    string
+		Service                 func() Service
+		wantErr                 bool
+		skipIfEnterpriseTesting bool
+		Errs                    []*model.ErrorDetail
 	}{
 		{
 			name: "empty service throws an error",
@@ -460,6 +460,10 @@ func TestService_Validate(t *testing.T) {
 				return s
 			},
 			wantErr: true,
+			// When executing this test with enterprise, the error message will vary due to websocket
+			// protocols being enabled. This test will be skipped when KOKO_TEST_ENTERPRISE_TESTING
+			// is set to true.
+			skipIfEnterpriseTesting: true,
 			Errs: []*model.ErrorDetail{
 				{
 					Type: model.ErrorType_ERROR_TYPE_ENTITY,
@@ -577,6 +581,10 @@ func TestService_Validate(t *testing.T) {
 				return s
 			},
 			wantErr: true,
+			// When executing this test with enterprise, the error message will vary due to websocket
+			// protocols being enabled. This test will be skipped when KOKO_TEST_ENTERPRISE_TESTING
+			// is set to true.
+			skipIfEnterpriseTesting: true,
 			Errs: []*model.ErrorDetail{
 				{
 					Type: model.ErrorType_ERROR_TYPE_ENTITY,
@@ -605,8 +613,8 @@ func TestService_Validate(t *testing.T) {
 				s.Service.Protocol = typedefs.ProtocolWS
 				return s
 			},
-			wantErr:           true,
-			enterpriseFeature: true,
+			wantErr:                 true,
+			skipIfEnterpriseTesting: true,
 			Errs: []*model.ErrorDetail{
 				{
 					Type: model.ErrorType_ERROR_TYPE_ENTITY,
@@ -624,8 +632,8 @@ func TestService_Validate(t *testing.T) {
 				s.Service.Protocol = typedefs.ProtocolWSS
 				return s
 			},
-			wantErr:           true,
-			enterpriseFeature: true,
+			wantErr:                 true,
+			skipIfEnterpriseTesting: true,
 			Errs: []*model.ErrorDetail{
 				{
 					Type: model.ErrorType_ERROR_TYPE_ENTITY,
@@ -638,7 +646,7 @@ func TestService_Validate(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		util.SkipForEnterpriseTests(t, tt.enterpriseFeature)
+		util.SkipTestIfEnterpriseTesting(t, tt.skipIfEnterpriseTesting)
 		t.Run(tt.name, func(t *testing.T) {
 			err := tt.Service().Validate(context.Background())
 			if (err != nil) != tt.wantErr {

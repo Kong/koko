@@ -83,11 +83,11 @@ func TestPlugin_ProcessDefaults(t *testing.T) {
 func TestPlugin_Validate(t *testing.T) {
 	setupLuaValidator(t)
 	tests := []struct {
-		name              string
-		Plugin            func() resource.Plugin
-		wantErr           bool
-		enterpriseFeature bool
-		Errs              []*model.ErrorDetail
+		name                    string
+		Plugin                  func() resource.Plugin
+		wantErr                 bool
+		skipIfEnterpriseTesting bool
+		Errs                    []*model.ErrorDetail
 	}{
 		{
 			name: "valid plugin returns no errors",
@@ -223,8 +223,8 @@ func TestPlugin_Validate(t *testing.T) {
 				}
 				return res
 			},
-			wantErr:           true,
-			enterpriseFeature: true,
+			wantErr:                 true,
+			skipIfEnterpriseTesting: true,
 			Errs: []*model.ErrorDetail{
 				{
 					Type: model.ErrorType_ERROR_TYPE_ENTITY,
@@ -243,8 +243,8 @@ func TestPlugin_Validate(t *testing.T) {
 				res.Plugin.Protocols = []string{"ws"}
 				return res
 			},
-			wantErr:           true,
-			enterpriseFeature: true,
+			wantErr:                 true,
+			skipIfEnterpriseTesting: true,
 			Errs: []*model.ErrorDetail{
 				{
 					Type: model.ErrorType_ERROR_TYPE_ENTITY,
@@ -263,8 +263,8 @@ func TestPlugin_Validate(t *testing.T) {
 				res.Plugin.Protocols = []string{"wss"}
 				return res
 			},
-			wantErr:           true,
-			enterpriseFeature: true,
+			wantErr:                 true,
+			skipIfEnterpriseTesting: true,
 			Errs: []*model.ErrorDetail{
 				{
 					Type: model.ErrorType_ERROR_TYPE_ENTITY,
@@ -277,7 +277,7 @@ func TestPlugin_Validate(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		util.SkipForEnterpriseTests(t, tt.enterpriseFeature)
+		util.SkipTestIfEnterpriseTesting(t, tt.skipIfEnterpriseTesting)
 		t.Run(tt.name, func(t *testing.T) {
 			err := tt.Plugin().Validate(context.Background())
 			if (err != nil) != tt.wantErr {
