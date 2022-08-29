@@ -289,10 +289,7 @@
                 },
                 "cert": {
                   "type": "string",
-                  "description": "PEM encoded certificate",
-                  "required": [
-                    "cert"
-                  ]
+                  "description": "PEM encoded certificate"
                 },
                 "cert_digest": {
                   "type": "string"
@@ -519,17 +516,11 @@
                 },
                 "cert": {
                   "type": "string",
-                  "description": "PEM encoded certificate",
-                  "required": [
-                    "cert"
-                  ]
+                  "description": "PEM encoded certificate"
                 },
                 "key": {
                   "type": "string",
-                  "description": "PEM encoded private key",
-                  "required": [
-                    "key"
-                  ]
+                  "description": "PEM encoded private key"
                 },
                 "cert_alt": {
                   "type": "string",
@@ -3306,10 +3297,7 @@
         },
         "cert": {
           "type": "string",
-          "description": "PEM encoded certificate",
-          "required": [
-            "cert"
-          ]
+          "description": "PEM encoded certificate"
         },
         "cert_digest": {
           "type": "string"
@@ -3353,17 +3341,11 @@
         },
         "cert": {
           "type": "string",
-          "description": "PEM encoded certificate",
-          "required": [
-            "cert"
-          ]
+          "description": "PEM encoded certificate"
         },
         "key": {
           "type": "string",
-          "description": "PEM encoded private key",
-          "required": [
-            "key"
-          ]
+          "description": "PEM encoded private key"
         },
         "cert_alt": {
           "type": "string",
