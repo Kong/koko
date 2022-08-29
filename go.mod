@@ -20,7 +20,7 @@ require (
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.11.2
 	github.com/hbagdi/gang v0.1.0
 	github.com/imdario/mergo v0.3.13
-	github.com/jackc/pgx/v4 v4.17.0
+	github.com/jackc/pgx/v4 v4.17.1
 	github.com/jeremywohl/flatten v1.0.1
 	github.com/kong/go-kong v0.31.1
 	github.com/kong/go-wrpc v0.0.0-20220713182016-0ac0ed43d830
