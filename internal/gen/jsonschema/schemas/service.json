@@ -64,8 +64,8 @@
       "type": "string",
       "allOf": [
         {
-          "pattern": "^/.*",
-          "description": "must begin with `/`"
+          "pattern": "^/.*|^~/.*",
+          "description": "must begin with `/` (prefix path) or `~/` (regex path)"
         },
         {
           "maxLength": 1024,
