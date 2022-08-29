@@ -395,28 +395,24 @@ func TestExtraProcessing_CorrectRoutesPathField(t *testing.T) {
 		{
 			name: "ensure 'paths' is de-normalized when '~' prefix is used in single path",
 			uncompressedPayload: `{
-				"config_table": [
+				"config_table": {
 					"routes": [
 						{
 							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
-							paths = [
-								"~/foo"
-							],
+							"paths": [ "~/foo" ]
 						}
 					]
-				]
+				}
 			}`,
 			expectedPayload: `{
-				"config_table": [
+				"config_table": {
 					"routes": [
 						{
 							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
-							paths = [
-								"~/foo"
-							],
+							"paths": [ "/foo" ]
 						}
 					]
-				]
+				}
 			}`,
 			expectedTrackedChanges: config.TrackedChanges{
 				ChangeDetails: []config.ChangeDetail{
@@ -424,7 +420,163 @@ func TestExtraProcessing_CorrectRoutesPathField(t *testing.T) {
 						ID: pathRegexFieldChangeID,
 						Resources: []config.ResourceInfo{
 							{
-								Type: "entity",
+								Type: "route",
+								ID:   "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "non-prefixed path is left alone",
+			uncompressedPayload: `{
+				"config_table": {
+					"routes": [
+						{
+							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							"paths": [ "/foo" ]
+						}
+					]
+				}
+			}`,
+			expectedPayload: `{
+				"config_table": {
+					"routes": [
+						{
+							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							"paths": [ "/foo" ]
+						}
+					]
+				}
+			}`,
+			expectedTrackedChanges: config.TrackedChanges{},
+		},
+		{
+			name: "mixed with and without '~' prefix",
+			uncompressedPayload: `{
+				"config_table": {
+					"routes": [
+						{
+							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							"paths": [ "/foo", "~/bar", "~/baz", "/fum" ]
+						}
+					]
+				}
+			}`,
+			expectedPayload: `{
+				"config_table": {
+					"routes": [
+						{
+							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							"paths": [ "/foo", "/bar", "/baz", "/fum" ]
+						}
+					]
+				}
+			}`,
+			expectedTrackedChanges: config.TrackedChanges{
+				ChangeDetails: []config.ChangeDetail{
+					{
+						ID: pathRegexFieldChangeID,
+						Resources: []config.ResourceInfo{
+							{
+								Type: "route",
+								ID:   "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "denormalize prefixed path",
+			uncompressedPayload: `{
+				"config_table": {
+					"routes": [
+						{
+							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							"paths": [ "~/foo/hi%%thing" ]
+						}
+					]
+				}
+			}`,
+			expectedPayload: `{
+				"config_table": {
+					"routes": [
+						{
+							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							"paths": [ "/foo/hi%25thing" ]
+						}
+					]
+				}
+			}`,
+			expectedTrackedChanges: config.TrackedChanges{
+				ChangeDetails: []config.ChangeDetail{
+					{
+						ID: pathRegexFieldChangeID,
+						Resources: []config.ResourceInfo{
+							{
+								Type: "route",
+								ID:   "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "don't denormalize plain path",
+			uncompressedPayload: `{
+				"config_table": {
+					"routes": [
+						{
+							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							"paths": [ "/foo/hi%%thing" ]
+						}
+					]
+				}
+			}`,
+			expectedPayload: `{
+				"config_table": {
+					"routes": [
+						{
+							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							"paths": [ "/foo/hi%%thing" ]
+						}
+					]
+				}
+			}`,
+			expectedTrackedChanges: config.TrackedChanges{},
+		},
+		{
+			name: "only denormalize prefixed paths",
+			uncompressedPayload: `{
+				"config_table": {
+					"routes": [
+						{
+							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							"paths": [ "~/foo/hi%%thing", "/fim%%fum" ]
+						}
+					]
+				}
+			}`,
+			expectedPayload: `{
+				"config_table": {
+					"routes": [
+						{
+							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							"paths": [ "/foo/hi%25thing", "/fim%%fum" ]
+						}
+					]
+				}
+			}`,
+			expectedTrackedChanges: config.TrackedChanges{
+				ChangeDetails: []config.ChangeDetail{
+					{
+						ID: pathRegexFieldChangeID,
+						Resources: []config.ResourceInfo{
+							{
+								Type: "route",
 								ID:   "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
 							},
 						},
@@ -439,10 +591,9 @@ func TestExtraProcessing_CorrectRoutesPathField(t *testing.T) {
 			tracker := config.NewChangeTracker()
 			processedPayload := correctRoutesPathField(test.
 				uncompressedPayload, versionsPre300, tracker, log.Logger)
-			fmt.Println(processedPayload)
-			// require.JSONEq(t, test.expectedPayload, processedPayload)
-			// trackedChanged := tracker.Get()
-			// require.Equal(t, test.expectedTrackedChanges, trackedChanged)
+			require.JSONEq(t, test.expectedPayload, processedPayload)
+			trackedChanged := tracker.Get()
+			require.Equal(t, test.expectedTrackedChanges, trackedChanged)
 		})
 	}
 }

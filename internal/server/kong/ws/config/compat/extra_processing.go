@@ -2,7 +2,9 @@ package compat
 
 import (
 	"fmt"
+	"strings"
 
+	"github.com/kong/koko/internal/json"
 	"github.com/kong/koko/internal/resource"
 	"github.com/kong/koko/internal/server/kong/ws/config"
 	"github.com/kong/koko/internal/versioning"
@@ -15,7 +17,7 @@ var versionOlderThan300 = versioning.MustNewRange("< 3.0.0")
 
 const (
 	awsLambdaExclusiveFieldChangeID = "P121"
-	pathRegexFieldChangeID          = "P126"
+	pathRegexFieldChangeID          = "P130"
 )
 
 func init() {
@@ -159,54 +161,117 @@ func correctHTTPLogHeadersField(payload string) (string, error) {
 	return payload, nil
 }
 
+func denormalizePath(path string) (string, error) {
+	path = strings.TrimPrefix(path, "~")
+	if !strings.HasPrefix(path, "/") {
+		return path, fmt.Errorf("invalid path %v", path)
+	}
+	path = strings.ReplaceAll(path, "%%", "%25")
+	return path, nil
+}
+
 func correctRoutesPathField(payload string,
 	dataPlaneVersion string,
 	tracker *config.ChangeTracker,
 	logger *zap.Logger,
 ) string {
-	processedPayload := payload
-	results := gjson.Get(processedPayload, "config_table.routes.#.paths")
-	// indexUpdate := 0
-	for _, res := range results.Array() {
-		updatedRaw := res.Raw
-		fmt.Println(updatedRaw)
-		// if awsRegionResult.Exists() && hostResult.Exists() {
-		// 	var (
-		// 		err      error
-		// 		pluginID = res.Get("id").String()
-		// 	)
-		// 	err = tracker.TrackForResource(awsLambdaExclusiveFieldChangeID,
-		// 		config.ResourceInfo{
-		// 			Type: string(resource.TypePlugin),
-		// 			ID:   pluginID,
-		// 		})
-		// 	if err != nil {
-		// 		logger.Error("failed to track version compatibility"+
-		// 			" change",
-		// 			zap.String("change-id", awsLambdaExclusiveFieldChangeID),
-		// 			zap.String("resource-type", "plugin"))
-		// 	}
-		// 	if updatedRaw, err = sjson.Delete(updatedRaw, "config.host"); err != nil {
-		// 		logger.With(zap.String("plugin", pluginName)).
-		// 			With(zap.String("field", "host")).
-		// 			With(zap.String("data-plane", dataPlaneVersion)).
-		// 			With(zap.Error(err)).
-		// 			Error("plugin configuration field was not removed from configuration")
-		// 	} else {
-		// 		logger.With(zap.String("plugin", pluginName)).
-		// 			With(zap.String("field", "host")).
-		// 			With(zap.String("data-plane", dataPlaneVersion)).
-		// 			Warn("removing plugin configuration field which is incompatible with data plane")
-		// 	}
-		// }
-
-		// // Update the processed payload
-		// resIndex := res.Index - indexUpdate
-		// updatedPayload := processedPayload[:resIndex] + updatedRaw +
-		// 	processedPayload[resIndex+len(res.Raw):]
-		// indexUpdate += len(processedPayload) - len(updatedPayload)
-		// processedPayload = updatedPayload
+	routesStr := gjson.Get(payload, "config_table.routes")
+	var routes []any
+	err := json.Unmarshal([]byte(routesStr.Raw), &routes)
+	if err != nil {
+		logger.Error("failed to parse routes", zap.Error(err))
+		return payload
 	}
+
+	changedAnyPath := false
+
+	for _, routeElm := range routes {
+		route, ok := routeElm.(map[string]any)
+		if !ok {
+			logger.Error("failed to parse route as JSON object",
+				zap.Any("route", routeElm),
+				zap.String("data-plane", dataPlaneVersion))
+			return payload
+		}
+
+		routeID, ok := route["id"]
+		if !ok {
+			continue
+		}
+		routeIDStr, ok := routeID.(string)
+		if !ok {
+			continue
+		}
+
+		pathsElm, ok := route["paths"]
+		if !ok {
+			continue
+		}
+
+		pathsArray, ok := pathsElm.([]any)
+		if !ok {
+			logger.Error("route paths must be an array of strings",
+				zap.Any("paths", pathsElm),
+				zap.String("data-plane", dataPlaneVersion))
+			return payload
+		}
+
+		for j, path := range pathsArray {
+			pathStr, ok := path.(string)
+			if !ok {
+				logger.Error("failed to parse path as a string",
+					zap.String("data-plane", dataPlaneVersion),
+					zap.String("change-id", pathRegexFieldChangeID),
+					zap.String("resource-type", "route"),
+					zap.String("route-id", routeIDStr),
+					zap.Any("path", path),
+				)
+			}
+			if strings.HasPrefix(pathStr, "~/") {
+				pathStr, err = denormalizePath(pathStr)
+				if err != nil {
+					logger.Error("failed to denormalize route path",
+						zap.Error(err),
+						zap.String("data-plane", dataPlaneVersion),
+						zap.String("change-id", pathRegexFieldChangeID),
+						zap.String("resource-type", "route"),
+						zap.String("route-id", routeIDStr),
+						zap.String("path", pathStr))
+					return payload
+				}
+
+				err = tracker.TrackForResource(pathRegexFieldChangeID,
+					config.ResourceInfo{
+						Type: string(resource.TypeRoute),
+						ID:   routeIDStr,
+					})
+				if err != nil {
+					logger.Error("failed to track vrsion compatibility change",
+						zap.Error(err),
+						zap.String("data-plane", dataPlaneVersion),
+						zap.String("change-id", pathRegexFieldChangeID),
+						zap.String("resource-type", "route"),
+						zap.String("route-id", routeIDStr))
+					return payload
+				}
+
+				pathsArray[j] = pathStr
+				changedAnyPath = true
+			}
+		}
+	}
+
+	if !changedAnyPath {
+		return payload
+	}
+
+	processedPayload, err := sjson.Set(payload, "config_table.routes", routes)
+	if err != nil {
+		logger.Error("failed to set routes to processed value",
+			zap.Error(err),
+			zap.String("data-plane", dataPlaneVersion))
+	}
+
 	return processedPayload
 }
 
