@@ -589,8 +589,9 @@ func TestExtraProcessing_CorrectRoutesPathField(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			tracker := config.NewChangeTracker()
-			processedPayload := correctRoutesPathField(test.
+			processedPayload, err := correctRoutesPathField(test.
 				uncompressedPayload, versionsPre300, tracker, log.Logger)
+			require.NoError(t, err)
 			require.JSONEq(t, test.expectedPayload, processedPayload)
 			trackedChanged := tracker.Get()
 			require.Equal(t, test.expectedTrackedChanges, trackedChanged)

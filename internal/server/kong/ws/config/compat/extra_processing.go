@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
 	"github.com/kong/koko/internal/json"
 	"github.com/kong/koko/internal/resource"
 	"github.com/kong/koko/internal/server/kong/ws/config"
@@ -44,10 +45,13 @@ func init() {
 		Metadata: config.ChangeMetadata{
 			ID:       pathRegexFieldChangeID,
 			Severity: config.ChangeSeverityError,
-			Description: "For the `paths` field used in route a regex " +
+			Description: "For the 'paths' field used in route a regex " +
 				"pattern usage was detected. This field has been de-normalized " +
 				"replacing '%%' with '%25' and stripping the prefix '~'. " +
-				"routes which rely on regex parsing may not work as intended.",
+				"Routes which rely on regex parsing may not work as intended " +
+				"on Kong gateway versions < 3.0. " +
+				"If upgrading to version 3.0 is not possible, using paths " +
+				"without the '~' prefix will avoid this warning.",
 			Resolution:       standardUpgradeMessage("3.0"),
 			DocumentationURL: "",
 		},
@@ -161,6 +165,9 @@ func correctHTTPLogHeadersField(payload string) (string, error) {
 	return payload, nil
 }
 
+// denormalizePath transforms a single path pattern into
+// pre-3.0 format by removing the '~' for regexes
+// and the minimal revertion of url-normalization.
 func denormalizePath(path string) (string, error) {
 	path = strings.TrimPrefix(path, "~")
 	if !strings.HasPrefix(path, "/") {
@@ -170,80 +177,46 @@ func denormalizePath(path string) (string, error) {
 	return path, nil
 }
 
+// correctRoutesPathField changes any regex path matching pattern
+// from the 3.0 style (where regex must start with '~/' and prefix paths
+// start with '/') into the previous format (where all paths start with
+// '/' and regexes are auto detected).
 func correctRoutesPathField(payload string,
 	dataPlaneVersion string,
 	tracker *config.ChangeTracker,
 	logger *zap.Logger,
-) string {
+) (string, error) {
 	routesStr := gjson.Get(payload, "config_table.routes")
-	var routes []any
-	err := json.Unmarshal([]byte(routesStr.Raw), &routes)
-	if err != nil {
-		logger.Error("failed to parse routes", zap.Error(err))
-		return payload
+	if !routesStr.Exists() {
+		return payload, nil
 	}
 
+	var routes []v1.Route
+	err := json.Unmarshal([]byte(routesStr.Raw), &routes)
+	if err != nil {
+		return "", err
+	}
 	changedAnyPath := false
-
-	for _, routeElm := range routes {
-		route, ok := routeElm.(map[string]any)
-		if !ok {
-			logger.Error("failed to parse route as JSON object",
-				zap.Any("route", routeElm),
-				zap.String("data-plane", dataPlaneVersion))
-			return payload
-		}
-
-		routeID, ok := route["id"]
-		if !ok {
-			continue
-		}
-		routeIDStr, ok := routeID.(string)
-		if !ok {
-			continue
-		}
-
-		pathsElm, ok := route["paths"]
-		if !ok {
-			continue
-		}
-
-		pathsArray, ok := pathsElm.([]any)
-		if !ok {
-			logger.Error("route paths must be an array of strings",
-				zap.Any("paths", pathsElm),
-				zap.String("data-plane", dataPlaneVersion))
-			return payload
-		}
-
-		for j, path := range pathsArray {
-			pathStr, ok := path.(string)
-			if !ok {
-				logger.Error("failed to parse path as a string",
-					zap.String("data-plane", dataPlaneVersion),
-					zap.String("change-id", pathRegexFieldChangeID),
-					zap.String("resource-type", "route"),
-					zap.String("route-id", routeIDStr),
-					zap.Any("path", path),
-				)
-			}
-			if strings.HasPrefix(pathStr, "~/") {
-				pathStr, err = denormalizePath(pathStr)
+	for i := range routes {
+		routeID := routes[i].Id
+		for j, path := range routes[i].Paths {
+			if strings.HasPrefix(path, "~/") {
+				path, err = denormalizePath(path)
 				if err != nil {
 					logger.Error("failed to denormalize route path",
 						zap.Error(err),
 						zap.String("data-plane", dataPlaneVersion),
 						zap.String("change-id", pathRegexFieldChangeID),
 						zap.String("resource-type", "route"),
-						zap.String("route-id", routeIDStr),
-						zap.String("path", pathStr))
-					return payload
+						zap.String("route-id", routeID),
+						zap.String("path", path))
+					return "", err
 				}
 
 				err = tracker.TrackForResource(pathRegexFieldChangeID,
 					config.ResourceInfo{
 						Type: string(resource.TypeRoute),
-						ID:   routeIDStr,
+						ID:   routeID,
 					})
 				if err != nil {
 					logger.Error("failed to track vrsion compatibility change",
@@ -251,18 +224,17 @@ func correctRoutesPathField(payload string,
 						zap.String("data-plane", dataPlaneVersion),
 						zap.String("change-id", pathRegexFieldChangeID),
 						zap.String("resource-type", "route"),
-						zap.String("route-id", routeIDStr))
-					return payload
+						zap.String("route-id", routeID))
+					return "", err
 				}
-
-				pathsArray[j] = pathStr
+				routes[i].Paths[j] = path
 				changedAnyPath = true
 			}
 		}
 	}
 
 	if !changedAnyPath {
-		return payload
+		return payload, nil
 	}
 
 	processedPayload, err := sjson.Set(payload, "config_table.routes", routes)
@@ -272,7 +244,7 @@ func correctRoutesPathField(payload string,
 			zap.String("data-plane", dataPlaneVersion))
 	}
 
-	return processedPayload
+	return processedPayload, nil
 }
 
 func VersionCompatibilityExtraProcessing(payload string, dataPlaneVersion versioning.Version,
@@ -290,6 +262,12 @@ func VersionCompatibilityExtraProcessing(payload string, dataPlaneVersion versio
 		// for DP's >= 3.0. As such, we need to transform the headers back to a single string within an array.
 		var err error
 		if processedPayload, err = correctHTTPLogHeadersField(processedPayload); err != nil {
+			return "", err
+		}
+
+		// remove '~' prefix from paths
+		processedPayload, err = correctRoutesPathField(processedPayload, dataPlaneVersionStr, tracker, logger)
+		if err != nil {
 			return "", err
 		}
 	}
