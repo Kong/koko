@@ -623,7 +623,7 @@ func TestRoute_Validate(t *testing.T) {
 				return r
 			},
 			wantErr: true,
-			// When executing this test with enterprise, the log message will vary due to websocket
+			// When executing this test with enterprise, the error message will vary due to websocket
 			// protocols being enabled. This test will be skipped when KOKO_TEST_ENTERPRISE_TESTING
 			// is set to true.
 			skipIfEnterpriseTesting: true,
@@ -677,7 +677,7 @@ func TestRoute_Validate(t *testing.T) {
 				return r
 			},
 			wantErr: true,
-			// When executing this test with enterprise, the log message will vary due to websocket
+			// When executing this test with enterprise, the error message will vary due to websocket
 			// protocols being enabled. This test will be skipped when KOKO_TEST_ENTERPRISE_TESTING
 			// is set to true.
 			skipIfEnterpriseTesting: true,
@@ -1059,7 +1059,7 @@ func TestRoute_Validate(t *testing.T) {
 				return r
 			},
 			wantErr: true,
-			// When executing this test with enterprise, the log message will vary due to websocket
+			// When executing this test with enterprise, the error message will vary due to websocket
 			// protocols being enabled. This test will be skipped when KOKO_TEST_ENTERPRISE_TESTING
 			// is set to true.
 			skipIfEnterpriseTesting: true,

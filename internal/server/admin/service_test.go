@@ -343,7 +343,7 @@ func TestServiceCreate(t *testing.T) {
 		})
 	t.Run("ensure failure creating a service referencing a client cert without https",
 		func(t *testing.T) {
-			// When executing this test with enterprise, the log message will vary due to websocket
+			// When executing this test with enterprise, the error message will vary due to websocket
 			// protocols being enabled. This test will be skipped when KOKO_TEST_ENTERPRISE_TESTING
 			// is set to true.
 			util.SkipTestIfEnterpriseTesting(t, true)
