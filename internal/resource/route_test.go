@@ -622,7 +622,10 @@ func TestRoute_Validate(t *testing.T) {
 				r.Route.Snis = []string{"foo.example.com"}
 				return r
 			},
-			wantErr:                 true,
+			wantErr: true,
+			// When executing this test with enterprise, the log message will vary due to websocket
+			// protocols being enabled. This test will be skipped when KOKO_TEST_ENTERPRISE_TESTING
+			// is set to true.
 			skipIfEnterpriseTesting: true,
 			Errs: []*model.ErrorDetail{
 				{
@@ -673,7 +676,10 @@ func TestRoute_Validate(t *testing.T) {
 				r.Route.Snis = []string{"foo.example.com"}
 				return r
 			},
-			wantErr:                 true,
+			wantErr: true,
+			// When executing this test with enterprise, the log message will vary due to websocket
+			// protocols being enabled. This test will be skipped when KOKO_TEST_ENTERPRISE_TESTING
+			// is set to true.
 			skipIfEnterpriseTesting: true,
 			Errs: []*model.ErrorDetail{
 				{
@@ -1052,7 +1058,10 @@ func TestRoute_Validate(t *testing.T) {
 				_ = r.ProcessDefaults(context.Background())
 				return r
 			},
-			wantErr:                 true,
+			wantErr: true,
+			// When executing this test with enterprise, the log message will vary due to websocket
+			// protocols being enabled. This test will be skipped when KOKO_TEST_ENTERPRISE_TESTING
+			// is set to true.
 			skipIfEnterpriseTesting: true,
 			Errs: []*model.ErrorDetail{
 				{

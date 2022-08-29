@@ -459,7 +459,10 @@ func TestService_Validate(t *testing.T) {
 				s.Service.Protocol = "http"
 				return s
 			},
-			wantErr:                 true,
+			wantErr: true,
+			// When executing this test with enterprise, the log message will vary due to websocket
+			// protocols being enabled. This test will be skipped when KOKO_TEST_ENTERPRISE_TESTING
+			// is set to true.
 			skipIfEnterpriseTesting: true,
 			Errs: []*model.ErrorDetail{
 				{
@@ -577,7 +580,10 @@ func TestService_Validate(t *testing.T) {
 				}
 				return s
 			},
-			wantErr:                 true,
+			wantErr: true,
+			// When executing this test with enterprise, the log message will vary due to websocket
+			// protocols being enabled. This test will be skipped when KOKO_TEST_ENTERPRISE_TESTING
+			// is set to true.
 			skipIfEnterpriseTesting: true,
 			Errs: []*model.ErrorDetail{
 				{
