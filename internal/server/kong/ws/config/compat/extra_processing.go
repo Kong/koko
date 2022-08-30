@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
-	"github.com/kong/koko/internal/json"
 	"github.com/kong/koko/internal/resource"
 	"github.com/kong/koko/internal/server/kong/ws/config"
 	"github.com/kong/koko/internal/versioning"
@@ -186,62 +184,44 @@ func correctRoutesPathField(payload string,
 	tracker *config.ChangeTracker,
 	logger *zap.Logger,
 ) (string, error) {
-	routesStr := gjson.Get(payload, "config_table.routes")
-	if !routesStr.Exists() {
-		return payload, nil
-	}
+	routes := gjson.Get(payload, "config_table.routes")
 
-	var routes []v1.Route
-	err := json.Unmarshal([]byte(routesStr.Raw), &routes)
-	if err != nil {
-		return "", err
-	}
-	changedAnyPath := false
-	for i := range routes {
-		routeID := routes[i].Id
-		for j, path := range routes[i].Paths {
-			if strings.HasPrefix(path, "~/") {
-				path, err = denormalizePath(path)
+	processedPayload := payload
+	logger = logger.With(zap.String("data-plane", dataPlaneVersion),
+		zap.String("change-id", pathRegexFieldChangeID),
+		zap.String("resource-type", "route"))
+
+	for _, route := range routes.Array() {
+		routeID := route.Get("id").Str
+		for _, path := range route.Get("paths").Array() {
+			pathString := path.Str
+			if strings.HasPrefix(pathString, "~/") {
+				pathString, err := denormalizePath(pathString)
 				if err != nil {
-					logger.Error("failed to denormalize route path",
-						zap.Error(err),
-						zap.String("data-plane", dataPlaneVersion),
-						zap.String("change-id", pathRegexFieldChangeID),
-						zap.String("resource-type", "route"),
+					logger.Error("failed to denormalize route path", zap.Error(err),
 						zap.String("route-id", routeID),
-						zap.String("path", path))
+						zap.String("path", pathString))
 					return "", err
 				}
-
 				err = tracker.TrackForResource(pathRegexFieldChangeID,
 					config.ResourceInfo{
 						Type: string(resource.TypeRoute),
 						ID:   routeID,
 					})
 				if err != nil {
-					logger.Error("failed to track vrsion compatibility change",
-						zap.Error(err),
-						zap.String("data-plane", dataPlaneVersion),
-						zap.String("change-id", pathRegexFieldChangeID),
-						zap.String("resource-type", "route"),
+					logger.Error("failed to track vrsion compatibility change", zap.Error(err),
 						zap.String("route-id", routeID))
 					return "", err
 				}
-				routes[i].Paths[j] = path
-				changedAnyPath = true
+				processedPayload, err = sjson.Set(processedPayload, path.Path(payload), pathString)
+				if err != nil {
+					logger.Error("failed to set processed path", zap.Error(err),
+						zap.String("route-id", routeID),
+						zap.String("path", pathString))
+					return "", err
+				}
 			}
 		}
-	}
-
-	if !changedAnyPath {
-		return payload, nil
-	}
-
-	processedPayload, err := sjson.Set(payload, "config_table.routes", routes)
-	if err != nil {
-		logger.Error("failed to set routes to processed value",
-			zap.Error(err),
-			zap.String("data-plane", dataPlaneVersion))
 	}
 
 	return processedPayload, nil
