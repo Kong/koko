@@ -408,7 +408,7 @@ func TestService_Validate(t *testing.T) {
 					Type:  model.ErrorType_ERROR_TYPE_FIELD,
 					Field: "path",
 					Messages: []string{
-						"must begin with `/` (prefix path) or `~/` (regex path)",
+						"must begin with `/`",
 					},
 				},
 			},

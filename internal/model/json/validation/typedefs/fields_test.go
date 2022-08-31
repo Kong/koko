@@ -23,7 +23,7 @@ func TestTagPattern(t *testing.T) {
 
 func TestPathPattern(t *testing.T) {
 	// Path regex associated with fixed and the 3.0 regex path format.
-	pathRegex := regexp.MustCompile(Path.AllOf[0].Pattern)
+	pathRegex := regexp.MustCompile(RouterPath.AllOf[0].Pattern)
 
 	tests := []struct {
 		name     string
@@ -74,7 +74,7 @@ func TestPathPattern(t *testing.T) {
 	for _, test := range tests {
 		for _, path := range test.paths {
 			valid := pathRegex.MatchString(path)
-			require.Equal(t, test.expected, valid)
+			require.Equal(t, test.expected, valid, "test: '%v', path: '%v'", test.name, path)
 		}
 	}
 }

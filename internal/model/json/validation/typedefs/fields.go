@@ -133,6 +133,26 @@ var Path = &generator.Schema{
 	Type: "string",
 	AllOf: []*generator.Schema{
 		{
+			Description: "must begin with `/`",
+			Pattern:     "^/.*",
+		},
+		{
+			Description: fmt.Sprintf("length must not exceed %d", maxPathLength),
+			MaxLength:   maxPathLength,
+		},
+		{
+			Not: &generator.Schema{
+				Description: "must not contain `//`",
+				Pattern:     "//",
+			},
+		},
+	},
+}
+
+var RouterPath = &generator.Schema{
+	Type: "string",
+	AllOf: []*generator.Schema{
+		{
 			Description: "must begin with `/` (prefix path) or `~/` (regex path)",
 			Pattern:     "^/.*|^~/.*",
 		},

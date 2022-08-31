@@ -199,7 +199,7 @@ func init() {
 			},
 			"paths": {
 				Type:     "array",
-				Items:    typedefs.Path,
+				Items:    typedefs.RouterPath,
 				MaxItems: maxMatchElements,
 			},
 			"headers": {
