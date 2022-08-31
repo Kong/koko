@@ -42,7 +42,7 @@ func init() {
 	if err := config.ChangeRegistry.Register(config.Change{
 		Metadata: config.ChangeMetadata{
 			ID:       pathRegexFieldChangeID,
-			Severity: config.ChangeSeverityError,
+			Severity: config.ChangeSeverityWarning,
 			Description: "For the 'paths' field used in route a regex " +
 				"pattern usage was detected. This field has been de-normalized " +
 				"replacing '%%' with '%25' and stripping the prefix '~'. " +
@@ -193,33 +193,53 @@ func correctRoutesPathField(payload string,
 
 	for _, route := range routes.Array() {
 		routeID := route.Get("id").Str
-		for _, path := range route.Get("paths").Array() {
-			pathString := path.Str
-			if strings.HasPrefix(pathString, "~/") {
-				pathString, err := denormalizePath(pathString)
+		pathsGJ := route.Get("paths")
+		if !pathsGJ.Exists() || !pathsGJ.IsArray() {
+			continue
+		}
+
+		modifiedRoute := false
+		paths, ok := pathsGJ.Value().([]any)
+		if !ok {
+			continue
+		}
+		for j, pathIntf := range paths {
+			path, ok := pathIntf.(string)
+			if !ok {
+				continue
+			}
+			if strings.HasPrefix(path, "~/") {
+				path, err := denormalizePath(path)
 				if err != nil {
 					logger.Error("failed to denormalize route path", zap.Error(err),
 						zap.String("route-id", routeID),
-						zap.String("path", pathString))
+						zap.String("path", path))
 					return "", err
 				}
-				err = tracker.TrackForResource(pathRegexFieldChangeID,
-					config.ResourceInfo{
-						Type: string(resource.TypeRoute),
-						ID:   routeID,
-					})
-				if err != nil {
-					logger.Error("failed to track vrsion compatibility change", zap.Error(err),
-						zap.String("route-id", routeID))
-					return "", err
+				if !modifiedRoute {
+					err = tracker.TrackForResource(pathRegexFieldChangeID,
+						config.ResourceInfo{
+							Type: string(resource.TypeRoute),
+							ID:   routeID,
+						})
+					if err != nil {
+						logger.Error("failed to track vrsion compatibility change", zap.Error(err),
+							zap.String("route-id", routeID))
+						return "", err
+					}
+					modifiedRoute = true
 				}
-				processedPayload, err = sjson.Set(processedPayload, path.Path(payload), pathString)
-				if err != nil {
-					logger.Error("failed to set processed path", zap.Error(err),
-						zap.String("route-id", routeID),
-						zap.String("path", pathString))
-					return "", err
-				}
+				paths[j] = path
+			}
+		}
+
+		if modifiedRoute {
+			var err error
+			processedPayload, err = sjson.Set(processedPayload, route.Path(payload)+".paths", paths)
+			if err != nil {
+				logger.Error("failed to set processed paths", zap.Error(err),
+					zap.String("route-id", routeID))
+				return "", err
 			}
 		}
 	}
