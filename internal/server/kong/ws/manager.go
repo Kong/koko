@@ -217,7 +217,7 @@ func (m *Manager) nodeStatusTracked(nodeID string, changes config.TrackedChanges
 		var ok bool
 		previousHash, ok = value.(string)
 		if !ok {
-			panic(fmt.Sprintf("expected %T but got %T", "", value))
+			panic(fmt.Sprintf("expected string but got %T", value))
 		}
 	}
 	if previousHash == newHash {

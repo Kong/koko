@@ -65,7 +65,7 @@ func TestCompatibilityIssueAPI(t *testing.T) {
 			plugin,
 		},
 	}
-	// Validate the service, route, and plugin configurations
+	// Validate the configurations
 	util.WaitFunc(t, func() error {
 		err := util.EnsureConfig(expectedConfig)
 		if err != nil {
@@ -90,8 +90,6 @@ func TestCompatibilityIssueAPI(t *testing.T) {
 			return fmt.Errorf("unexpected compatibility state")
 		}
 		require.Len(t, node.CompatibilityStatus.Issues, 1)
-		require.Equal(t, "P115", node.CompatibilityStatus.Issues[0].Code)
-		require.Equal(t, "P115", node.CompatibilityStatus.Issues[0].Code)
 		require.Equal(t, "P115", node.CompatibilityStatus.Issues[0].Code)
 		expectedDescription := "Plugin 'opentelemetry' is not available in Kong" +
 			" gateway versions < 3.0."

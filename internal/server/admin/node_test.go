@@ -376,6 +376,33 @@ func TestNodeRead(t *testing.T) {
 		compatibilityStatus.ValueEqual("state",
 			"COMPATIBILITY_STATE_UNKNOWN")
 	})
+	t.Run("read a node with empty config hash", func(t *testing.T) {
+		n := resource.NewNode()
+		n.Node = goodNode()
+		n.Node.ConfigHash = ""
+		nodeID := n.ID()
+		err = db.Create(ctx, n)
+		require.NoError(t, err)
+
+		nodeStatus := resource.NewNodeStatus()
+		nodeStatus.NodeStatus = &nonPublic.NodeStatus{
+			Id: nodeID,
+		}
+		err = db.Create(ctx, nodeStatus)
+		require.NoError(t, err)
+
+		res := c.GET("/v1/nodes/" + nodeID).Expect().Status(http.StatusOK)
+		body := res.JSON().Path("$.item").Object()
+		body.ValueEqual("id", nodeID)
+		body.ValueEqual("hostname", "secure-server")
+		body.ValueEqual("version", "42.1.0")
+		body.ValueEqual("type", resource.NodeTypeKongProxy)
+		body.ValueEqual("last_ping", 42)
+		body.ContainsKey("compatibility_status")
+		compatibilityStatus := body.Path("$.compatibility_status").Object()
+		compatibilityStatus.ValueEqual("state",
+			"COMPATIBILITY_STATE_UNKNOWN")
+	})
 }
 
 func TestNodeList(t *testing.T) {
