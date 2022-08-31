@@ -177,9 +177,9 @@ func (m *Manager) writeNode(node *Node) {
 			node.hash.String()))
 	}
 
-	if !m.nodeStatusTracked(node.ID, trackedChanges) {
+	newHash, tracked := m.nodeStatusTracked(node.ID, trackedChanges)
+	if !tracked {
 		issues := trackedChangesToCompatIssues(trackedChanges)
-
 		_, err = m.configClient.Status.UpdateNodeStatus(ctx, &relay.UpdateNodeStatusRequest{
 			Item: &nonPublic.NodeStatus{
 				Id:     node.ID,
@@ -190,6 +190,8 @@ func (m *Manager) writeNode(node *Node) {
 		if err != nil {
 			m.logger.Error("update kong node status resource", zap.Error(err),
 				zap.String("node-id", node.ID))
+		} else {
+			m.nodeStatusCache.Store(node.ID, newHash)
 		}
 	}
 }
@@ -203,12 +205,12 @@ func hashTrackedChanges(changes config.TrackedChanges) (string, error) {
 	return string(h.Sum(nil)), nil
 }
 
-func (m *Manager) nodeStatusTracked(nodeID string, changes config.TrackedChanges) bool {
+func (m *Manager) nodeStatusTracked(nodeID string, changes config.TrackedChanges) (string, bool) {
 	newHash, err := hashTrackedChanges(changes)
 	if err != nil {
 		m.logger.Error("failed to hash tracked changes", zap.Error(err))
 		// always assume the node status is not tracked
-		return false
+		return "", false
 	}
 
 	previousHash := ""
@@ -220,11 +222,7 @@ func (m *Manager) nodeStatusTracked(nodeID string, changes config.TrackedChanges
 			panic(fmt.Sprintf("expected string but got %T", value))
 		}
 	}
-	if previousHash == newHash {
-		return true
-	}
-	m.nodeStatusCache.Store(nodeID, newHash)
-	return false
+	return newHash, previousHash == newHash
 }
 
 func trackedChangesToCompatIssues(trackedChanges config.TrackedChanges) []*model.CompatibilityIssue {
