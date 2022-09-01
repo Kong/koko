@@ -15,6 +15,8 @@ type VersionCompatibilityPlugins struct {
 	Name string
 	// Config is the JSON configuration for the plugin
 	Config string
+	// Protocols is an array of strings with the protocol names (default: {"http", "https"})
+	Protocols []string
 	// VersionRange is used to determine when a plugin is not to be expected on a data plane
 	VersionRange string
 	// FieldUpdateChecks are the values to validate
