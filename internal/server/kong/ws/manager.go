@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/gob"
+	"errors"
 	"fmt"
 	"net"
 	"strconv"
@@ -11,6 +12,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/bluele/gcache"
 	"github.com/cenkalti/backoff/v4"
 	"github.com/cespare/xxhash/v2"
 	"github.com/gorilla/websocket"
@@ -50,6 +52,13 @@ func (d DefaultCluster) Get() string {
 	return "default"
 }
 
+// nodeStatusCacheSize sets the size of the node status cache size.
+// The value of 1000 ensures that a Manager can handle up to 1000
+// concurrent Kong DP nodes.
+// This is an artificial limit that may be bumped in the future if CP nodes
+// are not scaled out (instead of up) for any reason.
+const nodeStatusCacheSize = 1000
+
 func NewManager(opts ManagerOpts) (*Manager, error) {
 	payload, err := NewPayload(PayloadOpts{
 		VersionCompatibilityProcessor: opts.DPVersionCompatibility,
@@ -70,6 +79,7 @@ func NewManager(opts ManagerOpts) (*Manager, error) {
 		pendingNodes: &NodeList{},
 		config:       opts.Config,
 	}
+	m.nodeStatusCache = gcache.New(nodeStatusCacheSize).LRU().Build()
 	m.streamer = &streamer{
 		Logger: opts.Logger.With(zap.String("component", "manager-streamer")),
 		OnRecvFunc: func(_ context.Context) {
@@ -114,7 +124,11 @@ type Manager struct {
 	nodeTrackingMu sync.Mutex
 	streamer       *streamer
 
-	nodeStatusCache sync.Map
+	// nodeStatusCache is a map of node-id to node-status hash written to the
+	// database. This is used to reduce write load on the database by avoiding
+	// node-status update calls to the relay server when the node-status hasn't
+	// changed.
+	nodeStatusCache gcache.Cache
 }
 
 // AddEventStream registers an EventStream for streaming events to the streamer.
@@ -173,8 +187,11 @@ func (m *Manager) writeNode(node *Node) {
 
 	trackedChanges, err := m.payload.ChangesFor(node.hash.String(), node.Version)
 	if err != nil {
-		m.logger.Error("not found changes for key ", zap.String("hash",
-			node.hash.String()))
+		m.logger.Error("no tracked changes for key",
+			zap.String("hash", node.hash.String()),
+			zap.String("node-version", node.Version),
+		)
+		return
 	}
 
 	newHash, tracked := m.nodeStatusTracked(node.ID, trackedChanges)
@@ -188,10 +205,18 @@ func (m *Manager) writeNode(node *Node) {
 			Cluster: m.reqCluster(),
 		})
 		if err != nil {
-			m.logger.Error("update kong node status resource", zap.Error(err),
+			m.logger.Error("unable to update DP node status resource",
+				zap.Error(err),
 				zap.String("node-id", node.ID))
 		} else {
-			m.nodeStatusCache.Store(node.ID, newHash)
+			err := m.nodeStatusCache.Set(node.ID, newHash)
+			if err != nil {
+				m.logger.Error("unable to cache node's status hash",
+					zap.Error(err),
+					zap.String("hash", newHash),
+					zap.String("node-id", node.ID),
+				)
+			}
 		}
 	}
 }
@@ -213,31 +238,29 @@ func (m *Manager) nodeStatusTracked(nodeID string, changes config.TrackedChanges
 		return "", false
 	}
 
-	previousHash := ""
-	value, loaded := m.nodeStatusCache.Load(nodeID)
-	if loaded {
-		var ok bool
-		previousHash, ok = value.(string)
-		if !ok {
-			panic(fmt.Sprintf("expected string but got %T", value))
+	value, err := m.nodeStatusCache.Get(nodeID)
+	if err != nil {
+		if !errors.Is(err, gcache.KeyNotFoundError) {
+			m.logger.Error("failed to fetch node status hash from cache",
+				zap.Error(err))
 		}
+		return newHash, false
+	}
+	previousHash, ok := value.(string)
+	if !ok {
+		panic(fmt.Sprintf("expected string but got %T", value))
 	}
 	return newHash, previousHash == newHash
 }
 
 func trackedChangesToCompatIssues(trackedChanges config.TrackedChanges) []*model.CompatibilityIssue {
 	issues := make([]*model.CompatibilityIssue, len(trackedChanges.ChangeDetails))
-	for i := 0; i < len(trackedChanges.ChangeDetails); i++ {
-		change := trackedChanges.ChangeDetails[i]
-
-		var affectedResources []*model.Resource
-		if len(change.Resources) > 0 {
-			affectedResources = make([]*model.Resource, len(change.Resources))
-			for i, affectedResource := range change.Resources {
-				affectedResources[i] = &model.Resource{
-					Id:   affectedResource.ID,
-					Type: affectedResource.Type,
-				}
+	for i, change := range trackedChanges.ChangeDetails {
+		affectedResources := make([]*model.Resource, len(change.Resources))
+		for i, affectedResource := range change.Resources {
+			affectedResources[i] = &model.Resource{
+				Id:   affectedResource.ID,
+				Type: affectedResource.Type,
 			}
 		}
 

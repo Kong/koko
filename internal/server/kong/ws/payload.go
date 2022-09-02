@@ -6,12 +6,20 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/bluele/gcache"
 	"github.com/kong/koko/internal/metrics"
 	"github.com/kong/koko/internal/server/kong/ws/config"
 	"go.uber.org/zap"
 )
 
-const unversionedConfigKey = "unversioned"
+const (
+	unversionedConfigKey = "unversioned"
+	// configHashToChangesCacheSize is set to 1000 to ensure that 1000 unique
+	// hash+node-version can be tracked.
+	// The number of unique Kong Node versions for a Manager are expected to be
+	// less than 5 in most cases and usually one or two.
+	configHashToChangesCacheSize = 1000
+)
 
 type Payload struct {
 	// configCache is a cache of configuration. It holds the originally fetched
@@ -23,7 +31,8 @@ type Payload struct {
 	configVersion uint64
 	vc            config.VersionCompatibility
 	logger        *zap.Logger
-	hashToChanges sync.Map
+	// configHashToChanges is map of config-hash+version to tracked changes.
+	configHashToChanges gcache.Cache
 }
 
 type PayloadOpts struct {
@@ -35,11 +44,13 @@ func NewPayload(opts PayloadOpts) (*Payload, error) {
 	if opts.VersionCompatibilityProcessor == nil {
 		return nil, fmt.Errorf("opts.VersionCompatibilityProcessor required")
 	}
+	cache := gcache.New(configHashToChangesCacheSize).LRU().Build()
 
 	return &Payload{
-		vc:          opts.VersionCompatibilityProcessor,
-		configCache: configCache{},
-		logger:      opts.Logger,
+		vc:                  opts.VersionCompatibilityProcessor,
+		configCache:         configCache{},
+		logger:              opts.Logger,
+		configHashToChanges: cache,
 	}, nil
 }
 
@@ -116,7 +127,13 @@ func (p *Payload) configForVersion(version string) (cacheEntry, error) {
 				})
 		}
 		// cache changes
-		p.hashToChanges.Store(unversionedConfig.Hash+version, changes)
+		err = p.configHashToChanges.Set(unversionedConfig.Hash+version, changes)
+		if err != nil {
+			p.logger.Error("failed to track config changes in cache",
+				zap.Error(err))
+			// in case of cache error,
+			// continue on with configuration caching
+		}
 		// cache it
 		err = p.configCache.store(version, entry)
 		if err != nil {
@@ -135,10 +152,17 @@ func (p *Payload) configForVersion(version string) (cacheEntry, error) {
 }
 
 func (p *Payload) ChangesFor(hash, version string) (config.TrackedChanges, error) {
-	value, ok := p.hashToChanges.Load(hash + version)
-	if !ok {
+	value, err := p.configHashToChanges.Get(hash + version)
+	if err != nil {
+		if !errors.Is(err, gcache.KeyNotFoundError) {
+			p.logger.Error("failed to fetch tracked changes from cache",
+				zap.String("hash", hash),
+				zap.String("node-version", version),
+				zap.Error(err))
+		}
 		return config.TrackedChanges{}, errNotFound
 	}
+
 	trackedChanges, ok := value.(config.TrackedChanges)
 	if !ok {
 		panic(fmt.Sprintf("invalid type: expected %T, got %T", config.TrackedChanges{}, value))
