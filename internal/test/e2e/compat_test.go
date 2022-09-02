@@ -78,10 +78,10 @@ func TestCompatibilityIssueAPI(t *testing.T) {
 		cc, err := grpc.Dial("localhost:3001",
 			grpc.WithTransportCredentials(insecure.NewCredentials()),
 		)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		nodeClient := admin.NewNodeServiceClient(cc)
 		resp, err := nodeClient.ListNodes(context.Background(), &admin.ListNodesRequest{})
-		require.Nil(t, err)
+		require.NoError(t, err)
 		if len(resp.Items) != 1 {
 			return fmt.Errorf("expected one node")
 		}
