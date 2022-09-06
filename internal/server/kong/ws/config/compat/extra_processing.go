@@ -214,7 +214,7 @@ func correctRoutesPathField(payload string,
 					logger.Error("failed to denormalize route path", zap.Error(err),
 						zap.String("route-id", routeID),
 						zap.String("path", path))
-					return "", err
+					continue
 				}
 				if !modifiedRoute {
 					err = tracker.TrackForResource(pathRegexFieldChangeID,
@@ -223,9 +223,10 @@ func correctRoutesPathField(payload string,
 							ID:   routeID,
 						})
 					if err != nil {
-						logger.Error("failed to track vrsion compatibility change", zap.Error(err),
-							zap.String("route-id", routeID))
-						return "", err
+						logger.Error("failed to track version compatibility change", zap.Error(err),
+							zap.String("route-id", routeID),
+							zap.String("path", path))
+						continue
 					}
 					modifiedRoute = true
 				}
