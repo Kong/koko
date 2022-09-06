@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/kong/koko/internal/json"
@@ -225,10 +226,24 @@ func (vc *WSVersionCompatibility) performExtraProcessing(uncompressedPayload str
 
 func (vc *WSVersionCompatibility) getConfigTableUpdates(dataPlaneVersion versioning.Version) []ConfigTableUpdates {
 	configTableUpdates := []ConfigTableUpdates{}
+	type versionedUpdates struct {
+		v string
+		u []ConfigTableUpdates
+	}
+	var c []versionedUpdates
 	for versionRange, updates := range vc.configTableUpdates {
-		versionRangeFunc := versioning.MustNewRange(versionRange)
+		c = append(c, versionedUpdates{
+			versionRange, updates,
+		})
+	}
+	sort.SliceStable(c, func(i, j int) bool {
+		return c[i].v < c[j].v
+	})
+
+	for _, u := range c {
+		versionRangeFunc := versioning.MustNewRange(u.v)
 		if versionRangeFunc(dataPlaneVersion) {
-			configTableUpdates = append(configTableUpdates, updates...)
+			configTableUpdates = append(configTableUpdates, u.u...)
 		}
 	}
 	return configTableUpdates
