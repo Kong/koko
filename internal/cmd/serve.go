@@ -46,7 +46,7 @@ func serveMain(ctx context.Context) error {
 	cert, err := tls.LoadX509KeyPair(opts.Config.Control.TLSCertPath,
 		opts.Config.Control.TLSKeyPath)
 	if err != nil {
-		return fmt.Errorf("load tls/cert/key: %w", err)
+		return fmt.Errorf("unable to load tls/cert/key: %w", err)
 	}
 
 	return Run(ctx, ServerConfig{
