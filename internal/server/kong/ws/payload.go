@@ -48,7 +48,7 @@ func NewPayload(opts PayloadOpts) (*Payload, error) {
 
 	return &Payload{
 		vc:                  opts.VersionCompatibilityProcessor,
-		configCache:         configCache{},
+		configCache:         newConfigCache(),
 		logger:              opts.Logger,
 		configHashToChanges: cache,
 	}, nil
