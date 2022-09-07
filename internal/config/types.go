@@ -51,6 +51,14 @@ type Metrics struct {
 	ClientType string `yaml:"client_type" json:"client_type" env:"CLIENT_TYPE" env-default:"noop"`
 }
 
+// Config represents configuration of Koko.
+// Configuration is populated via a JSON or YAML file containing or via
+// environment variables.
+// The precedence order from lowest to highest priority is:
+// - defaults
+// - values in the configuration file
+// - values in environment variables
+// Array/Slice types are not supported within this data-structure.
 type Config struct {
 	Log                     Log           `yaml:"log" json:"log" env-prefix:"KOKO_LOG_"`
 	Admin                   AdminServer   `yaml:"admin_server" json:"admin_server" env-prefix:"KOKO_ADMIN_SERVER_"`

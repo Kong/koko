@@ -31,23 +31,21 @@ func TestGet(t *testing.T) {
 		envVars  map[string]string
 	}
 	tests := []struct {
-		name    string
-		args    args
-		want    Config
-		wantErr bool
+		name      string
+		args      args
+		want      Config
+		errString string
 	}{
 		{
-			name:    "gets default configuration when no file is specified",
-			want:    defaultConfig,
-			wantErr: false,
+			name: "gets default configuration when no file is specified",
+			want: defaultConfig,
 		},
 		{
 			name: "gets default configuration when file is missing",
 			args: args{
 				filename: "does-not-exist.yaml",
 			},
-			want:    defaultConfig,
-			wantErr: false,
+			want: defaultConfig,
 		},
 		{
 			name: "overrides from file",
@@ -93,7 +91,6 @@ func TestGet(t *testing.T) {
 				},
 				DisableAnonymousReports: true,
 			},
-			wantErr: false,
 		},
 		{
 			name: "overrides from json file",
@@ -139,7 +136,6 @@ func TestGet(t *testing.T) {
 				},
 				DisableAnonymousReports: true,
 			},
-			wantErr: false,
 		},
 		{
 			name: "configuration can be provided via env vars",
@@ -177,7 +173,6 @@ func TestGet(t *testing.T) {
 				},
 				DisableAnonymousReports: false,
 			},
-			wantErr: false,
 		},
 		{
 			name: "environment variables take the highest priority",
@@ -227,21 +222,22 @@ func TestGet(t *testing.T) {
 				},
 				DisableAnonymousReports: true,
 			},
-			wantErr: false,
 		},
 		{
 			name: "invalid YAML errors",
 			args: args{
 				filename: "bad.yaml",
 			},
-			wantErr: true,
+			errString: "read config: config file parsing error" +
+				": yaml: unmarshal errors",
 		},
 		{
 			name: "invalid JSON errors",
 			args: args{
 				filename: "bad.json",
 			},
-			wantErr: true,
+			errString: "read config: config file parsing error: invalid" +
+				" character 'b' looking for beginning of value",
 		},
 	}
 	for _, tt := range tests {
@@ -254,11 +250,13 @@ func TestGet(t *testing.T) {
 				filename = "testdata/" + filename
 			}
 			got, err := Get(filename)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("Get() error = %v, wantErr %v", err, tt.wantErr)
-				return
+			if tt.errString != "" {
+				require.Error(t, err)
+				require.ErrorContains(t, err, tt.errString)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tt.want, got)
 			}
-			require.Equal(t, tt.want, got)
 		})
 	}
 }
