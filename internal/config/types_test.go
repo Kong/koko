@@ -6,7 +6,7 @@ import (
 )
 
 // This test ensures that no slices are added to configuration.
-// Slices complicated environment variable based configuration and are not
+// Slices complicate environment variable based configuration and are not
 // allowed.
 func TestConfigNoArray(t *testing.T) {
 	var c Config

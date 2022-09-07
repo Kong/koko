@@ -29,7 +29,7 @@ func Get(filename string) (Config, error) {
 		err = cleanenv.ReadConfig(filename, &c)
 	}
 	if err != nil {
-		return Config{}, fmt.Errorf("read config: %w", err)
+		return Config{}, fmt.Errorf("unable to read config: %w", err)
 	}
 	return c, nil
 }
