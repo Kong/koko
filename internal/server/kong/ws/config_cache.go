@@ -39,7 +39,7 @@ const (
 	// For rapidly changing configuration, configCacheSize provides an upperbound
 	// on the number of cache entries. No upperbound for memory that this cache
 	// can consume exists since a single cache entry has no max limit.
-	configCacheExpiration = 15 * time.Minute
+	configCacheExpiration = 1 * time.Hour
 )
 
 func newConfigCache() configCache {
@@ -51,7 +51,7 @@ func newConfigCache() configCache {
 func (c configCache) store(key string, value cacheEntry) error {
 	err := c.cache.Set(key, value)
 	if err != nil {
-		return fmt.Errorf("save cache key '%v': %w", key, err)
+		return fmt.Errorf("failed to save cache key '%v': %w", key, err)
 	}
 	return nil
 }
