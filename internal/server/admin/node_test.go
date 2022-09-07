@@ -29,11 +29,12 @@ import (
 
 func goodNode() *model.Node {
 	return &model.Node{
-		Id:       uuid.NewString(),
-		Hostname: "secure-server",
-		Version:  "42.1.0",
-		Type:     resource.NodeTypeKongProxy,
-		LastPing: 42,
+		Id:         uuid.NewString(),
+		Hostname:   "secure-server",
+		Version:    "42.1.0",
+		ConfigHash: strings.Repeat("foo0", 8),
+		Type:       resource.NodeTypeKongProxy,
+		LastPing:   42,
 	}
 }
 
@@ -275,12 +276,12 @@ func TestNodeRead(t *testing.T) {
 		issue.ValueEqual("code", "P101")
 		issue.ValueEqual("severity", "error")
 
-		description := strings.ReplaceAll(`For the 'acme' plugin, 
-one or more of the following 'config' fields are set: 'preferred_chain', 
-'storage_config.vault.auth_method', 'storage_config.vault.auth_path', 
-'storage_config.vault.auth_role', 'storage_config.vault.jwt_path' but 
-Kong Gateway versions < 2.6 do not support these fields. 
-Plugin features that rely on these fields are not working as intended.`, "\n", "")
+		description := strings.ReplaceAll(`For the 'acme' plugin,
+ one or more of the following 'config' fields are set: 'preferred_chain',
+ 'storage_config.vault.auth_method', 'storage_config.vault.auth_path',
+ 'storage_config.vault.auth_role', 'storage_config.vault.jwt_path' but
+ Kong Gateway versions < 2.6 do not support these fields.
+ Plugin features that rely on these fields are not working as intended.`, "\n", "")
 		gotDescription := issue.Value("description").String().Raw()
 		require.Equal(t, description, gotDescription)
 		issue.ValueEqual("resolution", `Please upgrade Kong Gateway to version '2.6' or above.`)
@@ -344,6 +345,60 @@ Plugin features that rely on these fields are not working as intended.`, "\n", "
 		body.ValueEqual("version", "42.1.0")
 		body.ValueEqual("type", resource.NodeTypeKongProxy)
 		body.ValueEqual("last_ping", 42)
+		compatibilityStatus := body.Path("$.compatibility_status").Object()
+		compatibilityStatus.ValueEqual("state",
+			"COMPATIBILITY_STATE_UNKNOWN")
+	})
+	t.Run("read a node with zero config hash", func(t *testing.T) {
+		n := resource.NewNode()
+		n.Node = goodNode()
+		n.Node.ConfigHash = emptyConfigHash
+		nodeID := n.ID()
+		err = db.Create(ctx, n)
+		require.NoError(t, err)
+
+		nodeStatus := resource.NewNodeStatus()
+		nodeStatus.NodeStatus = &nonPublic.NodeStatus{
+			Id: nodeID,
+		}
+		err = db.Create(ctx, nodeStatus)
+		require.NoError(t, err)
+
+		res := c.GET("/v1/nodes/" + nodeID).Expect().Status(http.StatusOK)
+		body := res.JSON().Path("$.item").Object()
+		body.ValueEqual("id", nodeID)
+		body.ValueEqual("hostname", "secure-server")
+		body.ValueEqual("version", "42.1.0")
+		body.ValueEqual("type", resource.NodeTypeKongProxy)
+		body.ValueEqual("last_ping", 42)
+		body.ContainsKey("compatibility_status")
+		compatibilityStatus := body.Path("$.compatibility_status").Object()
+		compatibilityStatus.ValueEqual("state",
+			"COMPATIBILITY_STATE_UNKNOWN")
+	})
+	t.Run("read a node with empty config hash", func(t *testing.T) {
+		n := resource.NewNode()
+		n.Node = goodNode()
+		n.Node.ConfigHash = ""
+		nodeID := n.ID()
+		err = db.Create(ctx, n)
+		require.NoError(t, err)
+
+		nodeStatus := resource.NewNodeStatus()
+		nodeStatus.NodeStatus = &nonPublic.NodeStatus{
+			Id: nodeID,
+		}
+		err = db.Create(ctx, nodeStatus)
+		require.NoError(t, err)
+
+		res := c.GET("/v1/nodes/" + nodeID).Expect().Status(http.StatusOK)
+		body := res.JSON().Path("$.item").Object()
+		body.ValueEqual("id", nodeID)
+		body.ValueEqual("hostname", "secure-server")
+		body.ValueEqual("version", "42.1.0")
+		body.ValueEqual("type", resource.NodeTypeKongProxy)
+		body.ValueEqual("last_ping", 42)
+		body.ContainsKey("compatibility_status")
 		compatibilityStatus := body.Path("$.compatibility_status").Object()
 		compatibilityStatus.ValueEqual("state",
 			"COMPATIBILITY_STATE_UNKNOWN")
@@ -514,12 +569,12 @@ func TestNodeListWithStatus(t *testing.T) {
 			issue.ValueEqual("code", "P101")
 			issue.ValueEqual("severity", "error")
 
-			description := strings.ReplaceAll(`For the 'acme' plugin, 
-one or more of the following 'config' fields are set: 'preferred_chain', 
-'storage_config.vault.auth_method', 'storage_config.vault.auth_path', 
-'storage_config.vault.auth_role', 'storage_config.vault.jwt_path' but 
-Kong Gateway versions < 2.6 do not support these fields. 
-Plugin features that rely on these fields are not working as intended.`, "\n", "")
+			description := strings.ReplaceAll(`For the 'acme' plugin,
+ one or more of the following 'config' fields are set: 'preferred_chain',
+ 'storage_config.vault.auth_method', 'storage_config.vault.auth_path',
+ 'storage_config.vault.auth_role', 'storage_config.vault.jwt_path' but
+ Kong Gateway versions < 2.6 do not support these fields.
+ Plugin features that rely on these fields are not working as intended.`, "\n", "")
 			gotDescription := issue.Value("description").String().Raw()
 			require.Equal(t, description, gotDescription)
 			issue.ValueEqual("resolution", `Please upgrade Kong Gateway to version '2.6' or above.`)

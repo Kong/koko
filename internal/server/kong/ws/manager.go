@@ -3,6 +3,8 @@ package ws
 import (
 	"bytes"
 	"context"
+	"encoding/gob"
+	"errors"
 	"fmt"
 	"net"
 	"strconv"
@@ -10,10 +12,13 @@ import (
 	"sync"
 	"time"
 
+	"github.com/bluele/gcache"
 	"github.com/cenkalti/backoff/v4"
+	"github.com/cespare/xxhash/v2"
 	"github.com/gorilla/websocket"
 	model "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
 	admin "github.com/kong/koko/internal/gen/grpc/kong/admin/service/v1"
+	nonPublic "github.com/kong/koko/internal/gen/grpc/kong/nonpublic/v1"
 	relay "github.com/kong/koko/internal/gen/grpc/kong/relay/service/v1"
 	grpcKongUtil "github.com/kong/koko/internal/gen/grpc/kong/util/v1"
 	"github.com/kong/koko/internal/metrics"
@@ -47,6 +52,13 @@ func (d DefaultCluster) Get() string {
 	return "default"
 }
 
+// nodeStatusCacheSize sets the size of the node status cache size.
+// The value of 1000 ensures that a Manager can handle up to 1000
+// concurrent Kong DP nodes.
+// This is an artificial limit that may be bumped in the future if CP nodes
+// are not scaled out (instead of up) for any reason.
+const nodeStatusCacheSize = 1000
+
 func NewManager(opts ManagerOpts) (*Manager, error) {
 	payload, err := NewPayload(PayloadOpts{
 		VersionCompatibilityProcessor: opts.DPVersionCompatibility,
@@ -67,6 +79,7 @@ func NewManager(opts ManagerOpts) (*Manager, error) {
 		pendingNodes: &NodeList{},
 		config:       opts.Config,
 	}
+	m.nodeStatusCache = gcache.New(nodeStatusCacheSize).LRU().Build()
 	m.streamer = &streamer{
 		Logger: opts.Logger.With(zap.String("component", "manager-streamer")),
 		OnRecvFunc: func(_ context.Context) {
@@ -110,6 +123,12 @@ type Manager struct {
 	// removal.
 	nodeTrackingMu sync.Mutex
 	streamer       *streamer
+
+	// nodeStatusCache is a map of node-id to node-status hash written to the
+	// database. This is used to reduce write load on the database by avoiding
+	// node-status update calls to the relay server when the node-status hasn't
+	// changed.
+	nodeStatusCache gcache.Cache
 }
 
 // AddEventStream registers an EventStream for streaming events to the streamer.
@@ -165,6 +184,92 @@ func (m *Manager) writeNode(node *Node) {
 		m.logger.Error("update kong node resource", zap.Error(err),
 			zap.String("node-id", node.ID))
 	}
+
+	trackedChanges, err := m.payload.ChangesFor(node.hash.String(), node.Version)
+	if err != nil {
+		m.logger.Error("no tracked changes for key",
+			zap.String("hash", node.hash.String()),
+			zap.String("node-version", node.Version),
+		)
+		return
+	}
+
+	newHash, tracked := m.nodeStatusTracked(node.ID, trackedChanges)
+	if !tracked {
+		issues := trackedChangesToCompatIssues(trackedChanges)
+		_, err = m.configClient.Status.UpdateNodeStatus(ctx, &relay.UpdateNodeStatusRequest{
+			Item: &nonPublic.NodeStatus{
+				Id:     node.ID,
+				Issues: issues,
+			},
+			Cluster: m.reqCluster(),
+		})
+		if err != nil {
+			m.logger.Error("unable to update DP node status resource",
+				zap.Error(err),
+				zap.String("node-id", node.ID))
+		} else {
+			err := m.nodeStatusCache.Set(node.ID, newHash)
+			if err != nil {
+				m.logger.Error("unable to cache node's status hash",
+					zap.Error(err),
+					zap.String("hash", newHash),
+					zap.String("node-id", node.ID),
+				)
+			}
+		}
+	}
+}
+
+func hashTrackedChanges(changes config.TrackedChanges) (string, error) {
+	h := xxhash.New()
+	e := gob.NewEncoder(h)
+	if err := e.Encode(changes); err != nil {
+		return "", err
+	}
+	return string(h.Sum(nil)), nil
+}
+
+func (m *Manager) nodeStatusTracked(nodeID string, changes config.TrackedChanges) (string, bool) {
+	newHash, err := hashTrackedChanges(changes)
+	if err != nil {
+		m.logger.Error("failed to hash tracked changes", zap.Error(err))
+		// always assume the node status is not tracked
+		return "", false
+	}
+
+	value, err := m.nodeStatusCache.Get(nodeID)
+	if err != nil {
+		if !errors.Is(err, gcache.KeyNotFoundError) {
+			m.logger.Error("failed to fetch node status hash from cache",
+				zap.Error(err))
+		}
+		return newHash, false
+	}
+	previousHash, ok := value.(string)
+	if !ok {
+		panic(fmt.Sprintf("expected string but got %T", value))
+	}
+	return newHash, previousHash == newHash
+}
+
+func trackedChangesToCompatIssues(trackedChanges config.TrackedChanges) []*model.CompatibilityIssue {
+	issues := make([]*model.CompatibilityIssue, len(trackedChanges.ChangeDetails))
+	for i, change := range trackedChanges.ChangeDetails {
+		affectedResources := make([]*model.Resource, len(change.Resources))
+		for i, affectedResource := range change.Resources {
+			affectedResources[i] = &model.Resource{
+				Id:   affectedResource.ID,
+				Type: affectedResource.Type,
+			}
+		}
+
+		issues[i] = &model.CompatibilityIssue{
+			Code:              string(change.ID),
+			AffectedResources: affectedResources,
+		}
+	}
+	return issues
 }
 
 func (m *Manager) setupPingHandler(node *Node) {

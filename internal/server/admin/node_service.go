@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 
 	pbModel "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/service/v1"
@@ -48,7 +49,7 @@ func (s *NodeService) GetNode(ctx context.Context,
 	if status != nil {
 		nodeStatus = status.NodeStatus
 	}
-	result.Node.CompatibilityStatus = s.nodeStatusToCompatibilityStatus(ctx, nodeStatus)
+	result.Node.CompatibilityStatus = s.nodeStatusToCompatibilityStatus(ctx, result.Node.ConfigHash, nodeStatus)
 	return &v1.GetNodeResponse{
 		Item: result.Node,
 	}, nil
@@ -63,11 +64,14 @@ func (s *NodeService) statusForNode(ctx context.Context, db store.Store, nodeID 
 	return &result, nil
 }
 
+var emptyConfigHash = strings.Repeat("0", 32) //nolint:gomnd
+
 func (s *NodeService) nodeStatusToCompatibilityStatus(ctx context.Context,
-	nodeStatus *nonPublic.NodeStatus,
+	configHash string, nodeStatus *nonPublic.NodeStatus,
 ) *pbModel.CompatibilityStatus {
-	if nodeStatus == nil {
-		// no tracked status
+	// no config hash means the configuration state cannot be reliably tracked
+	// no nodeStatus implies the compat status is not tracked
+	if emptyConfigHash == configHash || configHash == "" || nodeStatus == nil {
 		return &pbModel.CompatibilityStatus{
 			State: pbModel.CompatibilityState_COMPATIBILITY_STATE_UNKNOWN,
 		}
@@ -202,7 +206,7 @@ func (s *NodeService) addStatusToNodes(ctx context.Context, nodes []*pbModel.Nod
 				break
 			}
 		}
-		node.CompatibilityStatus = s.nodeStatusToCompatibilityStatus(ctx, nodeStatus)
+		node.CompatibilityStatus = s.nodeStatusToCompatibilityStatus(ctx, node.ConfigHash, nodeStatus)
 	}
 }
 

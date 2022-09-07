@@ -5,6 +5,7 @@ go 1.19
 require (
 	github.com/DataDog/datadog-go/v5 v5.1.1
 	github.com/Masterminds/squirrel v1.5.3
+	github.com/bluele/gcache v0.0.2
 	github.com/bufbuild/buf v1.7.0
 	github.com/caarlos0/env/v6 v6.10.0
 	github.com/cenkalti/backoff/v4 v4.1.3
