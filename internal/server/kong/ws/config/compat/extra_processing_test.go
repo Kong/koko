@@ -385,7 +385,7 @@ func Test_correctHTTPLogHeadersField(t *testing.T) {
 	}
 }
 
-func TestExtraProcessing_CorrectRoutesPathField(t *testing.T) {
+func TestExtraProcessing_CorrectRoutesPathFieldPre300(t *testing.T) {
 	tests := []struct {
 		name                   string
 		uncompressedPayload    string
@@ -589,9 +589,270 @@ func TestExtraProcessing_CorrectRoutesPathField(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			tracker := config.NewChangeTracker()
-			processedPayload, err := correctRoutesPathField(test.
+			processedPayload, err := migrateRoutesPathFieldPre300(test.
 				uncompressedPayload, versionsPre300, tracker, log.Logger)
 			require.NoError(t, err)
+			require.JSONEq(t, test.expectedPayload, processedPayload)
+			trackedChanged := tracker.Get()
+			require.Equal(t, test.expectedTrackedChanges, trackedChanged)
+		})
+	}
+}
+
+func TestExtraProcessing_CorrectRoutesPathField300AndAbove(t *testing.T) {
+	tests := []struct {
+		name                   string
+		uncompressedPayload    string
+		expectedPayload        string
+		expectedTrackedChanges config.TrackedChanges
+	}{
+		{
+			name: "ensure 'paths' with '~' prefix pass through",
+			uncompressedPayload: `{
+				"config_table": {
+					"routes": [
+						{
+							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							"paths": [ "~/foo" ]
+						}
+					]
+				}
+			}`,
+			expectedPayload: `{
+				"config_table": {
+					"routes": [
+						{
+							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							"paths": [ "~/foo" ]
+						}
+					]
+				}
+			}`,
+			expectedTrackedChanges: config.TrackedChanges{},
+		},
+		{
+			name: "non-prefixed path is left alone if plain",
+			uncompressedPayload: `{
+				"config_table": {
+					"routes": [
+						{
+							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							"paths": [ "/foo" ]
+						}
+					]
+				}
+			}`,
+			expectedPayload: `{
+				"config_table": {
+					"routes": [
+						{
+							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							"paths": [ "/foo" ]
+						}
+					]
+				}
+			}`,
+			expectedTrackedChanges: config.TrackedChanges{},
+		},
+		{
+			name: "mixed with and without '~' prefix",
+			uncompressedPayload: `{
+				"config_table": {
+					"routes": [
+						{
+							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							"paths": [ "/foo", "~/bar", "~/baz", "/fum" ]
+						}
+					]
+				}
+			}`,
+			expectedPayload: `{
+				"config_table": {
+					"routes": [
+						{
+							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							"paths": [ "/foo", "~/bar", "~/baz", "/fum" ]
+						}
+					]
+				}
+			}`,
+			expectedTrackedChanges: config.TrackedChanges{},
+		},
+		{
+			name: "don't denormalize prefixed path",
+			uncompressedPayload: `{
+				"config_table": {
+					"routes": [
+						{
+							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							"paths": [ "~/foo/hi%%thing" ]
+						}
+					]
+				}
+			}`,
+			expectedPayload: `{
+				"config_table": {
+					"routes": [
+						{
+							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							"paths": [ "~/foo/hi%%thing" ]
+						}
+					]
+				}
+			}`,
+			expectedTrackedChanges: config.TrackedChanges{},
+		},
+		{
+			name: "don't denormalize plain path",
+			uncompressedPayload: `{
+				"config_table": {
+					"routes": [
+						{
+							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							"paths": [ "/foo/hi%%thing" ]
+						}
+					]
+				}
+			}`,
+			expectedPayload: `{
+				"config_table": {
+					"routes": [
+						{
+							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							"paths": [ "/foo/hi%%thing" ]
+						}
+					]
+				}
+			}`,
+			expectedTrackedChanges: config.TrackedChanges{},
+		},
+		{
+			name: "don't denormalize mixed paths",
+			uncompressedPayload: `{
+				"config_table": {
+					"routes": [
+						{
+							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							"paths": [ "~/foo/hi%%thing", "/fim%%fum" ]
+						}
+					]
+				}
+			}`,
+			expectedPayload: `{
+				"config_table": {
+					"routes": [
+						{
+							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							"paths": [ "~/foo/hi%%thing", "/fim%%fum" ]
+						}
+					]
+				}
+			}`,
+			expectedTrackedChanges: config.TrackedChanges{},
+		},
+		{
+			name: "warn on non-prefixed regex-like paths",
+			uncompressedPayload: `{
+				"config_table": {
+					"routes": [
+						{
+							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							"paths": [ "/fim.*fum" ]
+						}
+					]
+				}
+			}`,
+			expectedPayload: `{
+				"config_table": {
+					"routes": [
+						{
+							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							"paths": [ "/fim.*fum" ]
+						}
+					]
+				}
+			}`,
+			expectedTrackedChanges: config.TrackedChanges{
+				ChangeDetails: []config.ChangeDetail{
+					{
+						ID: pathRegexFieldUnprefixedChangeID,
+						Resources: []config.ResourceInfo{
+							{
+								Type: "route",
+								ID:   "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "silent on prefixed regex-like paths",
+			uncompressedPayload: `{
+				"config_table": {
+					"routes": [
+						{
+							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							"paths": [ "~/fim.*fum" ]
+						}
+					]
+				}
+			}`,
+			expectedPayload: `{
+				"config_table": {
+					"routes": [
+						{
+							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							"paths": [ "~/fim.*fum" ]
+						}
+					]
+				}
+			}`,
+			expectedTrackedChanges: config.TrackedChanges{},
+		},
+		{
+			name: "mixed prefixed and non-prefixed regex-like paths",
+			uncompressedPayload: `{
+				"config_table": {
+					"routes": [
+						{
+							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							"paths": [ "/fim.*fum", "~/blog-\\d+", "/post-\\w*" ]
+						}
+					]
+				}
+			}`,
+			expectedPayload: `{
+				"config_table": {
+					"routes": [
+						{
+							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							"paths": [ "/fim.*fum", "~/blog-\\d+", "/post-\\w*" ]
+						}
+					]
+				}
+			}`,
+			expectedTrackedChanges: config.TrackedChanges{
+				ChangeDetails: []config.ChangeDetail{
+					{
+						ID: pathRegexFieldUnprefixedChangeID,
+						Resources: []config.ResourceInfo{
+							{
+								Type: "route",
+								ID:   "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			tracker := config.NewChangeTracker()
+			processedPayload := migrateRoutesPathFieldPost300(test.
+				uncompressedPayload, versionsPre300, tracker, log.Logger)
 			require.JSONEq(t, test.expectedPayload, processedPayload)
 			trackedChanged := tracker.Get()
 			require.Equal(t, test.expectedTrackedChanges, trackedChanged)
@@ -705,6 +966,188 @@ func TestExtraProcessing_EnsureExtraProcessing(t *testing.T) {
 				// TODO(hbagdi): add code and assertions for tracked changes
 				// in extra processors
 			}
+		})
+	}
+}
+
+func TestExtraProcessing_EmitCorrectRoutePath(t *testing.T) {
+	type expect struct {
+		processedPayload string
+		trackedChanges   config.TrackedChanges
+	}
+	tests := []struct {
+		name                                string
+		uncompressedPayload                 string
+		expectedPre300, expected300AndAbove expect
+	}{
+		// a plaintext path is the same both before and after 3.0; no warnings
+		{
+			name: "plaintext path",
+			uncompressedPayload: `{
+				"config_table": {
+					"routes": [
+						{
+							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							"paths": [ "/foo" ]
+						}
+					]
+				}
+			}`,
+			expectedPre300: expect{
+				processedPayload: `{
+					"config_table": {
+						"routes": [
+							{
+								"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+								"paths": [ "/foo" ]
+							}
+						]
+					}
+				}`,
+				trackedChanges: config.TrackedChanges{},
+			},
+			expected300AndAbove: expect{
+				processedPayload: `{
+					"config_table": {
+						"routes": [
+							{
+								"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+								"paths": [ "/foo" ]
+							}
+						]
+					}
+				}`,
+				trackedChanges: config.TrackedChanges{},
+			},
+		},
+		// a path that is "regex-like" is passed unchanged
+		// but on >= 3.0 generates a change warning
+		{
+			name: "regex-like path",
+			uncompressedPayload: `{
+				"config_table": {
+					"routes": [
+						{
+							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							"paths": [ "/foo-\\d+" ]
+						}
+					]
+				}
+			}`,
+			expectedPre300: expect{
+				processedPayload: `{
+					"config_table": {
+						"routes": [
+							{
+								"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+								"paths": [ "/foo-\\d+" ]
+							}
+						]
+					}
+				}`,
+				trackedChanges: config.TrackedChanges{},
+			},
+			expected300AndAbove: expect{
+				processedPayload: `{
+					"config_table": {
+						"routes": [
+							{
+								"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+								"paths": [ "/foo-\\d+" ]
+							}
+						]
+					}
+				}`,
+				trackedChanges: config.TrackedChanges{
+					ChangeDetails: []config.ChangeDetail{
+						{
+							ID: pathRegexFieldUnprefixedChangeID,
+							Resources: []config.ResourceInfo{
+								{
+									Type: "route",
+									ID:   "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		// a regex path, prefixed with `~` is back-ported for
+		// pre-3.0, and passed unchanged to >= 3.0
+		{
+			name: "prefixed regex path",
+			uncompressedPayload: `{
+				"config_table": {
+					"routes": [
+						{
+							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							"paths": [ "~/foo-\\d+" ]
+						}
+					]
+				}
+			}`,
+			expectedPre300: expect{
+				// NOTE: should backporting be silent?
+				processedPayload: `{
+					"config_table": {
+						"routes": [
+							{
+								"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+								"paths": [ "/foo-\\d+" ]
+							}
+						]
+					}
+				}`,
+				trackedChanges: config.TrackedChanges{
+					ChangeDetails: []config.ChangeDetail{
+						{
+							ID: pathRegexFieldChangeID,
+							Resources: []config.ResourceInfo{
+								{
+									Type: "route",
+									ID:   "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+								},
+							},
+						},
+					},
+				},
+			},
+			expected300AndAbove: expect{
+				processedPayload: `{
+					"config_table": {
+						"routes": [
+							{
+								"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+								"paths": [ "~/foo-\\d+" ]
+							}
+						]
+					}
+				}`,
+			},
+		},
+	}
+
+	pre300Version := versioning.MustNewVersion("2.8.4")
+	v300Version := versioning.MustNewVersion("3.0.0")
+
+	for _, test := range tests {
+		t.Run(test.name+" - v2.8.4", func(t *testing.T) {
+			tracker := config.NewChangeTracker()
+			processedPayload, err := VersionCompatibilityExtraProcessing(
+				test.uncompressedPayload, pre300Version, tracker, log.Logger)
+			require.NoError(t, err)
+			require.JSONEq(t, test.expectedPre300.processedPayload, processedPayload)
+			require.Equal(t, test.expectedPre300.trackedChanges, tracker.Get())
+		})
+
+		t.Run(test.name+" - v3.0.0", func(t *testing.T) {
+			tracker := config.NewChangeTracker()
+			processedPayload, err := VersionCompatibilityExtraProcessing(
+				test.uncompressedPayload, v300Version, tracker, log.Logger)
+			require.NoError(t, err)
+			require.JSONEq(t, test.expected300AndAbove.processedPayload, processedPayload)
+			require.Equal(t, test.expected300AndAbove.trackedChanges, tracker.Get())
 		})
 	}
 }

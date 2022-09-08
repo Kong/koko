@@ -2,6 +2,7 @@ package compat
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/kong/koko/internal/resource"
@@ -12,11 +13,15 @@ import (
 	"go.uber.org/zap"
 )
 
-var versionOlderThan300 = versioning.MustNewRange("< 3.0.0")
+var (
+	versionOlderThan300 = versioning.MustNewRange("< 3.0.0")
+	version300OrNewer   = versioning.MustNewRange(">= 3.0.0")
+)
 
 const (
-	awsLambdaExclusiveFieldChangeID = "P121"
-	pathRegexFieldChangeID          = "P130"
+	awsLambdaExclusiveFieldChangeID  = "P121"
+	pathRegexFieldChangeID           = "P130"
+	pathRegexFieldUnprefixedChangeID = "P131"
 )
 
 func init() {
@@ -56,6 +61,21 @@ func init() {
 		SemverRange: versionsPre300,
 		// none since the logic is hard-coded instead
 		Update: config.ConfigTableUpdates{},
+	}); err != nil {
+		panic(err)
+	}
+
+	if err := config.ChangeRegistry.Register(config.Change{
+		Metadata: config.ChangeMetadata{
+			ID:       pathRegexFieldUnprefixedChangeID,
+			Severity: config.ChangeSeverityWarning,
+			Description: "For the 'paths' field used in route a regex " +
+				"pattern usage was detected. " +
+				"Kong gateway versions 3.0 and above require that regular expressions " +
+				"start with a '~' character to distinguish from simple prefix match.",
+			Resolution: standardUpgradeMessage("3.0"),
+		},
+		SemverRange: versions300AndAbove,
 	}); err != nil {
 		panic(err)
 	}
@@ -163,6 +183,12 @@ func correctHTTPLogHeadersField(payload string) (string, error) {
 	return payload, nil
 }
 
+var regexpattrn = regexp.MustCompile(`[^a-zA-Z0-9._~/%-]`)
+
+func isRegexLike(path string) bool {
+	return regexpattrn.MatchString(path)
+}
+
 // denormalizePath transforms a single path pattern into
 // pre-3.0 format by removing the '~' for regexes
 // and the minimal revertion of url-normalization.
@@ -175,11 +201,11 @@ func denormalizePath(path string) (string, error) {
 	return path, nil
 }
 
-// correctRoutesPathField changes any regex path matching pattern
+// migrateRoutesPathFieldPre300 changes any regex path matching pattern
 // from the 3.0 style (where regex must start with '~/' and prefix paths
 // start with '/') into the previous format (where all paths start with
 // '/' and regexes are auto detected).
-func correctRoutesPathField(payload string,
+func migrateRoutesPathFieldPre300(payload string,
 	dataPlaneVersion string,
 	tracker *config.ChangeTracker,
 	logger *zap.Logger,
@@ -248,12 +274,59 @@ func correctRoutesPathField(payload string,
 	return processedPayload, nil
 }
 
+func migrateRoutesPathFieldPost300(payload string,
+	dataPlaneVersion string,
+	tracker *config.ChangeTracker,
+	logger *zap.Logger,
+) string {
+	routes := gjson.Get(payload, "config_table.routes")
+
+	logger = logger.With(zap.String("data-plane", dataPlaneVersion),
+		zap.String("change-id", pathRegexFieldUnprefixedChangeID),
+		zap.String("resource-type", "route"))
+
+	for _, route := range routes.Array() {
+		routeID := route.Get("id").Str
+		pathsGJ := route.Get("paths")
+		if !pathsGJ.Exists() || !pathsGJ.IsArray() {
+			continue
+		}
+
+		paths, ok := pathsGJ.Value().([]any)
+		if !ok {
+			continue
+		}
+		for _, pathIntf := range paths {
+			path, ok := pathIntf.(string)
+			if !ok {
+				continue
+			}
+			if !strings.HasPrefix(path, "~/") && isRegexLike(path) {
+				err := tracker.TrackForResource(pathRegexFieldUnprefixedChangeID,
+					config.ResourceInfo{
+						Type: string(resource.TypeRoute),
+						ID:   routeID,
+					})
+				if err != nil {
+					logger.Error("failed to track version compatibility change", zap.Error(err),
+						zap.String("route-id", routeID),
+						zap.String("path", path))
+					continue
+				}
+			}
+		}
+	}
+
+	return payload
+}
+
 func VersionCompatibilityExtraProcessing(payload string, dataPlaneVersion versioning.Version,
 	tracker *config.ChangeTracker, logger *zap.Logger,
 ) (string, error) {
 	dataPlaneVersionStr := dataPlaneVersion.String()
 	processedPayload := payload
 
+	var err error
 	if versionOlderThan300(dataPlaneVersion) {
 		// 'aws_region' and 'host' are mutually exclusive for DP < 3.x
 		processedPayload = correctAWSLambdaMutuallyExclusiveFields(
@@ -261,16 +334,19 @@ func VersionCompatibilityExtraProcessing(payload string, dataPlaneVersion versio
 
 		// The `headers` field on the `http-log` plugin changed from an array of strings to just a single string
 		// for DP's >= 3.0. As such, we need to transform the headers back to a single string within an array.
-		var err error
 		if processedPayload, err = correctHTTPLogHeadersField(processedPayload); err != nil {
 			return "", err
 		}
 
 		// remove '~' prefix from paths
-		processedPayload, err = correctRoutesPathField(processedPayload, dataPlaneVersionStr, tracker, logger)
+		processedPayload, err = migrateRoutesPathFieldPre300(processedPayload, dataPlaneVersionStr, tracker, logger)
 		if err != nil {
 			return "", err
 		}
+	}
+
+	if version300OrNewer(dataPlaneVersion) {
+		processedPayload = migrateRoutesPathFieldPost300(processedPayload, dataPlaneVersionStr, tracker, logger)
 	}
 
 	return processedPayload, nil
