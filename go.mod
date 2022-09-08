@@ -25,7 +25,7 @@ require (
 	github.com/jeremywohl/flatten v1.0.1
 	github.com/kong/go-kong v0.31.1
 	github.com/kong/go-wrpc v0.0.0-20220713182016-0ac0ed43d830
-	github.com/kong/goks v0.4.11
+	github.com/kong/goks v0.5.0
 	github.com/kong/semver/v4 v4.0.1
 	github.com/mattn/go-sqlite3 v1.14.15
 	github.com/mitchellh/mapstructure v1.5.0
