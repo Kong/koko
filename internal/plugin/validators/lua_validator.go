@@ -292,15 +292,13 @@ func (v *LuaValidator) LoadSchemasFromEmbed(fs embed.FS, dirName string) error {
 
 // GetRawLuaSchema implements the Validator.GetRawLuaSchema interface.
 func (v *LuaValidator) GetRawLuaSchema(ctx context.Context, name string) ([]byte, error) {
+	// if plugin schema is bundled and already loaded into memory
 	rawLuaSchema, ok := v.rawLuaSchemas[name]
-	if !ok {
-		return []byte{}, plugin.ErrSchemaNotFound
+	if ok {
+		return rawLuaSchema, nil
 	}
-	return rawLuaSchema, nil
-}
 
-// GetRawLuaSchemaForCustomPlugin implements the Validator.GetRawLuaSchemaForCustomPlugin interface.
-func (v *LuaValidator) GetRawLuaSchemaForCustomPlugin(ctx context.Context, name string) ([]byte, error) {
+	// otherwise, retrieve it from the StoreLoader
 	start := time.Now()
 	defer func() {
 		v.logger.With(zap.String("plugin", name),

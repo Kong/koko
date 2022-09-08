@@ -64,23 +64,17 @@ func (s *SchemasService) GetLuaSchemasPlugin(ctx context.Context,
 	if req.Name == "" {
 		return nil, s.err(ctx, util.ErrClient{Message: "required name is missing"})
 	}
+	s.logger(ctx).With(zap.String("name", req.Name)).Debug("reading Lua plugin schema by name")
+	ctx = context.WithValue(ctx, util.ContextKeyCluster, req.Cluster)
 
 	// Retrieve the raw JSON based on plugin name
-	s.logger(ctx).With(zap.String("name", req.Name)).Debug("reading Lua plugin schema by name")
 	rawLuaSchema, err := s.validator.GetRawLuaSchema(ctx, req.Name)
 	if err != nil {
-		// if it's not a 404 return immediately
-		if !errors.Is(err, plugin.ErrSchemaNotFound) {
-			return nil, s.err(ctx, err)
+		// if it's not found, return custom error
+		if errors.Is(err, store.ErrNotFound) || errors.Is(err, plugin.ErrSchemaNotFound) {
+			return nil, status.Errorf(codes.NotFound, "no plugin-schema for '%s'", req.Name)
 		}
-		// otherwise check if the plugin is a non-bundled one
-		rawLuaSchema, err = s.getCustomPluginSchema(ctx, req)
-		if err != nil {
-			if errors.Is(err, store.ErrNotFound) || errors.Is(err, plugin.ErrSchemaNotFound) {
-				return nil, status.Errorf(codes.NotFound, "no plugin-schema for '%s'", req.Name)
-			}
-			return nil, s.err(ctx, err)
-		}
+		return nil, s.err(ctx, err)
 	}
 
 	// Convert the raw Lua (JSON) into a map/struct and return response
@@ -92,21 +86,6 @@ func (s *SchemasService) GetLuaSchemasPlugin(ctx context.Context,
 	return &v1.GetLuaSchemasPluginResponse{
 		Schema: luaSchema,
 	}, nil
-}
-
-func (s *SchemasService) getCustomPluginSchema(
-	ctx context.Context, req *v1.GetLuaSchemasPluginRequest,
-) ([]byte, error) {
-	db, err := s.CommonOpts.getDB(ctx, req.Cluster)
-	if err != nil {
-		return nil, err
-	}
-	res := resource.NewPluginSchema()
-	ctx = context.WithValue(ctx, util.ContextKeyCluster, req.Cluster)
-	if err := db.Read(ctx, res, store.GetByID(req.Name)); err != nil {
-		return nil, err
-	}
-	return s.validator.GetRawLuaSchemaForCustomPlugin(ctx, req.Name)
 }
 
 func (s *SchemasService) ValidateLuaPlugin(
