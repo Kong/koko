@@ -274,6 +274,32 @@ func migrateRoutesPathFieldPre300(payload string,
 	return processedPayload, nil
 }
 
+func checkRoutePaths300AndAbove(paths []interface{},
+	routeID string,
+	tracker *config.ChangeTracker,
+) error {
+	for i, pathIntf := range paths {
+		path, ok := pathIntf.(string)
+		if !ok {
+			return fmt.Errorf("path #%d, expected string, found %T", i, pathIntf)
+		}
+		if strings.HasPrefix(path, "~/") || !isRegexLike(path) {
+			continue
+		}
+
+		err := tracker.TrackForResource(pathRegexFieldUnprefixedChangeID,
+			config.ResourceInfo{
+				Type: string(resource.TypeRoute),
+				ID:   routeID,
+			})
+		if err != nil {
+			return fmt.Errorf("failed to version compatibility change: %w", err)
+		}
+		return fmt.Errorf("found non-prefixed regex-like path")
+	}
+	return nil
+}
+
 func migrateRoutesPathFieldPost300(payload string,
 	dataPlaneVersion string,
 	tracker *config.ChangeTracker,
@@ -292,28 +318,15 @@ func migrateRoutesPathFieldPost300(payload string,
 			continue
 		}
 
-		paths, ok := pathsGJ.Value().([]any)
+		paths, ok := pathsGJ.Value().([]interface{})
 		if !ok {
 			continue
 		}
-		for _, pathIntf := range paths {
-			path, ok := pathIntf.(string)
-			if !ok {
-				continue
-			}
-			if !strings.HasPrefix(path, "~/") && isRegexLike(path) {
-				err := tracker.TrackForResource(pathRegexFieldUnprefixedChangeID,
-					config.ResourceInfo{
-						Type: string(resource.TypeRoute),
-						ID:   routeID,
-					})
-				if err != nil {
-					logger.Error("failed to track version compatibility change", zap.Error(err),
-						zap.String("route-id", routeID),
-						zap.String("path", path))
-					continue
-				}
-			}
+
+		err := checkRoutePaths300AndAbove(paths, routeID, tracker)
+		if err != nil {
+			logger.Error("verifying route paths for DP versions 3.0 and above", zap.Error(err),
+				zap.String("route-id", routeID))
 		}
 	}
 
