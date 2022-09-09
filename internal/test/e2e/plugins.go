@@ -330,8 +330,47 @@ var VersionCompatibilityOSSPluginConfigurationTests = []VersionCompatibilityPlug
 		ConfigureForService: true,
 		ConfigureForRoute:   true,
 	},
+	// DP < 3.0:
+	//   - remove 'allow_status_codes', 'udp_packet_size', 'use_tcp',
+	//     'hostname_in_prefix', 'consumer_identifier_default',
+	//     'service_identifier_default', 'workspace_identifier_default' fields
+	//   - remove 'status_count_per_workspace', 'status_count_per_user_per_route',
+	//     'shdict_usage' metrics.
+	//   - remove 'service_identifier' and 'workspace_identifier' identifiers from metrics
 	{
-		Name:                "statsd",
+		Name: "statsd",
+		Config: `{
+			"metrics": [
+				{
+					"name": "unique_users",
+					"stat_type": "set",
+					"service_identifier": null,
+					"workspace_identifier": null
+				},
+				{
+					"name": "status_count_per_workspace",
+					"sample_rate": 1,
+					"stat_type": "counter"
+				},
+				{
+					"name": "status_count_per_user_per_route",
+					"sample_rate": 1,
+					"stat_type": "counter"
+				},
+				{
+					"name": "shdict_usage",
+					"sample_rate": 1,
+					"stat_type": "gauge"
+				}
+			],
+			"allow_status_codes": ["200-204"],
+			"udp_packet_size": 1000,
+			"use_tcp": true,
+			"hostname_in_prefix": true,
+			"consumer_identifier_default": "custom_id",
+			"service_identifier_default": "service_name_or_host",
+			"workspace_identifier_default": "workspace_id"
+		}`,
 		ConfigureForService: true,
 		ConfigureForRoute:   true,
 	},

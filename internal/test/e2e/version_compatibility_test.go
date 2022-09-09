@@ -378,3 +378,346 @@ func ensureUpstreams(upstreams []vcUpstreamsTC) error {
 
 	return util.EnsureConfig(expectedConfig)
 }
+
+type vcPlugins struct {
+	name           string
+	config         string
+	expectedConfig string
+}
+
+// Ensure that extra-processing logic correctly injects metric identifier default values
+// for DP < 3.0, which doesn't support setting default identifiers in the schema.
+func TestVersionCompatibilityTransformations_StatsdMetricsDefaults(t *testing.T) {
+	cleanup := run.Koko(t)
+	defer cleanup()
+
+	admin := httpexpect.WithConfig(httpexpect.Config{
+		BaseURL:  "http://localhost:3000",
+		Reporter: httpexpect.NewRequireReporter(t),
+		Printers: []httpexpect.Printer{
+			httpexpect.NewCompactPrinter(t),
+		},
+	})
+
+	tests := []vcPlugins{
+		// these 2 test metrics ensure that:
+		//
+		// 1. a metric with unsupported identifiers gets cleaned up
+		// 2. a metric with non-default identifiers gets filled with defaults
+		{
+			config: `{
+				"metrics": [
+				  {
+					"name": "response_size",
+					"stat_type": "timer",
+					"service_identifier": "service_name_or_host"
+				  },
+				  {
+					"name": "unique_users",
+					"consumer_identifier": null,
+					"stat_type": "set"
+				  }
+				]
+			}`,
+			expectedConfig: `{
+				"host": "localhost",
+				"metrics": [
+					{
+						"name": "response_size",
+						"stat_type": "timer"
+					},
+					{
+						"name": "unique_users",
+						"consumer_identifier": "custom_id",
+						"stat_type": "set"
+					  }
+				],
+				"port": 8125,
+				"prefix": "kong"
+			}`,
+		},
+	}
+	expectedConfig := &v1.TestingConfig{
+		Plugins: make([]*v1.Plugin, 0, len(tests)),
+	}
+
+	for _, test := range tests {
+		var config structpb.Struct
+		require.NoError(t, json.ProtoJSONUnmarshal([]byte(test.config), &config))
+
+		plugin := &v1.Plugin{
+			Id:        uuid.NewString(),
+			Name:      "statsd",
+			Config:    &config,
+			Enabled:   wrapperspb.Bool(true),
+			Protocols: []string{"http", "https"},
+		}
+		pluginBytes, err := json.ProtoJSONMarshal(plugin)
+		require.NoError(t, err)
+		res := admin.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
+		res.Status(http.StatusCreated)
+
+		var expected structpb.Struct
+		require.NoError(t, json.ProtoJSONUnmarshal([]byte(test.expectedConfig), &expected))
+		expectedConfig.Plugins = append(expectedConfig.Plugins, &v1.Plugin{
+			Id:        plugin.Id,
+			Name:      plugin.Name,
+			Config:    &expected,
+			Enabled:   plugin.Enabled,
+			Protocols: plugin.Protocols,
+		})
+	}
+
+	dpCleanup := run.KongDP(kong.GetKongConfForShared())
+	defer dpCleanup()
+	require.NoError(t, util.WaitForKong(t))
+	require.NoError(t, util.WaitForKongAdminAPI(t))
+
+	kongClient.RunWhenEnterprise(t, "<3.0.0", kongClient.RequiredFeatures{})
+
+	util.WaitFunc(t, func() error {
+		err := util.EnsureConfig(expectedConfig)
+		t.Log("plugin validation failed", err)
+		return err
+	})
+}
+
+// Ensure that a plugin configured with exactly the same pre-3.0 default configuration,
+// doesn't get changed via extra-processing logic.
+func TestVersionCompatibilityTransformations_StatsdDefaultConfig(t *testing.T) {
+	cleanup := run.Koko(t)
+	defer cleanup()
+
+	admin := httpexpect.WithConfig(httpexpect.Config{
+		BaseURL:  "http://localhost:3000",
+		Reporter: httpexpect.NewRequireReporter(t),
+		Printers: []httpexpect.Printer{
+			httpexpect.NewCompactPrinter(t),
+		},
+	})
+
+	tests := []vcPlugins{
+		{
+			name:   "statsd",
+			config: `{}`,
+			expectedConfig: `{
+				"host": "localhost",
+				"metrics": [
+					{
+					  "name": "request_count",
+					  "stat_type": "counter",
+					  "sample_rate": 1
+					},
+					{
+					  "name": "latency",
+					  "stat_type": "timer"
+					},
+					{
+					  "name": "request_size",
+					  "stat_type": "timer"
+					},
+					{
+					  "name": "status_count",
+					  "stat_type": "counter",
+					  "sample_rate": 1
+					},
+					{
+					  "name": "response_size",
+					  "stat_type": "timer"
+					},
+					{
+					  "name": "unique_users",
+					  "stat_type": "set",
+					  "consumer_identifier": "custom_id"
+					},
+					{
+					  "name": "request_per_user",
+					  "stat_type": "counter",
+					  "sample_rate": 1,
+					  "consumer_identifier": "custom_id"
+					},
+					{
+					  "name": "upstream_latency",
+					  "stat_type": "timer"
+					},
+					{
+					  "name": "kong_latency",
+					  "stat_type": "timer"
+					},
+					{
+					  "name": "status_count_per_user",
+					  "stat_type": "counter",
+					  "sample_rate": 1,
+					  "consumer_identifier": "custom_id"
+					}
+				],
+				"port": 8125,
+				"prefix": "kong"
+			}`,
+		},
+	}
+	expectedConfig := &v1.TestingConfig{
+		Plugins: make([]*v1.Plugin, 0, len(tests)),
+	}
+
+	for _, test := range tests {
+		var config structpb.Struct
+		require.NoError(t, json.ProtoJSONUnmarshal([]byte(test.config), &config))
+
+		plugin := &v1.Plugin{
+			Id:        uuid.NewString(),
+			Name:      "statsd",
+			Config:    &config,
+			Enabled:   wrapperspb.Bool(true),
+			Protocols: []string{"http", "https"},
+		}
+		pluginBytes, err := json.ProtoJSONMarshal(plugin)
+		require.NoError(t, err)
+		res := admin.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
+		res.Status(http.StatusCreated)
+
+		var expected structpb.Struct
+		require.NoError(t, json.ProtoJSONUnmarshal([]byte(test.expectedConfig), &expected))
+		expectedConfig.Plugins = append(expectedConfig.Plugins, &v1.Plugin{
+			Id:        plugin.Id,
+			Name:      plugin.Name,
+			Config:    &expected,
+			Enabled:   plugin.Enabled,
+			Protocols: plugin.Protocols,
+		})
+	}
+
+	dpCleanup := run.KongDP(kong.GetKongConfForShared())
+	defer dpCleanup()
+	require.NoError(t, util.WaitForKong(t))
+	require.NoError(t, util.WaitForKongAdminAPI(t))
+
+	kongClient.RunWhenEnterprise(t, "<3.0.0", kongClient.RequiredFeatures{})
+
+	util.WaitFunc(t, func() error {
+		err := util.EnsureConfig(expectedConfig)
+		t.Log("plugin validation failed", err)
+		return err
+	})
+}
+
+// Ensure that new fields and metrics can be configured for DP >= 3.0.
+func TestVersionCompatibility_StatsdMetrics300OrNewer(t *testing.T) {
+	cleanup := run.Koko(t)
+	defer cleanup()
+
+	admin := httpexpect.WithConfig(httpexpect.Config{
+		BaseURL:  "http://localhost:3000",
+		Reporter: httpexpect.NewRequireReporter(t),
+		Printers: []httpexpect.Printer{
+			httpexpect.NewCompactPrinter(t),
+		},
+	})
+
+	tests := []vcPlugins{
+		{
+			config: `{
+				"metrics": [
+				  {
+					"name": "status_count_per_workspace",
+					"stat_type": "counter",
+					"sample_rate": 1
+				  },
+				  {
+					"name": "status_count_per_user_per_route",
+					"stat_type": "counter",
+					"sample_rate": 1,
+					"consumer_identifier": "consumer_id"
+				  },
+				  {
+					"name": "shdict_usage",
+					"stat_type": "gauge",
+					"sample_rate": 1
+				  }
+				]
+			}`,
+			expectedConfig: `{
+				"allow_status_codes": null,
+				"host": "localhost",
+				"hostname_in_prefix": false,
+				"metrics": [
+					{
+						"name": "status_count_per_workspace",
+						"stat_type": "counter",
+						"sample_rate": 1,
+						"consumer_identifier": null,
+						"service_identifier": null,
+						"workspace_identifier": null
+					},
+					{
+						"name": "status_count_per_user_per_route",
+						"stat_type": "counter",
+						"sample_rate": 1,
+						"consumer_identifier": "consumer_id",
+						"service_identifier": null,
+						"workspace_identifier": null
+					},
+					{
+						"name": "shdict_usage",
+						"stat_type": "gauge",
+						"sample_rate": 1,
+						"consumer_identifier": null,
+						"service_identifier": null,
+						"workspace_identifier": null
+					}
+				],
+				"port": 8125,
+				"prefix": "kong",
+				"udp_packet_size": 0,
+				"use_tcp": false,
+				"consumer_identifier_default": "custom_id",
+				"service_identifier_default": "service_name_or_host",
+				"workspace_identifier_default": "workspace_id"
+
+			}`,
+		},
+	}
+	expectedConfig := &v1.TestingConfig{
+		Plugins: make([]*v1.Plugin, 0, len(tests)),
+	}
+
+	for _, test := range tests {
+		var config structpb.Struct
+		require.NoError(t, json.ProtoJSONUnmarshal([]byte(test.config), &config))
+
+		plugin := &v1.Plugin{
+			Id:        uuid.NewString(),
+			Name:      "statsd",
+			Config:    &config,
+			Enabled:   wrapperspb.Bool(true),
+			Protocols: []string{"http", "https"},
+		}
+		pluginBytes, err := json.ProtoJSONMarshal(plugin)
+		require.NoError(t, err)
+		res := admin.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
+		res.Status(http.StatusCreated)
+
+		var expected structpb.Struct
+		require.NoError(t, json.ProtoJSONUnmarshal([]byte(test.expectedConfig), &expected))
+		expectedConfig.Plugins = append(expectedConfig.Plugins, &v1.Plugin{
+			Id:        plugin.Id,
+			Name:      plugin.Name,
+			Config:    &expected,
+			Enabled:   plugin.Enabled,
+			Protocols: plugin.Protocols,
+		})
+	}
+
+	dpCleanup := run.KongDP(kong.GetKongConfForShared())
+	defer dpCleanup()
+	require.NoError(t, util.WaitForKong(t))
+	require.NoError(t, util.WaitForKongAdminAPI(t))
+
+	kongClient.RunWhenKong(t, ">=3.0.0")
+
+	util.WaitFunc(t, func() error {
+		err := util.EnsureConfig(expectedConfig)
+		t.Log("plugin validation failed", err)
+		return err
+	})
+}
