@@ -628,6 +628,118 @@ func TestExtraProcessing_CorrectRoutesPathFieldPre300(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "multiple routes",
+			uncompressedPayload: `{
+				"config_table": {
+					"routes": [
+						{
+							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							"paths": [ "~/foo" ]
+						},
+						{
+							"id": "7c242a47-fdd1-4177-b657-20bf60c49a0e",
+							"paths": [ "/foo", "/foo/hi%%thing" ]
+						},
+						{
+							"id": "c9eac010-eee2-45a4-b867-c672088389c9",
+							"paths": [ "/foo", "~/bar", "~/baz", "/fum" ]
+						},
+						{
+							"id": "ecc628f0-8415-4bf8-b6c9-45ca9327cc52",
+							"paths": [ "~/foo/hi%%thing", "/fim%%fum" ]
+						},
+						{
+							"id": "0834e1cf-0f41-49c2-a177-fbc81526535e",
+							"paths": [ "/fim.*fum" ]
+						},
+						{
+							"id": "c82b849b-4308-4dad-a963-52cc3ef2a16a",
+							"paths": [ "~/fim.*fum" ]
+						},
+						{
+							"id": "0d0e62d5-08ac-4c26-b7cd-8ff0d8a486ef",
+							"paths": [ "/fim.*fum", "~/blog-\\d+", "/post-\\w*" ]
+						},
+						{
+							"id": "70e72b38-0430-4049-83ca-9a0f10c146f6",
+							"paths": [ "/fim.*fum", "~/blog-\\d+",  "/foo", "/foo/hi%%thing" ]
+						}
+					]
+				}
+			}`,
+			expectedPayload: `{
+				"config_table": {
+					"routes": [
+						{
+							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							"paths": [ "/foo" ]
+						},
+						{
+							"id": "7c242a47-fdd1-4177-b657-20bf60c49a0e",
+							"paths": [ "/foo", "/foo/hi%%thing" ]
+						},
+						{
+							"id": "c9eac010-eee2-45a4-b867-c672088389c9",
+							"paths": [ "/foo", "/bar", "/baz", "/fum" ]
+						},
+						{
+							"id": "ecc628f0-8415-4bf8-b6c9-45ca9327cc52",
+							"paths": [ "/foo/hi%25thing", "/fim%%fum" ]
+						},
+						{
+							"id": "0834e1cf-0f41-49c2-a177-fbc81526535e",
+							"paths": [ "/fim.*fum" ]
+						},
+						{
+							"id": "c82b849b-4308-4dad-a963-52cc3ef2a16a",
+							"paths": [ "/fim.*fum" ]
+						},
+						{
+							"id": "0d0e62d5-08ac-4c26-b7cd-8ff0d8a486ef",
+							"paths": [ "/fim.*fum", "/blog-\\d+", "/post-\\w*" ]
+						},
+						{
+							"id": "70e72b38-0430-4049-83ca-9a0f10c146f6",
+							"paths": [ "/fim.*fum", "/blog-\\d+",  "/foo", "/foo/hi%%thing" ]
+						}
+					]
+				}
+			}`,
+			expectedTrackedChanges: config.TrackedChanges{
+				ChangeDetails: []config.ChangeDetail{
+					{
+						ID: pathRegexFieldChangeID,
+						Resources: []config.ResourceInfo{
+							{
+								Type: "route",
+								ID:   "0d0e62d5-08ac-4c26-b7cd-8ff0d8a486ef",
+							},
+							{
+								Type: "route",
+								ID:   "70e72b38-0430-4049-83ca-9a0f10c146f6",
+							},
+							{
+								Type: "route",
+								ID:   "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							},
+							{
+								Type: "route",
+								ID:   "c82b849b-4308-4dad-a963-52cc3ef2a16a",
+							},
+							{
+								Type: "route",
+								ID:   "c9eac010-eee2-45a4-b867-c672088389c9",
+							},
+							{
+								Type: "route",
+								ID:   "ecc628f0-8415-4bf8-b6c9-45ca9327cc52",
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	for _, test := range tests {
@@ -884,6 +996,106 @@ func TestExtraProcessing_CorrectRoutesPathField300AndAbove(t *testing.T) {
 							{
 								Type: "route",
 								ID:   "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "multiple routes",
+			uncompressedPayload: `{
+				"config_table": {
+					"routes": [
+						{
+							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							"paths": [ "~/foo" ]
+						},
+						{
+							"id": "7c242a47-fdd1-4177-b657-20bf60c49a0e",
+							"paths": [ "/foo", "/foo/hi%%thing" ]
+						},
+						{
+							"id": "c9eac010-eee2-45a4-b867-c672088389c9",
+							"paths": [ "/foo", "~/bar", "~/baz", "/fum" ]
+						},
+						{
+							"id": "ecc628f0-8415-4bf8-b6c9-45ca9327cc52",
+							"paths": [ "~/foo/hi%%thing", "/fim%%fum" ]
+						},
+						{
+							"id": "0834e1cf-0f41-49c2-a177-fbc81526535e",
+							"paths": [ "/fim.*fum" ]
+						},
+						{
+							"id": "c82b849b-4308-4dad-a963-52cc3ef2a16a",
+							"paths": [ "~/fim.*fum" ]
+						},
+						{
+							"id": "0d0e62d5-08ac-4c26-b7cd-8ff0d8a486ef",
+							"paths": [ "/fim.*fum", "~/blog-\\d+", "/post-\\w*" ]
+						},
+						{
+							"id": "70e72b38-0430-4049-83ca-9a0f10c146f6",
+							"paths": [ "/fim.*fum", "~/blog-\\d+",  "/foo", "/foo/hi%%thing" ]
+						}
+					]
+				}
+			}`,
+			expectedPayload: `{
+				"config_table": {
+					"routes": [
+						{
+							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							"paths": [ "~/foo" ]
+						},
+						{
+							"id": "7c242a47-fdd1-4177-b657-20bf60c49a0e",
+							"paths": [ "/foo", "/foo/hi%%thing" ]
+						},
+						{
+							"id": "c9eac010-eee2-45a4-b867-c672088389c9",
+							"paths": [ "/foo", "~/bar", "~/baz", "/fum" ]
+						},
+						{
+							"id": "ecc628f0-8415-4bf8-b6c9-45ca9327cc52",
+							"paths": [ "~/foo/hi%%thing", "/fim%%fum" ]
+						},
+						{
+							"id": "0834e1cf-0f41-49c2-a177-fbc81526535e",
+							"paths": [ "/fim.*fum" ]
+						},
+						{
+							"id": "c82b849b-4308-4dad-a963-52cc3ef2a16a",
+							"paths": [ "~/fim.*fum" ]
+						},
+						{
+							"id": "0d0e62d5-08ac-4c26-b7cd-8ff0d8a486ef",
+							"paths": [ "/fim.*fum", "~/blog-\\d+", "/post-\\w*" ]
+						},
+						{
+							"id": "70e72b38-0430-4049-83ca-9a0f10c146f6",
+							"paths": [ "/fim.*fum", "~/blog-\\d+",  "/foo", "/foo/hi%%thing" ]
+						}
+					]
+				}
+			}`,
+			expectedTrackedChanges: config.TrackedChanges{
+				ChangeDetails: []config.ChangeDetail{
+					{
+						ID: pathRegexFieldUnprefixedChangeID,
+						Resources: []config.ResourceInfo{
+							{
+								Type: "route",
+								ID:   "0834e1cf-0f41-49c2-a177-fbc81526535e",
+							},
+							{
+								Type: "route",
+								ID:   "0d0e62d5-08ac-4c26-b7cd-8ff0d8a486ef",
+							},
+							{
+								Type: "route",
+								ID:   "70e72b38-0430-4049-83ca-9a0f10c146f6",
 							},
 						},
 					},
@@ -1168,6 +1380,181 @@ func TestExtraProcessing_EmitCorrectRoutePath(t *testing.T) {
 						]
 					}
 				}`,
+			},
+		},
+		{
+			name: "multiple routes",
+			uncompressedPayload: `{
+				"config_table": {
+					"routes": [
+						{
+							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							"paths": [ "~/foo" ]
+						},
+						{
+							"id": "7c242a47-fdd1-4177-b657-20bf60c49a0e",
+							"paths": [ "/foo", "/foo/hi%%thing" ]
+						},
+						{
+							"id": "c9eac010-eee2-45a4-b867-c672088389c9",
+							"paths": [ "/foo", "~/bar", "~/baz", "/fum" ]
+						},
+						{
+							"id": "ecc628f0-8415-4bf8-b6c9-45ca9327cc52",
+							"paths": [ "~/foo/hi%%thing", "/fim%%fum" ]
+						},
+						{
+							"id": "0834e1cf-0f41-49c2-a177-fbc81526535e",
+							"paths": [ "/fim.*fum" ]
+						},
+						{
+							"id": "c82b849b-4308-4dad-a963-52cc3ef2a16a",
+							"paths": [ "~/fim.*fum" ]
+						},
+						{
+							"id": "0d0e62d5-08ac-4c26-b7cd-8ff0d8a486ef",
+							"paths": [ "/fim.*fum", "~/blog-\\d+", "/post-\\w*" ]
+						},
+						{
+							"id": "70e72b38-0430-4049-83ca-9a0f10c146f6",
+							"paths": [ "/fim.*fum", "~/blog-\\d+",  "/foo", "/foo/hi%%thing" ]
+						}
+					]
+				}
+			}`,
+			expectedPre300: expect{
+				processedPayload: `{
+					"config_table": {
+						"routes": [
+							{
+								"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+								"paths": [ "/foo" ]
+							},
+							{
+								"id": "7c242a47-fdd1-4177-b657-20bf60c49a0e",
+								"paths": [ "/foo", "/foo/hi%%thing" ]
+							},
+							{
+								"id": "c9eac010-eee2-45a4-b867-c672088389c9",
+								"paths": [ "/foo", "/bar", "/baz", "/fum" ]
+							},
+							{
+								"id": "ecc628f0-8415-4bf8-b6c9-45ca9327cc52",
+								"paths": [ "/foo/hi%25thing", "/fim%%fum" ]
+							},
+							{
+								"id": "0834e1cf-0f41-49c2-a177-fbc81526535e",
+								"paths": [ "/fim.*fum" ]
+							},
+							{
+								"id": "c82b849b-4308-4dad-a963-52cc3ef2a16a",
+								"paths": [ "/fim.*fum" ]
+							},
+							{
+								"id": "0d0e62d5-08ac-4c26-b7cd-8ff0d8a486ef",
+								"paths": [ "/fim.*fum", "/blog-\\d+", "/post-\\w*" ]
+							},
+							{
+								"id": "70e72b38-0430-4049-83ca-9a0f10c146f6",
+								"paths": [ "/fim.*fum", "/blog-\\d+",  "/foo", "/foo/hi%%thing" ]
+							}
+						]
+					}
+				}`,
+				trackedChanges: config.TrackedChanges{
+					ChangeDetails: []config.ChangeDetail{
+						{
+							ID: pathRegexFieldChangeID,
+							Resources: []config.ResourceInfo{
+								{
+									Type: "route",
+									ID:   "0d0e62d5-08ac-4c26-b7cd-8ff0d8a486ef",
+								},
+								{
+									Type: "route",
+									ID:   "70e72b38-0430-4049-83ca-9a0f10c146f6",
+								},
+								{
+									Type: "route",
+									ID:   "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+								},
+								{
+									Type: "route",
+									ID:   "c82b849b-4308-4dad-a963-52cc3ef2a16a",
+								},
+								{
+									Type: "route",
+									ID:   "c9eac010-eee2-45a4-b867-c672088389c9",
+								},
+								{
+									Type: "route",
+									ID:   "ecc628f0-8415-4bf8-b6c9-45ca9327cc52",
+								},
+							},
+						},
+					},
+				},
+			},
+			expected300AndAbove: expect{
+				processedPayload: `{
+					"config_table": {
+						"routes": [
+							{
+								"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+								"paths": [ "~/foo" ]
+							},
+							{
+								"id": "7c242a47-fdd1-4177-b657-20bf60c49a0e",
+								"paths": [ "/foo", "/foo/hi%%thing" ]
+							},
+							{
+								"id": "c9eac010-eee2-45a4-b867-c672088389c9",
+								"paths": [ "/foo", "~/bar", "~/baz", "/fum" ]
+							},
+							{
+								"id": "ecc628f0-8415-4bf8-b6c9-45ca9327cc52",
+								"paths": [ "~/foo/hi%%thing", "/fim%%fum" ]
+							},
+							{
+								"id": "0834e1cf-0f41-49c2-a177-fbc81526535e",
+								"paths": [ "/fim.*fum" ]
+							},
+							{
+								"id": "c82b849b-4308-4dad-a963-52cc3ef2a16a",
+								"paths": [ "~/fim.*fum" ]
+							},
+							{
+								"id": "0d0e62d5-08ac-4c26-b7cd-8ff0d8a486ef",
+								"paths": [ "/fim.*fum", "~/blog-\\d+", "/post-\\w*" ]
+							},
+							{
+								"id": "70e72b38-0430-4049-83ca-9a0f10c146f6",
+								"paths": [ "/fim.*fum", "~/blog-\\d+",  "/foo", "/foo/hi%%thing" ]
+							}
+						]
+					}
+				}`,
+				trackedChanges: config.TrackedChanges{
+					ChangeDetails: []config.ChangeDetail{
+						{
+							ID: pathRegexFieldUnprefixedChangeID,
+							Resources: []config.ResourceInfo{
+								{
+									Type: "route",
+									ID:   "0834e1cf-0f41-49c2-a177-fbc81526535e",
+								},
+								{
+									Type: "route",
+									ID:   "0d0e62d5-08ac-4c26-b7cd-8ff0d8a486ef",
+								},
+								{
+									Type: "route",
+									ID:   "70e72b38-0430-4049-83ca-9a0f10c146f6",
+								},
+							},
+						},
+					},
+				},
 			},
 		},
 	}
