@@ -473,7 +473,7 @@ func TestVersionCompatibilityTransformations_StatsdMetricsDefaults(t *testing.T)
 	require.NoError(t, util.WaitForKong(t))
 	require.NoError(t, util.WaitForKongAdminAPI(t))
 
-	kongClient.RunWhenEnterprise(t, "<3.0.0", kongClient.RequiredFeatures{})
+	kongClient.RunWhenKong(t, "<3.0.0")
 
 	util.WaitFunc(t, func() error {
 		err := util.EnsureConfig(expectedConfig)
@@ -592,7 +592,7 @@ func TestVersionCompatibilityTransformations_StatsdDefaultConfig(t *testing.T) {
 	require.NoError(t, util.WaitForKong(t))
 	require.NoError(t, util.WaitForKongAdminAPI(t))
 
-	kongClient.RunWhenEnterprise(t, "<3.0.0", kongClient.RequiredFeatures{})
+	kongClient.RunWhenKong(t, "<3.0.0")
 
 	util.WaitFunc(t, func() error {
 		err := util.EnsureConfig(expectedConfig)
