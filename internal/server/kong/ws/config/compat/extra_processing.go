@@ -20,8 +20,8 @@ var (
 
 const (
 	awsLambdaExclusiveFieldChangeID  = "P121"
-	pathRegexFieldChangeID           = "P130"
-	pathRegexFieldUnprefixedChangeID = "P131"
+	pathRegexFieldChangeID           = "P128"
+	pathRegexFieldUnprefixedChangeID = "P129"
 )
 
 func init() {
