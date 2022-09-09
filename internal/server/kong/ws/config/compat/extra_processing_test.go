@@ -12,6 +12,50 @@ import (
 	"github.com/tidwall/sjson"
 )
 
+func TestExtraProcessing_IsRegexLike(t *testing.T) {
+	for _, test := range []string{
+		"/blog-\\d+",
+		"/[ab]",
+		"/(a|b)",
+		"/end?",
+		"/\\w",
+		"/seg<ment>/",
+	} {
+		require.True(t, isRegexLike(test), "expected isRegexLike(%#v) == true but got false", test)
+	}
+
+	for _, test := range []string{
+		"/login",
+		"/~usnam",
+		"/segmented.path",
+		"/multi_word",
+		"/more-words",
+		"/with%sign",
+	} {
+		require.False(t, isRegexLike(test), "expected isRegexLike(%#v) == false but got true", test)
+	}
+}
+
+func TestExtraProcessing_DenormalizePath(t *testing.T) {
+	for _, test := range []struct{ path, expected string }{
+		{path: "/plain", expected: "/plain"},
+		{path: "~/simple", expected: "/simple"},
+		{path: "/with%%quote", expected: "/with%25quote"},
+		{path: "~/with%%quote", expected: "/with%25quote"},
+		{path: "/some%36numbers", expected: "/some%36numbers"},
+		{path: "~/some%36numbers", expected: "/some%36numbers"},
+		{path: "/even%25this", expected: "/even%25this"},
+		{path: "~/even%25this", expected: "/even%25this"},
+		{path: "/invalid%]quote", expected: "/invalid%]quote"},
+		{path: "~/invalid%]quote", expected: "/invalid%]quote"},
+	} {
+		denormalized, err := denormalizePath(test.path)
+		require.NoError(t, err, "denormalizing %#v", test.path)
+		require.Equal(t, test.expected, denormalized, "denormalizePath(%#v)=>%#v, expected %#v",
+			test.path, denormalized, test.expected)
+	}
+}
+
 func TestExtraProcessing_CorrectAWSLambdaMutuallyExclusiveFields(t *testing.T) {
 	tests := []struct {
 		name                   string
