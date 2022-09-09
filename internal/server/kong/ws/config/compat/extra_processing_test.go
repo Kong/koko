@@ -1624,3 +1624,334 @@ func TestExtraProcessing_EmitCorrectRoutePath(t *testing.T) {
 		})
 	}
 }
+
+func TestExtraProcessing_CorrectStatsdIdentifiers(t *testing.T) {
+	tests := []struct {
+		name                   string
+		uncompressedPayload    string
+		expectedPayload        string
+		expectedTrackedChanges config.TrackedChanges
+	}{
+		{
+			name: "ensure unsupported '*_identifier' fields are removed",
+			uncompressedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							"name": "statsd",
+							"config": {
+								"metrics": [
+									{
+										"name": "unique_users",
+										"stat_type": "set",
+										"consumer_identifier": null,
+										"workspace_identifier": null,
+										"service_identifier": null
+									}
+								]
+							}
+						}
+					]
+				}
+			}`,
+			expectedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							"name": "statsd",
+							"config": {
+								"metrics": [
+									{
+										"name": "unique_users",
+										"stat_type": "set",
+										"consumer_identifier": "custom_id"
+									}
+								]
+							}
+						}
+					]
+				}
+			}`,
+			expectedTrackedChanges: config.TrackedChanges{
+				ChangeDetails: []config.ChangeDetail{
+					{
+						ID: statsdUnsupportedMetricFieldChangeID,
+						Resources: []config.ResourceInfo{
+							{
+								Type: "plugin",
+								ID:   "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							},
+						},
+					},
+					{
+						ID: statsdAddDefaultMetricFieldValueChangeID,
+						Resources: []config.ResourceInfo{
+							{
+								Type: "plugin",
+								ID:   "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "ensure null '*_identifier' fields are properly filled with defaults for one metric",
+			uncompressedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							"name": "statsd",
+							"config": {
+								"metrics": [
+									{
+										"name": "request_per_user",
+										"sample_rate": 1,
+										"stat_type": "counter"
+									}
+								]
+							}
+						}
+					]
+				}
+			}`,
+			expectedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							"name": "statsd",
+							"config": {
+								"metrics": [
+									{
+										"consumer_identifier": "custom_id",
+										"name": "request_per_user",
+										"sample_rate": 1,
+										"stat_type": "counter"
+									}
+								]
+							}
+						}
+					]
+				}
+			}`,
+			expectedTrackedChanges: config.TrackedChanges{
+				ChangeDetails: []config.ChangeDetail{
+					{
+						ID: statsdAddDefaultMetricFieldValueChangeID,
+						Resources: []config.ResourceInfo{
+							{
+								Type: "plugin",
+								ID:   "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "ensure null '*_identifier' fields are properly filled with defaults for multiple metrics",
+			uncompressedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							"name": "statsd",
+							"config": {
+								"metrics": [
+									{
+										"name": "request_per_user",
+										"sample_rate": 1,
+										"stat_type": "counter"
+									},
+									{
+										"name": "status_count_per_user",
+										"sample_rate": 1,
+										"stat_type": "counter"
+									}
+								]
+							}
+						}
+					]
+				}
+			}`,
+			expectedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							"name": "statsd",
+							"config": {
+								"metrics": [
+									{
+										"consumer_identifier": "custom_id",
+										"name": "request_per_user",
+										"sample_rate": 1,
+										"stat_type": "counter"
+									},
+									{
+										"consumer_identifier": "custom_id",
+										"name": "status_count_per_user",
+										"sample_rate": 1,
+										"stat_type": "counter"
+									}
+								]
+							}
+						}
+					]
+				}
+			}`,
+			expectedTrackedChanges: config.TrackedChanges{
+				ChangeDetails: []config.ChangeDetail{
+					{
+						ID: statsdAddDefaultMetricFieldValueChangeID,
+						Resources: []config.ResourceInfo{
+							{
+								Type: "plugin",
+								ID:   "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "ensure non-default metric doesn't get changed",
+			uncompressedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							"name": "statsd",
+							"config": {
+								"metrics": [
+									{
+										"name": "cache_datastore_misses_total",
+										"sample_rate": 1,
+										"stat_type": "counter"
+									}
+								]
+							}
+						}
+					]
+				}
+			}`,
+			expectedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							"name": "statsd",
+							"config": {
+								"metrics": [
+									{
+										"name": "cache_datastore_misses_total",
+										"sample_rate": 1,
+										"stat_type": "counter"
+									}
+								]
+							}
+						}
+					]
+				}
+			}`,
+		},
+		{
+			name: "ensure unsupported metrics are removed",
+			uncompressedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							"name": "statsd",
+							"config": {
+								"metrics": [
+									{
+										"name": "response_size",
+										"stat_type": "timer",
+										"service_identifier": "service_name"
+									},
+									{
+										"name": "shdict_usage",
+										"stat_type": "gauge",
+										"sample_rate": 1,
+										"service_identifier": "service_name_or_host"
+									},
+									{
+										"name": "status_count_per_user_per_route",
+										"stat_type": "counter",
+										"sample_rate": 1,
+										"service_identifier": "service_name_or_host",
+										"consumer_identifier": "custom_id"
+									},
+									{
+										"workspace_identifier": "workspace_id",
+										"name": "status_count_per_workspace",
+										"stat_type": "counter",
+										"sample_rate": 1
+									}
+								]
+							}
+						}
+					]
+				}
+			}`,
+			expectedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							"name": "statsd",
+							"config": {
+								"metrics": [
+									{
+										"name": "response_size",
+										"stat_type": "timer"
+									}
+								]
+							}
+						}
+					]
+				}
+			}`,
+			expectedTrackedChanges: config.TrackedChanges{
+				ChangeDetails: []config.ChangeDetail{
+					{
+						ID: statsdUnsupportedMetricChangeID,
+						Resources: []config.ResourceInfo{
+							{
+								Type: "plugin",
+								ID:   "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							},
+						},
+					},
+					{
+						ID: statsdUnsupportedMetricFieldChangeID,
+						Resources: []config.ResourceInfo{
+							{
+								Type: "plugin",
+								ID:   "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			tracker := config.NewChangeTracker()
+			require.JSONEq(
+				t,
+				test.expectedPayload,
+				correctStatsdMetrics(test.uncompressedPayload, "2.6.0.0", tracker, log.Logger),
+			)
+			trackedChanged := tracker.Get()
+			require.Equal(t, test.expectedTrackedChanges, trackedChanged)
+		})
+	}
+}

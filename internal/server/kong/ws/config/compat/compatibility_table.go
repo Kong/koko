@@ -802,6 +802,38 @@ var (
 				},
 			},
 		},
+		{
+			Metadata: config.ChangeMetadata{
+				ID:       config.ChangeID("P133"),
+				Severity: config.ChangeSeverityError,
+				Description: standardPluginFieldsMessage("statsd",
+					[]string{
+						"allow_status_codes",
+						"udp_packet_size",
+						"use_tcp",
+						"hostname_in_prefix",
+						"consumer_identifier_default",
+						"service_identifier_default",
+						"workspace_identifier_default",
+					},
+					"3.0", false),
+				Resolution: standardUpgradeMessage("3.0"),
+			},
+			SemverRange: versionsPre300,
+			Update: config.ConfigTableUpdates{
+				Name: "statsd",
+				Type: config.Plugin,
+				RemoveFields: []string{
+					"allow_status_codes",
+					"udp_packet_size",
+					"use_tcp",
+					"hostname_in_prefix",
+					"consumer_identifier_default",
+					"service_identifier_default",
+					"workspace_identifier_default",
+				},
+			},
+		},
 	}
 )
 
