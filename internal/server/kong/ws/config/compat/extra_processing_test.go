@@ -1286,6 +1286,7 @@ func TestExtraProcessing_EmitCorrectRoutePath(t *testing.T) {
 			expected300AndAbove: expect{
 				processedPayload: `{
 					"config_table": {
+						"_format_version": "3.0",
 						"routes": [
 							{
 								"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
@@ -1327,6 +1328,7 @@ func TestExtraProcessing_EmitCorrectRoutePath(t *testing.T) {
 			expected300AndAbove: expect{
 				processedPayload: `{
 					"config_table": {
+						"_format_version": "3.0",
 						"routes": [
 							{
 								"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
@@ -1393,6 +1395,7 @@ func TestExtraProcessing_EmitCorrectRoutePath(t *testing.T) {
 			expected300AndAbove: expect{
 				processedPayload: `{
 					"config_table": {
+						"_format_version": "3.0",
 						"routes": [
 							{
 								"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
@@ -1528,6 +1531,7 @@ func TestExtraProcessing_EmitCorrectRoutePath(t *testing.T) {
 			expected300AndAbove: expect{
 				processedPayload: `{
 					"config_table": {
+						"_format_version": "3.0",
 						"routes": [
 							{
 								"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",

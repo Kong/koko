@@ -353,6 +353,18 @@ func migrateRoutesPathFieldPost300(payload string,
 	return payload
 }
 
+func updateFormatVersion(payload string,
+	dataPlaneVersion string,
+	logger *zap.Logger,
+) string {
+	payload, err := sjson.Set(payload, "config_table._format_version", "3.0")
+	if err != nil {
+		logger.Error("failed to update \"_format_version\" parameter", zap.Error(err),
+			zap.String("data-plane", dataPlaneVersion))
+	}
+	return payload
+}
+
 func VersionCompatibilityExtraProcessing(payload string, dataPlaneVersion versioning.Version,
 	tracker *config.ChangeTracker, logger *zap.Logger,
 ) (string, error) {
@@ -379,6 +391,7 @@ func VersionCompatibilityExtraProcessing(payload string, dataPlaneVersion versio
 	}
 
 	if version300OrNewer(dataPlaneVersion) {
+		processedPayload = updateFormatVersion(processedPayload, dataPlaneVersionStr, logger)
 		processedPayload = migrateRoutesPathFieldPost300(processedPayload, dataPlaneVersionStr, tracker, logger)
 	}
 
