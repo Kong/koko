@@ -39,18 +39,12 @@ func TestExtraProcessing_IsRegexLike(t *testing.T) {
 func TestExtraProcessing_DenormalizePath(t *testing.T) {
 	for _, test := range []struct{ path, expected string }{
 		{path: "/plain", expected: "/plain"},
-		{path: "~/simple", expected: "/simple"},
 		{path: "/with%%quote", expected: "/with%25quote"},
-		{path: "~/with%%quote", expected: "/with%25quote"},
 		{path: "/some%36numbers", expected: "/some%36numbers"},
-		{path: "~/some%36numbers", expected: "/some%36numbers"},
 		{path: "/even%25this", expected: "/even%25this"},
-		{path: "~/even%25this", expected: "/even%25this"},
 		{path: "/invalid%]quote", expected: "/invalid%]quote"},
-		{path: "~/invalid%]quote", expected: "/invalid%]quote"},
 	} {
-		denormalized, err := denormalizePath(test.path)
-		require.NoError(t, err, "denormalizing %#v", test.path)
+		denormalized, _ := denormalizePath(test.path)
 		require.Equal(t, test.expected, denormalized, "denormalizePath(%#v)=>%#v, expected %#v",
 			test.path, denormalized, test.expected)
 	}
@@ -565,6 +559,15 @@ func TestExtraProcessing_CorrectRoutesPathFieldPre300(t *testing.T) {
 							},
 						},
 					},
+					{
+						ID: pathRegexFieldDenormalizationChangeID,
+						Resources: []config.ResourceInfo{
+							{
+								Type: "route",
+								ID:   "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							},
+						},
+					},
 				},
 			},
 		},
@@ -618,6 +621,15 @@ func TestExtraProcessing_CorrectRoutesPathFieldPre300(t *testing.T) {
 				ChangeDetails: []config.ChangeDetail{
 					{
 						ID: pathRegexFieldChangeID,
+						Resources: []config.ResourceInfo{
+							{
+								Type: "route",
+								ID:   "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							},
+						},
+					},
+					{
+						ID: pathRegexFieldDenormalizationChangeID,
 						Resources: []config.ResourceInfo{
 							{
 								Type: "route",
@@ -731,6 +743,15 @@ func TestExtraProcessing_CorrectRoutesPathFieldPre300(t *testing.T) {
 								Type: "route",
 								ID:   "c9eac010-eee2-45a4-b867-c672088389c9",
 							},
+							{
+								Type: "route",
+								ID:   "ecc628f0-8415-4bf8-b6c9-45ca9327cc52",
+							},
+						},
+					},
+					{
+						ID: pathRegexFieldDenormalizationChangeID,
+						Resources: []config.ResourceInfo{
 							{
 								Type: "route",
 								ID:   "ecc628f0-8415-4bf8-b6c9-45ca9327cc52",
@@ -1486,6 +1507,15 @@ func TestExtraProcessing_EmitCorrectRoutePath(t *testing.T) {
 									Type: "route",
 									ID:   "c9eac010-eee2-45a4-b867-c672088389c9",
 								},
+								{
+									Type: "route",
+									ID:   "ecc628f0-8415-4bf8-b6c9-45ca9327cc52",
+								},
+							},
+						},
+						{
+							ID: pathRegexFieldDenormalizationChangeID,
+							Resources: []config.ResourceInfo{
 								{
 									Type: "route",
 									ID:   "ecc628f0-8415-4bf8-b6c9-45ca9327cc52",
