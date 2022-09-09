@@ -19,10 +19,9 @@ var (
 )
 
 const (
-	awsLambdaExclusiveFieldChangeID       = "P121"
-	pathRegexFieldChangeID                = "P128"
-	pathRegexFieldDenormalizationChangeID = "P129"
-	pathRegexFieldUnprefixedChangeID      = "P130"
+	awsLambdaExclusiveFieldChangeID  = "P121"
+	pathRegexFieldChangeID           = "P128"
+	pathRegexFieldUnprefixedChangeID = "P129"
 )
 
 func init() {
@@ -57,23 +56,6 @@ func init() {
 				"If upgrading to version 3.0 is not possible, using paths " +
 				"without the '~' prefix will avoid this warning.",
 			Resolution:       standardUpgradeMessage("3.0"),
-			DocumentationURL: "",
-		},
-		SemverRange: versionsPre300,
-		// none since the logic is hard-coded instead
-		Update: config.ConfigTableUpdates{},
-	}); err != nil {
-		panic(err)
-	}
-
-	if err := config.ChangeRegistry.Register(config.Change{
-		Metadata: config.ChangeMetadata{
-			ID:       pathRegexFieldDenormalizationChangeID,
-			Severity: config.ChangeSeverityWarning,
-			Description: "For the 'paths' field used in route a regex " +
-				"pattern with URL-encoding was detected. " +
-				"This field has been de-normalized replacing '%%' with '%25'. ",
-			Resolution:       "For regex paths, avoid '%%'.  Use '%25' instead.",
 			DocumentationURL: "",
 		},
 		SemverRange: versionsPre300,
@@ -207,13 +189,6 @@ func isRegexLike(path string) bool {
 	return regexpattrn.MatchString(path)
 }
 
-// denormalizePath performs a minimal revertion of url-normalization.
-// returns a boolean indicating if it actually changed the input.
-func denormalizePath(path string) (string, bool) {
-	denoPath := strings.ReplaceAll(path, "%%", "%25")
-	return denoPath, denoPath != path
-}
-
 // migrateRoutesPathFieldPre300 changes any regex path matching pattern
 // from the 3.0 style (where regex must start with '~/' and prefix paths
 // start with '/') into the previous format (where all paths start with
@@ -249,19 +224,6 @@ func migrateRoutesPathFieldPre300(payload string,
 			}
 			if strings.HasPrefix(path, "~/") {
 				path = strings.TrimPrefix(path, "~")
-				path, changed := denormalizePath(path)
-				if changed {
-					err := tracker.TrackForResource(pathRegexFieldDenormalizationChangeID,
-						config.ResourceInfo{
-							Type: string(resource.TypeRoute),
-							ID:   routeID,
-						})
-					if err != nil {
-						logger.Error("failed to track route path URL-denormalization change", zap.Error(err),
-							zap.String("route-id", routeID),
-							zap.String("path", path))
-					}
-				}
 				if !modifiedRoute {
 					err := tracker.TrackForResource(pathRegexFieldChangeID,
 						config.ResourceInfo{
