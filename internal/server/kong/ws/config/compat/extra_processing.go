@@ -293,7 +293,7 @@ func checkRoutePaths300AndAbove(paths []interface{},
 				ID:   routeID,
 			})
 		if err != nil {
-			return fmt.Errorf("failed to version compatibility change: %w", err)
+			return fmt.Errorf("failed to track version compatibility change: %w", err)
 		}
 		return fmt.Errorf("found non-prefixed regex-like path")
 	}

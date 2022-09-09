@@ -22,7 +22,7 @@ func TestTagPattern(t *testing.T) {
 }
 
 func TestPathPattern(t *testing.T) {
-	// Path regex associated with fixed and the 3.0 regex path format.
+	// regex associated with prefix paths and the 3.0 regex path format.
 	pathRegex := regexp.MustCompile(RouterPath.AllOf[0].Pattern)
 
 	tests := []struct {
@@ -36,7 +36,7 @@ func TestPathPattern(t *testing.T) {
 			expected: false,
 		},
 		{
-			name: "must start with / for fixed paths",
+			name: "must start with / for prefix paths",
 			paths: []string{
 				"/",
 				"/foo",
