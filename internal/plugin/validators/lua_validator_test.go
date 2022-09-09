@@ -16,6 +16,7 @@ import (
 	"github.com/kong/koko/internal/log"
 	"github.com/kong/koko/internal/model"
 	"github.com/kong/koko/internal/model/json/validation"
+	"github.com/kong/koko/internal/model/json/validation/typedefs"
 	"github.com/kong/koko/internal/plugin"
 	"github.com/kong/koko/internal/plugin/validators/testdata"
 	"github.com/kong/koko/internal/resource"
@@ -1175,6 +1176,233 @@ func TestValidate(t *testing.T) {
 			require.Empty(t, validator.luaSchemaNames)
 			require.Empty(t, validator.rawLuaSchemas)
 		}
+	})
+
+	t.Run("[statsd] accepts valid identifier_default", func(t *testing.T) {
+		var config structpb.Struct
+		require.NoError(
+			t,
+			json.ProtoJSONUnmarshal(
+				[]byte(`{
+					"consumer_identifier_default": "consumer_id",
+					"service_identifier_default": "service_id",
+					"workspace_identifier_default": "workspace_id"
+				}`),
+				&config,
+			),
+		)
+
+		assert.NoError(t, validator.Validate(
+			context.Background(),
+			&grpcModel.Plugin{
+				Name:      "statsd",
+				Config:    &config,
+				Protocols: []string{typedefs.ProtocolHTTP, typedefs.ProtocolHTTPS},
+				Enabled:   wrapperspb.Bool(true),
+			}),
+		)
+	})
+
+	t.Run("[statsd] rejects invalid identifier_default", func(t *testing.T) {
+		var config structpb.Struct
+		require.NoError(
+			t,
+			json.ProtoJSONUnmarshal(
+				[]byte(`{
+					"consumer_identifier_default": "invalid",
+					"service_identifier_default": "invalid",
+					"workspace_identifier_default": "invalid"
+				}`),
+				&config,
+			),
+		)
+		err := validator.Validate(context.Background(), &grpcModel.Plugin{
+			Name:      "statsd",
+			Config:    &config,
+			Protocols: []string{"http", "https"},
+			Enabled:   wrapperspb.Bool(true),
+		})
+		require.Error(t, err)
+		require.IsType(t, validation.Error{}, err)
+		assert.ElementsMatch(
+			t,
+			[]*grpcModel.ErrorDetail{
+				{
+					Type:     grpcModel.ErrorType_ERROR_TYPE_FIELD,
+					Field:    "config.consumer_identifier_default",
+					Messages: []string{"expected one of: consumer_id, custom_id, username"},
+				},
+				{
+					Type:     grpcModel.ErrorType_ERROR_TYPE_FIELD,
+					Field:    "config.service_identifier_default",
+					Messages: []string{"expected one of: service_id, service_name, service_host, service_name_or_host"},
+				},
+				{
+					Type:     grpcModel.ErrorType_ERROR_TYPE_FIELD,
+					Field:    "config.workspace_identifier_default",
+					Messages: []string{"expected one of: workspace_id, workspace_name"},
+				},
+			},
+			err.(validation.Error).Errs,
+		)
+	})
+
+	t.Run("[statsd] accepts valid allow_status_codes entries as ranges", func(t *testing.T) {
+		var config structpb.Struct
+		require.NoError(
+			t,
+			json.ProtoJSONUnmarshal(
+				[]byte(`{
+					"allow_status_codes": [
+						"200-299",
+						"300-399"
+					]
+				}`),
+				&config,
+			),
+		)
+
+		assert.NoError(t, validator.Validate(
+			context.Background(),
+			&grpcModel.Plugin{
+				Name:      "statsd",
+				Config:    &config,
+				Protocols: []string{typedefs.ProtocolHTTP, typedefs.ProtocolHTTPS},
+				Enabled:   wrapperspb.Bool(true),
+			}),
+		)
+	})
+
+	t.Run("[statsd] rejects invalid allow_status_codes formats", func(t *testing.T) {
+		var config structpb.Struct
+		// invalid formats:
+		// - literals
+		// - special chars
+		// - range format with literals
+		// - fixed number without range
+		require.NoError(
+			t,
+			json.ProtoJSONUnmarshal(
+				[]byte(`{
+					"allow_status_codes": [
+						"test",
+						"$%%",
+						"test-test",
+						"200"
+					]
+				}`),
+				&config,
+			),
+		)
+		err := validator.Validate(context.Background(), &grpcModel.Plugin{
+			Name:      "statsd",
+			Config:    &config,
+			Protocols: []string{"http", "https"},
+			Enabled:   wrapperspb.Bool(true),
+		})
+		require.Error(t, err)
+		require.IsType(t, validation.Error{}, err)
+		assert.ElementsMatch(
+			t,
+			[]*grpcModel.ErrorDetail{
+				{
+					Type:     grpcModel.ErrorType_ERROR_TYPE_FIELD,
+					Field:    "config.allow_status_codes[0]",
+					Messages: []string{"invalid value: test"},
+				},
+				{
+					Type:     grpcModel.ErrorType_ERROR_TYPE_FIELD,
+					Field:    "config.allow_status_codes[1]",
+					Messages: []string{"invalid value: $%%"},
+				},
+				{
+					Type:     grpcModel.ErrorType_ERROR_TYPE_FIELD,
+					Field:    "config.allow_status_codes[2]",
+					Messages: []string{"invalid value: test-test"},
+				},
+				{
+					Type:     grpcModel.ErrorType_ERROR_TYPE_FIELD,
+					Field:    "config.allow_status_codes[3]",
+					Messages: []string{"invalid value: 200"},
+				},
+			},
+			err.(validation.Error).Errs,
+		)
+	})
+
+	t.Run("[statsd] rejects invalid allow_status_codes with numbers and literals", func(t *testing.T) {
+		var config structpb.Struct
+		require.NoError(
+			t,
+			json.ProtoJSONUnmarshal(
+				[]byte(`{
+					"allow_status_codes": [
+						"test-299",
+						"300-test"
+					]
+				}`),
+				&config,
+			),
+		)
+		err := validator.Validate(context.Background(), &grpcModel.Plugin{
+			Name:      "statsd",
+			Config:    &config,
+			Protocols: []string{"http", "https"},
+			Enabled:   wrapperspb.Bool(true),
+		})
+		require.Error(t, err)
+		require.IsType(t, validation.Error{}, err)
+		assert.ElementsMatch(
+			t,
+			[]*grpcModel.ErrorDetail{
+				{
+					Type:     grpcModel.ErrorType_ERROR_TYPE_FIELD,
+					Field:    "config.allow_status_codes[0]",
+					Messages: []string{"invalid value: test-299"},
+				},
+				{
+					Type:     grpcModel.ErrorType_ERROR_TYPE_FIELD,
+					Field:    "config.allow_status_codes[1]",
+					Messages: []string{"invalid value: 300-test"},
+				},
+			},
+			err.(validation.Error).Errs,
+		)
+	})
+
+	t.Run("[statsd] rejects allow_status_codes with valid and invalid entries", func(t *testing.T) {
+		var config structpb.Struct
+		require.NoError(
+			t,
+			json.ProtoJSONUnmarshal(
+				[]byte(`{
+					"allow_status_codes": [
+						"200-300",
+						"test-test"
+					]
+				}`),
+				&config,
+			),
+		)
+		err := validator.Validate(context.Background(), &grpcModel.Plugin{
+			Name:      "statsd",
+			Config:    &config,
+			Protocols: []string{"http", "https"},
+			Enabled:   wrapperspb.Bool(true),
+		})
+		require.Error(t, err)
+		require.IsType(t, validation.Error{}, err)
+		assert.ElementsMatch(
+			t,
+			[]*grpcModel.ErrorDetail{
+				{
+					Type:     grpcModel.ErrorType_ERROR_TYPE_FIELD,
+					Field:    "config.allow_status_codes[0]",
+					Messages: []string{"[2] = invalid value: test-test"},
+				},
+			},
+			err.(validation.Error).Errs,
+		)
 	})
 }
 
