@@ -28,7 +28,7 @@ var (
 )
 
 const (
-	maxRetriesInTests = 30
+	maxRetriesInTests = 45
 	retryTimeout      = 5 * time.Second
 	requestTimeout    = 30 * time.Second
 )
