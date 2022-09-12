@@ -289,8 +289,8 @@ func TestExtraProcessing_CorrectAWSLambdaMutuallyExclusiveFields(t *testing.T) {
 			processedPayload := correctAWSLambdaMutuallyExclusiveFields(test.
 				uncompressedPayload, versionsPre260, tracker, log.Logger)
 			require.JSONEq(t, test.expectedPayload, processedPayload)
-			trackedChanged := tracker.Get()
-			require.Equal(t, test.expectedTrackedChanges, trackedChanged)
+			trackedChanges := tracker.Get()
+			require.Equal(t, test.expectedTrackedChanges, trackedChanges)
 		})
 	}
 }
@@ -693,8 +693,8 @@ func TestExtraProcessing_CorrectRoutesPathFieldPre300(t *testing.T) {
 				uncompressedPayload, versionsPre300, tracker, log.Logger)
 			require.NoError(t, err)
 			require.JSONEq(t, test.expectedPayload, processedPayload)
-			trackedChanged := tracker.Get()
-			require.Equal(t, test.expectedTrackedChanges, trackedChanged)
+			trackedChanges := tracker.Get()
+			require.Equal(t, test.expectedTrackedChanges, trackedChanges)
 		})
 	}
 }
@@ -1051,11 +1051,11 @@ func TestExtraProcessing_CorrectRoutesPathField300AndAbove(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			tracker := config.NewChangeTracker()
-			processedPayload := migrateRoutesPathFieldPost300(test.
+			processedPayload := checkRoutesPathFieldPost300(test.
 				uncompressedPayload, versionsPre300, tracker, log.Logger)
 			require.JSONEq(t, test.expectedPayload, processedPayload)
-			trackedChanged := tracker.Get()
-			require.Equal(t, test.expectedTrackedChanges, trackedChanged)
+			trackedChanges := tracker.Get()
+			require.Equal(t, test.expectedTrackedChanges, trackedChanges)
 		})
 	}
 }

@@ -55,8 +55,7 @@ func init() {
 				"on Kong gateway versions < 3.0. " +
 				"If upgrading to version 3.0 is not possible, using paths " +
 				"without the '~' prefix will avoid this warning.",
-			Resolution:       standardUpgradeMessage("3.0"),
-			DocumentationURL: "",
+			Resolution: standardUpgradeMessage("3.0"),
 		},
 		SemverRange: versionsPre300,
 		// none since the logic is hard-coded instead
@@ -73,7 +72,8 @@ func init() {
 				"pattern usage was detected. " +
 				"Kong gateway versions 3.0 and above require that regular expressions " +
 				"start with a '~' character to distinguish from simple prefix match.",
-			Resolution: "For regex paths, add a '~' character at the beginning.",
+			Resolution: "To define a regular expression based path for routing, please " +
+				"prefix the path with ~ character.",
 		},
 		SemverRange: versions300AndAbove,
 	}); err != nil {
@@ -183,10 +183,10 @@ func correctHTTPLogHeadersField(payload string) (string, error) {
 	return payload, nil
 }
 
-var regexpattrn = regexp.MustCompile(`[^a-zA-Z0-9._~/%-]`)
+var regexPattern = regexp.MustCompile(`[^a-zA-Z0-9._~/%-]`)
 
 func isRegexLike(path string) bool {
-	return regexpattrn.MatchString(path)
+	return regexPattern.MatchString(path)
 }
 
 // migrateRoutesPathFieldPre300 changes any regex path matching pattern
@@ -282,7 +282,7 @@ func checkRoutePaths300AndAbove(paths []interface{},
 	return nil
 }
 
-func migrateRoutesPathFieldPost300(payload string,
+func checkRoutesPathFieldPost300(payload string,
 	dataPlaneVersion string,
 	tracker *config.ChangeTracker,
 	logger *zap.Logger,
@@ -354,7 +354,7 @@ func VersionCompatibilityExtraProcessing(payload string, dataPlaneVersion versio
 
 	if version300OrNewer(dataPlaneVersion) {
 		processedPayload = updateFormatVersion(processedPayload, dataPlaneVersionStr, logger)
-		processedPayload = migrateRoutesPathFieldPost300(processedPayload, dataPlaneVersionStr, tracker, logger)
+		processedPayload = checkRoutesPathFieldPost300(processedPayload, dataPlaneVersionStr, tracker, logger)
 	}
 
 	return processedPayload, nil
