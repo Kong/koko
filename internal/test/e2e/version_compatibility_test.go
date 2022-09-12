@@ -721,3 +721,176 @@ func TestVersionCompatibility_StatsdMetrics300OrNewer(t *testing.T) {
 		return err
 	})
 }
+
+type vcRoutesTC struct {
+	name              string
+	route             *v1.Route
+	versionedExpected map[string]*v1.Route
+}
+
+func TestRoutePathVersionCompatibility(t *testing.T) {
+	cleanup := run.Koko(t)
+	defer cleanup()
+
+	dpCleanup := run.KongDP(kong.GetKongConfForShared())
+	defer dpCleanup()
+	require.NoError(t, util.WaitForKong(t))
+	require.NoError(t, util.WaitForKongAdminAPI(t))
+
+	admin := httpexpect.WithConfig(httpexpect.Config{
+		BaseURL:  "http://localhost:3000",
+		Reporter: httpexpect.NewRequireReporter(t),
+		Printers: []httpexpect.Printer{
+			httpexpect.NewCompactPrinter(t),
+		},
+	})
+
+	service := &v1.Service{
+		Id:   uuid.NewString(),
+		Name: "foo",
+		Host: "httpbin.org",
+		Path: "/",
+	}
+	res := admin.POST("/v1/services").WithJSON(service).Expect()
+	res.Status(http.StatusCreated)
+
+	tests := []vcRoutesTC{
+		{
+			name: "plain path",
+			route: &v1.Route{
+				Id:    uuid.NewString(),
+				Name:  "plain-path",
+				Paths: []string{"/foo/bar"},
+				Service: &v1.Service{
+					Id: service.Id,
+				},
+			},
+			versionedExpected: map[string]*v1.Route{
+				"< 3.0.0": {
+					Name:  "plain-path",
+					Paths: []string{"/foo/bar"},
+				},
+				">= 3.0.0": {
+					Name:  "plain-path",
+					Paths: []string{"/foo/bar"},
+				},
+			},
+		},
+		{
+			name: "plain path, prefixed",
+			route: &v1.Route{
+				Id:    uuid.NewString(),
+				Name:  "plain-path-prefixed",
+				Paths: []string{"~/foo/bar"},
+				Service: &v1.Service{
+					Id: service.Id,
+				},
+			},
+			versionedExpected: map[string]*v1.Route{
+				"< 3.0.0": {
+					Name:  "plain-path-prefixed",
+					Paths: []string{"/foo/bar"},
+				},
+				">= 3.0.0": {
+					Name:  "plain-path-prefixed",
+					Paths: []string{"~/foo/bar"},
+				},
+			},
+		},
+		{
+			name: "regex-like",
+			route: &v1.Route{
+				Id:    uuid.NewString(),
+				Name:  "regex-like",
+				Paths: []string{"/blog-\\d+"},
+				Service: &v1.Service{
+					Id: service.Id,
+				},
+			},
+			versionedExpected: map[string]*v1.Route{
+				"< 3.0.0": {
+					Name:  "regex-like",
+					Paths: []string{"/blog-\\d+"},
+				},
+				">= 3.0.0": {
+					Name:  "regex-like",
+					Paths: []string{"/blog-\\d+"},
+				},
+			},
+		},
+		{
+			name: "regex-like, prefixed",
+			route: &v1.Route{
+				Id:    uuid.NewString(),
+				Name:  "regex-like-prefixed",
+				Paths: []string{"~/blog-\\d+"},
+				Service: &v1.Service{
+					Id: service.Id,
+				},
+			},
+			versionedExpected: map[string]*v1.Route{
+				"< 3.0.0": {
+					Name:  "regex-like-prefixed",
+					Paths: []string{"/blog-\\d+"},
+				},
+				">= 3.0.0": {
+					Name:  "regex-like-prefixed",
+					Paths: []string{"~/blog-\\d+"},
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		res := admin.POST("/v1/routes").WithJSON(test.route).Expect()
+		res.Status(http.StatusCreated)
+	}
+
+	util.WaitFunc(t, func() error {
+		err := ensureRoutes(tests)
+		t.Log("upstreams validation failed", err)
+		return err
+	})
+}
+
+func ensureRoutes(tests []vcRoutesTC) error {
+	kongAdmin, err := kongClient.NewClient(util.BasedKongAdminAPIAddr, nil)
+	if err != nil {
+		return fmt.Errorf("create go client for kong: %v", err)
+	}
+	ctx := context.Background()
+	info, err := kongAdmin.Root(ctx)
+	if err != nil {
+		return fmt.Errorf("fetching Kong Gateway info: %v", err)
+	}
+	dataPlaneVersion, err := versioning.NewVersion(kongClient.VersionFromInfo(info))
+	if err != nil {
+		return fmt.Errorf("parsing Kong Gateway version: %v", err)
+	}
+	dataPlaneRoutes, err := kongAdmin.Routes.ListAll(ctx)
+	if err != nil {
+		return fmt.Errorf("fetching routes: %v", err)
+	}
+
+	if len(tests) != len(dataPlaneRoutes) {
+		return fmt.Errorf("upstreams configured count does not match [%d != %d]", len(tests), len(dataPlaneRoutes))
+	}
+
+	expectedConfig := &v1.TestingConfig{
+		Routes: []*v1.Route{},
+	}
+	for _, u := range tests {
+		for _, dataPlaneRoute := range dataPlaneRoutes {
+			if u.route.Name == *dataPlaneRoute.Name && u.route.Id == *dataPlaneRoute.ID {
+				for version, expectedRoute := range u.versionedExpected {
+					version := versioning.MustNewRange(version)
+					if version(dataPlaneVersion) {
+						expectedConfig.Routes = append(expectedConfig.Routes, expectedRoute)
+					}
+				}
+			}
+		}
+	}
+
+	return util.EnsureConfig(expectedConfig)
+}
