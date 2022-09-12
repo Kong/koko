@@ -2,6 +2,8 @@ package compat
 
 import (
 	"fmt"
+	"regexp"
+	"strings"
 
 	"github.com/kong/koko/internal/resource"
 	"github.com/kong/koko/internal/server/kong/ws/config"
@@ -11,14 +13,19 @@ import (
 	"go.uber.org/zap"
 )
 
-var versionOlderThan300 = versioning.MustNewRange("< 3.0.0")
+var (
+	versionOlderThan300 = versioning.MustNewRange("< 3.0.0")
+	version300OrNewer   = versioning.MustNewRange(">= 3.0.0")
+)
 
 const (
-	awsLambdaExclusiveFieldChangeID = "P121"
+	awsLambdaExclusiveFieldChangeID  = "P121"
+	pathRegexFieldChangeID           = "P128"
+	pathRegexFieldUnprefixedChangeID = "P129"
 )
 
 func init() {
-	err := config.ChangeRegistry.Register(config.Change{
+	if err := config.ChangeRegistry.Register(config.Change{
 		Metadata: config.ChangeMetadata{
 			ID:       awsLambdaExclusiveFieldChangeID,
 			Severity: config.ChangeSeverityError,
@@ -33,8 +40,43 @@ func init() {
 		SemverRange: versionsPre300,
 		// none since the logic is hard-coded instead
 		Update: config.ConfigTableUpdates{},
-	})
-	if err != nil {
+	}); err != nil {
+		panic(err)
+	}
+
+	if err := config.ChangeRegistry.Register(config.Change{
+		Metadata: config.ChangeMetadata{
+			ID:       pathRegexFieldChangeID,
+			Severity: config.ChangeSeverityWarning,
+			Description: "For the 'paths' field used in route a regex " +
+				"pattern usage was detected. " +
+				"This field has been back-ported by stripping the prefix '~'. " +
+				"Routes which rely on regex parsing may not work as intended " +
+				"on Kong gateway versions < 3.0. " +
+				"If upgrading to version 3.0 is not possible, using paths " +
+				"without the '~' prefix will avoid this warning.",
+			Resolution: standardUpgradeMessage("3.0"),
+		},
+		SemverRange: versionsPre300,
+		// none since the logic is hard-coded instead
+		Update: config.ConfigTableUpdates{},
+	}); err != nil {
+		panic(err)
+	}
+
+	if err := config.ChangeRegistry.Register(config.Change{
+		Metadata: config.ChangeMetadata{
+			ID:       pathRegexFieldUnprefixedChangeID,
+			Severity: config.ChangeSeverityWarning,
+			Description: "For the 'paths' field used in route a regex " +
+				"pattern usage was detected. " +
+				"Kong gateway versions 3.0 and above require that regular expressions " +
+				"start with a '~' character to distinguish from simple prefix match.",
+			Resolution: "To define a regular expression based path for routing, please " +
+				"prefix the path with ~ character.",
+		},
+		SemverRange: versions300AndAbove,
+	}); err != nil {
 		panic(err)
 	}
 }
@@ -141,12 +183,157 @@ func correctHTTPLogHeadersField(payload string) (string, error) {
 	return payload, nil
 }
 
+var regexPattern = regexp.MustCompile(`[^a-zA-Z0-9._~/%-]`)
+
+func isRegexLike(path string) bool {
+	return regexPattern.MatchString(path)
+}
+
+// migrateRoutesPathFieldPre300 changes any regex path matching pattern
+// from the 3.0 style (where regex must start with '~/' and prefix paths
+// start with '/') into the previous format (where all paths start with
+// '/' and regexes are auto detected).
+func migrateRoutesPathFieldPre300(payload string,
+	dataPlaneVersion string,
+	tracker *config.ChangeTracker,
+	logger *zap.Logger,
+) (string, error) {
+	routes := gjson.Get(payload, "config_table.routes")
+
+	processedPayload := payload
+	logger = logger.With(zap.String("data-plane", dataPlaneVersion),
+		zap.String("change-id", pathRegexFieldChangeID),
+		zap.String("resource-type", "route"))
+
+	for _, route := range routes.Array() {
+		routeID := route.Get("id").Str
+		pathsGJ := route.Get("paths")
+		if !pathsGJ.Exists() || !pathsGJ.IsArray() {
+			continue
+		}
+
+		modifiedRoute := false
+		paths, ok := pathsGJ.Value().([]any)
+		if !ok {
+			continue
+		}
+		for j, pathIntf := range paths {
+			path, ok := pathIntf.(string)
+			if !ok {
+				continue
+			}
+			if strings.HasPrefix(path, "~/") {
+				path = strings.TrimPrefix(path, "~")
+				if !modifiedRoute {
+					err := tracker.TrackForResource(pathRegexFieldChangeID,
+						config.ResourceInfo{
+							Type: string(resource.TypeRoute),
+							ID:   routeID,
+						})
+					if err != nil {
+						logger.Error("failed to track version compatibility change", zap.Error(err),
+							zap.String("route-id", routeID),
+							zap.String("path", path))
+						continue
+					}
+					modifiedRoute = true
+				}
+				paths[j] = path
+			}
+		}
+
+		if modifiedRoute {
+			var err error
+			processedPayload, err = sjson.Set(processedPayload, route.Path(payload)+".paths", paths)
+			if err != nil {
+				logger.Error("failed to set processed paths", zap.Error(err),
+					zap.String("route-id", routeID))
+				return "", err
+			}
+		}
+	}
+
+	return processedPayload, nil
+}
+
+func checkRoutePaths300AndAbove(paths []interface{},
+	routeID string,
+	tracker *config.ChangeTracker,
+) error {
+	for i, pathIntf := range paths {
+		path, ok := pathIntf.(string)
+		if !ok {
+			return fmt.Errorf("path #%d, expected string, found %T", i, pathIntf)
+		}
+		if strings.HasPrefix(path, "~/") || !isRegexLike(path) {
+			continue
+		}
+
+		err := tracker.TrackForResource(pathRegexFieldUnprefixedChangeID,
+			config.ResourceInfo{
+				Type: string(resource.TypeRoute),
+				ID:   routeID,
+			})
+		if err != nil {
+			return fmt.Errorf("failed to track version compatibility change: %w", err)
+		}
+		return fmt.Errorf("found non-prefixed regex-like path")
+	}
+	return nil
+}
+
+func checkRoutesPathFieldPost300(payload string,
+	dataPlaneVersion string,
+	tracker *config.ChangeTracker,
+	logger *zap.Logger,
+) string {
+	routes := gjson.Get(payload, "config_table.routes")
+
+	logger = logger.With(zap.String("data-plane", dataPlaneVersion),
+		zap.String("change-id", pathRegexFieldUnprefixedChangeID),
+		zap.String("resource-type", "route"))
+
+	for _, route := range routes.Array() {
+		routeID := route.Get("id").Str
+		pathsGJ := route.Get("paths")
+		if !pathsGJ.Exists() || !pathsGJ.IsArray() {
+			continue
+		}
+
+		paths, ok := pathsGJ.Value().([]interface{})
+		if !ok {
+			continue
+		}
+
+		err := checkRoutePaths300AndAbove(paths, routeID, tracker)
+		if err != nil {
+			logger.Error("verifying route paths for DP versions 3.0 and above", zap.Error(err),
+				zap.String("route-id", routeID))
+		}
+	}
+
+	return payload
+}
+
+func updateFormatVersion(payload string,
+	dataPlaneVersion string,
+	logger *zap.Logger,
+) string {
+	payload, err := sjson.Set(payload, "config_table._format_version", "3.0")
+	if err != nil {
+		logger.Error("failed to update \"_format_version\" parameter", zap.Error(err),
+			zap.String("data-plane", dataPlaneVersion))
+	}
+	return payload
+}
+
 func VersionCompatibilityExtraProcessing(payload string, dataPlaneVersion versioning.Version,
 	tracker *config.ChangeTracker, logger *zap.Logger,
 ) (string, error) {
 	dataPlaneVersionStr := dataPlaneVersion.String()
 	processedPayload := payload
 
+	var err error
 	if versionOlderThan300(dataPlaneVersion) {
 		// 'aws_region' and 'host' are mutually exclusive for DP < 3.x
 		processedPayload = correctAWSLambdaMutuallyExclusiveFields(
@@ -154,10 +341,20 @@ func VersionCompatibilityExtraProcessing(payload string, dataPlaneVersion versio
 
 		// The `headers` field on the `http-log` plugin changed from an array of strings to just a single string
 		// for DP's >= 3.0. As such, we need to transform the headers back to a single string within an array.
-		var err error
 		if processedPayload, err = correctHTTPLogHeadersField(processedPayload); err != nil {
 			return "", err
 		}
+
+		// remove '~' prefix from paths
+		processedPayload, err = migrateRoutesPathFieldPre300(processedPayload, dataPlaneVersionStr, tracker, logger)
+		if err != nil {
+			return "", err
+		}
+	}
+
+	if version300OrNewer(dataPlaneVersion) {
+		processedPayload = updateFormatVersion(processedPayload, dataPlaneVersionStr, logger)
+		processedPayload = checkRoutesPathFieldPost300(processedPayload, dataPlaneVersionStr, tracker, logger)
 	}
 
 	return processedPayload, nil

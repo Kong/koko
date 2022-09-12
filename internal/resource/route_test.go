@@ -313,7 +313,7 @@ func TestRoute_Validate(t *testing.T) {
 					Type:  model.ErrorType_ERROR_TYPE_FIELD,
 					Field: "paths[1]",
 					Messages: []string{
-						"must begin with `/`",
+						"must begin with `/` (prefix path) or `~/` (regex path)",
 					},
 				},
 				{
