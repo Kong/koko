@@ -699,6 +699,100 @@ func TestExtraProcessing_CorrectRoutesPathFieldPre300(t *testing.T) {
 	}
 }
 
+func TestExtraProcessing_checkRoutePaths300AndAbove(t *testing.T) {
+	tests := []struct {
+		name                   string
+		paths                  []any
+		expectedErr            string
+		expectedTrackedChanges config.TrackedChanges
+	}{
+		{
+			name:                   "ensure 'paths' with '~' prefix pass through",
+			paths:                  []any{"~/foo"},
+			expectedTrackedChanges: config.TrackedChanges{},
+		},
+		{
+			name:                   "non-prefixed path is left alone if plain",
+			paths:                  []any{"/foo"},
+			expectedTrackedChanges: config.TrackedChanges{},
+		},
+		{
+			name:                   "mixed with and without '~' prefix",
+			paths:                  []any{"/foo", "~/bar", "~/baz", "/fum"},
+			expectedTrackedChanges: config.TrackedChanges{},
+		},
+		{
+			name:                   "don't denormalize prefixed path",
+			paths:                  []any{"~/foo/hi%%thing"},
+			expectedTrackedChanges: config.TrackedChanges{},
+		},
+		{
+			name:                   "don't denormalize plain path",
+			paths:                  []any{"/foo/hi%%thing"},
+			expectedTrackedChanges: config.TrackedChanges{},
+		},
+		{
+			name:                   "don't denormalize mixed paths",
+			paths:                  []any{"~/foo/hi%%thing", "/fim%%fum"},
+			expectedTrackedChanges: config.TrackedChanges{},
+		},
+		{
+			name:  "warn on non-prefixed regex-like paths",
+			paths: []any{"/fim.*fum"},
+			expectedTrackedChanges: config.TrackedChanges{
+				ChangeDetails: []config.ChangeDetail{
+					{
+						ID: pathRegexFieldUnprefixedChangeID,
+						Resources: []config.ResourceInfo{
+							{
+								Type: "route",
+								ID:   "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							},
+						},
+					},
+				},
+			},
+			expectedErr: "found",
+		},
+		{
+			name:                   "silent on prefixed regex-like paths",
+			paths:                  []any{"~/fim.*fum"},
+			expectedTrackedChanges: config.TrackedChanges{},
+		},
+		{
+			name:  "mixed prefixed and non-prefixed regex-like paths",
+			paths: []any{"/fim.*fum", "~/blog-\\d+", "/post-\\w*"},
+			expectedTrackedChanges: config.TrackedChanges{
+				ChangeDetails: []config.ChangeDetail{
+					{
+						ID: pathRegexFieldUnprefixedChangeID,
+						Resources: []config.ResourceInfo{
+							{
+								Type: "route",
+								ID:   "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							},
+						},
+					},
+				},
+			},
+			expectedErr: "found",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			tracker := config.NewChangeTracker()
+			err := checkRoutePaths300AndAbove(test.paths, "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a", tracker)
+			if test.expectedErr == "" {
+				require.NoError(t, err)
+			} else {
+				require.Errorf(t, err, test.expectedErr)
+			}
+			require.Equal(t, test.expectedTrackedChanges, tracker.Get())
+		})
+	}
+}
+
 func TestExtraProcessing_CorrectRoutesPathField300AndAbove(t *testing.T) {
 	tests := []struct {
 		name                   string
