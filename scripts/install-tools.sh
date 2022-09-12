@@ -22,6 +22,7 @@ go install "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2"
 go install "google.golang.org/grpc/cmd/protoc-gen-go-grpc"
 go install "github.com/kong/go-wrpc/cmd/protoc-gen-go-wrpc"
 go install "google.golang.org/protobuf/cmd/protoc-gen-go"
+go install "golang.org/x/vuln/cmd/govulncheck@latest"
 
 GOLANGCI_LINT_VERSION=v1.49.0
 curl -sSfL \
