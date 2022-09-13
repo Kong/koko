@@ -1,8 +1,9 @@
 # Public contract of Koko
 
-This document lays out public contract, also known as "Compatibility promise"
-of Koko. Koko adheres to Semantic Versioning and the maintainers will strive to
-ensure that no breaking changes take place in minor or patch releases.
+This document lays out a public contract, also known as a "Compatibility promise"
+of Koko. Koko adheres to [Semantic Versioning](https://semver.org) and its
+maintainers will strive to ensure that no breaking changes take place in minor
+or patch releases.
 The maintainers of the project reserve rights to introduce breaking changes in
 minor releases for the major version number '0'.
 
@@ -13,7 +14,7 @@ potential to break without any notice.
 
 ## Admin API
 
-Koko offers Admin API of Kong in two forms:
+Koko offers the Admin API of Kong Gateway in two forms:
 - HTTP API
 - gRPC API
 
@@ -51,5 +52,5 @@ Some examples of non-public APIs of Koko (not an exhaustive list):
 ## Exceptions
 
 Project maintainers reserve rights to introduce a breaking change for cases
-where fixing an security issue is not possible in a backwards-compatible manner.
+where fixing a security issue is not possible in a backwards-compatible manner.
 
