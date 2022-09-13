@@ -265,7 +265,7 @@ func TestValidateJSONSchema(t *testing.T) {
 		res := c.POST(p).WithJSON(&v1.Consumer{
 			CreatedAt: -1,
 			CustomId:  "invalid!",
-			Tags:      []string{"some-tag", "some tag"},
+			Tags:      []string{"some-tag", "some$tag"},
 		}).Expect()
 		res.Status(http.StatusBadRequest)
 
@@ -301,7 +301,7 @@ func TestValidateJSONSchema(t *testing.T) {
 		tagsErr.Value("field").String().Equal("tags[1]")
 		messages = tagsErr.Value("messages").Array()
 		messages.Length().Equal(1)
-		messages.First().String().Equal("must match pattern '^[0-9a-zA-Z.\\-_~:]*$'")
+		messages.First().String().Equal("must match pattern '^(?:[0-9a-zA-Z.\\-_~:]+(?: *[0-9a-zA-Z.\\-_~:])*)?$'")
 	})
 
 	t.Run("duplicate tags returns an error", func(t *testing.T) {
@@ -323,6 +323,33 @@ func TestValidateJSONSchema(t *testing.T) {
 		messages := tagsErr.Value("messages").Array()
 		messages.Length().Equal(1)
 		messages.First().String().Equal("items at index 0 and 1 are equal")
+	})
+
+	t.Run("tag with space produces valid JSON schema for", func(t *testing.T) {
+		t.Run("consumers", func(t *testing.T) {
+			res := c.POST(p).WithJSON(&v1.Consumer{
+				Id:       uuid.NewString(),
+				Username: "spacesInTagsConsumers",
+				Tags:     []string{"some tag", "with multiple spaces"},
+			}).Expect()
+			res.Status(http.StatusOK)
+		})
+
+		t.Run("services", func(t *testing.T) {
+			p := path.Join("/v1/schemas/json/", typeToRoute(resource.TypeService), "validate")
+			res := c.POST(p).WithJSON(&v1.Service{
+				Id:             uuid.NewString(),
+				Protocol:       typedefs.ProtocolHTTP,
+				Host:           "example.com",
+				Path:           "/",
+				Port:           80,
+				ConnectTimeout: 5000,
+				ReadTimeout:    5000,
+				WriteTimeout:   5000,
+				Tags:           []string{"some tag", "with multiple spaces"},
+			}).Expect()
+			res.Status(http.StatusOK)
+		})
 	})
 
 	t.Run("valid JSON schema", func(t *testing.T) {

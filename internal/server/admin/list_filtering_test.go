@@ -2,6 +2,7 @@ package admin
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"strings"
 	"testing"
@@ -55,37 +56,7 @@ func TestListFiltering(t *testing.T) {
 	// Run tests for every resource that has been registered.
 	for _, resourceInfo := range seeder.AllResourceInfo() {
 		expectedResources := results.ByType(resourceInfo.Name)
-
-		// Store resource IDs that contain the keyed tag(s). Resources that have
-		// multiple tags will be duplicated for each tag.
-		//
-		// The "all" key contains all resources with a tag. Additionally, each
-		// combination of tags will have its own key, e.g.: `tag-1, tag-2` is a
-		// valid key defining resources that contain both `tag-1` and `tag-2.
-		resourceIDsByTag := map[string][]string{"all": make([]string, 0)}
-		for _, r := range expectedResources.All() {
-			// Keep track of resources by each tag.
-			for _, tag := range r.Tags {
-				if _, ok := resourceIDsByTag[tag]; !ok {
-					resourceIDsByTag[tag] = make([]string, 0)
-				}
-				resourceIDsByTag[tag] = append(resourceIDsByTag[tag], r.ID)
-			}
-
-			// Keep track of all resources that have at least one tag.
-			if len(r.Tags) > 0 {
-				resourceIDsByTag["all"] = append(resourceIDsByTag["all"], r.ID)
-			}
-
-			// Keep track of resources that share the same combination of tags.
-			if len(r.Tags) > 1 {
-				joinedTags := strings.Join(r.Tags, ", ")
-				if _, ok := resourceIDsByTag[joinedTags]; !ok {
-					resourceIDsByTag[joinedTags] = make([]string, 0)
-				}
-				resourceIDsByTag[joinedTags] = append(resourceIDsByTag[joinedTags], r.ID)
-			}
-		}
+		resourceIDsByTag := getResourcesByTag(expectedResources)
 
 		// The purpose of these tests are not to validate all possible expression combinations, as that is tested
 		// in `internal/server/admin/cel_test.go`. The sole purpose of these tests are to ensure the filtering is
@@ -166,28 +137,72 @@ func TestListFiltering(t *testing.T) {
 		}
 
 		t.Run(string(resourceInfo.Name), func(t *testing.T) {
-			// Skip tests that we cannot run list filters on.
-			if resourceInfo.JSONSchemaConfig.ResourceAPIPath == "" {
-				t.Skipf(
-					"Tag-based listing tests for type %s skipped, as it does"+
-						" not set the API resource path per the JSON schema.",
-					resourceInfo.Name,
-				)
-				return
-			}
-			if !resourceInfo.HasField("tags") {
-				t.Skipf(
-					"Tag-based listing tests for type %s skipped, as it does"+
-						" not have a tags field per the JSON schema.",
-					resourceInfo.Name,
-				)
-				return
-			}
+			skipListFilteringTestForResource(t, resourceInfo)
 
 			for i, tt := range tests {
 				t.Run(tt.name, func(t *testing.T) {
 					testListFilteringForType(t, httpexpect.New(t, server.URL), &tests[i], resourceInfo)
 				})
+			}
+		})
+	}
+}
+
+// TestListFilteringWithSpaces is a simple test to ensure we can properly query tags with spaces across all resources.
+func TestListFilteringWithSpaces(t *testing.T) {
+	server, cleanup := setup(t)
+	defer cleanup()
+
+	seeder, err := seed.New(seed.NewSeederOpts{URL: server.URL})
+	require.NoError(t, err)
+
+	// We'll be creating one of every resource with the below tags.
+	validTags := []string{"some tag", "another  tag", "yet another tag"}
+
+	for _, tag := range append([]string{
+		// Should not appear in our filter tests, however we'll create some resources
+		// with these tags to ensure exact match filtering is working as expected.
+		"sometag",
+		"some  tag",
+		"another tag",
+	}, validTags...) {
+		seedOpts, err := seed.NewOptionsBuilder().
+			WithResourceCount(1).
+			WithStaticTags([]string{tag}).
+			WithIgnoredErrors(seed.ErrRequiredFieldMissing).
+			Build()
+		require.NoError(t, err)
+
+		_, err = seeder.SeedAllTypes(context.Background(), seedOpts)
+		require.NoError(t, err)
+	}
+
+	results := seeder.Results()
+	require.Greater(t, len(results.All()), 0)
+
+	for _, resourceInfo := range seeder.AllResourceInfo() {
+		t.Run(string(resourceInfo.Name), func(t *testing.T) {
+			skipListFilteringTestForResource(t, resourceInfo)
+
+			resourceIDsByTag := getResourcesByTag(results.ByType(resourceInfo.Name))
+			for _, tag := range validTags {
+				tests := []*listFilterTestData{
+					// Should return results.
+					{
+						pageRequest:      &v1.PaginationRequest{Size: 1, Filter: fmt.Sprintf("%q in tags", tag)},
+						expectedPagedIDs: lo.Chunk(resourceIDsByTag[tag], 1),
+					},
+
+					// Should not return results.
+					{pageRequest: &v1.PaginationRequest{Size: 1, Filter: fmt.Sprintf(`" %s" in tags`, tag)}},
+					{pageRequest: &v1.PaginationRequest{Size: 1, Filter: fmt.Sprintf(`"%s " in tags`, tag)}},
+					{pageRequest: &v1.PaginationRequest{Size: 1, Filter: fmt.Sprintf(`" %s " in tags`, tag)}},
+				}
+				for _, tt := range tests {
+					t.Run(tt.pageRequest.Filter, func(t *testing.T) {
+						testListFilteringForType(t, httpexpect.New(t, server.URL), tt, resourceInfo)
+					})
+				}
 			}
 		})
 	}
@@ -306,4 +321,57 @@ func testListFilteringForType(t *testing.T, c *httpexpect.Expect, tt *listFilter
 	// Ensure actual resources IDs match to what is expected, for each page.
 	assert.Len(t, actualResults, len(tt.expectedPagedIDs))
 	assert.ElementsMatch(t, lo.Flatten(tt.expectedPagedIDs), lo.Flatten(actualResults))
+}
+
+// getResourcesByTag stores resource IDs by tag. Resources that have
+// multiple tags will be duplicated for each tag.
+//
+// The "all" key contains all resources with a tag. Additionally, each
+// combination of tags will have its own key, e.g.: `tag-1, tag-2` is a
+// valid key defining resources that contain both `tag-1` and `tag-2.
+func getResourcesByTag(resources *seed.Results) map[string][]string {
+	resourceIDsByTag := map[string][]string{"all": make([]string, 0)}
+	for _, r := range resources.All() {
+		// Keep track of resources by each tag.
+		for _, tag := range r.Tags {
+			if _, ok := resourceIDsByTag[tag]; !ok {
+				resourceIDsByTag[tag] = make([]string, 0)
+			}
+			resourceIDsByTag[tag] = append(resourceIDsByTag[tag], r.ID)
+		}
+
+		// Keep track of all resources that have at least one tag.
+		if len(r.Tags) > 0 {
+			resourceIDsByTag["all"] = append(resourceIDsByTag["all"], r.ID)
+		}
+
+		// Keep track of resources that share the same combination of tags.
+		if len(r.Tags) > 1 {
+			joinedTags := strings.Join(r.Tags, ", ")
+			if _, ok := resourceIDsByTag[joinedTags]; !ok {
+				resourceIDsByTag[joinedTags] = make([]string, 0)
+			}
+			resourceIDsByTag[joinedTags] = append(resourceIDsByTag[joinedTags], r.ID)
+		}
+	}
+
+	return resourceIDsByTag
+}
+
+// skipListFilteringTestForResource handles skipping tests that we cannot run list filters on.
+func skipListFilteringTestForResource(t *testing.T, resourceInfo *seed.ResourceInfo) {
+	if resourceInfo.JSONSchemaConfig.ResourceAPIPath == "" {
+		t.Skipf(
+			"Tag-based listing tests for type %s skipped, as it does"+
+				" not set the API resource path per the JSON schema.",
+			resourceInfo.Name,
+		)
+	}
+	if !resourceInfo.HasField("tags") {
+		t.Skipf(
+			"Tag-based listing tests for type %s skipped, as it does"+
+				" not have a tags field per the JSON schema.",
+			resourceInfo.Name,
+		)
+	}
 }

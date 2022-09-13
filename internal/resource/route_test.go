@@ -200,7 +200,7 @@ func TestRoute_Validate(t *testing.T) {
 					Type:  model.ErrorType_ERROR_TYPE_FIELD,
 					Field: "tags[0]",
 					Messages: []string{
-						"must match pattern '^[0-9a-zA-Z.\\-_~:]*$'",
+						"must match pattern '^(?:[0-9a-zA-Z.\\-_~:]+(?: *[0-9a-zA-Z.\\-_~:])*)?$'",
 					},
 				},
 			},
@@ -232,6 +232,15 @@ func TestRoute_Validate(t *testing.T) {
 					},
 				},
 			},
+		},
+		{
+			name: "tag with space doesn't throw an error",
+			Route: func() Route {
+				r := goodRoute()
+				r.Route.Tags = []string{"fubaz bar"}
+				return r
+			},
+			wantErr: false,
 		},
 		{
 			name: "name longer than 128 character errors out",
