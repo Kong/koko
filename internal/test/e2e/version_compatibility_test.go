@@ -721,3 +721,157 @@ func TestVersionCompatibility_StatsdMetrics300OrNewer(t *testing.T) {
 		return err
 	})
 }
+
+type vcRoutesTC struct {
+	name  string
+	route *v1.Route
+}
+
+func TestRoutePathVersionCompatibility(t *testing.T) {
+	cleanup := run.Koko(t)
+	defer cleanup()
+
+	dpCleanup := run.KongDP(kong.GetKongConfForShared())
+	defer dpCleanup()
+	require.NoError(t, util.WaitForKong(t))
+	require.NoError(t, util.WaitForKongAdminAPI(t))
+
+	admin := httpexpect.WithConfig(httpexpect.Config{
+		BaseURL:  "http://localhost:3000",
+		Reporter: httpexpect.NewRequireReporter(t),
+		Printers: []httpexpect.Printer{
+			httpexpect.NewCompactPrinter(t),
+		},
+	})
+
+	service := &v1.Service{
+		Id:   uuid.NewString(),
+		Name: "foo",
+		Host: "httpbin.org",
+		Path: "/",
+	}
+	res := admin.POST("/v1/services").WithJSON(service).Expect()
+	res.Status(http.StatusCreated)
+
+	tests := []vcRoutesTC{
+		{
+			name: "plain path",
+			route: &v1.Route{
+				Id:    uuid.NewString(),
+				Name:  "plain-path",
+				Paths: []string{"/foo/bar"},
+				Service: &v1.Service{
+					Id: service.Id,
+				},
+			},
+		},
+		{
+			name: "plain path, prefixed",
+			route: &v1.Route{
+				Id:    uuid.NewString(),
+				Name:  "plain-path-prefixed",
+				Paths: []string{"~/foo/bar"},
+				Service: &v1.Service{
+					Id: service.Id,
+				},
+			},
+		},
+		{
+			name: "regex-like",
+			route: &v1.Route{
+				Id:    uuid.NewString(),
+				Name:  "regex-like",
+				Paths: []string{"/blog-\\d+"},
+				Service: &v1.Service{
+					Id: service.Id,
+				},
+			},
+		},
+		{
+			name: "regex-like, prefixed",
+			route: &v1.Route{
+				Id:    uuid.NewString(),
+				Name:  "regex-like-prefixed",
+				Paths: []string{"~/blog-\\d+"},
+				Service: &v1.Service{
+					Id: service.Id,
+				},
+			},
+		},
+		{
+			name: "mixed",
+			route: &v1.Route{
+				Id:    uuid.NewString(),
+				Name:  "mixed",
+				Paths: []string{"/foo", "~/bar", "/blog-\\d+", "~/bl[ao]go(sphere|web)/"},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		res := admin.POST("/v1/routes").WithJSON(test.route).Expect()
+		res.Status(http.StatusCreated)
+	}
+
+	t.Run("pre 3.0", func(t *testing.T) {
+		kongClient.RunWhenKong(t, "< 3.0.0")
+
+		util.WaitFunc(t, func() error {
+			return util.EnsureConfig(&v1.TestingConfig{
+				Routes: []*v1.Route{
+					{
+						Name:  "plain-path",
+						Paths: []string{"/foo/bar"},
+					},
+					{
+						Name:  "plain-path-prefixed",
+						Paths: []string{"/foo/bar"},
+					},
+					{
+						Name:  "regex-like",
+						Paths: []string{"/blog-\\d+"},
+					},
+					{
+						Name:  "regex-like-prefixed",
+						Paths: []string{"/blog-\\d+"},
+					},
+					{
+						Name:  "mixed",
+						Paths: []string{"/foo", "/bar", "/blog-\\d+", "/bl[ao]go(sphere|web)/"},
+					},
+				},
+			})
+		})
+	})
+
+	t.Run("3.0.0 and above", func(t *testing.T) {
+		kongClient.RunWhenKong(t, ">= 3.0.0")
+
+		util.WaitFunc(t, func() error {
+			return util.EnsureConfig(&v1.TestingConfig{
+				Routes: []*v1.Route{
+					{
+						Name:  "plain-path",
+						Paths: []string{"/foo/bar"},
+					},
+					{
+						Name:  "plain-path-prefixed",
+						Paths: []string{"~/foo/bar"},
+					},
+					{
+						Name:  "regex-like",
+						Paths: []string{"/blog-\\d+"},
+					},
+					{
+						Name:  "regex-like-prefixed",
+						Paths: []string{"~/blog-\\d+"},
+					},
+					{
+						Name:  "mixed",
+						Paths: []string{"/foo", "~/bar", "/blog-\\d+", "~/bl[ao]go(sphere|web)/"},
+					},
+				},
+			})
+		})
+	})
+}
