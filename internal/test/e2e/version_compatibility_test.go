@@ -848,7 +848,7 @@ func TestRoutePathVersionCompatibility(t *testing.T) {
 
 	util.WaitFunc(t, func() error {
 		err := ensureRoutes(tests)
-		t.Log("upstreams validation failed", err)
+		t.Log("routes validation failed", err)
 		return err
 	})
 }
@@ -873,7 +873,7 @@ func ensureRoutes(tests []vcRoutesTC) error {
 	}
 
 	if len(tests) != len(dataPlaneRoutes) {
-		return fmt.Errorf("upstreams configured count does not match [%d != %d]", len(tests), len(dataPlaneRoutes))
+		return fmt.Errorf("routes configured count does not match [%d != %d]", len(tests), len(dataPlaneRoutes))
 	}
 
 	expectedConfig := &v1.TestingConfig{
