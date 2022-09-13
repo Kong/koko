@@ -14,13 +14,6 @@ func TestNamePattern(t *testing.T) {
 	})
 }
 
-func TestTagPattern(t *testing.T) {
-	t.Run("colon is acceptable in tag", func(t *testing.T) {
-		re := regexp.MustCompile(tagPattern)
-		require.True(t, re.MatchString("foo:bar"))
-	})
-}
-
 func TestPathPattern(t *testing.T) {
 	// regex associated with prefix paths and the 3.0 regex path format.
 	pathRegex := regexp.MustCompile(RouterPath.AllOf[0].Pattern)

@@ -277,16 +277,25 @@ func TestService_Validate(t *testing.T) {
 					Type:  model.ErrorType_ERROR_TYPE_FIELD,
 					Field: "tags[0]",
 					Messages: []string{
-						"must match pattern '^[0-9a-zA-Z.\\-_~:]*$'",
+						"must match pattern '^(?:[0-9a-zA-Z.\\-_~:]+(?: *[0-9a-zA-Z.\\-_~:])*)?$'",
 					},
 				},
 			},
 		},
 		{
-			name: "tag with colon(:) doesn't thrown an error",
+			name: "tag with colon(:) doesn't throw an error",
 			Service: func() Service {
 				s := goodService()
 				s.Service.Tags = []string{"fubaz:bar"}
+				return s
+			},
+			wantErr: false,
+		},
+		{
+			name: "tag with space doesn't throw an error",
+			Service: func() Service {
+				s := goodService()
+				s.Service.Tags = []string{"fubaz bar"}
 				return s
 			},
 			wantErr: false,

@@ -12,10 +12,15 @@ const (
 	maxTimeout        = (1 << 31) - 2 //nolint:gomnd
 	maxTags           = 8
 	namePattern       = `^[0-9a-zA-Z.\-_~]*$`
-	tagPattern        = `^[0-9a-zA-Z.\-_~:]*$`
 	maxHostnameLength = 256
 	maxPathLength     = 1024
 	hostnamePattern   = "[a-zA-Z0-9]([-a-zA-Z0-9]*[a-zA-Z0-9])?(.[a-zA-Z0-9]([-a-zA-Z0-9]*[a-zA-Z0-9])?)*$"
+
+	// Allow alphanumerics, dashes, underscores, colons, periods, and tildes anywhere
+	// within the tag. Spaces are allowed, but not as the first/last character.
+	//
+	// This disallows tags like: ` `, `  `, ` tag `, `  tag  `, etc.
+	tagPattern = `^(?:[0-9a-zA-Z.\-_~:]+(?: *[0-9a-zA-Z.\-_~:])*)?$`
 
 	HTTPHeaderNamePattern = "^[A-Za-z0-9!#$%&'*+-.^_|~]{1,64}$"
 )

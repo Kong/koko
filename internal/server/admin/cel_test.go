@@ -28,13 +28,16 @@ func Test_validateFilter(t *testing.T) {
 	tests := []struct{ name, expression, expectedError string }{
 		// Valid expressions.
 		{name: "single tag match", expression: `"tag1" in tags`},
+		{name: "single tag match containing spaces", expression: `"tag1 with spaces" in tags`},
 		{name: "logical and", expression: `"tag1" in tags && "tag2" in tags`},
 		{name: "logical or", expression: `"tag1" in tags || "tag2" in tags`},
 		{name: "redundant parenthesis", expression: `("tag1" in tags && "tag2" in tags) && "tag3" in tags`},
 		// Functionally equivalent to the "logical and" test.
 		{name: "list.all()", expression: `["tag1", "tag2"].all(x, x in tags)`},
+		{name: "list.all() containing spaces", expression: `["tag1 with spaces"].all(x, x in tags)`},
 		// Functionally equivalent to the "logical or" test.
 		{name: "list.exists()", expression: `["tag1", "tag2"].exists(x, x in tags)`},
+		{name: "list.exists() containing spaces", expression: `["tag1 with spaces"].exists(x, x in tags)`},
 		{
 			name:       "exactly max length",
 			expression: fmt.Sprintf(`%q in tags`, strings.Repeat("x", 2038)),
