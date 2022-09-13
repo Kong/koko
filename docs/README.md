@@ -1,7 +1,7 @@
 # Koko documentation
 
 > Note: Koko's documentation is work in progress, if you see an inconsistency
-or if something doesn't work well for you, please open a Github Issue.
+or if something doesn't work well for you, please open a GitHub Issue.
 
 ## Overview
 
