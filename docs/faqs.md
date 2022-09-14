@@ -6,7 +6,7 @@ Koko is the second generation Control-Plane (CP) for Kong Gateway. All CP
 aspects of Kong have been redesigned to offer a better experience and make it
 easier to operate the CP. Some highlights of differences between Koko and built-in Kong Control Plane:
 - Simplified integration and programmatic access
-- Freedom to choose the database of your choice
+- Freedom to use the database of your choice
 - Easy migrations between Kong Gateway versions and huge focus on
   backwards compatibility across major versions of Kong Gateway
 - Improved operational model with structured logs, metrics and planned OpenTracing support
