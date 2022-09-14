@@ -1,6 +1,0 @@
-log:
-  level: debug
-admin:
-  listeners:
-    - address: ":4000"
-      protocol: "grpc"

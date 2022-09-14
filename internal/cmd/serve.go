@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"crypto/tls"
+	"fmt"
 
 	"github.com/kong/koko/internal/config"
 	"github.com/kong/koko/internal/log"
@@ -45,7 +46,7 @@ func serveMain(ctx context.Context) error {
 	cert, err := tls.LoadX509KeyPair(opts.Config.Control.TLSCertPath,
 		opts.Config.Control.TLSKeyPath)
 	if err != nil {
-		return err
+		return fmt.Errorf("unable to load tls/cert/key: %w", err)
 	}
 
 	return Run(ctx, ServerConfig{

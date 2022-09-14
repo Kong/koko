@@ -1,74 +1,37 @@
 package config
 
 import (
+	"errors"
 	"fmt"
 	"os"
-	"path/filepath"
 	"time"
 
-	"github.com/ghodss/yaml"
-	"github.com/imdario/mergo"
+	"github.com/ilyakaznacheev/cleanenv"
 	"github.com/kong/koko/internal/db"
 	"github.com/kong/koko/internal/persistence/postgres"
 	"github.com/kong/koko/internal/persistence/sqlite"
 )
 
-var (
-	defaultConfigYAML = []byte(`
-log:
-  level: info
-  format: json
-admin:
-  listeners:
-  - address: ":3000"
-    protocol: http
-database:
-  query_timeout: 5s
-metrics:
-  client_type: noop
-disable_anonymous_reports: false
-`)
-	defaultConfig Config
-)
-
-func init() {
-	err := yaml.Unmarshal(defaultConfigYAML, &defaultConfig)
-	if err != nil {
-		panic(fmt.Errorf("failed to decode default config: %v", err))
-	}
-}
-
 // Get constructs the Config using the filename, env vars and defaults.
 func Get(filename string) (Config, error) {
+	var c Config
+	if filename != "" {
+		if _, err := os.Stat(filename); err != nil {
+			if errors.Is(err, os.ErrNotExist) {
+				filename = ""
+			}
+		}
+	}
+	var err error
 	if filename == "" {
-		return defaultConfig, nil
+		err = cleanenv.ReadEnv(&c)
+	} else {
+		err = cleanenv.ReadConfig(filename, &c)
 	}
-	content, err := os.ReadFile(filepath.Clean(filename))
 	if err != nil {
-		return Config{}, fmt.Errorf("reading file '%v': %w", filename, err)
+		return Config{}, fmt.Errorf("unable to read config: %w", err)
 	}
-
-	result, err := parse(content)
-	if err != nil {
-		return Config{}, fmt.Errorf("parsing file '%v': %w", filename, err)
-	}
-
-	err = mergo.Merge(&result, defaultConfig)
-	if err != nil {
-		return Config{}, fmt.Errorf("merging defaults: %w", err)
-	}
-	return result, nil
-}
-
-func parse(content []byte) (Config, error) {
-	contentAsString := string(content)
-
-	var result Config
-	err := yaml.Unmarshal([]byte(contentAsString), &result)
-	if err != nil {
-		return Config{}, err
-	}
-	return result, nil
+	return c, nil
 }
 
 func ToDBConfig(configDB Database) (db.Config, error) {
@@ -89,8 +52,8 @@ func ToDBConfig(configDB Database) (db.Config, error) {
 			Port:             configDB.Postgres.Port,
 			User:             configDB.Postgres.User,
 			Password:         configDB.Postgres.Password,
-			EnableTLS:        configDB.Postgres.EnableTLS,
-			CABundleFSPath:   configDB.Postgres.CABundleFSPath,
+			EnableTLS:        configDB.Postgres.TLS.Enable,
+			CABundleFSPath:   configDB.Postgres.TLS.CABundlePath,
 		},
 		QueryTimeout: queryTimeout,
 	}, nil
