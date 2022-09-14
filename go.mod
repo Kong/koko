@@ -23,7 +23,7 @@ require (
 	github.com/imdario/mergo v0.3.13
 	github.com/jackc/pgx/v4 v4.17.2
 	github.com/jeremywohl/flatten v1.0.1
-	github.com/kong/go-kong v0.31.1
+	github.com/kong/go-kong v0.32.0
 	github.com/kong/go-wrpc v0.0.0-20220713182016-0ac0ed43d830
 	github.com/kong/goks v0.5.0
 	github.com/kong/semver/v4 v4.0.1
@@ -56,7 +56,6 @@ require (
 	github.com/andybalholm/brotli v1.0.4 // indirect
 	github.com/antlr/antlr4/runtime/Go/antlr v0.0.0-20220418222510-f25a4f6275ed // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
-	github.com/blang/semver/v4 v4.0.0 // indirect
 	github.com/bufbuild/connect-go v0.2.0 // indirect
 	github.com/containerd/containerd v1.6.6 // indirect
 	github.com/containerd/typeurl v1.0.2 // indirect

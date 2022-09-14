@@ -181,8 +181,6 @@ github.com/bkaradzic/go-lz4 v1.0.0/go.mod h1:0YdlkowM3VswSROI7qDxhRvJ3sLhlFrRRwj
 github.com/bketelsen/crypt v0.0.3-0.20200106085610-5cbc8cc4026c/go.mod h1:MKsuJmJgSg28kpZDP6UIiPt0e0Oz0kqKNGyRaWEPv84=
 github.com/blang/semver v3.1.0+incompatible/go.mod h1:kRBLl5iJ+tD4TcOOxsy/0fnwebNt5EWlYSAyrTnjyyk=
 github.com/blang/semver v3.5.1+incompatible/go.mod h1:kRBLl5iJ+tD4TcOOxsy/0fnwebNt5EWlYSAyrTnjyyk=
-github.com/blang/semver/v4 v4.0.0 h1:1PFHFE6yCCTv8C1TeyNNarDzntLi7wMI5i/pzqYIsAM=
-github.com/blang/semver/v4 v4.0.0/go.mod h1:IbckMUScFkM3pff0VJDNKRiT6TG/YpiHIM2yvyW5YoQ=
 github.com/bluele/gcache v0.0.2 h1:WcbfdXICg7G/DGBh1PFfcirkWOQV+v077yF1pSy3DGw=
 github.com/bluele/gcache v0.0.2/go.mod h1:m15KV+ECjptwSPxKhOhQoAFQVtUFjTVkc3H8o0t/fp0=
 github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869/go.mod h1:Ekp36dRnpXw/yCqJaO+ZrUyxD+3VXMFFr56k5XYrpB4=
@@ -856,8 +854,8 @@ github.com/klauspost/compress v1.15.9 h1:wKRjX6JRtDdrE9qwa4b/Cip7ACOshUI4smpCQan
 github.com/klauspost/compress v1.15.9/go.mod h1:PhcZ0MbTNciWF3rruxRgKxI5NkcHHrHUDtV4Yw2GlzU=
 github.com/klauspost/pgzip v1.2.5 h1:qnWYvvKqedOF2ulHpMG72XQol4ILEJ8k2wwRl/Km8oE=
 github.com/klauspost/pgzip v1.2.5/go.mod h1:Ch1tH69qFZu15pkjo5kYi6mth2Zzwzt50oCQKQE9RUs=
-github.com/kong/go-kong v0.31.1 h1:bO9jRdw35HQKXd3XS5baJhwTAVl8gZjdY51cvglojUU=
-github.com/kong/go-kong v0.31.1/go.mod h1:76auWSrwSmH1de2oBJ2/6zibVS0eW+sJgAsdA94f1jI=
+github.com/kong/go-kong v0.32.0 h1:XmSWmKl5bNfcQHbmw3GBNiT7pRHbuehmeMft0Hjr63U=
+github.com/kong/go-kong v0.32.0/go.mod h1:GzkYwVXXuAZwxr3K6kgAbSEkh2zBDKtliD0xIqMu/9E=
 github.com/kong/go-wrpc v0.0.0-20220713182016-0ac0ed43d830 h1:KKUStSi53GgOWWnIqQx2RIYcORQX75z1t0jWTR8n4NA=
 github.com/kong/go-wrpc v0.0.0-20220713182016-0ac0ed43d830/go.mod h1:y0xoS99VcKjQ7Q0p8y3ppSLIeKOF7apHLv3TdpThqnY=
 github.com/kong/goks v0.5.0 h1:rTozT/Cw+eZntQ8JhZMkT1G0yGoFQowNx9drZ0OdDA8=
