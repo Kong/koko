@@ -333,6 +333,10 @@ func (s *seeder) createResourcesForType(ctx context.Context, opts *Options, typ 
 
 // generateTags handles creating tags, either randomly or incrementally based on the provided options.
 func (s *seeder) generateTags(r *rand.Rand, lastNum *atomic.Uint64, opts *Options) []string {
+	if len(opts.tags.staticTags) > 0 {
+		return opts.tags.staticTags
+	}
+
 	var tags []string
 	for j := 1; j <= opts.tags.count; j++ {
 		// Use a 50% chance whether the tag will be set on the resource.

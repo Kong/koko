@@ -45,6 +45,9 @@ type tagOptions struct {
 
 	// When true, allows for no tags at all on a resource. When false, at least one tag will always exist.
 	allowEmpty bool
+
+	// Optional tags to set on every resource.
+	staticTags []string
 }
 
 // NewOptionsBuilder instantiates a new instance of an OptionsBuilder.
@@ -93,6 +96,13 @@ func (b *OptionsBuilder) WithRandomTagCount(count int, allowEmpty bool) *Options
 // option is specified).
 func (b *OptionsBuilder) WithIncrementalTags(count int) *OptionsBuilder {
 	b.opts.tags.count, b.opts.tags.useIncremental, b.opts.tags.allowEmpty = count, true, false
+	return b
+}
+
+// WithStaticTags sets optional tags to set on each resource. When used, this overrides
+// all default tag generation behavior (as in, no other tags will be set but these).
+func (b *OptionsBuilder) WithStaticTags(tags []string) *OptionsBuilder {
+	b.opts.tags.count, b.opts.tags.staticTags = len(tags), tags
 	return b
 }
 
