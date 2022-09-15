@@ -215,7 +215,7 @@ var (
 				ID:       config.ChangeID("P106"),
 				Severity: config.ChangeSeverityError,
 				Description: "For the 'datadog' plugin, " +
-					"distribution metric type is not support in Kong gateway " +
+					"distribution metric type is not supported in Kong gateway " +
 					"versions < 2.7. " +
 					"Distribution metrics will not be emitted by the gateway.",
 				Resolution: standardUpgradeMessage("2.7"),
