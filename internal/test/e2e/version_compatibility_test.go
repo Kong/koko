@@ -875,3 +875,80 @@ func TestRoutePathVersionCompatibility(t *testing.T) {
 		})
 	})
 }
+
+func TestTagsVersionCompatibility(t *testing.T) {
+	cleanup := run.Koko(t)
+	defer cleanup()
+
+	dpCleanup := run.KongDP(kong.GetKongConfForShared())
+	defer dpCleanup()
+	require.NoError(t, util.WaitForKong(t))
+	require.NoError(t, util.WaitForKongAdminAPI(t))
+
+	admin := httpexpect.WithConfig(httpexpect.Config{
+		BaseURL:  "http://localhost:3000",
+		Reporter: httpexpect.NewRequireReporter(t),
+		Printers: []httpexpect.Printer{
+			httpexpect.NewCompactPrinter(t),
+		},
+	})
+
+	service := &v1.Service{
+		Id:   uuid.NewString(),
+		Name: "service-1",
+		Host: "example.com",
+		Path: "/",
+		Tags: []string{"tag-1", "tag-2", "tag 3"},
+	}
+	res := admin.POST("/v1/services").WithJSON(service).Expect()
+	res.Status(http.StatusCreated)
+
+	for _, route := range []*v1.Route{
+		{Name: "path-1", Paths: []string{"/path/one"}},
+		{Name: "path-2", Paths: []string{"/path/two"}, Tags: []string{"tag-1"}},
+		{Name: "path-3", Paths: []string{"/path/three"}, Tags: []string{"tag 2"}},
+		{Name: "path-4", Paths: []string{"/path/four"}, Tags: []string{"tag-3", "tag 4"}},
+	} {
+		route.Service = &v1.Service{Id: service.Id}
+		res := admin.POST("/v1/routes").WithJSON(route).Expect()
+		res.Status(http.StatusCreated)
+	}
+
+	t.Run("pre 3.0", func(t *testing.T) {
+		kongClient.RunWhenKong(t, "< 3.0.0")
+
+		util.WaitFunc(t, func() error {
+			return util.EnsureConfig(&v1.TestingConfig{
+				Services: []*v1.Service{{
+					Name: "service-1",
+					Tags: []string{"tag-1", "tag-2"},
+				}},
+				Routes: []*v1.Route{
+					{Name: "path-1"},
+					{Name: "path-2", Tags: []string{"tag-1"}},
+					{Name: "path-3"},
+					{Name: "path-4", Tags: []string{"tag-3"}},
+				},
+			})
+		})
+	})
+
+	t.Run("3.0.0 and above", func(t *testing.T) {
+		kongClient.RunWhenKong(t, ">= 3.0.0")
+
+		util.WaitFunc(t, func() error {
+			return util.EnsureConfig(&v1.TestingConfig{
+				Services: []*v1.Service{{
+					Name: "service-1",
+					Tags: []string{"tag-1", "tag-2", "tag 3"},
+				}},
+				Routes: []*v1.Route{
+					{Name: "path-1"},
+					{Name: "path-2", Tags: []string{"tag-1"}},
+					{Name: "path-3", Tags: []string{"tag 2"}},
+					{Name: "path-4", Tags: []string{"tag-3", "tag 4"}},
+				},
+			})
+		})
+	})
+}

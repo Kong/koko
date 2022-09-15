@@ -1955,3 +1955,72 @@ func TestExtraProcessing_CorrectStatsdIdentifiers(t *testing.T) {
 		})
 	}
 }
+
+func Test_dropTagsWithSpaces(t *testing.T) {
+	inputPayload := `{
+		"config_table": {
+			"_format_version": "2.1",
+			"_transform": false,
+			"consumers": [{"id": "id-1", "tags": ["tag 1"]}],
+			"plugins": [
+				{
+					"id": "id-2",
+					"tags": ["tag-1", "tag 2", "tag-3"]
+				},
+				{
+					"id": "id-3",
+					"tags": ["tag-4"]
+				},
+				{
+					"id": "id-4",
+					"tags": ["tag-5", "tag 6", "tag-7"],
+					"config": {"tags": ["leave me alone"]}
+				}
+			]
+		}
+	}`
+
+	expectedPayload := `{
+		"config_table": {
+			"_format_version": "2.1",
+			"_transform": false,
+			"consumers": [{"id": "id-1"}],
+			"plugins": [
+				{
+					"id": "id-2",
+					"tags": ["tag-1", "tag-3"]
+				},
+				{
+					"id": "id-3",
+					"tags": ["tag-4"]
+				},
+				{
+					"id": "id-4",
+					"tags": ["tag-5", "tag-7"],
+					"config": {"tags": ["leave me alone"]}
+				}
+			]
+		}
+	}`
+
+	tracker := config.NewChangeTracker()
+	actual, err := dropTagsWithSpaces(inputPayload, "", tracker, log.Logger)
+	require.NoError(t, err)
+	assert.JSONEq(t, expectedPayload, actual)
+	require.Equal(t, config.TrackedChanges{
+		ChangeDetails: []config.ChangeDetail{{
+			ID: dropSpacesInTagsChangeID,
+			Resources: []config.ResourceInfo{
+				{Type: "consumer", ID: "id-1"},
+				{Type: "plugin", ID: "id-2"},
+				{Type: "plugin", ID: "id-4"},
+			},
+		}},
+	}, tracker.Get())
+}
+
+func Test_getTypeFromKongKeyName(t *testing.T) {
+	assert.EqualValues(t, "ca_certificate", getTypeFromKongKeyName("ca_certificates"))
+	assert.EqualValues(t, "plugin", getTypeFromKongKeyName("plugins"))
+	assert.EqualValues(t, "sni", getTypeFromKongKeyName("snis"))
+}

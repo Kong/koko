@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/kong/koko/internal/json"
+	"github.com/kong/koko/internal/model"
 	"github.com/kong/koko/internal/resource"
 	"github.com/kong/koko/internal/server/kong/ws/config"
 	"github.com/kong/koko/internal/versioning"
@@ -54,62 +55,71 @@ const (
 	statsdUnsupportedMetricChangeID          = "P130"
 	statsdUnsupportedMetricFieldChangeID     = "P131"
 	statsdAddDefaultMetricFieldValueChangeID = "P132"
+	dropSpacesInTagsChangeID                 = "P134"
 )
 
 func init() {
-	if err := config.ChangeRegistry.Register(config.Change{
-		Metadata: config.ChangeMetadata{
-			ID:       awsLambdaExclusiveFieldChangeID,
-			Severity: config.ChangeSeverityError,
-			Description: "For the 'aws-lambda' plugin, " +
-				"'config.aws_region' and 'config.host' fields are set. " +
-				"These fields were mutually exclusive for Kong gateway " +
-				"versions < 3.0. The plugin configuration has been changed " +
-				"to remove the 'config.host' field.",
-			Resolution:       standardUpgradeMessage("3.0"),
-			DocumentationURL: "",
+	for _, change := range []config.Change{
+		{
+			Metadata: config.ChangeMetadata{
+				ID:       awsLambdaExclusiveFieldChangeID,
+				Severity: config.ChangeSeverityError,
+				Description: "For the 'aws-lambda' plugin, " +
+					"'config.aws_region' and 'config.host' fields are set. " +
+					"These fields were mutually exclusive for Kong gateway " +
+					"versions < 3.0. The plugin configuration has been changed " +
+					"to remove the 'config.host' field.",
+				Resolution:       standardUpgradeMessage("3.0"),
+				DocumentationURL: "",
+			},
+			SemverRange: versionsPre300,
+			// none since the logic is hard-coded instead
+			Update: config.ConfigTableUpdates{},
 		},
-		SemverRange: versionsPre300,
-		// none since the logic is hard-coded instead
-		Update: config.ConfigTableUpdates{},
-	}); err != nil {
-		panic(err)
-	}
-
-	if err := config.ChangeRegistry.Register(config.Change{
-		Metadata: config.ChangeMetadata{
-			ID:       pathRegexFieldChangeID,
-			Severity: config.ChangeSeverityWarning,
-			Description: "For the 'paths' field used in route a regex " +
-				"pattern usage was detected. " +
-				"This field has been back-ported by stripping the prefix '~'. " +
-				"Routes which rely on regex parsing may not work as intended " +
-				"on Kong gateway versions < 3.0. " +
-				"If upgrading to version 3.0 is not possible, using paths " +
-				"without the '~' prefix will avoid this warning.",
-			Resolution: standardUpgradeMessage("3.0"),
+		{
+			Metadata: config.ChangeMetadata{
+				ID:       pathRegexFieldChangeID,
+				Severity: config.ChangeSeverityWarning,
+				Description: "For the 'paths' field used in route a regex " +
+					"pattern usage was detected. " +
+					"This field has been back-ported by stripping the prefix '~'. " +
+					"Routes which rely on regex parsing may not work as intended " +
+					"on Kong gateway versions < 3.0. " +
+					"If upgrading to version 3.0 is not possible, using paths " +
+					"without the '~' prefix will avoid this warning.",
+				Resolution: standardUpgradeMessage("3.0"),
+			},
+			SemverRange: versionsPre300,
+			// none since the logic is hard-coded instead
+			Update: config.ConfigTableUpdates{},
 		},
-		SemverRange: versionsPre300,
-		// none since the logic is hard-coded instead
-		Update: config.ConfigTableUpdates{},
-	}); err != nil {
-		panic(err)
-	}
-
-	if err := config.ChangeRegistry.Register(config.Change{
-		Metadata: config.ChangeMetadata{
-			ID:       pathRegexFieldUnprefixedChangeID,
-			Severity: config.ChangeSeverityWarning,
-			Description: "For the 'paths' field used in route a regex " +
-				"pattern usage was detected. " +
-				"Kong gateway versions 3.0 and above require that regular expressions " +
-				"start with a '~' character to distinguish from simple prefix match.",
-			Resolution: "To define a regular expression based path for routing, please " +
-				"prefix the path with ~ character.",
+		{
+			Metadata: config.ChangeMetadata{
+				ID:       dropSpacesInTagsChangeID,
+				Severity: config.ChangeSeverityError,
+				Description: "Tags that contain space characters (' ') are not supported on Kong gateway " +
+					"versions < 3.0. As such, all tag values that contain space characters have been removed.",
+				Resolution: standardUpgradeMessage("3.0"),
+			},
+			SemverRange: versionsPre300,
 		},
-		SemverRange: versions300AndAbove,
-	}); err != nil {
-		panic(err)
+		{
+			Metadata: config.ChangeMetadata{
+				ID:       pathRegexFieldUnprefixedChangeID,
+				Severity: config.ChangeSeverityWarning,
+				Description: "For the 'paths' field used in route a regex " +
+					"pattern usage was detected. " +
+					"Kong gateway versions 3.0 and above require that regular expressions " +
+					"start with a '~' character to distinguish from simple prefix match.",
+				Resolution: "To define a regular expression based path for routing, please " +
+					"prefix the path with ~ character.",
+			},
+			SemverRange: versions300AndAbove,
+		},
+	} {
+		if err := config.ChangeRegistry.Register(change); err != nil {
+			panic(err)
+		}
 	}
 }
 
@@ -488,6 +498,74 @@ func correctStatsdMetrics(
 	return processedPayload
 }
 
+// dropTagsWithSpaces handles dropping tags with spaces for < 3.0 DPs, across all entities in the config table.
+//
+// In Kong 3.0, it introduced support for space characters (` `) in tags. For DPs < 3.0, we've decided to drop such
+// tags that contain spaces, as we did not want to attempt to replace the space character with something else.
+func dropTagsWithSpaces(
+	payload string,
+	dataPlaneVersionStr string,
+	tracker *config.ChangeTracker,
+	logger *zap.Logger,
+) (string, error) {
+	log := logger.With(zap.String("data-plane", dataPlaneVersionStr))
+
+	for key, resources := range gjson.Get(payload, "config_table").Map() {
+		typ := string(getTypeFromKongKeyName(key))
+		log = log.With(zap.String("resource-type", typ))
+
+		for rIdx, r := range resources.Array() {
+			resourceID, tagsObj := r.Get("id").Str, r.Get("tags")
+			log = log.With(zap.String("resource-id", resourceID))
+
+			// This resource does not have tags, so we can skip it.
+			if tagsObj.Type == gjson.Null {
+				continue
+			}
+
+			var tags []string
+			if err := json.Unmarshal([]byte(tagsObj.Raw), &tags); err != nil {
+				return "", err
+			}
+
+			// Remove all tags that have any number of spaces.
+			filteredTags := lo.Filter(tags, func(tag string, _ int) bool {
+				return !strings.ContainsRune(tag, ' ')
+			})
+
+			// Nothing to do when no tags contain spaces.
+			if len(tags) == len(filteredTags) {
+				continue
+			}
+
+			tagsKey := fmt.Sprintf("config_table.%s.%d.tags", key, rIdx)
+			var err error
+			if len(filteredTags) == 0 {
+				// All tags contained spaces, so we'll delete the tags key.
+				payload, err = sjson.Delete(payload, tagsKey)
+			} else {
+				// Some tags contained spaces, so we'll keep the tags around that do not contain spaces.
+				payload, err = sjson.Set(payload, tagsKey, filteredTags)
+			}
+			if err != nil {
+				return "", err
+			}
+
+			if err := tracker.TrackForResource(
+				dropSpacesInTagsChangeID,
+				config.ResourceInfo{ID: resourceID, Type: typ},
+			); err != nil {
+				log.Error(
+					"failed to track version compatibility change",
+					zap.String("change-id", dropSpacesInTagsChangeID),
+				)
+			}
+		}
+	}
+
+	return payload, nil
+}
+
 func VersionCompatibilityExtraProcessing(payload string, dataPlaneVersion versioning.Version,
 	tracker *config.ChangeTracker, logger *zap.Logger,
 ) (string, error) {
@@ -514,6 +592,16 @@ func VersionCompatibilityExtraProcessing(payload string, dataPlaneVersion versio
 
 		// Correct default metrics identifier for statsd in 2.x.x.x.
 		processedPayload = correctStatsdMetrics(processedPayload, dataPlaneVersionStr, tracker, logger)
+
+		// Remove all tags that contain spaces, as it is only supported by DPs >= 3.0.
+		if processedPayload, err = dropTagsWithSpaces(
+			processedPayload,
+			dataPlaneVersionStr,
+			tracker,
+			logger,
+		); err != nil {
+			return "", err
+		}
 	}
 
 	if version300OrNewer(dataPlaneVersion) {
@@ -522,4 +610,13 @@ func VersionCompatibilityExtraProcessing(payload string, dataPlaneVersion versio
 	}
 
 	return processedPayload, nil
+}
+
+// getTypeFromKongKeyName translates Kong type names used in its config, like `plugins`,
+// `routes`, `services`, etc., to Koko's own type name, which happens to be the
+// singular version of Kong's type name, e.g.: `plugin`, `route`, `service`, etc.
+func getTypeFromKongKeyName(key string) model.Type {
+	// TODO(tjasko): We'll likely want an explicit mapping for this in the future, however, some care would
+	//  need to be done to ensure such mapping is maintained in the event new resources are created.
+	return model.Type(key[:len(key)-1])
 }
