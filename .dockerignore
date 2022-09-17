@@ -2,4 +2,5 @@ bin
 dist/
 koko
 .git
-
+go.work
+go.work.sum
