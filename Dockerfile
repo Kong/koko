@@ -7,7 +7,6 @@ ARG GIT_TAG
 COPY go.mod ./
 COPY go.sum ./
 RUN go mod download
-RUN go mod verify
 
 ADD . .
 
