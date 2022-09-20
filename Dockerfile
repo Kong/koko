@@ -10,7 +10,7 @@ RUN go mod download
 RUN go mod verify
 
 ADD . .
-# TODO(hbagdi) pass along commit hash and tag details
+
 RUN CGO_ENABLED=1 go build \
   -ldflags="-extldflags=-static -X github.com/kong/koko/internal/info.VERSION=$GIT_TAG -X github.com/kong/koko/internal/info.COMMIT=$GIT_COMMIT_HASH" \
   -tags sqlite_omit_load_extension,netgo,osusergo \
