@@ -6,6 +6,11 @@ if [ -z "${DOCKER_HUB_USERNAME}" -o -z "${DOCKER_HUB_ACCESS_TOKEN}" ]; then
   exit
 fi
 
+if [ -n "$(git status --porcelain)" ]; then
+  echo "Git tree is dirty, please commit your changes."
+  exit 1
+fi
+
 IMG_NAME="${IMG_NAME:-kong/koko}"
 GIT_COMMIT_HASH="${GIT_COMMIT_HASH:-$(git rev-parse --short HEAD)}"
 
