@@ -20,4 +20,4 @@ RUN adduser --disabled-password --gecos "" koko
 RUN apk --no-cache add ca-certificates bash
 USER koko
 COPY --from=build /koko/koko /usr/local/bin
-ENTRYPOINT ["koko", "serve"]
+ENTRYPOINT ["koko"]
