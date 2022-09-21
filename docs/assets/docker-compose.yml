@@ -1,0 +1,47 @@
+version: "3.9"
+
+networks:
+  kong-net:
+    external: false
+
+services:
+  koko:
+    image: "kong/koko:dev-latest"
+    command: "serve"
+    environment:
+      KOKO_DATABASE_SQLITE_IN_MEMORY: true
+      KOKO_CONTROL_SERVER_TLS_CERT_PATH: "/certs/cluster.crt"
+      KOKO_CONTROL_SERVER_TLS_KEY_PATH: "/certs/cluster.key"
+    restart: on-failure:3
+    networks:
+      - kong-net
+    volumes:
+      - ./certs:/certs
+    ports:
+    - 3000:3000
+  kong:
+    image: "kong:3.0"
+    environment:
+      KONG_ADMIN_ACCESS_LOG: /dev/stdout
+      KONG_ADMIN_ERROR_LOG: /dev/stderr
+      KONG_USER: kong
+      KONG_PROXY_LISTEN: "0.0.0.0:8000"
+      KONG_PROXY_ACCESS_LOG: /dev/stdout
+      KONG_PROXY_ERROR_LOG: /dev/stderr
+      KONG_DATABASE: "off"
+      KONG_ROLE: data_plane
+      KONG_CLUSTER_MTLS: shared
+      KONG_CLUSTER_CERT: /certs/cluster.crt
+      KONG_CLUSTER_CERT_KEY: /certs/cluster.key
+      KONG_NGINX_WORKER_PROCESSES: "1"
+      KONG_CLUSTER_CONTROL_PLANE: kong_clustering:3100
+    ports:
+    - 8000:8000
+    networks:
+      - kong-net
+    links:
+    - koko:kong_clustering
+    restart: on-failure:3
+    volumes:
+      - ./certs:/certs
+
