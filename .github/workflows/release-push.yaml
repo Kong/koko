@@ -1,0 +1,19 @@
+name: release-push
+on:
+  push:
+    tags:
+      - "v*"
+jobs:
+  build-image:
+    name: Build Docker image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v3
+      - name: Build and push docker image
+        id: build
+        run: bash scripts/build-release.sh
+        env:
+          DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
+          DOCKER_HUB_ACCESS_TOKEN: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+          GIT_TAG: ${{ github.ref_name }}
