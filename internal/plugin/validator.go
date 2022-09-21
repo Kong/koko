@@ -26,11 +26,7 @@ type Validator interface {
 	// ascending order. The returned slice must not be modified.
 	GetAvailablePluginNames(ctx context.Context) []string
 
-	// GetRawLuaSchema returns the raw Lua schema for the given plugin. In the event the plugin
-	// does not exist, an error is returned. The returned slice must not be modified.
+	// GetRawLuaSchema returns the raw Lua schema for the given plugin (bundled or non-bundled). In the
+	// event the plugin does not exist, an error is returned. The returned slice must not be modified.
 	GetRawLuaSchema(ctx context.Context, name string) ([]byte, error)
-
-	// GetRawLuaSchemaForCustomPlugin returns the raw Lua schema for the given non-bundled plugin.
-	// In the event the plugin does not exist, an error is returned.
-	GetRawLuaSchemaForCustomPlugin(ctx context.Context, name string) ([]byte, error)
 }
