@@ -14,9 +14,9 @@ services:
       KOKO_CONTROL_SERVER_TLS_KEY_PATH: "/certs/cluster.key"
     restart: on-failure:3
     networks:
-      - kong-net
+    - kong-net
     volumes:
-      - ./certs:/certs
+    - ./certs:/certs
     ports:
     - 3000:3000
   kong:
@@ -24,7 +24,6 @@ services:
     environment:
       KONG_ADMIN_ACCESS_LOG: /dev/stdout
       KONG_ADMIN_ERROR_LOG: /dev/stderr
-      KONG_USER: kong
       KONG_PROXY_LISTEN: "0.0.0.0:8000"
       KONG_PROXY_ACCESS_LOG: /dev/stdout
       KONG_PROXY_ERROR_LOG: /dev/stderr
@@ -38,10 +37,10 @@ services:
     ports:
     - 8000:8000
     networks:
-      - kong-net
+    - kong-net
     links:
     - koko:kong_clustering
     restart: on-failure:3
     volumes:
-      - ./certs:/certs
+    - ./certs:/certs
 

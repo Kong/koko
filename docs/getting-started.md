@@ -3,7 +3,7 @@
 ## System requirements
 
 - Docker
-- curl
+- cURL
 
 ## Create a new directory
 
@@ -30,7 +30,7 @@ curl https://raw.githubusercontent.com/Kong/koko/main/docs/assets/docker-compose
   -o docker-compose.yml
 ```
 
-## Start docker containers
+## Start Docker containers
 
 ```shell
 docker compose up
@@ -68,7 +68,9 @@ curl -v http://localhost:8000/foo/status/200
 ```
 
 Observe that Kong correctly routes the request to
-[mockbin.org](https://mockbin.org) and enforces appropriate rate-limits.
+[mockbin.org](https://mockbin.org).
+Kong also enforces appropriate rate-limits and the rate-limits can be found in
+the HTTP response headers.
 
 ## Check tracked data-plane node
 
@@ -86,8 +88,7 @@ status.
 
 Please explore the
 [OpenAPI v2 spec](https://github.com/Kong/koko/blob/main/internal/gen/swagger/koko.swagger.json)
-of the Admin API offered by Koko to configure Kong.
-Or hook up another Kong data-plane.
+of the Admin API offered by Koko to configure Kong, or hook up another Kong data-plane.
 
 ## Seeking help
 
