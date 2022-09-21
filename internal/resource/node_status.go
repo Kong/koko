@@ -129,7 +129,7 @@ func init() {
 			ResourceAPIPath:         "",
 		},
 	}
-	err = generator.Register(string(TypeNodeStatus), nodeSchema)
+	err = generator.Registry.Register(string(TypeNodeStatus), nodeSchema)
 	if err != nil {
 		panic(err)
 	}

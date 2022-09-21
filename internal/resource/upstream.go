@@ -684,7 +684,7 @@ func init() {
 			ResourceAPIPath: "upstreams",
 		},
 	}
-	err = generator.Register(string(TypeUpstream), upstreamSchema)
+	err = generator.Registry.Register(string(TypeUpstream), upstreamSchema)
 	if err != nil {
 		panic(err)
 	}

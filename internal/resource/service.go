@@ -316,7 +316,7 @@ func init() {
 			ResourceAPIPath: "services",
 		},
 	}
-	err = generator.Register(string(TypeService), serviceSchema)
+	err = generator.Registry.Register(string(TypeService), serviceSchema)
 	if err != nil {
 		panic(err)
 	}

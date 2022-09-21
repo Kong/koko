@@ -123,7 +123,7 @@ func init() {
 			ResourceAPIPath:         "plugin-schemas",
 		},
 	}
-	err = generator.Register(string(TypePluginSchema), pluginSchema)
+	err = generator.Registry.Register(string(TypePluginSchema), pluginSchema)
 	if err != nil {
 		panic(err)
 	}

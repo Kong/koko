@@ -183,7 +183,7 @@ func init() {
 			ResourceAPIPath: "ca-certificates",
 		},
 	}
-	err = generator.Register(string(TypeCACertificate), caCertificateSchema)
+	err = generator.Registry.Register(string(TypeCACertificate), caCertificateSchema)
 	if err != nil {
 		panic(err)
 	}
