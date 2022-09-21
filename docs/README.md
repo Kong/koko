@@ -5,13 +5,15 @@ or if something doesn't work well for you, please open a GitHub Issue.
 
 ## Overview
 
-TODO
+- [Architecture](./architecture.md)
+- [FAQs](./faqs.md)
 
 ## Guides
 
-TODO
+- [Getting started guide](./getting-started.md)
 
 ## References
 
 - [Comparison of Kong Gateway Control-Plane with Koko](./koko-vs-kong.md)
+- [Public contract of Koko](./contract.md)
 
