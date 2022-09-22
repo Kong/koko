@@ -4,8 +4,10 @@ package e2e
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/gavv/httpexpect/v2"
@@ -17,7 +19,9 @@ import (
 	"github.com/kong/koko/internal/test/run"
 	"github.com/kong/koko/internal/test/util"
 	"github.com/kong/koko/internal/versioning"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/tidwall/gjson"
 	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )
@@ -167,6 +171,119 @@ func TestVersionCompatibility(t *testing.T) {
 		}
 		return err
 	})
+}
+
+func TestVersionCompatibilityFieldUpdatesEnsurePlugins(t *testing.T) {
+	// todo: duplicate code
+	// setup test resources
+	cleanup := run.Koko(t)
+	defer cleanup()
+
+	dpCleanup := run.KongDP(kong.GetKongConfForShared())
+	defer dpCleanup()
+	require.NoError(t, util.WaitForKong(t))
+	require.NoError(t, util.WaitForKongAdminAPI(t))
+
+	kongAdmin, err := kongClient.NewClient(util.BasedKongAdminAPIAddr, nil)
+	require.NoError(t, err, "create go client for kong")
+	ctx := context.Background()
+	info, err := kongAdmin.Root(ctx)
+	require.NoError(t, err, "fetching Kong Gateway info")
+
+	dataPlaneVersion, err := versioning.NewVersion(kongClient.VersionFromInfo(info))
+	require.NoError(t, err)
+
+	admin := httpexpect.New(t, "http://localhost:3000")
+
+	// Remove plugins that may not be expected due to data plane version
+	expectedPluginsMap := make(map[string]VersionCompatibilityPlugins, 0)
+	for _, pluginTest := range VersionCompatibilityOSSPluginConfigurationTests {
+		addPlugin := true
+		if len(pluginTest.VersionRange) > 0 {
+			version := versioning.MustNewRange(pluginTest.VersionRange)
+			if !version(dataPlaneVersion) {
+				addPlugin = false
+			}
+		}
+		if addPlugin {
+			expectedPluginsMap[pluginTest.Name] = pluginTest
+		}
+	}
+
+	// todo: just create for plugins containing expected FieldUpdateChecks?
+	// request to create plugin records in the CP + DP
+	for _, pluginTest := range VersionCompatibilityOSSPluginConfigurationTests {
+		var config structpb.Struct
+		if len(pluginTest.Config) > 0 {
+			require.Nil(t, json.ProtoJSONUnmarshal([]byte(pluginTest.Config), &config))
+		}
+
+		p := &v1.Plugin{
+			Id:        uuid.NewString(),
+			Name:      pluginTest.Name,
+			Config:    &config,
+			Enabled:   wrapperspb.Bool(true),
+			Protocols: []string{"http", "https"},
+		}
+
+		pluginBytes, err := json.ProtoJSONMarshal(p)
+		require.Nil(t, err)
+		res := admin.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
+		res.Status(http.StatusCreated)
+	}
+
+	// fetch list of created plugin records from the DP
+	dataPlanePlugins := []*kongClient.Plugin{}
+	util.WaitFunc(t, func() error {
+		dataPlanePlugins, err = kongAdmin.Plugins.ListAll(ctx)
+		if err != nil {
+			t.Log("fetch plugin failed", err)
+		}
+		if len(dataPlanePlugins) == 0 {
+			return errors.New("plugins len was 0")
+		}
+		return err
+	})
+
+	// todo: can I construct this during the WaitFunc call?
+	dpPluginsMap := make(map[string]*kongClient.Plugin, 0)
+	for _, dpPlugin := range dataPlanePlugins {
+		dpPluginsMap[*dpPlugin.Name] = dpPlugin
+	}
+
+	require.Equal(t, len(expectedPluginsMap), len(dpPluginsMap), "plugins configured count does not match")
+	var failedPlugins, missingPlugins []string
+	// todo: maybe call t.Run(plugin.Name) instead of aggregating failures in a single test
+	for name, expectedPlugin := range expectedPluginsMap {
+		if dpPlugin, ok := dpPluginsMap[name]; ok {
+			// Ensure field updates occurred and validate
+			if len(expectedPlugin.FieldUpdateChecks) > 0 {
+				for rawVersion, updates := range expectedPlugin.FieldUpdateChecks {
+					parsedVersion := versioning.MustNewRange(rawVersion)
+					if parsedVersion(dataPlaneVersion) {
+						for _, update := range updates {
+							config, err := json.ProtoJSONMarshal(dpPlugin.Config)
+							require.NoError(t, err, "marshaling plugin config should not error")
+							updateField := gjson.Get(string(config), update.Field)
+
+							have := update.Value.([]string)
+							want := make([]string, 0)
+							for _, w := range updateField.Array() {
+								want = append(want, w.Value().(string))
+							}
+							if !assert.ElementsMatch(t, have, want) {
+								failedPlugins = append(failedPlugins, expectedPlugin.Name)
+							}
+						}
+					}
+				}
+			}
+		} else {
+			missingPlugins = append(missingPlugins, expectedPlugin.Name)
+		}
+	}
+	require.Zero(t, len(missingPlugins), "failed to discover plugins %s", strings.Join(missingPlugins, ","))
+	require.Zero(t, len(failedPlugins), "failed to validate plugin updates %s", strings.Join(failedPlugins, ","))
 }
 
 func TestVersionCompatibilitySyslogFacilityField(t *testing.T) {
