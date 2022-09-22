@@ -27,7 +27,7 @@ const (
 )
 
 var (
-	IPv4LikePattern       = regexp.MustCompile(`^[0-9.]+$`)
+	IPv4LikePattern       = regexp.MustCompile(`^[0-9.]+(/\d+)?$`)
 	HostnamePattern       = regexp.MustCompile(typedefs.HostnamePattern)
 	IPv6HasPortPattern    = regexp.MustCompile(`\]\:\d+$`)
 	IPv6HasBracketPattern = regexp.MustCompile(`\[\S+\]$`)

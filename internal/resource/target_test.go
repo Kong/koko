@@ -358,6 +358,21 @@ func TestTarget_fortmatTarget(t *testing.T) {
 			target:  "1.2.3.4.5:80",
 			wantErr: true,
 		},
+		{
+			name:    "mask is not supported with ipv4",
+			target:  "1.2.3.4/32:80",
+			wantErr: true,
+		},
+		{
+			name:    "mask is not supported with ipv6",
+			target:  "2001:DB8:85a3::8a2e:370:7334/128",
+			wantErr: true,
+		},
+		{
+			name:    "mask is not supported with ipv6 and brackets",
+			target:  "[2001:DB8::1]/128",
+			wantErr: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
