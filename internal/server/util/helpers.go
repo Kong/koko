@@ -173,6 +173,8 @@ func HandleErr(ctx context.Context, logger *zap.Logger, err error) error {
 		return status.Error(codes.NotFound, "")
 	}
 
+	// Do not include types that are aliased to the `error`
+	// interface, as it will leak all errors to clients.
 	switch e := err.(type) {
 	case store.ErrConstraint:
 		s := status.New(codes.InvalidArgument, "data constraint error")
