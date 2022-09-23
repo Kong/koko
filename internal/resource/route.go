@@ -643,7 +643,7 @@ func init() {
 			ResourceAPIPath: "routes",
 		},
 	}
-	err = generator.Registry.Register(string(TypeRoute), routeSchema)
+	err = generator.Default.Register(string(TypeRoute), routeSchema)
 	if err != nil {
 		panic(err)
 	}

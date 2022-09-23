@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	genJSONSchema "github.com/kong/koko/internal/gen/jsonschema"
-	"github.com/kong/koko/internal/test/files"
+	"github.com/kong/koko/internal/model/json/schema/testdata"
 	"github.com/santhosh-tekuri/jsonschema/v5"
 	"github.com/stretchr/testify/require"
 )
@@ -22,7 +22,7 @@ func TestRegisterSchemaFS(t *testing.T) {
 	require.ErrorContains(t, err, "schema not found")
 	require.Nil(t, schema)
 
-	RegisterSchemaFS(&files.TestKongSchemas)
+	RegisterSchemasFromFS(&testdata.TestKongSchemas)
 	// make sure to reload schemas
 	initSchemas()
 
@@ -37,7 +37,7 @@ func TestSchemaLoadingOverride(t *testing.T) {
 	// make sure the oss service schema is loaded by default
 	schema, _ := Get("service")
 	require.Greater(t, len(schema.Properties), 1) // default has 19 properties
-	RegisterSchemaFS(&files.TestKongSchemas)
+	RegisterSchemasFromFS(&testdata.TestKongSchemas)
 	initSchemas()
 
 	// check that the new service schema overrides the default one

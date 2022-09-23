@@ -7,7 +7,6 @@ import (
 	"strings"
 	"sync"
 
-	genJSONSchema "github.com/kong/koko/internal/gen/jsonschema"
 	"github.com/kong/koko/internal/json"
 	"github.com/kong/koko/internal/model/json/extension"
 	"github.com/santhosh-tekuri/jsonschema/v5"
@@ -17,7 +16,7 @@ var (
 	schemas        = map[string]*jsonschema.Schema{}
 	rawJSONSchemas = map[string][]byte{}
 	once           sync.Once
-	schemaFS       = []*embed.FS{&genJSONSchema.KongSchemas}
+	schemaFS       []*embed.FS
 )
 
 // This is not done in a traditional init() to avoid circular dependency on the
@@ -86,7 +85,8 @@ func GetRawJSONSchema(name string) ([]byte, error) {
 	return rawJSONSchema, nil
 }
 
-func RegisterSchemaFS(fs *embed.FS) {
+// RegisterSchemasFromFS adds an embed FS where schemas should be loaded.
+func RegisterSchemasFromFS(fs *embed.FS) {
 	schemaFS = append(schemaFS, fs)
 }
 

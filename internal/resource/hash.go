@@ -81,7 +81,7 @@ func init() {
 		},
 		XKokoConfig: &extension.Config{DisableValidateEndpoint: true},
 	}
-	err = generator.Registry.Register(string(TypeHash), nodeSchema)
+	err = generator.Default.Register(string(TypeHash), nodeSchema)
 	if err != nil {
 		panic(err)
 	}

@@ -17,6 +17,8 @@ import (
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
+	genJSONSchema "github.com/kong/koko/internal/gen/jsonschema"
+	"github.com/kong/koko/internal/model/json/schema"
 )
 
 var (
@@ -34,6 +36,7 @@ const (
 )
 
 func init() {
+	schema.RegisterSchemasFromFS(&genJSONSchema.KongSchemas)
 	TestBackoff = backoff.NewConstantBackOff(1 * time.Second)
 	TestBackoff = backoff.WithMaxRetries(TestBackoff, maxRetriesInTests)
 }

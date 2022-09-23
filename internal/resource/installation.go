@@ -87,7 +87,7 @@ func init() {
 		},
 		XKokoConfig: &extension.Config{DisableValidateEndpoint: true},
 	}
-	err = generator.Registry.Register(string(TypeInstallation), installationSchema)
+	err = generator.Default.Register(string(TypeInstallation), installationSchema)
 	if err != nil {
 		panic(err)
 	}
