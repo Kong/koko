@@ -1,8 +1,6 @@
 package store
 
 import (
-	"errors"
-
 	"github.com/kong/koko/internal/model"
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 )
@@ -88,9 +86,9 @@ type ListOpts struct {
 func (o *ListOpts) validate() error {
 	// TODO(tjasko): Implement proper support for combining both ListFor() & ListWithFilter().
 	if o.Filter != nil && o.ReferenceType != "" && o.ReferenceID != "" {
-		return ErrUnsupportedListOpts(errors.New(
+		return ErrUnsupportedListOpts{
 			"listing resources scoped to a resource while applying a filter are not yet supported",
-		))
+		}
 	}
 
 	return nil
@@ -99,7 +97,11 @@ func (o *ListOpts) validate() error {
 type ListOptsFunc func(*ListOpts)
 
 // ErrUnsupportedListOpts is used when the provided combination of list options is not supported.
-type ErrUnsupportedListOpts error
+type ErrUnsupportedListOpts struct{ message string }
+
+func (e ErrUnsupportedListOpts) Error() string {
+	return e.message
+}
 
 const (
 	DefaultPage     = 1

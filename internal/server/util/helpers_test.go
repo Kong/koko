@@ -2,6 +2,7 @@ package util
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"net"
 	"net/http"
@@ -9,10 +10,15 @@ import (
 	"testing"
 
 	"github.com/gavv/httpexpect/v2"
+	"github.com/kong/koko/internal/model/json/validation"
+	"github.com/kong/koko/internal/store"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/status"
 	"google.golang.org/grpc/test/bufconn"
 )
 
@@ -131,4 +137,60 @@ func clientConn(ctx context.Context, t *testing.T, l *bufconn.Listener) grpc.Cli
 		grpc.WithTransportCredentials(insecure.NewCredentials()))
 	require.Nil(t, err)
 	return conn
+}
+
+func TestHandleErr(t *testing.T) {
+	type someError error
+
+	tests := []struct {
+		name        string
+		inputErr    error
+		expectedErr error
+	}{
+		// Supported errors.
+		{
+			name:        "store.ErrConstraint throws an invalid argument error",
+			inputErr:    store.ErrConstraint{},
+			expectedErr: status.Error(codes.InvalidArgument, "data constraint error"),
+		},
+		{
+			name:        "validation.Error throws an invalid argument error",
+			inputErr:    validation.Error{},
+			expectedErr: status.Error(codes.InvalidArgument, "validation error"),
+		},
+		{
+			name:        "util.ErrClient throws an invalid argument error",
+			inputErr:    ErrClient{Message: "public error"},
+			expectedErr: status.Error(codes.InvalidArgument, "public error"),
+		},
+		{
+			name:        "store.ErrUnsupportedListOpts throws a failed precondition error",
+			inputErr:    store.ErrUnsupportedListOpts{},
+			expectedErr: status.Error(codes.FailedPrecondition, ""),
+		},
+
+		// Unsupported errors.
+		{
+			name:        "regular error throws internal error with no message",
+			inputErr:    errors.New("private error"),
+			expectedErr: status.Error(codes.Internal, ""),
+		},
+		{
+			name:        "unsupported error type throws internal error with no message",
+			inputErr:    sql.ErrNoRows,
+			expectedErr: status.Error(codes.Internal, ""),
+		},
+		{
+			name:        "type aliased error throws internal error with no message",
+			inputErr:    someError(errors.New("private error")),
+			expectedErr: status.Error(codes.Internal, ""),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			actualErr := HandleErr(context.Background(), zap.L(), tt.inputErr)
+			require.IsType(t, tt.expectedErr, actualErr)
+			assert.EqualError(t, actualErr, tt.expectedErr.Error())
+		})
+	}
 }
