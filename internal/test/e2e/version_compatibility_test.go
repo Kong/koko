@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"strings"
 	"testing"
 
 	"github.com/gavv/httpexpect/v2"
@@ -19,9 +18,7 @@ import (
 	"github.com/kong/koko/internal/test/run"
 	"github.com/kong/koko/internal/test/util"
 	"github.com/kong/koko/internal/versioning"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/tidwall/gjson"
 	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )
@@ -173,9 +170,7 @@ func TestVersionCompatibility(t *testing.T) {
 	})
 }
 
-func TestVersionCompatibilityFieldUpdatesEnsurePlugins(t *testing.T) {
-	// todo: duplicate code
-	// setup test resources
+func TestVersionCompatibility_FieldUpdatesEnsurePlugins(t *testing.T) {
 	cleanup := run.Koko(t)
 	defer cleanup()
 
@@ -195,7 +190,7 @@ func TestVersionCompatibilityFieldUpdatesEnsurePlugins(t *testing.T) {
 
 	admin := httpexpect.New(t, "http://localhost:3000")
 
-	// Remove plugins that may not be expected due to data plane version
+	// Remove plugins that may not be expected due to data plane version or aren't subject to compatibility updates
 	expectedPluginsMap := make(map[string]VersionCompatibilityPlugins, 0)
 	for _, pluginTest := range VersionCompatibilityOSSPluginConfigurationTests {
 		addPlugin := true
@@ -205,14 +200,17 @@ func TestVersionCompatibilityFieldUpdatesEnsurePlugins(t *testing.T) {
 				addPlugin = false
 			}
 		}
+		if pluginTest.FieldUpdateChecks == nil {
+			addPlugin = false
+		}
+
 		if addPlugin {
 			expectedPluginsMap[pluginTest.Name] = pluginTest
 		}
 	}
 
-	// todo: just create for plugins containing expected FieldUpdateChecks?
-	// request to create plugin records in the CP + DP
-	for _, pluginTest := range VersionCompatibilityOSSPluginConfigurationTests {
+	// create plugin records in the CP + DP
+	for _, pluginTest := range expectedPluginsMap {
 		var config structpb.Struct
 		if len(pluginTest.Config) > 0 {
 			require.Nil(t, json.ProtoJSONUnmarshal([]byte(pluginTest.Config), &config))
@@ -245,45 +243,27 @@ func TestVersionCompatibilityFieldUpdatesEnsurePlugins(t *testing.T) {
 		return err
 	})
 
-	// todo: can I construct this during the WaitFunc call?
 	dpPluginsMap := make(map[string]*kongClient.Plugin, 0)
 	for _, dpPlugin := range dataPlanePlugins {
 		dpPluginsMap[*dpPlugin.Name] = dpPlugin
 	}
-
 	require.Equal(t, len(expectedPluginsMap), len(dpPluginsMap), "plugins configured count does not match")
-	var failedPlugins, missingPlugins []string
-	// todo: maybe call t.Run(plugin.Name) instead of aggregating failures in a single test
-	for name, expectedPlugin := range expectedPluginsMap {
-		if dpPlugin, ok := dpPluginsMap[name]; ok {
-			// Ensure field updates occurred and validate
-			if len(expectedPlugin.FieldUpdateChecks) > 0 {
-				for rawVersion, updates := range expectedPlugin.FieldUpdateChecks {
-					parsedVersion := versioning.MustNewRange(rawVersion)
-					if parsedVersion(dataPlaneVersion) {
-						for _, update := range updates {
-							config, err := json.ProtoJSONMarshal(dpPlugin.Config)
-							require.NoError(t, err, "marshaling plugin config should not error")
-							updateField := gjson.Get(string(config), update.Field)
 
-							have := update.Value.([]string)
-							want := make([]string, 0)
-							for _, w := range updateField.Array() {
-								want = append(want, w.Value().(string))
-							}
-							if !assert.ElementsMatch(t, have, want) {
-								failedPlugins = append(failedPlugins, expectedPlugin.Name)
-							}
-						}
+	for name, expectedPlugin := range expectedPluginsMap {
+		t.Run(fmt.Sprintf("%s successfully updates fields", name), func(t *testing.T) {
+			require.Contains(t, dpPluginsMap, name, "failed to discover plugin")
+			for rawVersion, updates := range expectedPlugin.FieldUpdateChecks {
+				parsedVersion := versioning.MustNewRange(rawVersion)
+				if parsedVersion(dataPlaneVersion) {
+					for _, update := range updates {
+						want := fmt.Sprintf("%v", update.Value)
+						have := fmt.Sprintf("%v", dpPluginsMap[name].Config[update.Field])
+						require.Equal(t, want, have, "failed to validate plugin updates")
 					}
 				}
 			}
-		} else {
-			missingPlugins = append(missingPlugins, expectedPlugin.Name)
-		}
+		})
 	}
-	require.Zero(t, len(missingPlugins), "failed to discover plugins %s", strings.Join(missingPlugins, ","))
-	require.Zero(t, len(failedPlugins), "failed to validate plugin updates %s", strings.Join(failedPlugins, ","))
 }
 
 func TestVersionCompatibilitySyslogFacilityField(t *testing.T) {
