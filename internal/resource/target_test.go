@@ -360,6 +360,11 @@ func TestTarget_fortmatTarget(t *testing.T) {
 		},
 		{
 			name:    "mask is not supported with ipv4",
+			target:  "1.2.3.4/32",
+			wantErr: true,
+		},
+		{
+			name:    "mask is not supported with ipv4 and port",
 			target:  "1.2.3.4/32:80",
 			wantErr: true,
 		},
@@ -369,8 +374,13 @@ func TestTarget_fortmatTarget(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name:    "mask is not supported with ipv6 and brackets",
+			name:    "mask is not supported with ipv6 in brackets format",
 			target:  "[2001:DB8::1]/128",
+			wantErr: true,
+		},
+		{
+			name:    "mask is not supported with ipv6 and port in brackets format",
+			target:  "[2001:DB8::1]:8080/128",
 			wantErr: true,
 		},
 	}
