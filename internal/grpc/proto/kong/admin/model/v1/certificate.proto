@@ -3,9 +3,16 @@ syntax = "proto3";
 package kong.admin.model.v1;
 
 import "google/api/field_behavior.proto";
+import "google/protobuf/descriptor.proto";
 import "protoc-gen-openapiv2/options/annotations.proto";
 
 option go_package = "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1;v1";
+
+extend google.protobuf.FieldOptions {
+  // Referenceable fields can include the regular value or a reference to the value.
+  // https://docs.konghq.com/gateway/latest/kong-enterprise/secrets-management/reference-format/
+  bool referenceable = 50000;
+}
 
 message Certificate {
   string id = 1;
@@ -14,20 +21,28 @@ message Certificate {
   string cert = 4 [
     (google.api.field_behavior) = REQUIRED,
     (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-      description: "PEM encoded certificate"
-    }
+      description: "PEM encoded certificate (referenceable)"
+    },
+    (referenceable) = true
   ];
   string key = 5 [
     (google.api.field_behavior) = REQUIRED,
     (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-      description: "PEM encoded private key"
-    }
+      description: "PEM encoded private key (referenceable)"
+    },
+    (referenceable) = true
   ];
-  string cert_alt = 6 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-    description: "PEM encoded certificate"
-  }];
-  string key_alt = 7 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-    description: "PEM encoded private key"
-  }];
+  string cert_alt = 6 [
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "PEM encoded certificate (referenceable)",
+    },
+    (referenceable) = true
+  ];
+  string key_alt = 7 [
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "PEM encoded private key (referenceable)",
+    },
+    (referenceable) = true
+  ];
   repeated string tags = 8;
 }

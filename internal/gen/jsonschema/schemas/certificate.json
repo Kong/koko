@@ -7,11 +7,37 @@
   "properties": {
     "cert": {
       "type": "string",
-      "format": "pem-encoded-cert"
+      "anyOf": [
+        {
+          "format": "pem-encoded-cert"
+        },
+        {
+          "pattern": "^{vault://.*}$",
+          "type": "string",
+          "description": "referenceable field must contain a valid 'Reference'"
+        }
+      ],
+      "x-koko-config": {
+        "disableValidateEndpoint": true,
+        "referenceable": true
+      }
     },
     "cert_alt": {
       "type": "string",
-      "format": "pem-encoded-cert"
+      "anyOf": [
+        {
+          "format": "pem-encoded-cert"
+        },
+        {
+          "pattern": "^{vault://.*}$",
+          "type": "string",
+          "description": "referenceable field must contain a valid 'Reference'"
+        }
+      ],
+      "x-koko-config": {
+        "disableValidateEndpoint": true,
+        "referenceable": true
+      }
     },
     "created_at": {
       "minimum": 1,
@@ -24,11 +50,37 @@
     },
     "key": {
       "type": "string",
-      "format": "pem-encoded-private-key"
+      "anyOf": [
+        {
+          "format": "pem-encoded-private-key"
+        },
+        {
+          "pattern": "^{vault://.*}$",
+          "type": "string",
+          "description": "referenceable field must contain a valid 'Reference'"
+        }
+      ],
+      "x-koko-config": {
+        "disableValidateEndpoint": true,
+        "referenceable": true
+      }
     },
     "key_alt": {
       "type": "string",
-      "format": "pem-encoded-private-key"
+      "anyOf": [
+        {
+          "format": "pem-encoded-private-key"
+        },
+        {
+          "pattern": "^{vault://.*}$",
+          "type": "string",
+          "description": "referenceable field must contain a valid 'Reference'"
+        }
+      ],
+      "x-koko-config": {
+        "disableValidateEndpoint": true,
+        "referenceable": true
+      }
     },
     "tags": {
       "items": {
