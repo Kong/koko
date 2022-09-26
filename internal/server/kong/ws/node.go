@@ -282,6 +282,11 @@ func (n *Node) writeWRPCConfig(ctx context.Context, c config.Content, configVers
 		defer cancel()
 
 		cli := config_service.ConfigServiceClient{Peer: n.peer}
+		defer func() {
+			if err := recover(); err != nil {
+				n.Logger.Error("panic sending wrpc config", zap.Any("panic-message", err))
+			}
+		}()
 		out, err := cli.SyncConfig(ctx, req)
 		if err != nil {
 			n.Logger.Error("SyncConfig method failed", zap.Error(err))
