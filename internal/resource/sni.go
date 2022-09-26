@@ -110,7 +110,7 @@ func init() {
 			ResourceAPIPath: "snis",
 		},
 	}
-	err = generator.Default.Register(string(TypeSNI), sniSchema)
+	err = generator.DefaultRegistry.Register(string(TypeSNI), sniSchema)
 	if err != nil {
 		panic(err)
 	}

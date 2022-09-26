@@ -38,4 +38,4 @@ func (r *SchemaRegistry) Unregister(name string) (*Schema, error) {
 	return schema, nil
 }
 
-var Default = NewSchemaRegistry()
+var DefaultRegistry = NewSchemaRegistry()

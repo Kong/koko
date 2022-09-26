@@ -126,7 +126,7 @@ func init() {
 			ResourceAPIPath:         "nodes",
 		},
 	}
-	err = generator.Default.Register(string(TypeNode), nodeSchema)
+	err = generator.DefaultRegistry.Register(string(TypeNode), nodeSchema)
 	if err != nil {
 		panic(err)
 	}

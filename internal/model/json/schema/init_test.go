@@ -42,5 +42,5 @@ func TestSchemaLoadingOverride(t *testing.T) {
 
 	// check that the new service schema overrides the default one
 	schema, _ = Get("service")
-	require.Equal(t, 1, len(schema.Properties))
+	require.Len(t, schema.Properties, 1)
 }
