@@ -2,7 +2,6 @@ package persistence
 
 import (
 	"context"
-	"fmt"
 
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 )
@@ -76,12 +75,4 @@ type Tx interface {
 	Commit() error
 	Rollback() error
 	CRUD
-}
-
-type ErrNotFound struct {
-	Key string
-}
-
-func (e ErrNotFound) Error() string {
-	return fmt.Sprintf("%v not found", e.Key)
 }
