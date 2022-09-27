@@ -4,7 +4,7 @@
 
 ## v0.1.0
 
-> Unreleased
+> Release date: 2022/09/27
 
 This is the debut release of Koko.
 
