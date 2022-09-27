@@ -6,7 +6,7 @@ networks:
 
 services:
   koko:
-    image: "kong/koko:dev-latest"
+    image: "kong/koko:latest"
     command: "serve"
     environment:
       KOKO_DATABASE_SQLITE_IN_MEMORY: true
