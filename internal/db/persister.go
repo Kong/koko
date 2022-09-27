@@ -16,16 +16,11 @@ func NewPersister(config Config) (persistence.Persister, error) {
 	switch config.Dialect {
 	case DialectSQLite3:
 		persister, err = sqlite.New(config.SQLite, config.QueryTimeout, config.Logger)
-		if err != nil {
-			return nil, err
-		}
 	case DialectPostgres:
 		persister, err = postgres.New(config.Postgres, config.QueryTimeout, config.Logger)
-		if err != nil {
-			return nil, err
-		}
 	default:
-		return nil, fmt.Errorf("unknown database: %v", config.Dialect)
+		err = fmt.Errorf("unsupported database: %v", config.Dialect)
 	}
-	return persister, nil
+
+	return persister, err
 }

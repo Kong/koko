@@ -19,10 +19,7 @@ const (
 	insertQuery = `insert into store(key,value) values($1,$2) on conflict (key) do update set value=$2;`
 	deleteQuery = `delete from store where key=$1`
 
-	defaultMaxConn         = 50
-	defaultMaxIdleConn     = 20
-	defaultMaxConnLifetime = time.Hour
-	DefaultPort            = 5432
+	DefaultPort = 5432
 )
 
 type Postgres struct {
@@ -40,7 +37,7 @@ type Opts struct {
 	Password         string
 	EnableTLS        bool
 	CABundleFSPath   string
-	SQLOpen          func(driver persistence.Driver, dataSourceName string) (*sql.DB, error)
+	SQLOpen          persistence.SQLOpenFunc
 }
 
 func getDSN(opts Opts, logger *zap.Logger) (string, error) {
@@ -81,29 +78,12 @@ func NewSQLClient(opts Opts, logger *zap.Logger) (*sql.DB, error) {
 		return nil, err
 	}
 
-	open := func(driver persistence.Driver, dsn string) (*sql.DB, error) {
-		driverName := driver.String()
-		if driver == persistence.Postgres {
-			driverName = "pgx"
-		}
-		return sql.Open(driverName, dsn)
-	}
+	openFunc := persistence.DefaultSQLOpenFunc(&Postgres{})
 	if opts.SQLOpen != nil {
-		open = opts.SQLOpen
+		openFunc = opts.SQLOpen
 	}
 
-	db, err := open(persistence.Postgres, dsn)
-	if err != nil {
-		return nil, err
-	}
-	db.SetMaxOpenConns(defaultMaxConn)
-	// Without this setting, default by library is 2 which is very less
-	db.SetMaxIdleConns(defaultMaxIdleConn)
-	// Set the maximum lifetime of a connection to 1 hour. Setting it to 0
-	// means that there is no maximum lifetime and the connection is reused
-	// forever (which is the default behavior).
-	db.SetConnMaxLifetime(defaultMaxConnLifetime)
-	return db, err
+	return openFunc(dsn)
 }
 
 func New(opts Opts, queryTimeout time.Duration, logger *zap.Logger) (persistence.Persister, error) {
@@ -127,6 +107,17 @@ func New(opts Opts, queryTimeout time.Duration, logger *zap.Logger) (persistence
 		queryTimeout: queryTimeout,
 	}
 	return res, nil
+}
+
+// Driver implements the persistence.SQLPersister interface.
+func (s *Postgres) Driver() persistence.Driver { return persistence.Postgres }
+
+// SetDefaultSQLOptions implements the persistence.SQLPersister interface.
+func (s *Postgres) SetDefaultSQLOptions(db *sql.DB) error {
+	db.SetMaxOpenConns(persistence.DefaultMaxConn)
+	db.SetMaxIdleConns(persistence.DefaultMaxIdleConn)
+	db.SetConnMaxLifetime(persistence.DefaultMaxConnLifetime)
+	return nil
 }
 
 func (s *Postgres) Get(ctx context.Context, key string) ([]byte, error) {
@@ -202,14 +193,8 @@ func (t *postgresTx) List(
 	return t.query.List(ctx, prefix, opts)
 }
 
-type query interface {
-	ExecContext(context.Context, string, ...any) (sql.Result, error)
-	QueryContext(context.Context, string, ...any) (*sql.Rows, error)
-	QueryRowContext(context.Context, string, ...any) *sql.Row
-}
-
 type postgresQuery struct {
-	query        query
+	query        sq.StdSqlCtx
 	queryTimeout time.Duration
 }
 
@@ -241,7 +226,7 @@ func (t *postgresQuery) Put(ctx context.Context, key string, value []byte) error
 		return err
 	}
 	if rowCount != 1 {
-		return fmt.Errorf("invalid rows affected")
+		return persistence.ErrInvalidRowsAffected
 	}
 	return nil
 }
@@ -261,7 +246,7 @@ func (t *postgresQuery) Delete(ctx context.Context, key string) error {
 		return persistence.ErrNotFound{Key: key}
 	}
 	if rowCount != 1 {
-		return fmt.Errorf("invalid rows affected")
+		return persistence.ErrInvalidRowsAffected
 	}
 	return nil
 }

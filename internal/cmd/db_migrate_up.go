@@ -20,7 +20,7 @@ var dbMigrateUpCmd = &cobra.Command{
 		logger := opts.Logger
 		logger.Debug("setup successful")
 
-		dbConfig, err := config.ToDBConfig(opts.Config.Database)
+		dbConfig, err := config.ToDBConfig(opts.Config.Database, logger)
 		if err != nil {
 			logger.Fatal(err.Error())
 		}

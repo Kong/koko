@@ -12,7 +12,7 @@ func TestDSN(t *testing.T) {
 		opt := Opts{
 			DBName:    "koko",
 			Hostname:  "localhost",
-			Port:      5432,
+			Port:      DefaultPort,
 			User:      "koko",
 			Password:  "koko",
 			EnableTLS: false,
@@ -27,7 +27,7 @@ func TestDSN(t *testing.T) {
 		opt := Opts{
 			DBName:         "koko",
 			Hostname:       "localhost",
-			Port:           5432,
+			Port:           DefaultPort,
 			User:           "koko",
 			Password:       "koko",
 			EnableTLS:      true,
@@ -44,7 +44,7 @@ func TestDSN(t *testing.T) {
 		opt := Opts{
 			DBName:    "koko",
 			Hostname:  "localhost",
-			Port:      5432,
+			Port:      DefaultPort,
 			User:      "koko",
 			Password:  "koko",
 			EnableTLS: true,

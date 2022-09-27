@@ -433,7 +433,7 @@ func setupGRPCClients(cc *grpc.ClientConn) grpcClients {
 }
 
 func setupDB(logger *zap.Logger, configDB config.Database) (persistence.Persister, error) {
-	config, err := config.ToDBConfig(configDB)
+	config, err := config.ToDBConfig(configDB, logger)
 	if err != nil {
 		logger.Fatal(err.Error())
 	}

@@ -28,7 +28,7 @@ type SQLite struct {
 type Opts struct {
 	Filename string
 	InMemory bool
-	SQLOpen  func(driver persistence.Driver, dataSourceName string) (*sql.DB, error)
+	SQLOpen  persistence.SQLOpenFunc
 }
 
 const (
@@ -52,19 +52,12 @@ func NewSQLClient(opts Opts, logger *zap.Logger) (*sql.DB, error) {
 		return nil, err
 	}
 
-	open := func(driver persistence.Driver, dsn string) (*sql.DB, error) {
-		return sql.Open(driver.String(), dsn)
-	}
+	openFunc := persistence.DefaultSQLOpenFunc(&SQLite{})
 	if opts.SQLOpen != nil {
-		open = opts.SQLOpen
+		openFunc = opts.SQLOpen
 	}
 
-	db, err := open(persistence.SQLite3, dsn)
-	if err != nil {
-		return nil, err
-	}
-	db.SetMaxOpenConns(1)
-	return db, nil
+	return openFunc(dsn)
 }
 
 func New(opts Opts, queryTimeout time.Duration, logger *zap.Logger) (persistence.Persister, error) {
@@ -78,6 +71,15 @@ func New(opts Opts, queryTimeout time.Duration, logger *zap.Logger) (persistence
 		queryTimeout: queryTimeout,
 	}
 	return res, nil
+}
+
+// Driver implements the persistence.SQLPersister interface.
+func (s *SQLite) Driver() persistence.Driver { return persistence.SQLite3 }
+
+// SetDefaultSQLOptions implements the persistence.SQLPersister interface.
+func (s *SQLite) SetDefaultSQLOptions(db *sql.DB) error {
+	db.SetMaxOpenConns(1)
+	return nil
 }
 
 func (s *SQLite) Get(ctx context.Context, key string) ([]byte, error) {
@@ -151,14 +153,8 @@ func (t *sqliteTx) List(
 	return t.query.List(ctx, prefix, opts)
 }
 
-type query interface {
-	ExecContext(context.Context, string, ...any) (sql.Result, error)
-	QueryContext(context.Context, string, ...any) (*sql.Rows, error)
-	QueryRowContext(context.Context, string, ...any) *sql.Row
-}
-
 type sqliteQuery struct {
-	query        query
+	query        sq.StdSqlCtx
 	queryTimeout time.Duration
 }
 
@@ -190,7 +186,7 @@ func (t *sqliteQuery) Put(ctx context.Context, key string, value []byte) error {
 		return err
 	}
 	if rowCount != 1 {
-		return fmt.Errorf("invalid rows affected")
+		return persistence.ErrInvalidRowsAffected
 	}
 	return nil
 }
@@ -210,7 +206,7 @@ func (t *sqliteQuery) Delete(ctx context.Context, key string) error {
 		return persistence.ErrNotFound{Key: key}
 	}
 	if rowCount != 1 {
-		return fmt.Errorf("invalid rows affected")
+		return persistence.ErrInvalidRowsAffected
 	}
 	return nil
 }
