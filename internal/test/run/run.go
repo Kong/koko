@@ -4,24 +4,17 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
-	"os"
 	"sync"
 	"testing"
-	"time"
 
 	"github.com/kong/koko/internal/cmd"
-	"github.com/kong/koko/internal/config"
 	"github.com/kong/koko/internal/crypto"
-	"github.com/kong/koko/internal/db"
 	"github.com/kong/koko/internal/log"
-	"github.com/kong/koko/internal/persistence/postgres"
 	"github.com/kong/koko/internal/test/certs"
 	"github.com/kong/koko/internal/test/kong"
 	"github.com/kong/koko/internal/test/util"
 	"github.com/stretchr/testify/require"
 )
-
-const queryTimeout = 3 * time.Second
 
 type ServerConfigOpt func(*cmd.ServerConfig) error
 
@@ -69,34 +62,8 @@ func Koko(t *testing.T, options ...ServerConfigOpt) func() {
 		DPAuthMode: cmd.DPAuthSharedMTLS,
 	}
 
-	dialect := os.Getenv("KOKO_TEST_DB")
-	if dialect == "" {
-		dialect = "sqlite3"
-	}
-	switch dialect {
-	case "sqlite3":
-		serverConfig.Database = config.Database{
-			Dialect: db.DialectSQLite3,
-			SQLite: config.SQLite{
-				InMemory: true,
-			},
-			QueryTimeout: queryTimeout.String(),
-		}
-	case "postgres":
-		serverConfig.Database = config.Database{
-			Dialect: db.DialectPostgres,
-			Postgres: config.Postgres{
-				Hostname: "localhost",
-				Port:     postgres.DefaultPort,
-				User:     "koko",
-				Password: "koko",
-				DBName:   "koko",
-			},
-			QueryTimeout: queryTimeout.String(),
-		}
-	default:
-		panic(fmt.Sprintf("unknown dialect: %s", dialect))
-	}
+	serverConfig.Database, err = util.GetAppDatabaseConfig()
+	require.NoError(t, err)
 
 	// inject user options
 	for _, o := range options {

@@ -14,37 +14,6 @@ type ControlServer struct {
 	TLSKeyPath  string `yaml:"tls_key_path" json:"tls_key_path" env:"TLS_KEY_PATH"`
 }
 
-type SQLite struct {
-	InMemory bool   `yaml:"in_memory" json:"in_memory" env:"IN_MEMORY"`
-	Filename string `yaml:"filename" json:"filename" env:"FILENAME"`
-}
-
-type Postgres struct {
-	DBName      string              `yaml:"db_name" json:"db_name" env:"DB_NAME"`
-	Hostname    string              `yaml:"hostname" json:"hostname" env:"HOSTNAME"`
-	ReadReplica PostgresReadReplica `yaml:"read_replica" json:"read_replica" env-prefix:"READ_REPLICA_"`
-	Port        int                 `yaml:"port" json:"port" env:"PORT"`
-	User        string              `yaml:"user" json:"user" env:"USER"`
-	Password    string              `yaml:"password" json:"password" env:"PASSWORD"`
-	TLS         PostgresTLS         `yaml:"tls" json:"tls" env-prefix:"TLS_"`
-}
-
-type PostgresTLS struct {
-	Enable       bool   `yaml:"enable" json:"enable" env:"ENABLE"`
-	CABundlePath string `yaml:"ca_bundle_path" json:"ca_bundle_path" env:"CA_BUNDLE_PATH"`
-}
-
-type PostgresReadReplica struct {
-	Hostname string `yaml:"hostname" json:"hostname" env:"HOSTNAME"`
-}
-
-type Database struct {
-	Dialect      string   `yaml:"dialect" json:"dialect" env:"DIALECT" env-default:"sqlite3"`
-	SQLite       SQLite   `yaml:"sqlite" json:"sqlite" env-prefix:"SQLITE_"`
-	Postgres     Postgres `yaml:"postgres" json:"postgres" env-prefix:"POSTGRES_"`
-	QueryTimeout string   `yaml:"query_timeout" json:"query_timeout" env:"QUERY_TIMEOUT" env-default:"5s"`
-}
-
 // Metrics config.
 type Metrics struct {
 	// ClientType metrics client type e.g. prometheus, datadog.

@@ -3,6 +3,7 @@ package config
 import (
 	"testing"
 
+	"github.com/kong/koko/internal/db"
 	"github.com/stretchr/testify/require"
 )
 
@@ -16,7 +17,7 @@ var defaultConfig = Config{
 	},
 	Control: ControlServer{},
 	Database: Database{
-		Dialect:      "sqlite3",
+		Dialect:      db.DialectSQLite3,
 		QueryTimeout: "5s",
 	},
 	Metrics: Metrics{
@@ -65,7 +66,7 @@ func TestGet(t *testing.T) {
 					TLSKeyPath:  "bar.key",
 				},
 				Database: Database{
-					Dialect: "postgres",
+					Dialect: db.DialectPostgres,
 					SQLite: SQLite{
 						InMemory: true,
 						Filename: "test.db",
@@ -110,7 +111,7 @@ func TestGet(t *testing.T) {
 					TLSKeyPath:  "bar.key",
 				},
 				Database: Database{
-					Dialect: "postgres",
+					Dialect: db.DialectPostgres,
 					SQLite: SQLite{
 						InMemory: true,
 						Filename: "test.db",
@@ -143,7 +144,7 @@ func TestGet(t *testing.T) {
 				envVars: map[string]string{
 					"KOKO_LOG_LEVEL":                               "error",
 					"KOKO_LOG_FORMAT":                              "FOOBAR",
-					"KOKO_DATABASE_DIALECT":                        "postgres",
+					"KOKO_DATABASE_DIALECT":                        db.DialectPostgres,
 					"KOKO_DATABASE_POSTGRES_READ_REPLICA_HOSTNAME": "foobar",
 					"KOKO_DATABASE_POSTGRES_TLS_ENABLE":            "true",
 				},
@@ -157,7 +158,7 @@ func TestGet(t *testing.T) {
 					Address: ":3000",
 				},
 				Database: Database{
-					Dialect: "postgres",
+					Dialect: db.DialectPostgres,
 					Postgres: Postgres{
 						ReadReplica: PostgresReadReplica{
 							Hostname: "foobar",
@@ -196,7 +197,7 @@ func TestGet(t *testing.T) {
 					TLSKeyPath:  "bar.key",
 				},
 				Database: Database{
-					Dialect: "postgres",
+					Dialect: db.DialectPostgres,
 					SQLite: SQLite{
 						InMemory: true,
 						Filename: "test.db",

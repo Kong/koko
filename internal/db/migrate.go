@@ -1,6 +1,7 @@
 package db
 
 import (
+	"database/sql"
 	"errors"
 	"fmt"
 	"os"
@@ -31,11 +32,6 @@ type Config struct {
 	QueryTimeout time.Duration
 }
 
-const (
-	DialectSQLite3  = "sqlite3"
-	DialectPostgres = "postgres"
-)
-
 type Migrator struct {
 	m      *migrate.Migrate
 	logger *zap.Logger
@@ -50,39 +46,32 @@ func sourceForDialect(dialect string) (source.Driver, error) {
 	return source, nil
 }
 
-func driverForDialect(config Config) (database.Driver, error) {
-	switch config.Dialect {
+func driverForDialect(dialect string, db *sql.DB) (database.Driver, error) {
+	var dbDriver database.Driver
+	var err error
+
+	switch dialect {
 	case DialectSQLite3:
-		db, err := sqlite.NewSQLClient(config.SQLite, config.Logger)
-		if err != nil {
-			return nil, err
-		}
-		dbDriver, err := sqlite3.WithInstance(db, &sqlite3.Config{
-			MigrationsTable: "schema_migrations",
+		dbDriver, err = sqlite3.WithInstance(db, &sqlite3.Config{
+			MigrationsTable: sqlite3.DefaultMigrationsTable,
 		})
-		if err != nil {
-			return nil, err
-		}
-		return dbDriver, nil
 	case DialectPostgres:
-		db, err := postgres2.NewSQLClient(config.Postgres, config.Logger)
-		if err != nil {
-			return nil, err
-		}
-		dbDriver, err := postgres.WithInstance(db, &postgres.Config{
+		dbDriver, err = postgres.WithInstance(db, &postgres.Config{
 			MigrationsTable: postgres.DefaultMigrationsTable,
 		})
-		if err != nil {
-			return nil, err
-		}
-		return dbDriver, nil
 	default:
-		return nil, fmt.Errorf("unsupported database '%v'", config.Dialect)
+		return nil, fmt.Errorf("unsupported database '%v'", dialect)
 	}
+
+	return dbDriver, err
 }
 
 func NewMigrator(config Config) (*Migrator, error) {
-	dbDriver, err := driverForDialect(config)
+	sqlDB, err := NewSQLDBFromConfig(config)
+	if err != nil {
+		return nil, err
+	}
+	dbDriver, err := driverForDialect(config.Dialect, sqlDB)
 	if err != nil {
 		return nil, err
 	}

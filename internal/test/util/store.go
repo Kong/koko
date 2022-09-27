@@ -2,11 +2,13 @@ package util
 
 import (
 	"context"
-	"os"
+	"fmt"
 	"testing"
 	"time"
 
 	"github.com/golang-migrate/migrate/v4"
+	"github.com/ilyakaznacheev/cleanenv"
+	"github.com/kong/koko/internal/config"
 	"github.com/kong/koko/internal/db"
 	"github.com/kong/koko/internal/log"
 	"github.com/kong/koko/internal/persistence"
@@ -39,33 +41,35 @@ func CleanDB(t *testing.T) error {
 }
 
 func GetPersister(t *testing.T) (persistence.Persister, error) {
-	dbConfig := testConfig
-	dialect := os.Getenv("KOKO_TEST_DB")
-	if dialect == "" {
-		dialect = "sqlite3"
+	var appConfig config.Config
+	if err := cleanenv.ReadEnv(&appConfig); err != nil {
+		return nil, fmt.Errorf("unable to read config from environment: %w", err)
 	}
+
+	if err := setDBConfig(&appConfig.Database); err != nil {
+		return nil, fmt.Errorf("unable to set DB config: %w", err)
+	}
+
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	switch dialect {
-	case "sqlite3":
-		dbClient, err := sqlite.NewSQLClient(dbConfig.SQLite, dbConfig.Logger)
-		if err != nil {
-			t.Fatal(err)
-		}
-		// store may not exist always so ignore the error
-		// TODO(hbagdi): add "IF exists" clause
-		_, _ = dbClient.ExecContext(ctx, "delete from store;")
 
-		dbConfig.Dialect = db.DialectSQLite3
-	case "postgres":
-		dbClient, err := postgres.NewSQLClient(dbConfig.Postgres, dbConfig.Logger)
-		if err != nil {
-			t.Fatal(err)
-		}
-		// store may not exist always so ignore the error
-		// TODO(hbagdi): add "IF exists" clause
+	dbConfig, err := GetDatabaseConfig()
+	if err != nil {
+		return nil, err
+	}
+
+	dbClient, err := db.NewSQLDBFromConfig(dbConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	// store may not exist always so ignore the error
+	// TODO(hbagdi): add "IF exists" clause
+	switch dbConfig.Dialect {
+	case db.DialectSQLite3:
+		_, _ = dbClient.ExecContext(ctx, "delete from store;")
+	case db.DialectPostgres:
 		_, _ = dbClient.ExecContext(ctx, "truncate table store;")
-		dbConfig.Dialect = db.DialectPostgres
 	}
 
 	if err := runMigrations(dbConfig); err != nil {
