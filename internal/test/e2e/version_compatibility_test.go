@@ -170,7 +170,7 @@ func TestVersionCompatibility(t *testing.T) {
 	})
 }
 
-func TestVersionCompatibility_FieldUpdatesEnsurePlugins(t *testing.T) {
+func TestVersionCompatibility_PluginFieldUpdates(t *testing.T) {
 	cleanup := run.Koko(t)
 	defer cleanup()
 
@@ -192,45 +192,42 @@ func TestVersionCompatibility_FieldUpdatesEnsurePlugins(t *testing.T) {
 
 	// Remove plugins that may not be expected due to data plane version or aren't subject to compatibility updates
 	expectedPluginsMap := make(map[string]VersionCompatibilityPlugins, 0)
-	for _, pluginTest := range VersionCompatibilityOSSPluginConfigurationTests {
-		addPlugin := true
-		if len(pluginTest.VersionRange) > 0 {
-			version := versioning.MustNewRange(pluginTest.VersionRange)
+	for _, plugin := range VersionCompatibilityOSSPluginConfigurationTests {
+		if plugin.FieldUpdateChecks == nil {
+			continue
+		}
+
+		if len(plugin.VersionRange) > 0 {
+			version := versioning.MustNewRange(plugin.VersionRange)
 			if !version(dataPlaneVersion) {
-				addPlugin = false
+				continue
 			}
 		}
-		if pluginTest.FieldUpdateChecks == nil {
-			addPlugin = false
-		}
-
-		if addPlugin {
-			expectedPluginsMap[pluginTest.Name] = pluginTest
-		}
+		expectedPluginsMap[plugin.Name] = plugin
 	}
 
-	// create plugin records in the CP + DP
-	for _, pluginTest := range expectedPluginsMap {
+	// create plugins
+	for _, plugin := range expectedPluginsMap {
 		var config structpb.Struct
-		if len(pluginTest.Config) > 0 {
-			require.Nil(t, json.ProtoJSONUnmarshal([]byte(pluginTest.Config), &config))
+		if len(plugin.Config) > 0 {
+			require.NoError(t, json.ProtoJSONUnmarshal([]byte(plugin.Config), &config))
 		}
 
 		p := &v1.Plugin{
 			Id:        uuid.NewString(),
-			Name:      pluginTest.Name,
+			Name:      plugin.Name,
 			Config:    &config,
 			Enabled:   wrapperspb.Bool(true),
 			Protocols: []string{"http", "https"},
 		}
 
 		pluginBytes, err := json.ProtoJSONMarshal(p)
-		require.Nil(t, err)
+		require.NoError(t, err)
 		res := admin.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
 		res.Status(http.StatusCreated)
 	}
 
-	// fetch list of created plugin records from the DP
+	// fetch list of plugins from the DP
 	dataPlanePlugins := []*kongClient.Plugin{}
 	util.WaitFunc(t, func() error {
 		dataPlanePlugins, err = kongAdmin.Plugins.ListAll(ctx)
@@ -243,15 +240,15 @@ func TestVersionCompatibility_FieldUpdatesEnsurePlugins(t *testing.T) {
 		return err
 	})
 
+	require.Equal(t, len(expectedPluginsMap), len(dataPlanePlugins), "plugins configured count does not match")
 	dpPluginsMap := make(map[string]*kongClient.Plugin, 0)
 	for _, dpPlugin := range dataPlanePlugins {
 		dpPluginsMap[*dpPlugin.Name] = dpPlugin
 	}
-	require.Equal(t, len(expectedPluginsMap), len(dpPluginsMap), "plugins configured count does not match")
 
 	for name, expectedPlugin := range expectedPluginsMap {
 		t.Run(fmt.Sprintf("%s successfully updates fields", name), func(t *testing.T) {
-			require.Contains(t, dpPluginsMap, name, "failed to discover plugin")
+			require.Contains(t, dpPluginsMap, name, "plugin not present in the DP")
 			for rawVersion, updates := range expectedPlugin.FieldUpdateChecks {
 				parsedVersion := versioning.MustNewRange(rawVersion)
 				if parsedVersion(dataPlaneVersion) {
