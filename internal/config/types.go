@@ -20,6 +20,15 @@ type Metrics struct {
 	ClientType string `yaml:"client_type" json:"client_type" env:"CLIENT_TYPE" env-default:"noop"`
 }
 
+// TLS defines re-usable TLS configuration used in tls.Config.
+type TLS struct {
+	Enable                bool   `yaml:"enable" json:"enable" env:"ENABLE"`
+	RootCAs               string `yaml:"root_ca_certs" json:"root_ca_certs" env:"ROOT_CA_CERTS"`
+	Certificates          string `yaml:"certificates" json:"certificates" env:"CERTIFICATES"`
+	InsecureSkipVerify    bool   `yaml:"insecure_skip_verify" json:"insecure_skip_verify" env:"INSECURE_SKIP_VERIFY"`
+	VerifyPeerCertificate bool   `yaml:"verify_peer_certificate" json:"verify_peer_certificate" env:"VERIFY_PEER_CERTIFICATE"` //nolint:lll
+}
+
 // Config represents configuration of Koko.
 // Configuration is populated via a JSON or YAML file containing or via
 // environment variables.
