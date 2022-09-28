@@ -9,6 +9,7 @@ jobs:
         database:
         - sqlite3
         - postgres
+        - mysql
     env:
       KOKO_TEST_DB: ${{ matrix.database }}
     steps:
@@ -26,10 +27,9 @@ jobs:
           ~/.cache/go-build
         key: ${{ runner.os }}-go-unit-${{ hashFiles('**/go.sum') }}
     - name: setup-db
-      if: ${{ matrix.database == 'postgres'}}
       run: |
-        ./scripts/setup-db.sh &
-        ./scripts/wait-for-db.sh
+        ./scripts/setup-db.sh ${{ matrix.database }} &
+        ./scripts/wait-for-db.sh ${{ matrix.database }}
     - name: make test-race
       run: make test-race
 
