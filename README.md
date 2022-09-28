@@ -6,8 +6,8 @@ Koko is the second generation Control-Plane (CP) for
 [Kong](https://github.com/kong/kong) API Gateway's
 [Hybrid mode](https://docs.konghq.com/gateway/latest/plan-and-deploy/hybrid-mode/)
 deployment.
-Koko is designed to simplify Kong Gateway deployments and to decouple 
-Control-Plane (CP) aspects from the powerful underlying NGINX/OpenResty 
+Koko is designed to simplify Kong Gateway deployments and to decouple
+Control-Plane (CP) aspects from the powerful underlying NGINX/OpenResty
 Data-Plane (DP) stack.
 
 ## Table of Contents
@@ -53,7 +53,7 @@ The recommended version of Kong Gateway is 3.0.
 
 ## Seeking help
 
-Please open a GitHub [Issue](/issues/new/choose) for reporting bugs, providing
+Please open a GitHub [Issue](../../issues/new/choose) for reporting bugs, providing
 feedback, asking questions, and feature requests.
 
 ## License
