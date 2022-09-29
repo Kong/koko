@@ -66,6 +66,8 @@ func GetPersister(t *testing.T) (persistence.Persister, error) {
 	// store may not exist always so ignore the error
 	// TODO(hbagdi): add "IF exists" clause
 	switch dbConfig.Dialect {
+	case db.DialectMariaDB, db.DialectMySQL:
+		_, _ = dbClient.ExecContext(ctx, "truncate table store;")
 	case db.DialectSQLite3:
 		_, _ = dbClient.ExecContext(ctx, "delete from store;")
 	case db.DialectPostgres:

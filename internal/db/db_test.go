@@ -5,6 +5,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/kong/koko/internal/persistence/mysql"
 	"github.com/kong/koko/internal/persistence/postgres"
 	"github.com/kong/koko/internal/persistence/sqlite"
 	"github.com/stretchr/testify/assert"
@@ -17,6 +18,19 @@ func TestNewSQLDBFromConfig(t *testing.T) {
 	noOpOpenFunc := func(dataSourceName string) (*sql.DB, error) {
 		return &sql.DB{}, nil
 	}
+
+	t.Run("MariaDB", func(t *testing.T) {
+		config.Dialect = DialectMariaDB
+		_, err := NewSQLDBFromConfig(config)
+		assert.EqualError(t, err, "MariaDB is currently unsupported")
+	})
+
+	t.Run("MySQL", func(t *testing.T) {
+		config.Dialect = DialectMySQL
+		config.MySQL = mysql.Opts{SQLOpen: noOpOpenFunc}
+		_, err := NewSQLDBFromConfig(config)
+		assert.NoError(t, err)
+	})
 
 	t.Run("SQLite", func(t *testing.T) {
 		config.Dialect = DialectSQLite3

@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/kong/koko/internal/db"
+	"github.com/kong/koko/internal/persistence/mysql"
 	"github.com/kong/koko/internal/persistence/postgres"
 	"github.com/kong/koko/internal/persistence/sqlite"
 	"go.uber.org/zap"
@@ -18,8 +19,29 @@ type Database struct {
 
 	QueryTimeout string `yaml:"query_timeout" json:"query_timeout" env:"QUERY_TIMEOUT" env-default:"5s"`
 
+	MySQL    MySQL    `yaml:"mysql" json:"mysql" env-prefix:"MYSQL_"`
 	SQLite   SQLite   `yaml:"sqlite" json:"sqlite" env-prefix:"SQLITE_"`
 	Postgres Postgres `yaml:"postgres" json:"postgres" env-prefix:"POSTGRES_"`
+}
+
+// MySQL defines configuration for using MySQL as the persistent store.
+type MySQL struct {
+	DBName      string           `yaml:"db_name" json:"db_name" env:"DB_NAME"`
+	Hostname    string           `yaml:"hostname" json:"hostname" env:"HOSTNAME"`
+	ReadReplica MySQLReadReplica `yaml:"read_replica" json:"read_replica" env-prefix:"READ_REPLICA_"`
+	Port        int              `yaml:"port" json:"port" env:"PORT"`
+	User        string           `yaml:"user" json:"user" env:"USER"`
+	Password    string           `yaml:"password" json:"password" env:"PASSWORD"`
+	TLS         TLS              `yaml:"tls" json:"tls" env-prefix:"TLS_"`
+
+	// See the `Params` field on mysql.Opts for more info.
+	Params map[string]string `yaml:"params" json:"params" env:"PARAMS"`
+}
+
+// MySQLReadReplica defines configuration for specifying a single read-replica.
+// This configuration overrides fields set in config.MySQL.
+type MySQLReadReplica struct {
+	Hostname string `yaml:"hostname" json:"hostname" env:"HOSTNAME"`
 }
 
 // Postgres defines configuration for using Postgres as the persistent store.
@@ -49,6 +71,32 @@ type PostgresReadReplica struct {
 type SQLite struct {
 	Filename string `yaml:"filename" json:"filename" env:"FILENAME"`
 	InMemory bool   `yaml:"in_memory" json:"in_memory" env:"IN_MEMORY"`
+}
+
+// Opts returns the options required to instantiate a MySQL persistence.Persister.
+func (c *MySQL) Opts() (mysql.Opts, error) {
+	if err := c.TLS.fetchFileContents(); err != nil {
+		return mysql.Opts{}, err
+	}
+
+	opts := mysql.Opts{
+		DBName:           c.DBName,
+		Hostname:         c.Hostname,
+		ReadOnlyHostname: c.ReadReplica.Hostname,
+		Params:           c.Params,
+		Port:             c.Port,
+		User:             c.User,
+		Password:         c.Password,
+
+		// TLS options.
+		EnableTLS:                c.TLS.Enable,
+		RootCA:                   c.TLS.RootCA,
+		Certificate:              c.TLS.Certificate,
+		Key:                      c.TLS.Key,
+		SkipHostnameVerification: c.TLS.SkipHostnameVerification,
+	}
+
+	return opts, nil
 }
 
 // Opts returns the options required to instantiate a Postgres persistence.Persister.
@@ -89,10 +137,16 @@ func ToDBConfig(config Database, logger *zap.Logger) (db.Config, error) {
 		return db.Config{}, fmt.Errorf("failed to parse DB query timeout: %w", err)
 	}
 
+	mysqlOpts, err := config.MySQL.Opts()
+	if err != nil {
+		return db.Config{}, fmt.Errorf("unable to set MySQL DB options: %w", err)
+	}
+
 	return db.Config{
 		Dialect:      config.Dialect,
 		QueryTimeout: queryTimeout,
 		Logger:       logger,
+		MySQL:        mysqlOpts,
 		Postgres:     config.Postgres.Opts(),
 		SQLite:       config.SQLite.Opts(),
 	}, nil
