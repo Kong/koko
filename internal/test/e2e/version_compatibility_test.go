@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"reflect"
 	"testing"
 
 	"github.com/gavv/httpexpect/v2"
@@ -253,9 +254,17 @@ func TestVersionCompatibility_PluginFieldUpdates(t *testing.T) {
 				parsedVersion := versioning.MustNewRange(rawVersion)
 				if parsedVersion(dataPlaneVersion) {
 					for _, update := range updates {
-						want := fmt.Sprintf("%v", update.Value)
-						have := fmt.Sprintf("%v", dpPluginsMap[name].Config[update.Field])
-						require.Equal(t, want, have, "failed to validate plugin updates")
+						want := update.Value
+						have := dpPluginsMap[name].Config[update.Field]
+						switch want.(type) {
+						case string:
+							require.Equal(t, want, have, "failed to validate plugin updates")
+						case []string:
+							require.ElementsMatch(t, want, have, "failed to validate plugin updates")
+						default:
+							require.Fail(t, fmt.Sprintf("Unexpected type(s): want: %s, have: %s, ",
+								reflect.TypeOf(want), reflect.TypeOf(have)))
+						}
 					}
 				}
 			}
