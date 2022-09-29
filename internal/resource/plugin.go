@@ -209,7 +209,7 @@ func init() {
 			},
 		},
 	}
-	err = generator.Register(string(TypePlugin), pluginSchema)
+	err = generator.DefaultRegistry.Register(string(TypePlugin), pluginSchema)
 	if err != nil {
 		panic(err)
 	}

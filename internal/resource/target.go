@@ -178,7 +178,7 @@ func init() {
 			ResourceAPIPath: "targets",
 		},
 	}
-	err = generator.Register(string(TypeTarget), targetSchema)
+	err = generator.DefaultRegistry.Register(string(TypeTarget), targetSchema)
 	if err != nil {
 		panic(err)
 	}

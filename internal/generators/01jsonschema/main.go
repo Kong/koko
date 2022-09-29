@@ -30,7 +30,7 @@ func main() {
 		log.Fatalln(err)
 	}
 
-	schema := generator.GlobalSchema()
+	schema := generator.DefaultRegistry.Schema
 	for name, schema := range schema.Definitions {
 		jsonSchema, err := json.MarshalIndent(schema, "", "  ")
 		if err != nil {

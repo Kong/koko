@@ -13,9 +13,11 @@ import (
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/service/v1"
 	relay "github.com/kong/koko/internal/gen/grpc/kong/relay/service/v1"
 	grpcKongUtil "github.com/kong/koko/internal/gen/grpc/kong/util/v1"
+	genJSONSchema "github.com/kong/koko/internal/gen/jsonschema"
 	"github.com/kong/koko/internal/info"
 	"github.com/kong/koko/internal/metrics"
 	"github.com/kong/koko/internal/model"
+	"github.com/kong/koko/internal/model/json/schema"
 	"github.com/kong/koko/internal/persistence"
 	"github.com/kong/koko/internal/plugin"
 	"github.com/kong/koko/internal/plugin/validators"
@@ -58,6 +60,8 @@ const (
 func Run(ctx context.Context, config ServerConfig) error {
 	logger := config.Logger
 	var g gang.Gang
+
+	schema.RegisterSchemasFromFS(&genJSONSchema.KongSchemas)
 
 	err := metrics.InitMetricsClient(logger.With(zap.String("component", "metrics-collector")), config.Metrics.ClientType)
 	if err != nil {

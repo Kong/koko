@@ -13,10 +13,13 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
+	genJSONSchema "github.com/kong/koko/internal/gen/jsonschema"
+	"github.com/kong/koko/internal/model/json/schema"
 )
 
 var (
@@ -24,7 +27,8 @@ var (
 	hc      = http.DefaultClient
 
 	// TestBackoff retries every second for 30 seconds and then gives up.
-	TestBackoff backoff.BackOff
+	TestBackoff         backoff.BackOff
+	registerSchemasOnce sync.Once
 )
 
 const (
@@ -175,4 +179,8 @@ func SkipTestIfEnterpriseTesting(t *testing.T, skip bool) {
 	if skip && strings.EqualFold(os.Getenv("KOKO_TEST_ENTERPRISE_TESTING"), "true") {
 		t.Skip("Skipping test for enterprise level testing")
 	}
+}
+
+func RegisterSchemasFromFS() {
+	registerSchemasOnce.Do(func() { schema.RegisterSchemasFromFS(&genJSONSchema.KongSchemas) })
 }

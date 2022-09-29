@@ -2,11 +2,11 @@ package schema
 
 import (
 	"bytes"
+	"embed"
 	"fmt"
 	"strings"
 	"sync"
 
-	genJSONSchema "github.com/kong/koko/internal/gen/jsonschema"
 	"github.com/kong/koko/internal/json"
 	"github.com/kong/koko/internal/model/json/extension"
 	"github.com/santhosh-tekuri/jsonschema/v5"
@@ -16,15 +16,21 @@ var (
 	schemas        = map[string]*jsonschema.Schema{}
 	rawJSONSchemas = map[string][]byte{}
 	once           sync.Once
+	schemaFS       []*embed.FS
 )
 
-// initSchemas reads and compiles schemas.
 // This is not done in a traditional init() to avoid circular dependency on the
 // generated JSON schemas.
 func initSchemas() {
+	for _, fs := range schemaFS {
+		loadSchemasFromFS(fs)
+	}
+}
+
+// loadSchemasFromFS reads and compiles schemas from an embed FS.
+func loadSchemasFromFS(fs *embed.FS) {
 	const dir = "schemas"
-	schemaFS := genJSONSchema.KongSchemas
-	files, err := schemaFS.ReadDir(dir)
+	files, err := fs.ReadDir(dir)
 	if err != nil {
 		panic(err)
 	}
@@ -42,7 +48,7 @@ func initSchemas() {
 			panic(fmt.Sprintf("expected a JSON file but got: %v", name))
 		}
 		schemaName := strings.TrimSuffix(name, ".json")
-		schema, err := schemaFS.ReadFile(fmt.Sprintf("%s/%s", dir, name))
+		schema, err := fs.ReadFile(fmt.Sprintf("%s/%s", dir, name))
 		if err != nil {
 			panic(err)
 		}
@@ -77,6 +83,11 @@ func GetRawJSONSchema(name string) ([]byte, error) {
 		return []byte{}, fmt.Errorf("raw JSON schema not found for entity: '%s'", name)
 	}
 	return rawJSONSchema, nil
+}
+
+// RegisterSchemasFromFS adds an embed FS where schemas should be loaded.
+func RegisterSchemasFromFS(fs *embed.FS) {
+	schemaFS = append(schemaFS, fs)
 }
 
 func registerExtension(c *jsonschema.Compiler, ext extension.Extension) {
