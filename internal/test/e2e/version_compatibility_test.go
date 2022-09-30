@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"reflect"
 	"testing"
 
 	"github.com/gavv/httpexpect/v2"
@@ -20,6 +19,7 @@ import (
 	"github.com/kong/koko/internal/test/util"
 	"github.com/kong/koko/internal/versioning"
 	"github.com/stretchr/testify/require"
+	"github.com/tidwall/gjson"
 	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )
@@ -242,9 +242,11 @@ func TestVersionCompatibility_PluginFieldUpdates(t *testing.T) {
 	})
 
 	require.Equal(t, len(expectedPluginsMap), len(dataPlanePlugins), "plugins configured count does not match")
-	dpPluginsMap := make(map[string]*kongClient.Plugin, 0)
+	dpPluginsMap := make(map[string]string, 0)
 	for _, dpPlugin := range dataPlanePlugins {
-		dpPluginsMap[*dpPlugin.Name] = dpPlugin
+		b, err := json.ProtoJSONMarshal(dpPlugin.Config)
+		require.NoError(t, err)
+		dpPluginsMap[*dpPlugin.Name] = string(b)
 	}
 
 	for name, expectedPlugin := range expectedPluginsMap {
@@ -255,15 +257,14 @@ func TestVersionCompatibility_PluginFieldUpdates(t *testing.T) {
 				if parsedVersion(dataPlaneVersion) {
 					for _, update := range updates {
 						want := update.Value
-						have := dpPluginsMap[name].Config[update.Field]
+						have := gjson.Get(dpPluginsMap[name], update.Field)
 						switch want.(type) {
 						case string:
-							require.Equal(t, want, have, "failed to validate plugin updates")
+							require.Equal(t, want, have.String())
 						case []string:
-							require.ElementsMatch(t, want, have, "failed to validate plugin updates")
+							require.ElementsMatch(t, want, have.Value())
 						default:
-							require.Fail(t, fmt.Sprintf("Unexpected type(s): want: %s, have: %s, ",
-								reflect.TypeOf(want), reflect.TypeOf(have)))
+							require.Equal(t, want, have.Value())
 						}
 					}
 				}
