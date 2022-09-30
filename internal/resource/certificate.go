@@ -53,27 +53,36 @@ func (r Certificate) Validate(ctx context.Context) error {
 		return err
 	}
 
-	cert, _ := crypto.ParsePEMCert([]byte(r.Certificate.Cert))
-	pubKey, err := crypto.RetrievePublicFromPrivateKey([]byte(r.Certificate.Key))
-	if err != nil {
-		return validation.Error{
-			Errs: []*v1.ErrorDetail{
-				{
-					Type:     v1.ErrorType_ERROR_TYPE_ENTITY,
-					Messages: []string{fmt.Sprintf("failed to get public key from certificate: %v", err)},
+	var cert *x509.Certificate
+	var pubKey []byte
+
+	if !isReference(r.Certificate.Cert) {
+		cert, _ = crypto.ParsePEMCert([]byte(r.Certificate.Cert))
+	}
+	if !isReference(r.Certificate.Key) {
+		pubKey, err = crypto.RetrievePublicFromPrivateKey([]byte(r.Certificate.Key))
+		if err != nil {
+			return validation.Error{
+				Errs: []*v1.ErrorDetail{
+					{
+						Type:     v1.ErrorType_ERROR_TYPE_ENTITY,
+						Messages: []string{fmt.Sprintf("failed to get public key from certificate: %v", err)},
+					},
 				},
-			},
+			}
 		}
 	}
-	certPubKey, _ := x509.MarshalPKIXPublicKey(cert.PublicKey)
-	if !bytes.Equal(certPubKey, pubKey) {
-		return validation.Error{
-			Errs: []*v1.ErrorDetail{
-				{
-					Type:     v1.ErrorType_ERROR_TYPE_ENTITY,
-					Messages: []string{"certificate does not match key"},
+	if !isReference(r.Certificate.Cert) && !isReference(r.Certificate.Key) {
+		certPubKey, _ := x509.MarshalPKIXPublicKey(cert.PublicKey)
+		if !bytes.Equal(certPubKey, pubKey) {
+			return validation.Error{
+				Errs: []*v1.ErrorDetail{
+					{
+						Type:     v1.ErrorType_ERROR_TYPE_ENTITY,
+						Messages: []string{"certificate does not match key"},
+					},
 				},
-			},
+			}
 		}
 	}
 
@@ -81,40 +90,51 @@ func (r Certificate) Validate(ctx context.Context) error {
 		return nil
 	}
 
-	altCert, _ := crypto.ParsePEMCert([]byte(r.Certificate.CertAlt))
-	if cert.PublicKeyAlgorithm == altCert.PublicKeyAlgorithm {
-		return validation.Error{
-			Errs: []*v1.ErrorDetail{
-				{
-					Type: v1.ErrorType_ERROR_TYPE_ENTITY,
-					Messages: []string{fmt.Sprintf("certificate and alternative certificate need to have "+
-						"different type (e.g. RSA and ECDSA), the provided "+
-						"certificates were both of the same type '%s'", cert.PublicKeyAlgorithm.String())},
+	var altCert *x509.Certificate
+	var altPubKey []byte
+
+	if !isReference(r.Certificate.CertAlt) {
+		altCert, _ = crypto.ParsePEMCert([]byte(r.Certificate.CertAlt))
+	}
+	if !isReference(r.Certificate.Cert) && !isReference(r.Certificate.CertAlt) {
+		if cert.PublicKeyAlgorithm == altCert.PublicKeyAlgorithm {
+			return validation.Error{
+				Errs: []*v1.ErrorDetail{
+					{
+						Type: v1.ErrorType_ERROR_TYPE_ENTITY,
+						Messages: []string{fmt.Sprintf("certificate and alternative certificate need to have "+
+							"different type (e.g. RSA and ECDSA), the provided "+
+							"certificates were both of the same type '%s'", cert.PublicKeyAlgorithm.String())},
+					},
 				},
-			},
+			}
 		}
 	}
 
-	altPubKey, err := crypto.RetrievePublicFromPrivateKey([]byte(r.Certificate.KeyAlt))
-	if err != nil {
-		return validation.Error{
-			Errs: []*v1.ErrorDetail{
-				{
-					Type:     v1.ErrorType_ERROR_TYPE_ENTITY,
-					Messages: []string{fmt.Sprintf("failed to get public key from alternate certificate: %v", err)},
+	if !isReference(r.Certificate.KeyAlt) {
+		altPubKey, err = crypto.RetrievePublicFromPrivateKey([]byte(r.Certificate.KeyAlt))
+		if err != nil {
+			return validation.Error{
+				Errs: []*v1.ErrorDetail{
+					{
+						Type:     v1.ErrorType_ERROR_TYPE_ENTITY,
+						Messages: []string{fmt.Sprintf("failed to get public key from alternate certificate: %v", err)},
+					},
 				},
-			},
+			}
 		}
 	}
-	altCertPubKey, _ := x509.MarshalPKIXPublicKey(altCert.PublicKey)
-	if !bytes.Equal(altCertPubKey, altPubKey) {
-		return validation.Error{
-			Errs: []*v1.ErrorDetail{
-				{
-					Type:     v1.ErrorType_ERROR_TYPE_ENTITY,
-					Messages: []string{"alternate certificate does not match key"},
+	if !isReference(r.Certificate.CertAlt) && !isReference(r.Certificate.KeyAlt) {
+		altCertPubKey, _ := x509.MarshalPKIXPublicKey(altCert.PublicKey)
+		if !bytes.Equal(altCertPubKey, altPubKey) {
+			return validation.Error{
+				Errs: []*v1.ErrorDetail{
+					{
+						Type:     v1.ErrorType_ERROR_TYPE_ENTITY,
+						Messages: []string{"alternate certificate does not match key"},
+					},
 				},
-			},
+			}
 		}
 	}
 	return nil
@@ -144,20 +164,48 @@ func init() {
 		Properties: map[string]*generator.Schema{
 			"id": typedefs.ID,
 			"cert": {
-				Type:   "string",
-				Format: "pem-encoded-cert",
+				Type: "string",
+				AnyOf: []*generator.Schema{
+					{Format: "pem-encoded-cert"},
+					typedefs.Reference,
+				},
+				XKokoConfig: &extension.Config{
+					DisableValidateEndpoint: true,
+					Referenceable:           true,
+				},
 			},
 			"key": {
-				Type:   "string",
-				Format: "pem-encoded-private-key",
+				Type: "string",
+				AnyOf: []*generator.Schema{
+					{Format: "pem-encoded-private-key"},
+					typedefs.Reference,
+				},
+				XKokoConfig: &extension.Config{
+					DisableValidateEndpoint: true,
+					Referenceable:           true,
+				},
 			},
 			"cert_alt": {
-				Type:   "string",
-				Format: "pem-encoded-cert",
+				Type: "string",
+				AnyOf: []*generator.Schema{
+					{Format: "pem-encoded-cert"},
+					typedefs.Reference,
+				},
+				XKokoConfig: &extension.Config{
+					DisableValidateEndpoint: true,
+					Referenceable:           true,
+				},
 			},
 			"key_alt": {
-				Type:   "string",
-				Format: "pem-encoded-private-key",
+				Type: "string",
+				AnyOf: []*generator.Schema{
+					{Format: "pem-encoded-private-key"},
+					typedefs.Reference,
+				},
+				XKokoConfig: &extension.Config{
+					DisableValidateEndpoint: true,
+					Referenceable:           true,
+				},
 			},
 			"tags":       typedefs.Tags,
 			"created_at": typedefs.UnixEpoch,

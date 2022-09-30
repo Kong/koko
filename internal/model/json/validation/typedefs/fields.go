@@ -23,6 +23,7 @@ const (
 	tagPattern = `^(?:[0-9a-zA-Z.\-_~:]+(?: *[0-9a-zA-Z.\-_~:])*)?$`
 
 	HTTPHeaderNamePattern = "^[A-Za-z0-9!#$%&'*+-.^_|~]{1,64}$"
+	ReferencePattern      = "^{vault://.*}$"
 )
 
 var (
@@ -205,6 +206,12 @@ var CIDRPort = &generator.Schema{
 			Required:    []string{"port"},
 		},
 	},
+}
+
+var Reference = &generator.Schema{
+	Type:        "string",
+	Description: "referenceable field must contain a valid 'Reference'",
+	Pattern:     ReferencePattern,
 }
 
 func intP(i int) *int { return &i }

@@ -272,14 +272,20 @@ func TestCertificate_Validate(t *testing.T) {
 			wantErr: true,
 			Errs: []*model.ErrorDetail{
 				{
-					Type:     model.ErrorType_ERROR_TYPE_FIELD,
-					Field:    "cert_alt",
-					Messages: []string{"'a' is not valid 'pem-encoded-cert'"},
+					Type:  model.ErrorType_ERROR_TYPE_FIELD,
+					Field: "cert_alt",
+					Messages: []string{
+						"'a' is not valid 'pem-encoded-cert'",
+						"referenceable field must contain a valid 'Reference'",
+					},
 				},
 				{
-					Type:     model.ErrorType_ERROR_TYPE_FIELD,
-					Field:    "key_alt",
-					Messages: []string{"'b' is not valid 'pem-encoded-private-key'"},
+					Type:  model.ErrorType_ERROR_TYPE_FIELD,
+					Field: "key_alt",
+					Messages: []string{
+						"'b' is not valid 'pem-encoded-private-key'",
+						"referenceable field must contain a valid 'Reference'",
+					},
 				},
 			},
 		},
@@ -297,14 +303,20 @@ func TestCertificate_Validate(t *testing.T) {
 			wantErr: true,
 			Errs: []*model.ErrorDetail{
 				{
-					Type:     model.ErrorType_ERROR_TYPE_FIELD,
-					Field:    "cert_alt",
-					Messages: []string{"'a' is not valid 'pem-encoded-cert'"},
+					Type:  model.ErrorType_ERROR_TYPE_FIELD,
+					Field: "cert_alt",
+					Messages: []string{
+						"'a' is not valid 'pem-encoded-cert'",
+						"referenceable field must contain a valid 'Reference'",
+					},
 				},
 				{
-					Type:     model.ErrorType_ERROR_TYPE_FIELD,
-					Field:    "key_alt",
-					Messages: []string{"'b' is not valid 'pem-encoded-private-key'"},
+					Type:  model.ErrorType_ERROR_TYPE_FIELD,
+					Field: "key_alt",
+					Messages: []string{
+						"'b' is not valid 'pem-encoded-private-key'",
+						"referenceable field must contain a valid 'Reference'",
+					},
 				},
 			},
 		},
@@ -398,6 +410,103 @@ func TestCertificate_Validate(t *testing.T) {
 				return cert
 			},
 			wantErr: false,
+		},
+		{
+			name: "valid certificate and key reference passes",
+			Certificate: func() Certificate {
+				cert := NewCertificate()
+				_ = cert.ProcessDefaults(context.Background())
+				cert.Certificate.Cert = "{vault://env/test-cert}"
+				cert.Certificate.Key = "{vault://env/test-key}"
+				return cert
+			},
+			wantErr: false,
+		},
+		{
+			name: "valid certificate and key reference with valid alternate cert and key reference passes",
+			Certificate: func() Certificate {
+				cert := NewCertificate()
+				_ = cert.ProcessDefaults(context.Background())
+				cert.Certificate.Cert = "{vault://env/test-cert}"
+				cert.Certificate.Key = "{vault://env/test-key}"
+				cert.Certificate.CertAlt = "{vault://env/test-cert-alt}"
+				cert.Certificate.KeyAlt = "{vault://env/test-key-alt}"
+				return cert
+			},
+			wantErr: false,
+		},
+		{
+			name: "valid cert reference combinations 1 passes",
+			Certificate: func() Certificate {
+				cert := NewCertificate()
+				_ = cert.ProcessDefaults(context.Background())
+				cert.Certificate.Cert = string(certPEM)
+				cert.Certificate.Key = "{vault://env/test-key}"
+				cert.Certificate.CertAlt = string(certAltPEM)
+				cert.Certificate.KeyAlt = "{vault://env/test-key-alt}"
+				return cert
+			},
+			wantErr: false,
+		},
+		{
+			name: "valid cert reference combinations 2 passes",
+			Certificate: func() Certificate {
+				cert := NewCertificate()
+				_ = cert.ProcessDefaults(context.Background())
+				cert.Certificate.Cert = "{vault://env/test-cert}"
+				cert.Certificate.Key = string(keyPEM)
+				cert.Certificate.CertAlt = "{vault://env/test-cert-alt}"
+				cert.Certificate.KeyAlt = string(keyAltPEM)
+				return cert
+			},
+			wantErr: false,
+		},
+		{
+			name: "invalid cert reference throws an error",
+			Certificate: func() Certificate {
+				cert := NewCertificate()
+				_ = cert.ProcessDefaults(context.Background())
+				cert.Certificate.Cert = "vault://env/test-cert}"
+				cert.Certificate.Key = "{vault://env/test-key"
+				cert.Certificate.CertAlt = "{vaults://env/test-cert-alt}"
+				cert.Certificate.KeyAlt = "{vault:/env/test-key-alt}"
+				return cert
+			},
+			wantErr: true,
+			Errs: []*model.ErrorDetail{
+				{
+					Type:  model.ErrorType_ERROR_TYPE_FIELD,
+					Field: "cert",
+					Messages: []string{
+						"'vault://env/test-cert}' is not valid 'pem-encoded-cert'",
+						"referenceable field must contain a valid 'Reference'",
+					},
+				},
+				{
+					Type:  model.ErrorType_ERROR_TYPE_FIELD,
+					Field: "cert_alt",
+					Messages: []string{
+						"'{vaults://env/test-cert-alt}' is not valid 'pem-encoded-cert'",
+						"referenceable field must contain a valid 'Reference'",
+					},
+				},
+				{
+					Type:  model.ErrorType_ERROR_TYPE_FIELD,
+					Field: "key",
+					Messages: []string{
+						"'{vault://env/test-key' is not valid 'pem-encoded-private-key'",
+						"referenceable field must contain a valid 'Reference'",
+					},
+				},
+				{
+					Type:  model.ErrorType_ERROR_TYPE_FIELD,
+					Field: "key_alt",
+					Messages: []string{
+						"'{vault:/env/test-key-alt}' is not valid 'pem-encoded-private-key'",
+						"referenceable field must contain a valid 'Reference'",
+					},
+				},
+			},
 		},
 	}
 	for _, tt := range tests {

@@ -34,6 +34,12 @@ type Config struct {
 	//
 	// This should be left empty in the event the resource is not exposed in the REST API.
 	ResourceAPIPath string `json:"resourceAPIPath,omitempty"`
+
+	// Referenceable fields can include the regular value or a reference to the value.
+	// https://docs.konghq.com/gateway/latest/kong-enterprise/secrets-management/reference-format/
+	//
+	// This should be set to true for any referenceable field, and otherwise omitted.
+	Referenceable bool `json:"referenceable,omitempty"`
 }
 
 // Name implements the Extension interface.

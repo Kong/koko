@@ -516,19 +516,19 @@
                 },
                 "cert": {
                   "type": "string",
-                  "description": "PEM encoded certificate"
+                  "description": "PEM encoded certificate (referenceable)"
                 },
                 "key": {
                   "type": "string",
-                  "description": "PEM encoded private key"
+                  "description": "PEM encoded private key (referenceable)"
                 },
                 "cert_alt": {
                   "type": "string",
-                  "description": "PEM encoded certificate"
+                  "description": "PEM encoded certificate (referenceable)"
                 },
                 "key_alt": {
                   "type": "string",
-                  "description": "PEM encoded private key"
+                  "description": "PEM encoded private key (referenceable)"
                 },
                 "tags": {
                   "type": "array",
@@ -3341,19 +3341,19 @@
         },
         "cert": {
           "type": "string",
-          "description": "PEM encoded certificate"
+          "description": "PEM encoded certificate (referenceable)"
         },
         "key": {
           "type": "string",
-          "description": "PEM encoded private key"
+          "description": "PEM encoded private key (referenceable)"
         },
         "cert_alt": {
           "type": "string",
-          "description": "PEM encoded certificate"
+          "description": "PEM encoded certificate (referenceable)"
         },
         "key_alt": {
           "type": "string",
-          "description": "PEM encoded private key"
+          "description": "PEM encoded private key (referenceable)"
         },
         "tags": {
           "type": "array",
