@@ -2,8 +2,57 @@ log:
   level: debug
   format: console
 database:
+  # Supported database dialects include:
+  # - mysql
+  # - postgres
+  # - sqlite3
   dialect: sqlite3
   query_timeout: 5s
+  mysql:
+    # Required fields to set primary DB settings.
+    hostname: localhost
+    db_name: koko
+    user: koko
+    password: koko
+
+    # Optional, otherwise defaults to 3306.
+    port: 3306
+
+    tls:
+      # In order to enable TLS negotiation, this must be enabled,
+      # otherwise, no TLS negotiation will be done.
+      #
+      # Defaults to false when not provided.
+      enable: true
+
+      # Enable in the event hostname verification needs to be skipped.
+      #
+      # Defaults to false when not provided.
+      skip_hostname_verification: false
+
+      # Optional root CA, certificate, and key settings.
+      #
+      # You may specify the `*_file` fields or provide the data in plain text.
+      #
+      # root_ca_file: /some/path/to/ca.pem
+      # certificate_file: /some/path/to/cert.pem
+      # key_file: /some/path/to/key.pem
+      root_ca: |
+        -----BEGIN CERTIFICATE-----
+        ...
+        -----END CERTIFICATE-----
+      certificate: |
+        -----BEGIN CERTIFICATE-----
+        ...
+        -----END CERTIFICATE-----
+      key: |
+        -----BEGIN RSA PRIVATE KEY-----
+        ...
+        -----END RSA PRIVATE KEY-----
+
+    # Optional hostname to declare a single read-replica. Shares the
+    # same connectivity settings as the primary DB settings above.
+    read_replica: another-hostname
   sqlite:
     #in_memory: true
     filename: test.db
