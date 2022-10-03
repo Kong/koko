@@ -16,9 +16,6 @@ then
   exit 1
 fi
 
-curl -sSfL "https://raw.githubusercontent.com/Kong/go-atc-router/trunk/build-deps.sh" \
-  | sh -s -- --build --install --rm
-
 go install "github.com/bufbuild/buf/cmd/buf"
 go install "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway"
 go install "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2"
