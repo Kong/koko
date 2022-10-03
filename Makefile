@@ -34,7 +34,7 @@ test-race:
 	go test -tags testsetup -count 1 -race -p 1 ./...
 
 .PHONY: test-integration
-test-integration:
+test-integration: install-tools
 	go test -tags=testsetup,integration -timeout 15m -race -count 1 -p 1 ./internal/test/...
 
 .PHONY: gen
