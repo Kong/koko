@@ -6,7 +6,9 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/gofrs/uuid"
 	"github.com/imdario/mergo"
+	goatcrouter "github.com/kong/go-atc-router"
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
 	"github.com/kong/koko/internal/model"
 	"github.com/kong/koko/internal/model/json/extension"
@@ -14,6 +16,7 @@ import (
 	"github.com/kong/koko/internal/model/json/validation"
 	"github.com/kong/koko/internal/model/json/validation/typedefs"
 	"github.com/samber/lo"
+	"github.com/santhosh-tekuri/jsonschema/v5"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
@@ -30,6 +33,9 @@ const (
 	// WSProtocolsRuleTitle denotes the name of the schema rule to apply
 	// to ws protocols.
 	WSProtocolsRuleTitle = "ws_protocols_rule"
+	// ExpressionRouteRuleTitle denotes the name of the schema rule to apply
+	// to expression-based routes.
+	ExpressionRouteRuleTitle = "atc_route_rule"
 )
 
 var (
@@ -145,7 +151,40 @@ func (r Route) ProcessDefaults(ctx context.Context) error {
 	return nil
 }
 
+func buildSchema() *goatcrouter.Schema {
+	schema := goatcrouter.NewSchema()
+
+	for _, fieldname := range []string{
+		"net.protocol", "tls.sni",
+		"http.method", "http.host",
+		"http.path", "http.raw_path",
+		"http.headers.*",
+	} {
+		schema.AddField(fieldname, goatcrouter.String)
+	}
+
+	for _, fieldname := range []string{"net.port"} {
+		schema.AddField(fieldname, goatcrouter.Int)
+	}
+
+	return schema
+}
+
+var cachedSchema = buildSchema()
+
 func init() {
+	jsonschema.Formats["route-expression"] = func(v interface{}) bool {
+		expression, ok := v.(string)
+		if !ok {
+			return false
+		}
+
+		router := goatcrouter.NewRouter(cachedSchema)
+		defer router.Free()
+		err := router.AddMatcher(0, uuid.Must(uuid.NewV4()), expression)
+		return err == nil
+	}
+
 	err := model.RegisterType(TypeRoute, &v1.Route{}, func() model.Object {
 		return NewRoute()
 	})
@@ -324,6 +363,13 @@ func init() {
 			"created_at": typedefs.UnixEpoch,
 			"updated_at": typedefs.UnixEpoch,
 			"service":    typedefs.ReferenceObject,
+			"expression": {
+				Type:   "string",
+				Format: "route-expression",
+			},
+			"priority": {
+				Type: "integer",
+			},
 		},
 		AdditionalProperties: &falsy,
 		Required: []string{
@@ -679,6 +725,22 @@ func init() {
 								},
 							},
 						},
+					},
+				},
+			},
+			{
+				Title: ExpressionRouteRuleTitle,
+				Description: "When 'expression' is defined, 'priority' is required and " +
+					"'snis', 'sources' or 'destinations' cannot be set.",
+				If: &generator.Schema{
+					Required: []string{"expression"},
+				},
+				Then: &generator.Schema{
+					Required: []string{"priority"},
+					Properties: map[string]*generator.Schema{
+						"snis":         {Not: &generator.Schema{}},
+						"sources":      {Not: &generator.Schema{}},
+						"destinations": {Not: &generator.Schema{}},
 					},
 				},
 			},

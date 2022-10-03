@@ -29,6 +29,8 @@ message Route {
   google.protobuf.BoolValue request_buffering = 19;
   google.protobuf.BoolValue response_buffering = 20;
   Service service = 21;
+  string expression = 22;
+  int32 priority = 23;
 }
 
 message HeaderValues {

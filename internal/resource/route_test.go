@@ -1318,6 +1318,116 @@ func TestRoute_Validate(t *testing.T) {
 				return r
 			},
 		},
+		{
+			name: "expression route needs priority",
+			Route: func() Route {
+				r := goodRoute()
+				r.Route.Expression = "net.port == 80"
+				return r
+			},
+			wantErr: true,
+			Errs: []*model.ErrorDetail{
+				{
+					Type: model.ErrorType_ERROR_TYPE_ENTITY,
+					Messages: []string{
+						"When 'expression' is defined, 'priority' is required and " +
+							"'snis', 'sources' or 'destinations' cannot be set.",
+					},
+				},
+			},
+		},
+		{
+			name: "minimal complete expression route",
+			Route: func() Route {
+				r := goodRoute()
+				r.Route.Expression = "net.port == 80"
+				r.Route.Priority = 5
+				return r
+			},
+		},
+		{
+			name: "expression route must not have traditional field 'snis'",
+			Route: func() Route {
+				r := goodRoute()
+				r.Route.Expression = "net.port == 80"
+				r.Route.Priority = 5
+				r.Route.Snis = []string{"foo.example.com"}
+				return r
+			},
+			wantErr: true,
+			Errs: []*model.ErrorDetail{
+				{
+					Type: model.ErrorType_ERROR_TYPE_ENTITY,
+					Messages: []string{
+						"When 'expression' is defined, 'priority' is required and " +
+							"'snis', 'sources' or 'destinations' cannot be set.",
+					},
+				},
+			},
+		},
+		{
+			name: "expression route must not have traditional field 'sources'",
+			Route: func() Route {
+				r := goodRoute()
+				r.Route.Hosts = []string{}
+				r.Route.Protocols = []string{typedefs.ProtocolTCP}
+				r.Route.Expression = "net.port == 80"
+				r.Route.Priority = 5
+				r.Route.Sources = []*model.CIDRPort{{Ip: "10.0.0.0/8"}}
+				return r
+			},
+			wantErr: true,
+			Errs: []*model.ErrorDetail{
+				{
+					Type: model.ErrorType_ERROR_TYPE_ENTITY,
+					Messages: []string{
+						"When 'expression' is defined, 'priority' is required and " +
+							"'snis', 'sources' or 'destinations' cannot be set.",
+					},
+				},
+			},
+		},
+		{
+			name: "expression route must not have traditional field 'destinations'",
+			Route: func() Route {
+				r := goodRoute()
+				r.Route.Hosts = []string{}
+				r.Route.Protocols = []string{typedefs.ProtocolTCP}
+				r.Route.Expression = "net.port == 80"
+				r.Route.Priority = 5
+				r.Route.Destinations = []*model.CIDRPort{{Ip: "10.0.0.0/8"}}
+				return r
+			},
+			wantErr: true,
+			Errs: []*model.ErrorDetail{
+				{
+					Type: model.ErrorType_ERROR_TYPE_ENTITY,
+					Messages: []string{
+						"When 'expression' is defined, 'priority' is required and " +
+							"'snis', 'sources' or 'destinations' cannot be set.",
+					},
+				},
+			},
+		},
+		{
+			name: "expression route must be a valid expression",
+			Route: func() Route {
+				r := goodRoute()
+				r.Route.Expression = "tcp.aport .. K9"
+				r.Route.Priority = 5
+				return r
+			},
+			wantErr: true,
+			Errs: []*model.ErrorDetail{
+				{
+					Type:  model.ErrorType_ERROR_TYPE_FIELD,
+					Field: "expression",
+					Messages: []string{
+						"'tcp.aport .. K9' is not valid 'route-expression'",
+					},
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		util.SkipTestIfEnterpriseTesting(t, tt.skipIfEnterpriseTesting)
