@@ -31,6 +31,12 @@ jobs:
       run: |
         ./scripts/setup-db.sh ${{ matrix.database }} &
         ./scripts/wait-for-db.sh ${{ matrix.database }}
+    - name: Cache go-atc-router library
+      uses: actions/cache@v3
+      with:
+        path: |
+          /usr/local/lib/libatc_router*
+        key: ${{ runner.os }}-go-atc-router-${{ hashFiles('**/go.sum') }}
     - name: make test-race
       run: make test-race
 

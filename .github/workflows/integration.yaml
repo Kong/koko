@@ -34,6 +34,12 @@ jobs:
           ~/go/pkg/mod
           ~/.cache/go-build
         key: ${{ runner.os }}-go-integration-${{ hashFiles('**/go.sum') }}
+    - name: Cache go-atc-router library
+      uses: actions/cache@v3
+      with:
+        path: |
+          /usr/local/lib/libatc_router*
+        key: ${{ runner.os }}-go-atc-router-${{ hashFiles('**/go.sum') }}
     - name: make test-integration
       continue-on-error: ${{ matrix.experimental }}
       run: make test-integration

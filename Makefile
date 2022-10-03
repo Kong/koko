@@ -2,7 +2,7 @@
 DEFAULT_BRANCH:=$(shell git remote show origin | sed -n '/HEAD branch/s/.*: //p')
 
 .PHONY: install-tools
-install-tools:
+install-tools: install-deps
 	./scripts/install-tools.sh
 
 .PHONY: install-deps
@@ -46,7 +46,7 @@ gen:
 	./scripts/update-codegen.sh
 
 .PHONY: gen-verify
-gen-verify: install-deps
+gen-verify:
 	./scripts/verify-codegen.sh
 
 .PHONY: buf-format
