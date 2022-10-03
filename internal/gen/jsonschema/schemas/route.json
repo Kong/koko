@@ -768,19 +768,13 @@
         ],
         "properties": {
           "destinations": {
-            "not": {
-              "description": "some destinations"
-            }
+            "not": {}
           },
           "snis": {
-            "not": {
-              "description": "some snis"
-            }
+            "not": {}
           },
           "sources": {
-            "not": {
-              "description": "some sources"
-            }
+            "not": {}
           }
         }
       }
