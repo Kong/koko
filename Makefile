@@ -10,7 +10,7 @@ install-deps:
 	./scripts/install-deps.sh
 
 .PHONY: build
-build:
+build: install-deps
 	go build -o koko main.go
 
 .PHONY: run

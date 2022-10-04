@@ -21,11 +21,16 @@ jobs:
           ~/.cache/buf
         key: ${{ runner.os }}-go-lint-${{ hashFiles('**/go.sum') }}
     - name: Cache go-atc-router library
+      id: cache-atc
       uses: actions/cache@v3
       with:
         path: |
-          /usr/local/lib/libatc_router*
+          /tmp/libatc_router*
         key: ${{ runner.os }}-go-atc-router-${{ hashFiles('**/go.sum') }}
+    - name: Install cached library
+      if: steps.cache-atc.outputs.cache-hit == 'true'
+      run: |
+        sudo install /tmp/libatc_router* /usr/local/lib
     - name: make install-tools
       run: make install-tools
     - name: make verify
