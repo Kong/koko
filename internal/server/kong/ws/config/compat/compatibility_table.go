@@ -43,6 +43,14 @@ func standardPluginNotAvailableMessage(pluginName string, versionWithFeatureSupp
 	)
 }
 
+func standardCoreEntityMessage(entityName string, versionWithFeatureSupport string) string {
+	return fmt.Sprintf("The '%s' entity is being used, "+
+		"but Kong Gateway versions < %s do not support this entity. "+
+		entityName,
+		versionWithFeatureSupport,
+	)
+}
+
 func standardCoreEntityFieldsMessage(entityName string, fields []string, versionWithFeatureSupport string) string {
 	quotedFields := "'" + strings.Join(fields, "', '") + "'"
 	return fmt.Sprintf("For the '%s' entity, "+
@@ -828,6 +836,20 @@ var (
 					"service_identifier_default",
 					"workspace_identifier_default",
 				},
+			},
+		},
+		{
+			Metadata: config.ChangeMetadata{
+				ID:          config.ChangeID("P135"),
+				Severity:    config.ChangeSeverityError,
+				Description: standardCoreEntityMessage("vault", "3.0"),
+				Resolution:  standardUpgradeMessage("3.0"),
+			},
+			SemverRange: versionsPre300,
+			Update: config.ConfigTableUpdates{
+				Name:   config.Vault.String(),
+				Type:   config.Vault,
+				Remove: true,
 			},
 		},
 	}

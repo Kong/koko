@@ -16,6 +16,7 @@ import "kong/admin/model/v1/service.proto";
 import "kong/admin/model/v1/sni.proto";
 import "kong/admin/model/v1/target.proto";
 import "kong/admin/model/v1/upstream.proto";
+import "kong/admin/model/v1/vault.proto";
 
 option go_package = "github.com/kong/koko/internal/gen/kong/admin/service/v1;v1";
 
@@ -86,6 +87,13 @@ service SchemasService {
   rpc ValidateUpstreamSchema(ValidateUpstreamSchemaRequest) returns (ValidateUpstreamSchemaResponse) {
     option (google.api.http) = {
       post: "/v1/schemas/json/upstream/validate",
+      body: "item",
+    };
+  }
+
+  rpc ValidateVaultSchema(ValidateVaultSchemaRequest) returns (ValidateVaultSchemaResponse) {
+    option (google.api.http) = {
+      post: "/v1/schemas/json/vault/validate",
       body: "item",
     };
   }
@@ -173,6 +181,10 @@ message ValidateUpstreamSchemaRequest {
   model.v1.Upstream item = 1;
 }
 
+message ValidateVaultSchemaRequest {
+  model.v1.Vault item = 1;
+}
+
 message ValidateCACertificateSchemaResponse {}
 message ValidateCertificateSchemaResponse {}
 message ValidateConfigHashSchemaResponse {}
@@ -184,3 +196,4 @@ message ValidateServiceSchemaResponse {}
 message ValidateSNISchemaResponse {}
 message ValidateTargetSchemaResponse {}
 message ValidateUpstreamSchemaResponse {}
+message ValidateVaultSchemaResponse {}

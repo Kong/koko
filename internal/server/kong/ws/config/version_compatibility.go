@@ -40,14 +40,15 @@ const (
 	Service
 	Route
 	Upstream
+	Vault
 )
 
 func (u UpdateType) String() string {
-	return [...]string{"plugin", "plugin", "service", "route", "upstream"}[u]
+	return [...]string{"plugin", "plugin", "service", "route", "upstream", "vault"}[u]
 }
 
 func (u UpdateType) ConfigTableKey() string {
-	return [...]string{"plugins", "plugins", "services", "routes", "upstreams"}[u]
+	return [...]string{"plugins", "plugins", "services", "routes", "upstreams", "vaults"}[u]
 }
 
 //nolint:revive
@@ -248,7 +249,7 @@ func (vc *WSVersionCompatibility) processConfigTableUpdates(uncompressedPayload 
 		case Plugin:
 			processedPayload = vc.processPluginUpdates(processedPayload,
 				configTableUpdate, dataPlaneVersionStr, tracker)
-		case Service, CorePlugin, Route, Upstream:
+		case Service, CorePlugin, Route, Upstream, Vault:
 			processedPayload = vc.processCoreEntityUpdates(processedPayload,
 				configTableUpdate, dataPlaneVersionStr, tracker)
 		default:

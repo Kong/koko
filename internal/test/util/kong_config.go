@@ -18,6 +18,7 @@ type KongConfig struct {
 	Certificates   []*kong.Certificate   `json:"certificates,omitempty"`
 	CACertificates []*kong.CACertificate `json:"ca_certificates,omitempty"`
 	SNIs           []*kong.SNI           `json:"snis,omitempty"`
+	Vaults         []*kong.Vault         `json:"vaults,omitempty"`
 }
 
 func EnsureConfig(expectedConfig *model.TestingConfig) error {
@@ -27,6 +28,14 @@ func EnsureConfig(expectedConfig *model.TestingConfig) error {
 	}
 	err = JSONSubset(expectedConfig, gotConfig)
 	return err
+}
+
+func EnsureKongConfig(expectedConfig KongConfig) error {
+	gotConfig, err := fetchKongConfig()
+	if err != nil {
+		return fmt.Errorf("fetching kong config: %v", err)
+	}
+	return JSONSubset(expectedConfig, gotConfig)
 }
 
 var BasedKongAdminAPIAddr = kong.String("http://localhost:8001")
@@ -69,6 +78,9 @@ func fetchKongConfig() (KongConfig, error) {
 	if err != nil {
 		return KongConfig{}, fmt.Errorf("fetch SNIs: %v", err)
 	}
+	vaults, _ := client.Vaults.ListAll(ctx)
+	// TODO(ejkinger): make this request based on version compatibility
+
 	var allTargets []*kong.Target
 	for _, u := range upstreams {
 		targets, err := client.Targets.ListAll(ctx, u.ID)
@@ -87,6 +99,7 @@ func fetchKongConfig() (KongConfig, error) {
 		Certificates:   certificates,
 		CACertificates: caCertificates,
 		SNIs:           snis,
+		Vaults:         vaults,
 		Targets:        allTargets,
 	}, nil
 }
