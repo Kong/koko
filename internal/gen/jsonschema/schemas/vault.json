@@ -1,0 +1,105 @@
+{
+  "required": [
+    "prefix",
+    "name"
+  ],
+  "properties": {
+    "config": {
+      "properties": {
+        "env": {}
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "created_at": {
+      "minimum": 1,
+      "type": "integer"
+    },
+    "description": {
+      "type": "string"
+    },
+    "id": {
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+      "type": "string",
+      "description": "must be a valid UUID"
+    },
+    "name": {
+      "enum": [
+        "env"
+      ],
+      "type": "string"
+    },
+    "prefix": {
+      "pattern": "^[a-z][a-z0-9-]*[a-z0-9]+$",
+      "type": "string",
+      "not": {
+        "anyOf": [
+          {
+            "enum": [
+              "env"
+            ]
+          },
+          {
+            "enum": [
+              "aws",
+              "gcp",
+              "hcv"
+            ]
+          }
+        ],
+        "description": "must not be any of [env] or [aws gcp hcv]"
+      }
+    },
+    "tags": {
+      "items": {
+        "maxLength": 128,
+        "minLength": 1,
+        "pattern": "^(?:[0-9a-zA-Z.\\-_~:]+(?: *[0-9a-zA-Z.\\-_~:])*)?$",
+        "type": "string"
+      },
+      "maxItems": 8,
+      "uniqueItems": true,
+      "type": "array"
+    },
+    "updated_at": {
+      "minimum": 1,
+      "type": "integer"
+    }
+  },
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "name": {
+            "const": "env"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "config": {
+            "properties": {
+              "env": {
+                "properties": {
+                  "prefix": {
+                    "pattern": "^[a-zA-Z_][a-zA-Z0-9_]*$",
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false,
+                "type": "object"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "type": "object"
+      }
+    }
+  ],
+  "x-koko-config": {
+    "disableValidateEndpoint": false,
+    "resourceAPIPath": "vaults"
+  }
+}

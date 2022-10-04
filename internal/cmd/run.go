@@ -238,6 +238,12 @@ func Run(ctx context.Context, config ServerConfig) error {
 			err)
 	}
 
+	err = loader.Register(&kongConfigWS.KongVaultLoader{Client: grpcClients.Vault})
+	if err != nil {
+		return fmt.Errorf("failed to register vault configuration loader: %w",
+			err)
+	}
+
 	err = loader.Register(&kongConfigWS.VersionLoader{})
 	if err != nil {
 		return fmt.Errorf("failed to register version configuration loader"+
@@ -411,6 +417,7 @@ type grpcClients struct {
 	Certificate   v1.CertificateServiceClient
 	CACertificate v1.CACertificateServiceClient
 	SNI           v1.SNIServiceClient
+	Vault         v1.VaultServiceClient
 
 	Status relay.StatusServiceClient
 	Node   v1.NodeServiceClient
@@ -429,6 +436,7 @@ func setupGRPCClients(cc *grpc.ClientConn) grpcClients {
 		Certificate:   v1.NewCertificateServiceClient(cc),
 		CACertificate: v1.NewCACertificateServiceClient(cc),
 		SNI:           v1.NewSNIServiceClient(cc),
+		Vault:         v1.NewVaultServiceClient(cc),
 
 		Node:   v1.NewNodeServiceClient(cc),
 		Event:  relay.NewEventServiceClient(cc),

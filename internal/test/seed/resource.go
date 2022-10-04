@@ -107,6 +107,12 @@ var DefaultNewResourceFuncs = map[model.Type]NewResourceFunc{
 		r.Name = fmt.Sprintf("upstream-%d", i+1)
 		return nil
 	},
+	resource.TypeVault: func(_ Seeder, m proto.Message, i int) error {
+		r := m.(*v1.Vault)
+		r.Prefix = fmt.Sprintf("vault-%d", i+1)
+		r.Name = "env"
+		return nil
+	},
 }
 
 // resourcesToCreateLast defines the resources that require other resources to be created first.

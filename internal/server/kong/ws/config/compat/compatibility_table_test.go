@@ -1408,6 +1408,199 @@ func TestDisableChangeTracking(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "[vault] configurations are removed for old versions",
+			uncompressedPayload: `
+{
+	"config_table": {
+		"vaults": [
+			{
+				"id": "462c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+				"name": "env",
+				"prefix": "test-env-vault",
+				"config": {
+					"PREFIX": "TEST_"
+				}
+			}
+		]
+	}
+}
+`,
+			dataPlaneVersion: "2.5.0",
+			expectedPayload: `
+{
+	"config_table": {
+	}
+}
+`,
+			expectedChanges: config.TrackedChanges{
+				ChangeDetails: []config.ChangeDetail{
+					{
+						ID: "P135",
+						Resources: []config.ResourceInfo{
+							{
+								Type: "vault",
+								ID:   "462c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "[vault] configurations are removed for old versions",
+			uncompressedPayload: `
+{
+	"config_table": {
+		"vaults": [
+			{
+				"id": "462c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+				"name": "env",
+				"prefix": "test-env-vault",
+				"config": {
+					"PREFIX": "TEST_"
+				}
+			}
+		]
+	}
+}
+`,
+			dataPlaneVersion: "2.6.0",
+			expectedPayload: `
+{
+	"config_table": {
+	}
+}
+`,
+			expectedChanges: config.TrackedChanges{
+				ChangeDetails: []config.ChangeDetail{
+					{
+						ID: "P135",
+						Resources: []config.ResourceInfo{
+							{
+								Type: "vault",
+								ID:   "462c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "[vault] configurations are removed for old versions",
+			uncompressedPayload: `
+{
+	"config_table": {
+		"vaults": [
+			{
+				"id": "462c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+				"name": "env",
+				"prefix": "test-env-vault",
+				"config": {
+					"PREFIX": "TEST_"
+				}
+			}
+		]
+	}
+}
+`,
+			dataPlaneVersion: "2.7.0",
+			expectedPayload: `
+{
+	"config_table": {
+	}
+}
+`,
+			expectedChanges: config.TrackedChanges{
+				ChangeDetails: []config.ChangeDetail{
+					{
+						ID: "P135",
+						Resources: []config.ResourceInfo{
+							{
+								Type: "vault",
+								ID:   "462c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "[vault] configurations are removed for old versions",
+			uncompressedPayload: `
+{
+	"config_table": {
+		"vaults": [
+			{
+				"id": "462c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+				"name": "env",
+				"prefix": "test-env-vault",
+				"config": {
+					"PREFIX": "TEST_"
+				}
+			}
+		]
+	}
+}
+`,
+			dataPlaneVersion: "2.8.0",
+			expectedPayload: `
+{
+	"config_table": {
+	}
+}
+`,
+			expectedChanges: config.TrackedChanges{
+				ChangeDetails: []config.ChangeDetail{
+					{
+						ID: "P135",
+						Resources: []config.ResourceInfo{
+							{
+								Type: "vault",
+								ID:   "462c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "[vault] configurations are removed for old versions",
+			uncompressedPayload: `
+{
+	"config_table": {
+		"vaults": [
+			{
+				"id": "462c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+				"name": "env",
+				"prefix": "test-env-vault",
+				"config": {
+					"PREFIX": "TEST_"
+				}
+			}
+		]
+	}
+}
+`,
+			dataPlaneVersion: "3.0.0",
+			expectedPayload: `
+{
+	"config_table": {
+		"vaults": [
+			{
+				"id": "462c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+				"name": "env",
+				"prefix": "test-env-vault",
+				"config": {
+					"PREFIX": "TEST_"
+				}
+			}
+		]
+	}
+}
+`,
+			expectedChanges: config.TrackedChanges{},
+		},
 	}
 	vc, err := config.NewVersionCompatibilityProcessor(config.VersionCompatibilityOpts{
 		Logger:        log.Logger,
@@ -1427,6 +1620,7 @@ func TestDisableChangeTracking(t *testing.T) {
 			require.NoError(t, err)
 			require.Equal(t, test.expectedChanges, trackedChanges)
 			uncompressedCompatiblePayload, err := config.UncompressPayload(processedPayload)
+			require.NoError(t, err)
 			require.JSONEq(t, test.expectedPayload, string(uncompressedCompatiblePayload))
 		})
 	}
