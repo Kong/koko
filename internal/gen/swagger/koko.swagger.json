@@ -48,6 +48,9 @@
       "name": "kong.admin.service.v1.UpstreamService"
     },
     {
+      "name": "kong.admin.service.v1.VaultService"
+    },
+    {
       "name": "kong.relay.service.v1.EventService"
     },
     {
@@ -2074,6 +2077,38 @@
         ]
       }
     },
+    "/v1/schemas/json/vault/validate": {
+      "post": {
+        "operationId": "SchemasService_ValidateVaultSchema",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/kong.admin.service.v1.ValidateVaultSchemaResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "item",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/kong.admin.model.v1.Vault"
+            }
+          }
+        ],
+        "tags": [
+          "kong.admin.service.v1.SchemasService"
+        ]
+      }
+    },
     "/v1/schemas/json/{name}": {
       "get": {
         "operationId": "SchemasService_GetSchemas",
@@ -3170,6 +3205,239 @@
           "kong.admin.service.v1.UpstreamService"
         ]
       }
+    },
+    "/v1/vaults": {
+      "get": {
+        "operationId": "VaultService_ListVaults",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/kong.admin.service.v1.ListVaultsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "cluster.id",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "page.size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "page.number",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "page.filter",
+            "description": "Allows callers to provide a CEL expression to filter results on `list` API calls.\n\nFor example, given a resource with the following tags, `tag1` \u0026 `tag2`, the\nfollowing CEL expressions are supported:\n\n- Matches resources that have `tag1` as any tag:\n    - `\"tag1\" in tags`\n- Matches all resources that have both `tag1` \u0026 `tag2`:\n    - `[\"tag1\", \"tag2\"].all(x, x in tags)`\n    - `\"tag1\" in tags \u0026\u0026 \"tag2\" in tags`\n- Matches resources that have `tag1` or `tag2`:\n    - `[\"tag1\", \"tag2\"].exists(x, x in tags)`\n    - `\"tag1\" in tags || \"tag2\" in tags`\n\nLimitations:\nCurrently, it is only possible to filter on tags, and supported logical\noperators/macros are limited to only what is documented above.\n\nFor further information, you may view the CEL Specification:\nhttps://github.com/google/cel-spec",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "kong.admin.service.v1.VaultService"
+        ]
+      },
+      "post": {
+        "operationId": "VaultService_CreateVault",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/kong.admin.service.v1.CreateVaultResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "item",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/kong.admin.model.v1.Vault"
+            }
+          },
+          {
+            "name": "cluster.id",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "kong.admin.service.v1.VaultService"
+        ]
+      }
+    },
+    "/v1/vaults/{id}": {
+      "get": {
+        "operationId": "VaultService_GetVault",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/kong.admin.service.v1.GetVaultResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "cluster.id",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "kong.admin.service.v1.VaultService"
+        ]
+      },
+      "delete": {
+        "operationId": "VaultService_DeleteVault",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/kong.admin.service.v1.DeleteVaultResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "cluster.id",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "kong.admin.service.v1.VaultService"
+        ]
+      }
+    },
+    "/v1/vaults/{item.id}": {
+      "put": {
+        "operationId": "VaultService_UpsertVault",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/kong.admin.service.v1.UpsertVaultResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "item.id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "item",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "created_at": {
+                  "type": "integer",
+                  "format": "int32"
+                },
+                "updated_at": {
+                  "type": "integer",
+                  "format": "int32"
+                },
+                "prefix": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "description": {
+                  "type": "string"
+                },
+                "config": {
+                  "$ref": "#/definitions/kong.admin.model.v1.Vault.Config"
+                },
+                "tags": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              },
+              "required": [
+                "prefix",
+                "name"
+              ]
+            }
+          },
+          {
+            "name": "cluster.id",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "kong.admin.service.v1.VaultService"
+        ]
+      }
     }
   },
   "definitions": {
@@ -4008,6 +4276,109 @@
         }
       }
     },
+    "kong.admin.model.v1.Vault": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "created_at": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "updated_at": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "prefix": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "config": {
+          "$ref": "#/definitions/kong.admin.model.v1.Vault.Config"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "prefix",
+        "name"
+      ]
+    },
+    "kong.admin.model.v1.Vault.AwsConfig": {
+      "type": "object",
+      "properties": {
+        "region": {
+          "type": "string"
+        }
+      }
+    },
+    "kong.admin.model.v1.Vault.Config": {
+      "type": "object",
+      "properties": {
+        "env": {
+          "$ref": "#/definitions/kong.admin.model.v1.Vault.EnvConfig"
+        },
+        "aws": {
+          "$ref": "#/definitions/kong.admin.model.v1.Vault.AwsConfig"
+        },
+        "gcp": {
+          "$ref": "#/definitions/kong.admin.model.v1.Vault.GcpConfig"
+        },
+        "hcv": {
+          "$ref": "#/definitions/kong.admin.model.v1.Vault.HcvConfig"
+        }
+      }
+    },
+    "kong.admin.model.v1.Vault.EnvConfig": {
+      "type": "object",
+      "properties": {
+        "prefix": {
+          "type": "string"
+        }
+      }
+    },
+    "kong.admin.model.v1.Vault.GcpConfig": {
+      "type": "object",
+      "properties": {
+        "project_id": {
+          "type": "string"
+        }
+      }
+    },
+    "kong.admin.model.v1.Vault.HcvConfig": {
+      "type": "object",
+      "properties": {
+        "host": {
+          "type": "string"
+        },
+        "port": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "protocol": {
+          "type": "string"
+        },
+        "mount": {
+          "type": "string"
+        },
+        "kv": {
+          "type": "string"
+        },
+        "token": {
+          "type": "string"
+        }
+      }
+    },
     "kong.admin.service.v1.CreateCACertificateResponse": {
       "type": "object",
       "properties": {
@@ -4096,6 +4467,14 @@
         }
       }
     },
+    "kong.admin.service.v1.CreateVaultResponse": {
+      "type": "object",
+      "properties": {
+        "item": {
+          "$ref": "#/definitions/kong.admin.model.v1.Vault"
+        }
+      }
+    },
     "kong.admin.service.v1.DeleteCACertificateResponse": {
       "type": "object"
     },
@@ -4127,6 +4506,9 @@
       "type": "object"
     },
     "kong.admin.service.v1.DeleteUpstreamResponse": {
+      "type": "object"
+    },
+    "kong.admin.service.v1.DeleteVaultResponse": {
       "type": "object"
     },
     "kong.admin.service.v1.GetAvailablePluginsResponse": {
@@ -4260,6 +4642,14 @@
       "properties": {
         "item": {
           "$ref": "#/definitions/kong.admin.model.v1.Upstream"
+        }
+      }
+    },
+    "kong.admin.service.v1.GetVaultResponse": {
+      "type": "object",
+      "properties": {
+        "item": {
+          "$ref": "#/definitions/kong.admin.model.v1.Vault"
         }
       }
     },
@@ -4425,6 +4815,20 @@
         }
       }
     },
+    "kong.admin.service.v1.ListVaultsResponse": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/kong.admin.model.v1.Vault"
+          }
+        },
+        "page": {
+          "$ref": "#/definitions/kong.admin.model.v1.PaginationResponse"
+        }
+      }
+    },
     "kong.admin.service.v1.UpsertCACertificateResponse": {
       "type": "object",
       "properties": {
@@ -4513,6 +4917,14 @@
         }
       }
     },
+    "kong.admin.service.v1.UpsertVaultResponse": {
+      "type": "object",
+      "properties": {
+        "item": {
+          "$ref": "#/definitions/kong.admin.model.v1.Vault"
+        }
+      }
+    },
     "kong.admin.service.v1.ValidateCACertificateSchemaResponse": {
       "type": "object"
     },
@@ -4541,6 +4953,9 @@
       "type": "object"
     },
     "kong.admin.service.v1.ValidateUpstreamSchemaResponse": {
+      "type": "object"
+    },
+    "kong.admin.service.v1.ValidateVaultSchemaResponse": {
       "type": "object"
     },
     "kong.nonpublic.v1.NodeStatus": {

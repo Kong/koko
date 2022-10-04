@@ -11,6 +11,7 @@ import "kong/admin/model/v1/service.proto";
 import "kong/admin/model/v1/sni.proto";
 import "kong/admin/model/v1/target.proto";
 import "kong/admin/model/v1/upstream.proto";
+import "kong/admin/model/v1/vault.proto";
 
 option go_package = "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1;v1";
 
@@ -24,4 +25,5 @@ message TestingConfig {
   repeated Certificate certificates = 7;
   repeated CACertificate ca_certificates = 8;
   repeated SNI snis = 9;
+  repeated Vault vaults = 10;
 }

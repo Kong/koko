@@ -151,6 +151,13 @@ func (s *SchemasService) ValidateSNISchema(
 	return &v1.ValidateSNISchemaResponse{}, s.validateSchema(ctx, req.Item)
 }
 
+func (s *SchemasService) ValidateVaultSchema(
+	ctx context.Context,
+	req *v1.ValidateVaultSchemaRequest,
+) (*v1.ValidateVaultSchemaResponse, error) {
+	return &v1.ValidateVaultSchemaResponse{}, s.validateSchema(ctx, req.Item)
+}
+
 func (s *SchemasService) ValidateTargetSchema(
 	ctx context.Context,
 	req *v1.ValidateTargetSchemaRequest,

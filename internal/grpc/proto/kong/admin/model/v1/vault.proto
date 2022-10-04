@@ -1,0 +1,44 @@
+syntax = "proto3";
+
+package kong.admin.model.v1;
+
+import "google/api/field_behavior.proto";
+
+option go_package = "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1;v1";
+
+message Vault {
+  message EnvConfig {
+    string prefix = 1;
+  }
+  message AwsConfig {
+    string region = 1;
+  }
+  message GcpConfig {
+    string project_id = 1;
+  }
+  message HcvConfig {
+    string host = 1;
+    int32 port = 2;
+    string protocol = 3;
+    string mount = 4;
+    string kv = 5;
+    string token = 6;
+  }
+  message Config {
+    oneof config {
+      EnvConfig env = 1;
+      AwsConfig aws = 2;
+      GcpConfig gcp = 3;
+      HcvConfig hcv = 4;
+    }
+  }
+
+  string id = 1;
+  int32 created_at = 2;
+  int32 updated_at = 3;
+  string prefix = 4 [(google.api.field_behavior) = REQUIRED];
+  string name = 5 [(google.api.field_behavior) = REQUIRED];
+  string description = 6;
+  Config config = 7;
+  repeated string tags = 8;
+}

@@ -1,0 +1,85 @@
+syntax = "proto3";
+
+package kong.admin.service.v1;
+
+import "google/api/annotations.proto";
+import "google/protobuf/descriptor.proto";
+import "kong/admin/model/v1/cluster.proto";
+import "kong/admin/model/v1/pagination.proto";
+import "kong/admin/model/v1/vault.proto";
+
+option go_package = "github.com/kong/koko/internal/gen/kong/admin/service/v1;v1";
+
+service VaultService {
+  rpc GetVault(GetVaultRequest) returns (GetVaultResponse) {
+    option (google.api.http) = {
+      get: "/v1/vaults/{id}"
+    };
+  }
+  rpc CreateVault(CreateVaultRequest) returns (CreateVaultResponse) {
+    option (google.api.http) = {
+      post: "/v1/vaults"
+      body: "item"
+    };
+  }
+  rpc UpsertVault(UpsertVaultRequest) returns (UpsertVaultResponse) {
+    option (google.api.http) = {
+      put: "/v1/vaults/{item.id}"
+      body: "item"
+    };
+  }
+  rpc DeleteVault(DeleteVaultRequest) returns (DeleteVaultResponse) {
+    option (google.api.http) = {
+      delete: "/v1/vaults/{id}"
+    };
+  }
+  rpc ListVaults(ListVaultsRequest) returns (ListVaultsResponse) {
+    option (google.api.http) = {
+      get: "/v1/vaults"
+    };
+  }
+}
+
+message GetVaultRequest {
+  string id = 1;
+  model.v1.RequestCluster cluster = 2;
+}
+
+message GetVaultResponse {
+  model.v1.Vault item = 1;
+}
+
+message CreateVaultRequest {
+  model.v1.Vault item = 1;
+  model.v1.RequestCluster cluster = 2;
+}
+
+message CreateVaultResponse {
+  model.v1.Vault item = 1;
+}
+
+message UpsertVaultRequest {
+  model.v1.Vault item = 1;
+  model.v1.RequestCluster cluster = 2;
+}
+
+message UpsertVaultResponse {
+  model.v1.Vault item = 1;
+}
+
+message DeleteVaultRequest {
+  string id = 1;
+  model.v1.RequestCluster cluster = 2;
+}
+
+message DeleteVaultResponse {}
+
+message ListVaultsRequest {
+  model.v1.RequestCluster cluster = 1;
+  model.v1.PaginationRequest page = 2;
+}
+
+message ListVaultsResponse {
+  repeated model.v1.Vault items = 1;
+  model.v1.PaginationResponse page = 2;
+}

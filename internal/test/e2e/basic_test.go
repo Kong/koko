@@ -564,6 +564,89 @@ func TestSNISync(t *testing.T) {
 	})
 }
 
+func TestVaultSync(t *testing.T) {
+	// ensure that Vaults can be synced to Kong gateway
+	cleanup := run.Koko(t)
+
+	defer cleanup()
+
+	vault := &v1.Vault{
+		Id:     uuid.NewString(),
+		Name:   "env",
+		Prefix: "test-vault-1",
+	}
+	c := httpexpect.New(t, "http://localhost:3000")
+	c.POST("/v1/vaults").WithJSON(vault).Expect().Status(http.StatusCreated)
+
+	dpCleanup := run.KongDP(kong.GetKongConfForShared())
+	defer dpCleanup()
+
+	require.NoError(t, util.WaitForKongPort(t, 8001))
+
+	// kongClient
+	kongClient.RunWhenKong(t, ">= 3.0.0")
+
+	expectedConfig := &v1.TestingConfig{
+		Vaults: []*v1.Vault{vault},
+	}
+	util.WaitFunc(t, func() error {
+		err := util.EnsureConfig(expectedConfig)
+		t.Log("configuration mismatch for vault", err)
+		return err
+	})
+}
+
+func TestVaultRemoval(t *testing.T) {
+	// ensure that Vaults aren't present on old data planes, and that
+	// other configurations can still be synced.
+	cleanup := run.Koko(t)
+
+	defer cleanup()
+
+	service := &v1.Service{
+		Id:   uuid.NewString(),
+		Name: "foo",
+		Host: "httpbin.org",
+		Path: "/",
+	}
+	route := &v1.Route{
+		Id:    uuid.NewString(),
+		Name:  "bar",
+		Paths: []string{"/bar"},
+		Service: &v1.Service{
+			Id: service.Id,
+		},
+	}
+	vault := &v1.Vault{
+		Id:     uuid.NewString(),
+		Name:   "env",
+		Prefix: "test-vault-1",
+	}
+	c := httpexpect.New(t, "http://localhost:3000")
+	c.POST("/v1/services").WithJSON(service).Expect().Status(http.StatusCreated)
+	c.POST("/v1/vaults").WithJSON(vault).Expect().Status(http.StatusCreated)
+	c.POST("/v1/routes").WithJSON(route).Expect().Status(http.StatusCreated)
+
+	dpCleanup := run.KongDP(kong.GetKongConfForShared())
+	defer dpCleanup()
+
+	require.NoError(t, util.WaitForKongPort(t, 8001))
+
+	// kongClient
+	kongClient.RunWhenKong(t, "< 3.0.0")
+
+	expectedConfig := &v1.TestingConfig{
+		Services: []*v1.Service{service},
+		Routes:   []*v1.Route{route},
+	}
+
+	util.WaitFunc(t, func() error {
+		err := util.EnsureConfig(expectedConfig)
+		t.Log("configuration mismatch for vault", err)
+		return err
+	})
+}
+
 func TestTargetSync(t *testing.T) {
 	// ensure that target can be synced to Kong gateway
 	cleanup := run.Koko(t)

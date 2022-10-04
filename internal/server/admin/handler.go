@@ -66,6 +66,7 @@ type services struct {
 	consumer      v1.ConsumerServiceServer
 	caCertificate v1.CACertificateServiceServer
 	sni           v1.SNIServiceServer
+	vault         v1.VaultServiceServer
 
 	status v1.StatusServiceServer
 	node   v1.NodeServiceServer
@@ -180,6 +181,14 @@ func buildServices(opts HandlerOpts) services {
 				},
 			},
 		},
+		vault: &VaultService{
+			CommonOpts: CommonOpts{
+				storeLoader: opts.StoreLoader,
+				loggerFields: []zapcore.Field{
+					zap.String("admin-service", "vault"),
+				},
+			},
+		},
 	}
 }
 
@@ -281,6 +290,12 @@ func NewHandler(opts HandlerOpts) (http.Handler, error) {
 		return nil, err
 	}
 
+	err = v1.RegisterVaultServiceHandlerServer(context.Background(),
+		mux, services.vault)
+	if err != nil {
+		return nil, err
+	}
+
 	return mux, nil
 }
 
@@ -313,4 +328,5 @@ func RegisterAdminService(server *grpc.Server, opts HandlerOpts) {
 	v1.RegisterCACertificateServiceServer(server, services.caCertificate)
 	v1.RegisterConsumerServiceServer(server, services.consumer)
 	v1.RegisterSNIServiceServer(server, services.sni)
+	v1.RegisterVaultServiceServer(server, services.vault)
 }
