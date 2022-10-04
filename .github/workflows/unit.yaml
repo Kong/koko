@@ -39,9 +39,12 @@ jobs:
           /tmp/libatc_router*
         key: ${{ runner.os }}-go-atc-router-${{ hashFiles('**/go.sum') }}
     - name: Install cached library
-      if: steps.cache-atc.outputs.cache-hit == 'true'
       run: |
-        sudo install /tmp/libatc_router* /usr/local/lib
+        if [ -e /tmp/libatc_router* ]; then
+          sudo install /tmp/libatc_router* /usr/local/lib;
+        else
+          make install-deps
+        fi
     - name: make test-race
       run: make test-race
 

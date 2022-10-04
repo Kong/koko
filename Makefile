@@ -2,7 +2,7 @@
 DEFAULT_BRANCH:=$(shell git remote show origin | sed -n '/HEAD branch/s/.*: //p')
 
 .PHONY: install-tools
-install-tools: install-deps
+install-tools:
 	./scripts/install-tools.sh
 
 .PHONY: install-deps
@@ -10,7 +10,7 @@ install-deps:
 	./scripts/install-deps.sh
 
 .PHONY: build
-build: install-deps
+build:
 	go build -o koko main.go
 
 .PHONY: run
@@ -18,13 +18,13 @@ run:
 	go run main.go serve
 
 .PHONY: lint
-lint: install-deps verify-tidy
+lint: verify-tidy
 	buf format -d --exit-code
 	buf lint
 	./bin/golangci-lint run ./...
 
 .PHONY: verify-tidy
-verify-tidy: install-deps
+verify-tidy:
 	./scripts/verify-tidy.sh
 
 .PHONY: all
@@ -34,11 +34,11 @@ all: lint test
 test:
 	go test -tags testsetup -count 1 ./...
 
-test-race: install-deps
+test-race:
 	go test -tags testsetup -count 1 -race -p 1 ./...
 
 .PHONY: test-integration
-test-integration: install-deps
+test-integration:
 	go test -tags=testsetup,integration -timeout 15m -race -count 1 -p 1 ./internal/test/...
 
 .PHONY: gen
