@@ -49,6 +49,14 @@ var (
 		PathHandling:            "v0",
 		HttpsRedirectStatusCode: http.StatusUpgradeRequired,
 	}
+	defaultExpressionRoute = &v1.Route{
+		Protocols:               []string{typedefs.ProtocolHTTP, typedefs.ProtocolHTTPS},
+		PreserveHost:            wrapperspb.Bool(false),
+		StripPath:               wrapperspb.Bool(true),
+		RequestBuffering:        wrapperspb.Bool(true),
+		ResponseBuffering:       wrapperspb.Bool(true),
+		HttpsRedirectStatusCode: http.StatusUpgradeRequired,
+	}
 	_ model.Object = Route{}
 )
 
@@ -142,10 +150,18 @@ func (r Route) ProcessDefaults(ctx context.Context) error {
 			r.Route.StripPath = wrapperspb.Bool(false)
 		}
 	}
-	err := mergo.Merge(r.Route, defaultRoute,
-		mergo.WithTransformers(wrappersPBTransformer{}))
-	if err != nil {
-		return err
+	if r.Route.Expression == "" {
+		err := mergo.Merge(r.Route, defaultRoute,
+			mergo.WithTransformers(wrappersPBTransformer{}))
+		if err != nil {
+			return err
+		}
+	} else {
+		err := mergo.Merge(r.Route, defaultExpressionRoute,
+			mergo.WithTransformers(wrappersPBTransformer{}))
+		if err != nil {
+			return err
+		}
 	}
 	defaultID(&r.Route.Id)
 	return nil
@@ -457,6 +473,7 @@ func init() {
 								Const: typedefs.ProtocolHTTP,
 							},
 						},
+						"expression": {Not: &generator.Schema{}},
 					},
 				},
 				Then: &generator.Schema{
@@ -490,6 +507,7 @@ func init() {
 								Const: typedefs.ProtocolHTTPS,
 							},
 						},
+						"expression": {Not: &generator.Schema{}},
 					},
 				},
 				Then: &generator.Schema{
@@ -740,16 +758,38 @@ func init() {
 			},
 			{
 				Title: ExpressionRouteRuleTitle,
-				Description: "When 'expression' is defined, 'snis', 'sources' " +
-					"or 'destinations' cannot be set.",
 				If: &generator.Schema{
 					Required: []string{"expression"},
 				},
 				Then: &generator.Schema{
 					Properties: map[string]*generator.Schema{
-						"snis":         {Not: &generator.Schema{}},
-						"sources":      {Not: &generator.Schema{}},
-						"destinations": {Not: &generator.Schema{}},
+						"hosts": {Not: &generator.Schema{
+							Description: "When 'expression' is defined, the field 'hosts' must not be set.",
+						}},
+						"headers": {Not: &generator.Schema{
+							Description: "When 'expression' is defined, the field 'headers' must not be set.",
+						}},
+						"methods": {Not: &generator.Schema{
+							Description: "When 'expression' is defined, the field 'methods' must not be set.",
+						}},
+						"paths": {Not: &generator.Schema{
+							Description: "When 'expression' is defined, the field 'paths' must not be set.",
+						}},
+						"path_handling": {Not: &generator.Schema{
+							Description: "When 'expression' is defined, the field 'path_handling' must not be set.",
+						}},
+						"regex_priority": {Not: &generator.Schema{
+							Description: "When 'expression' is defined, the field 'regex_priority' must not be set.",
+						}},
+						"snis": {Not: &generator.Schema{
+							Description: "When 'expression' is defined, the field 'snis' must not be set.",
+						}},
+						"sources": {Not: &generator.Schema{
+							Description: "When 'expression' is defined, the field 'sources' must not be set.",
+						}},
+						"destinations": {Not: &generator.Schema{
+							Description: "When 'expression' is defined, the field 'destinations' must not be set.",
+						}},
 					},
 				},
 			},

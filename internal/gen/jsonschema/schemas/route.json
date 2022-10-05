@@ -409,6 +409,9 @@
           "protocols"
         ],
         "properties": {
+          "expression": {
+            "not": {}
+          },
           "protocols": {
             "contains": {
               "const": "http"
@@ -453,6 +456,9 @@
           "protocols"
         ],
         "properties": {
+          "expression": {
+            "not": {}
+          },
           "protocols": {
             "contains": {
               "const": "https"
@@ -770,7 +776,6 @@
     },
     {
       "title": "atc_route_rule",
-      "description": "When 'expression' is defined, 'snis', 'sources' or 'destinations' cannot be set.",
       "if": {
         "required": [
           "expression"
@@ -779,13 +784,49 @@
       "then": {
         "properties": {
           "destinations": {
-            "not": {}
+            "not": {
+              "description": "When 'expression' is defined, the field 'destinations' must not be set."
+            }
+          },
+          "headers": {
+            "not": {
+              "description": "When 'expression' is defined, the field 'headers' must not be set."
+            }
+          },
+          "hosts": {
+            "not": {
+              "description": "When 'expression' is defined, the field 'hosts' must not be set."
+            }
+          },
+          "methods": {
+            "not": {
+              "description": "When 'expression' is defined, the field 'methods' must not be set."
+            }
+          },
+          "path_handling": {
+            "not": {
+              "description": "When 'expression' is defined, the field 'path_handling' must not be set."
+            }
+          },
+          "paths": {
+            "not": {
+              "description": "When 'expression' is defined, the field 'paths' must not be set."
+            }
+          },
+          "regex_priority": {
+            "not": {
+              "description": "When 'expression' is defined, the field 'regex_priority' must not be set."
+            }
           },
           "snis": {
-            "not": {}
+            "not": {
+              "description": "When 'expression' is defined, the field 'snis' must not be set."
+            }
           },
           "sources": {
-            "not": {}
+            "not": {
+              "description": "When 'expression' is defined, the field 'sources' must not be set."
+            }
           }
         }
       }
