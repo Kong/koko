@@ -52,7 +52,8 @@ database:
 
     # Optional hostname to declare a single read-replica. Shares the
     # same connectivity settings as the primary DB settings above.
-    read_replica: another-hostname
+    read_replica:
+      hostname: another-hostname
   sqlite:
     #in_memory: true
     filename: test.db
