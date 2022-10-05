@@ -3,6 +3,7 @@ package mysql
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"time"
 
@@ -13,6 +14,9 @@ import (
 	"go.uber.org/zap"
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 )
+
+// ErrMariaDBUnsupported is the error returned when db.DialectMariaDB is attempted to be used.
+var ErrMariaDBUnsupported = errors.New("MariaDB is currently unsupported")
 
 // MySQL defines a persistence store integration for databases that speak the MySQL protocol.
 //

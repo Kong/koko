@@ -1,7 +1,6 @@
 package db
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/kong/koko/internal/persistence"
@@ -18,7 +17,7 @@ func NewPersister(config Config) (persistence.Persister, error) {
 	switch config.Dialect {
 	case DialectMariaDB:
 		// See mysql.MySQL on why MariaDB is not supported.
-		err = errors.New("MariaDB is currently unsupported")
+		err = mysql.ErrMariaDBUnsupported
 	case DialectMySQL:
 		persister, err = mysql.New(config.MySQL, config.QueryTimeout, config.Logger)
 	case DialectSQLite3:

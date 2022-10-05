@@ -56,7 +56,7 @@ func driverForDialect(dialect string, db *sql.DB) (database.Driver, error) {
 	switch dialect {
 	case DialectMariaDB:
 		// See mysql.MySQL on why MariaDB is not supported.
-		err = errors.New("MariaDB is currently unsupported")
+		err = mysql2.ErrMariaDBUnsupported
 	case DialectMySQL:
 		dbDriver, err = mysql.WithInstance(db, &mysql.Config{
 			MigrationsTable: mysql.DefaultMigrationsTable,

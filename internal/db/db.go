@@ -2,7 +2,6 @@ package db
 
 import (
 	"database/sql"
-	"errors"
 	"fmt"
 
 	"github.com/kong/koko/internal/persistence/mysql"
@@ -36,7 +35,7 @@ func NewSQLDBFromConfig(config Config) (*sql.DB, error) {
 	switch config.Dialect {
 	case DialectMariaDB:
 		// See mysql.MySQL on why MariaDB is not supported.
-		err = errors.New("MariaDB is currently unsupported")
+		err = mysql.ErrMariaDBUnsupported
 	case DialectMySQL:
 		db, err = mysql.NewSQLClient(config.MySQL, config.Logger)
 	case DialectPostgres:
