@@ -756,7 +756,7 @@
     },
     {
       "title": "atc_route_rule",
-      "description": "When 'expression' is defined, 'priority' is required and 'snis', 'sources' or 'destinations' cannot be set.",
+      "description": "When 'expression' is defined, 'priority' is required.",
       "if": {
         "required": [
           "expression"
@@ -765,7 +765,18 @@
       "then": {
         "required": [
           "priority"
-        ],
+        ]
+      }
+    },
+    {
+      "title": "atc_route_rule",
+      "description": "When 'expression' is defined, 'snis', 'sources' or 'destinations' cannot be set.",
+      "if": {
+        "required": [
+          "expression"
+        ]
+      },
+      "then": {
         "properties": {
           "destinations": {
             "not": {}

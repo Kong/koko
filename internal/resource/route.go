@@ -729,14 +729,23 @@ func init() {
 				},
 			},
 			{
-				Title: ExpressionRouteRuleTitle,
-				Description: "When 'expression' is defined, 'priority' is required and " +
-					"'snis', 'sources' or 'destinations' cannot be set.",
+				Title:       ExpressionRouteRuleTitle,
+				Description: "When 'expression' is defined, 'priority' is required.",
 				If: &generator.Schema{
 					Required: []string{"expression"},
 				},
 				Then: &generator.Schema{
 					Required: []string{"priority"},
+				},
+			},
+			{
+				Title: ExpressionRouteRuleTitle,
+				Description: "When 'expression' is defined, 'snis', 'sources' " +
+					"or 'destinations' cannot be set.",
+				If: &generator.Schema{
+					Required: []string{"expression"},
+				},
+				Then: &generator.Schema{
 					Properties: map[string]*generator.Schema{
 						"snis":         {Not: &generator.Schema{}},
 						"sources":      {Not: &generator.Schema{}},

@@ -1330,8 +1330,7 @@ func TestRoute_Validate(t *testing.T) {
 				{
 					Type: model.ErrorType_ERROR_TYPE_ENTITY,
 					Messages: []string{
-						"When 'expression' is defined, 'priority' is required and " +
-							"'snis', 'sources' or 'destinations' cannot be set.",
+						"When 'expression' is defined, 'priority' is required.",
 					},
 				},
 			},
@@ -1359,7 +1358,7 @@ func TestRoute_Validate(t *testing.T) {
 				{
 					Type: model.ErrorType_ERROR_TYPE_ENTITY,
 					Messages: []string{
-						"When 'expression' is defined, 'priority' is required and " +
+						"When 'expression' is defined, " +
 							"'snis', 'sources' or 'destinations' cannot be set.",
 					},
 				},
@@ -1381,7 +1380,7 @@ func TestRoute_Validate(t *testing.T) {
 				{
 					Type: model.ErrorType_ERROR_TYPE_ENTITY,
 					Messages: []string{
-						"When 'expression' is defined, 'priority' is required and " +
+						"When 'expression' is defined, " +
 							"'snis', 'sources' or 'destinations' cannot be set.",
 					},
 				},
@@ -1403,7 +1402,7 @@ func TestRoute_Validate(t *testing.T) {
 				{
 					Type: model.ErrorType_ERROR_TYPE_ENTITY,
 					Messages: []string{
-						"When 'expression' is defined, 'priority' is required and " +
+						"When 'expression' is defined, " +
 							"'snis', 'sources' or 'destinations' cannot be set.",
 					},
 				},
