@@ -80,7 +80,7 @@ func (v *LuaValidator) Validate(ctx context.Context, plugin *grpcModel.Plugin) e
 	}
 	err = v.goksV.Validate(string(pluginJSON))
 	if err != nil {
-		return validationErr(plugin.Name, err)
+		return v.validationErr(plugin.Name, err)
 	}
 	return nil
 }
@@ -108,16 +108,25 @@ func (v *LuaValidator) ValidateSchema(ctx context.Context, pluginSchema string) 
 	return pluginName, nil
 }
 
-func validationErr(name string, e error) error {
+func (v *LuaValidator) validationErr(name string, e error) error {
 	if e == nil {
 		return nil
 	}
+	res := validation.Error{}
 	var errMap map[string]interface{}
 	err := json.ProtoJSONUnmarshal([]byte(e.Error()), &errMap)
 	if err != nil {
-		return fmt.Errorf("unmarshal kong plugin validation error: %v", err)
+		v.logger.With(zap.String("plugin", name)).Error("validation error", zap.Error(e))
+		res.Errs = append(res.Errs, &grpcModel.ErrorDetail{
+			Messages: []string{
+				fmt.Sprintf(
+					`(%s) unknown plugin validation error, please file a bug with Kong Inc`,
+					name,
+				),
+			},
+		})
+		return res
 	}
-	res := validation.Error{}
 	// name error happens when plugin doesn't exist
 	if _, ok := errMap["name"]; ok {
 		res.Errs = append(res.Errs, &grpcModel.ErrorDetail{
