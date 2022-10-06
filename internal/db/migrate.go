@@ -9,10 +9,12 @@ import (
 
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database"
+	"github.com/golang-migrate/migrate/v4/database/mysql"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
 	"github.com/golang-migrate/migrate/v4/database/sqlite3"
 	"github.com/golang-migrate/migrate/v4/source"
 	"github.com/golang-migrate/migrate/v4/source/iofs"
+	mysql2 "github.com/kong/koko/internal/persistence/mysql"
 	postgres2 "github.com/kong/koko/internal/persistence/postgres"
 	"github.com/kong/koko/internal/persistence/sqlite"
 	"go.uber.org/zap"
@@ -25,8 +27,9 @@ type SQLite struct {
 
 type Config struct {
 	Dialect  string
-	SQLite   sqlite.Opts
+	MySQL    mysql2.Opts
 	Postgres postgres2.Opts
+	SQLite   sqlite.Opts
 
 	Logger       *zap.Logger
 	QueryTimeout time.Duration
@@ -51,6 +54,13 @@ func driverForDialect(dialect string, db *sql.DB) (database.Driver, error) {
 	var err error
 
 	switch dialect {
+	case DialectMariaDB:
+		// See mysql.MySQL on why MariaDB is not supported.
+		err = mysql2.ErrMariaDBUnsupported
+	case DialectMySQL:
+		dbDriver, err = mysql.WithInstance(db, &mysql.Config{
+			MigrationsTable: mysql.DefaultMigrationsTable,
+		})
 	case DialectSQLite3:
 		dbDriver, err = sqlite3.WithInstance(db, &sqlite3.Config{
 			MigrationsTable: sqlite3.DefaultMigrationsTable,

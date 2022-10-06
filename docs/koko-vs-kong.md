@@ -25,7 +25,8 @@ The following key is used within the document:
 | **Storage**                           |                    |                    |
 | Postgres                              | :heavy_check_mark: | :heavy_check_mark: |
 | SQLite                                | :x:                | :heavy_check_mark: |
-| MySQL                                 | :x:                | :calendar:         |
+| MySQL                                 | :x:                | :heavy_check_mark: |
+| MariaDB                               | :x:                | :calendar:         |
 | SQL Server                            | :x:                | :calendar:         |
 | CockroachDB                           | :x:                | :calendar:         |
 | **Plugins**                           |                    |                    |

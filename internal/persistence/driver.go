@@ -23,6 +23,7 @@ type Driver int
 const (
 	SQLite3 Driver = iota
 	Postgres
+	MySQL
 )
 
 // DefaultSQLOpenFunc generates a default SQLOpenFunc function for the given SQL persister.
@@ -43,5 +44,5 @@ var DefaultSQLOpenFunc = func(p SQLPersister) SQLOpenFunc {
 
 // String returns the applicable registered DB driver name (set via sql.Register).
 func (d Driver) String() string {
-	return [...]string{"sqlite3", "pgx"}[d]
+	return [...]string{"sqlite3", "pgx", "mysql"}[d]
 }

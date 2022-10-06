@@ -55,6 +55,15 @@ func setDBConfig(conf *config.Database) error {
 	}
 
 	switch conf.Dialect {
+	case db.DialectMySQL:
+		if conf.MySQL.Hostname == "" {
+			conf.MySQL = config.MySQL{
+				DBName:   "koko",
+				Hostname: "localhost",
+				User:     "koko",
+				Password: "koko",
+			}
+		}
 	case db.DialectSQLite3:
 		conf.SQLite = config.SQLite{InMemory: true}
 	case db.DialectPostgres:
