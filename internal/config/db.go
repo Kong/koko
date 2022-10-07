@@ -59,6 +59,9 @@ type Postgres struct {
 type PostgresTLS struct {
 	CABundlePath string `yaml:"ca_bundle_path" json:"ca_bundle_path" env:"CA_BUNDLE_PATH"`
 	Enable       bool   `yaml:"enable" json:"enable" env:"ENABLE"`
+	// SslMode should be one of the postgresql ssl modes. Default to 'verify-full'.
+	// Ref: https://www.postgresql.org/docs/current/libpq-ssl.html#LIBPQ-SSL-SSLMODE-STATEMENTS
+	SslMode string `yaml:"ssl_mode" json:"ssl_mode" env:"SSL_MODE"`
 }
 
 // PostgresReadReplica allows for using a read replica in addition to the
@@ -109,6 +112,7 @@ func (c *Postgres) Opts() postgres.Opts {
 		CABundleFSPath:   c.TLS.CABundlePath,
 		DBName:           c.DBName,
 		EnableTLS:        c.TLS.Enable,
+		SslMode:          c.TLS.SslMode,
 		Port:             c.Port,
 		Hostname:         c.Hostname,
 		ReadOnlyHostname: c.ReadReplica.Hostname,

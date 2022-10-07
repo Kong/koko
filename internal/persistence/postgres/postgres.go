@@ -19,7 +19,8 @@ const (
 	insertQuery = `insert into store(key,value) values($1,$2) on conflict (key) do update set value=$2;`
 	deleteQuery = `delete from store where key=$1`
 
-	DefaultPort = 5432
+	DefaultPort       = 5432
+	defaultTLSSslMode = "verify-full"
 )
 
 type Postgres struct {
@@ -37,6 +38,7 @@ type Opts struct {
 	Password         string
 	EnableTLS        bool
 	CABundleFSPath   string
+	SslMode          string
 	SQLOpen          persistence.SQLOpenFunc
 }
 
@@ -67,7 +69,10 @@ func getDSN(opts Opts, logger *zap.Logger) (string, error) {
 	if opts.CABundleFSPath == "" {
 		return "", fmt.Errorf("postgres connection requires TLS but ca_bundle_fs_path is empty")
 	}
-	res += "sslmode=verify-full sslrootcert=" + opts.CABundleFSPath
+	if opts.SslMode == "" {
+		opts.SslMode = defaultTLSSslMode
+	}
+	res += fmt.Sprintf("sslmode=%s sslrootcert=%s", opts.SslMode, opts.CABundleFSPath)
 
 	return res, nil
 }

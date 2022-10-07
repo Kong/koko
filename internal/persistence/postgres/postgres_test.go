@@ -40,6 +40,24 @@ func TestDSN(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, expectedDSN, dsn)
 	})
+	t.Run("TLS DSN with sslmode", func(t *testing.T) {
+		opt := Opts{
+			DBName:         "koko",
+			Hostname:       "localhost",
+			Port:           DefaultPort,
+			User:           "koko",
+			Password:       "koko",
+			EnableTLS:      true,
+			CABundleFSPath: "/koko-postgres-cabundle/global-bundle.pem",
+			SslMode:        "verify-ca",
+		}
+		logger := log.Logger
+		expectedDSN := "host=localhost port=5432 user=koko password=koko dbname=koko sslmode=verify-ca " +
+			"sslrootcert=/koko-postgres-cabundle/global-bundle.pem"
+		dsn, err := getDSN(opt, logger)
+		require.NoError(t, err)
+		require.Equal(t, expectedDSN, dsn)
+	})
 	t.Run("TLS DSN No CABundlePath", func(t *testing.T) {
 		opt := Opts{
 			DBName:    "koko",
