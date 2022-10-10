@@ -27,7 +27,7 @@ require (
 	github.com/jeremywohl/flatten v1.0.1
 	github.com/kong/go-kong v0.33.0
 	github.com/kong/go-wrpc v0.0.0-20220926162517-2374aa556d56
-	github.com/kong/goks v0.5.0
+	github.com/kong/goks v0.4.10
 	github.com/kong/semver/v4 v4.0.1
 	github.com/mattn/go-sqlite3 v1.14.15
 	github.com/mitchellh/mapstructure v1.5.0
@@ -46,7 +46,7 @@ require (
 	golang.org/x/exp v0.0.0-20220303212507-bbda1eaf7a17
 	golang.org/x/sync v0.0.0-20220819030929-7fc1605a5dde
 	google.golang.org/genproto v0.0.0-20220822174746-9e6da59bd2fc
-	google.golang.org/grpc v1.49.0
+	google.golang.org/grpc v1.50.0
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.2.0
 	google.golang.org/protobuf v1.28.1
 )
