@@ -18,6 +18,7 @@ import (
 	"github.com/kong/koko/internal/model/json/validation"
 	"github.com/kong/koko/internal/model/json/validation/typedefs"
 	"github.com/kong/koko/internal/plugin"
+	"github.com/kong/koko/internal/plugin/validators/badtestdata"
 	"github.com/kong/koko/internal/plugin/validators/testdata"
 	"github.com/kong/koko/internal/resource"
 	serverUtil "github.com/kong/koko/internal/server/util"
@@ -265,6 +266,30 @@ func TestProcessAutoFields(t *testing.T) {
 
 func TestValidate(t *testing.T) {
 	validator := goodValidator
+	t.Run("invalid JSON returned", func(t *testing.T) {
+		badValidator, err := NewLuaValidator(Opts{
+			Logger:   log.Logger,
+			InjectFS: &badtestdata.BadLuaTree,
+		})
+		require.NoError(t, err)
+		require.NoError(t, badValidator.LoadSchemasFromEmbed(plugin.Schemas, "schemas"))
+		require.NoError(t, badValidator.LoadPatch("validate-invalid-json"))
+
+		err = badValidator.Validate(context.Background(), &grpcModel.Plugin{
+			Name:      "prometheus",
+			Protocols: []string{"http", "https"},
+			Enabled:   wrapperspb.Bool(true),
+		})
+		require.IsType(t, validation.Error{}, err)
+		vErr := err.(validation.Error)
+		require.Len(t, vErr.Errs, 1)
+		require.Len(t, vErr.Errs[0].Messages, 1)
+		require.Equal(
+			t,
+			"(prometheus) unknown plugin validation error, please file a bug with Kong Inc",
+			vErr.Errs[0].Messages[0],
+		)
+	})
 	t.Run("test with entity errors", func(t *testing.T) {
 		config, err := structpb.NewStruct(map[string]interface{}{
 			"policy": "redis",
