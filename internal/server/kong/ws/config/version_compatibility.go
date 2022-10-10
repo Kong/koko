@@ -388,7 +388,7 @@ func (vc *WSVersionCompatibility) processPluginUpdates(payload string,
 					if gjson.Get(updatedRaw, conditionField).Exists() {
 						for _, fieldUpdate := range update.Updates {
 							if fieldUpdate.IgnoreEmpty && fieldIsEmpty(gjson.Get(updatedRaw, configField)) {
-								continue
+								break
 							}
 
 							conditionUpdate := fmt.Sprintf("config.%s", fieldUpdate.Field)
@@ -698,13 +698,12 @@ func fieldIsEmpty(field gjson.Result) bool {
 		return len(field.Array()) == 0
 	}
 
-	if field.String() == "" {
-		return true
-	}
-
 	if field.Value() == nil {
 		return true
 	}
 
+	if field.String() == "" {
+		return true
+	}
 	return false
 }

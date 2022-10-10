@@ -5452,7 +5452,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 			}`,
 		},
 		{
-			name: "conditionally ignores empty value updates",
+			name: "updates conditionally ignores empty arrays",
 			configTableUpdates: map[string][]ConfigTableUpdates{
 				">= 3.0.0": {
 					{
@@ -5475,6 +5475,14 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 							},
 						},
 						ChangeID: "T101",
+					},
+					{
+						Name: "plugin_1",
+						Type: Plugin,
+						RemoveFields: []string{
+							"plugin_field_1",
+						},
+						ChangeID: "T102",
 					},
 				},
 			},
@@ -5513,7 +5521,328 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 			expectedChanges: TrackedChanges{
 				ChangeDetails: []ChangeDetail{
 					{
-						ID: "T101",
+						ID: "T102",
+						Resources: []ResourceInfo{
+							{
+								Type: "plugin",
+								ID:   "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "updates conditionally ignores empty objects",
+			configTableUpdates: map[string][]ConfigTableUpdates{
+				">= 3.0.0": {
+					{
+						Name: "plugin_1",
+						Type: Plugin,
+						FieldUpdates: []ConfigTableFieldCondition{
+							{
+								Field:     "plugin_field_1",
+								Condition: "plugin_field_1",
+								Updates: []ConfigTableFieldUpdate{
+									{
+										Field:          "plugin_field_2",
+										ValueFromField: "plugin_field_1",
+										IgnoreEmpty:    true,
+									},
+									{
+										Field: "plugin_field_1",
+									},
+								},
+							},
+						},
+						ChangeID: "T101",
+					},
+					{
+						Name: "plugin_1",
+						Type: Plugin,
+						RemoveFields: []string{
+							"plugin_field_1",
+						},
+						ChangeID: "T102",
+					},
+				},
+			},
+			uncompressedPayload: `
+		{
+			"config_table": {
+				"plugins": [
+					{
+						"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+						"name": "plugin_1",
+						"config": {
+							"plugin_field_1": {},
+							"plugin_field_2": { "foo": "bar" }
+						}
+					}
+				]
+			}
+		}
+		`,
+			dataPlaneVersion: "3.0.0",
+			expectedPayload: `
+		{
+			"config_table": {
+				"plugins": [
+					{
+						"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+						"name": "plugin_1",
+						"config": {
+							"plugin_field_2": { "foo": "bar" }
+						}
+					}
+				]
+			}
+		}
+		`,
+			expectedChanges: TrackedChanges{
+				ChangeDetails: []ChangeDetail{
+					{
+						ID: "T102",
+						Resources: []ResourceInfo{
+							{
+								Type: "plugin",
+								ID:   "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "updates conditionally ignores empty strings",
+			configTableUpdates: map[string][]ConfigTableUpdates{
+				">= 3.0.0": {
+					{
+						Name: "plugin_1",
+						Type: Plugin,
+						FieldUpdates: []ConfigTableFieldCondition{
+							{
+								Field:     "plugin_field_1",
+								Condition: "plugin_field_1",
+								Updates: []ConfigTableFieldUpdate{
+									{
+										Field:          "plugin_field_2",
+										ValueFromField: "plugin_field_1",
+										IgnoreEmpty:    true,
+									},
+									{
+										Field: "plugin_field_1",
+									},
+								},
+							},
+						},
+						ChangeID: "T101",
+					},
+					{
+						Name: "plugin_1",
+						Type: Plugin,
+						RemoveFields: []string{
+							"plugin_field_1",
+						},
+						ChangeID: "T102",
+					},
+				},
+			},
+			uncompressedPayload: `
+		{
+			"config_table": {
+				"plugins": [
+					{
+						"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+						"name": "plugin_1",
+						"config": {
+							"plugin_field_1": "",
+							"plugin_field_2": "foo"
+						}
+					}
+				]
+			}
+		}
+		`,
+			dataPlaneVersion: "3.0.0",
+			expectedPayload: `
+		{
+			"config_table": {
+				"plugins": [
+					{
+						"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+						"name": "plugin_1",
+						"config": {
+							"plugin_field_2": "foo"
+						}
+					}
+				]
+			}
+		}
+		`,
+			expectedChanges: TrackedChanges{
+				ChangeDetails: []ChangeDetail{
+					{
+						ID: "T102",
+						Resources: []ResourceInfo{
+							{
+								Type: "plugin",
+								ID:   "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "updates conditionally ignores nil values",
+			configTableUpdates: map[string][]ConfigTableUpdates{
+				">= 3.0.0": {
+					{
+						Name: "plugin_1",
+						Type: Plugin,
+						FieldUpdates: []ConfigTableFieldCondition{
+							{
+								Field:     "plugin_field_1",
+								Condition: "plugin_field_1",
+								Updates: []ConfigTableFieldUpdate{
+									{
+										Field:          "plugin_field_2",
+										ValueFromField: "plugin_field_1",
+										IgnoreEmpty:    true,
+									},
+									{
+										Field: "plugin_field_1",
+									},
+								},
+							},
+						},
+						ChangeID: "T101",
+					},
+					{
+						Name: "plugin_1",
+						Type: Plugin,
+						RemoveFields: []string{
+							"plugin_field_1",
+						},
+						ChangeID: "T102",
+					},
+				},
+			},
+			uncompressedPayload: `
+		{
+			"config_table": {
+				"plugins": [
+					{
+						"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+						"name": "plugin_1",
+						"config": {
+							"plugin_field_1": null,
+							"plugin_field_2": "foo"
+						}
+					}
+				]
+			}
+		}
+		`,
+			dataPlaneVersion: "3.0.0",
+			expectedPayload: `
+		{
+			"config_table": {
+				"plugins": [
+					{
+						"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+						"name": "plugin_1",
+						"config": {
+							"plugin_field_2": "foo"
+						}
+					}
+				]
+			}
+		}
+		`,
+			expectedChanges: TrackedChanges{
+				ChangeDetails: []ChangeDetail{
+					{
+						ID: "T102",
+						Resources: []ResourceInfo{
+							{
+								Type: "plugin",
+								ID:   "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "does not create new fields when ignoring empty array values",
+			configTableUpdates: map[string][]ConfigTableUpdates{
+				">= 3.0.0": {
+					{
+						Name: "plugin_1",
+						Type: Plugin,
+						FieldUpdates: []ConfigTableFieldCondition{
+							{
+								Field:     "plugin_field_1",
+								Condition: "plugin_field_1",
+								Updates: []ConfigTableFieldUpdate{
+									{
+										Field:          "plugin_field_2",
+										ValueFromField: "plugin_field_1",
+										IgnoreEmpty:    true,
+									},
+									{
+										Field: "plugin_field_1",
+									},
+								},
+							},
+						},
+						ChangeID: "T101",
+					},
+					{
+						Name: "plugin_1",
+						Type: Plugin,
+						RemoveFields: []string{
+							"plugin_field_1",
+						},
+						ChangeID: "T102",
+					},
+				},
+			},
+			uncompressedPayload: `
+		{
+			"config_table": {
+				"plugins": [
+					{
+						"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+						"name": "plugin_1",
+						"config": {
+							"plugin_field_1": []
+						}
+					}
+				]
+			}
+		}
+		`,
+			dataPlaneVersion: "3.0.0",
+			expectedPayload: `
+		{
+			"config_table": {
+				"plugins": [
+					{
+						"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+						"name": "plugin_1",
+						"config": {}
+					}
+				]
+			}
+		}
+		`,
+			expectedChanges: TrackedChanges{
+				ChangeDetails: []ChangeDetail{
+					{
+						ID: "T102",
 						Resources: []ResourceInfo{
 							{
 								Type: "plugin",
