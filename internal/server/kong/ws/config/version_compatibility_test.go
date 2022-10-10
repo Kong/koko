@@ -5451,6 +5451,79 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 				}
 			}`,
 		},
+		{
+			name: "conditionally ignores empty value updates",
+			configTableUpdates: map[string][]ConfigTableUpdates{
+				">= 3.0.0": {
+					{
+						Name: "plugin_1",
+						Type: Plugin,
+						FieldUpdates: []ConfigTableFieldCondition{
+							{
+								Field:     "plugin_field_1",
+								Condition: "plugin_field_1",
+								Updates: []ConfigTableFieldUpdate{
+									{
+										Field:          "plugin_field_2",
+										ValueFromField: "plugin_field_1",
+										IgnoreEmpty:    true,
+									},
+									{
+										Field: "plugin_field_1",
+									},
+								},
+							},
+						},
+						ChangeID: "T101",
+					},
+				},
+			},
+			uncompressedPayload: `
+		{
+			"config_table": {
+				"plugins": [
+					{
+						"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+						"name": "plugin_1",
+						"config": {
+							"plugin_field_1": [],
+							"plugin_field_2": ["kong.log.err('Hello Koko!')"]
+						}
+					}
+				]
+			}
+		}
+		`,
+			dataPlaneVersion: "3.0.0",
+			expectedPayload: `
+		{
+			"config_table": {
+				"plugins": [
+					{
+						"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+						"name": "plugin_1",
+						"config": {
+							"plugin_field_2": ["kong.log.err('Hello Koko!')"]
+						}
+					}
+				]
+			}
+		}
+		`,
+			expectedChanges: TrackedChanges{
+				ChangeDetails: []ChangeDetail{
+					{
+						ID: "T101",
+						Resources: []ResourceInfo{
+							{
+								Type: "plugin",
+								ID:   "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	for _, test := range tests {

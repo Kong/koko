@@ -61,6 +61,7 @@ type ConfigTableFieldUpdate struct {
 	// ValueFromField when specified represents the name of the key whose value is
 	// retrieved and applied to the key referenced in the member Field.
 	ValueFromField string
+	IgnoreEmpty    bool
 }
 
 //nolint:revive
@@ -386,6 +387,10 @@ func (vc *WSVersionCompatibility) processPluginUpdates(payload string,
 					conditionField := fmt.Sprintf("[@this].#(config.%s)", update.Condition)
 					if gjson.Get(updatedRaw, conditionField).Exists() {
 						for _, fieldUpdate := range update.Updates {
+							if fieldUpdate.IgnoreEmpty && fieldIsEmpty(gjson.Get(updatedRaw, configField)) {
+								continue
+							}
+
 							conditionUpdate := fmt.Sprintf("config.%s", fieldUpdate.Field)
 							if fieldUpdate.Value == nil && len(fieldUpdate.ValueFromField) == 0 {
 								// Handle field removal
@@ -677,4 +682,29 @@ func shouldTrackChange(updates ConfigTableUpdates, entityJSON string) bool {
 		return true
 	}
 	return !updates.DisableChangeTracking(entityJSON)
+}
+
+// fieldIsEmpty checks if a given field is one of:
+//   - Object with no nested items
+//   - Type is null
+//   - Zero length array
+//   - Zero length string
+func fieldIsEmpty(field gjson.Result) bool {
+	if field.IsObject() {
+		return len(field.Map()) == 0
+	}
+
+	if field.IsArray() {
+		return len(field.Array()) == 0
+	}
+
+	if field.String() == "" {
+		return true
+	}
+
+	if field.Value() == nil {
+		return true
+	}
+
+	return false
 }

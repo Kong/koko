@@ -603,6 +603,7 @@ var (
 							{
 								Field:          "access",
 								ValueFromField: "functions",
+								IgnoreEmpty:    true,
 							},
 							{
 								Field: "functions",
@@ -636,6 +637,7 @@ var (
 							{
 								Field:          "access",
 								ValueFromField: "functions",
+								IgnoreEmpty:    true,
 							},
 							{
 								Field: "functions",
