@@ -61,7 +61,9 @@ type ConfigTableFieldUpdate struct {
 	// ValueFromField when specified represents the name of the key whose value is
 	// retrieved and applied to the key referenced in the member Field.
 	ValueFromField string
-	IgnoreEmpty    bool
+	// IgnoreEmpty indicates whether an empty value should be ignored when processing
+	// updates so that default values don't overwrite existing target values.
+	IgnoreEmpty bool
 }
 
 //nolint:revive
