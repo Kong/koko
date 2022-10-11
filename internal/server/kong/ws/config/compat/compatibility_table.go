@@ -839,7 +839,7 @@ var (
 		{
 			Metadata: config.ChangeMetadata{
 				ID:       config.ChangeID("P135"),
-				Severity: config.ChangeSeverityWarning,
+				Severity: config.ChangeSeverityError,
 				Description: standardPluginFieldsMessage("pre-function",
 					[]string{"functions"}, "3.0", true),
 				Resolution: "Please update the plugin configuration to use " +
@@ -850,12 +850,17 @@ var (
 				Name:         "pre-function",
 				Type:         config.Plugin,
 				RemoveFields: []string{"functions"},
+				DisableChangeTracking: func(rawJSON string) bool {
+					// do not emit change if functions is set to default value (empty array)
+					plugin := gjson.Parse(rawJSON)
+					return len(plugin.Get("config.functions").Array()) == 0
+				},
 			},
 		},
 		{
 			Metadata: config.ChangeMetadata{
 				ID:       config.ChangeID("P136"),
-				Severity: config.ChangeSeverityWarning,
+				Severity: config.ChangeSeverityError,
 				Description: standardPluginFieldsMessage("post-function",
 					[]string{"functions"}, "3.0", true),
 				Resolution: "Please update the plugin configuration to use " +
@@ -866,6 +871,11 @@ var (
 				Name:         "post-function",
 				Type:         config.Plugin,
 				RemoveFields: []string{"functions"},
+				DisableChangeTracking: func(rawJSON string) bool {
+					// do not emit change if functions is set to default value (empty array)
+					plugin := gjson.Parse(rawJSON)
+					return len(plugin.Get("config.functions").Array()) == 0
+				},
 			},
 		},
 	}
