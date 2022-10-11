@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"github.com/tidwall/gjson"
 	"strings"
 	"testing"
 
@@ -5452,7 +5453,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 			}`,
 		},
 		{
-			name: "updates conditionally ignores empty arrays",
+			name: "field updates conditionally ignore empty arrays",
 			configTableUpdates: map[string][]ConfigTableUpdates{
 				">= 3.0.0": {
 					{
@@ -5529,7 +5530,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 			},
 		},
 		{
-			name: "updates conditionally ignores empty objects",
+			name: "field updates conditionally ignore empty objects",
 			configTableUpdates: map[string][]ConfigTableUpdates{
 				">= 3.0.0": {
 					{
@@ -5606,7 +5607,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 			},
 		},
 		{
-			name: "updates conditionally ignores empty strings",
+			name: "field updates conditionally ignore empty strings",
 			configTableUpdates: map[string][]ConfigTableUpdates{
 				">= 3.0.0": {
 					{
@@ -5683,7 +5684,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 			},
 		},
 		{
-			name: "updates conditionally ignores nil values",
+			name: "field updates conditionally ignore nil values",
 			configTableUpdates: map[string][]ConfigTableUpdates{
 				">= 3.0.0": {
 					{
@@ -5760,7 +5761,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 			},
 		},
 		{
-			name: "does not create new fields when ignoring empty array values",
+			name: "field updates do not create new fields when ignoring empty array values",
 			configTableUpdates: map[string][]ConfigTableUpdates{
 				">= 3.0.0": {
 					{
@@ -5789,6 +5790,11 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 						Type: Plugin,
 						RemoveFields: []string{
 							"plugin_field_1",
+						},
+						DisableChangeTracking: func(rawJSON string) bool {
+							// do not emit change if functions is set to default value (empty array)
+							plugin := gjson.Parse(rawJSON)
+							return len(plugin.Get("config.plugin_field_1").Array()) == 0
 						},
 						ChangeID: "T102",
 					},
@@ -5819,19 +5825,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 					]
 				}
 			}`,
-			expectedChanges: TrackedChanges{
-				ChangeDetails: []ChangeDetail{
-					{
-						ID: "T102",
-						Resources: []ResourceInfo{
-							{
-								Type: "plugin",
-								ID:   "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
-							},
-						},
-					},
-				},
-			},
+			expectedChanges: TrackedChanges{},
 		},
 	}
 
