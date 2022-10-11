@@ -235,11 +235,53 @@ var VersionCompatibilityOSSPluginConfigurationTests = []VersionCompatibilityPlug
 		ConfigureForRoute:   true,
 	},
 	{
+		Name: "post-function",
+		Config: `{
+			"access": [
+				"kong.log.err('Goodbye Koko!')"
+			],
+			"functions": []
+		}`,
+		FieldUpdateChecks: map[string][]FieldUpdateCheck{
+			">= 3.0.0": {
+				{
+					Field: "access",
+					Value: []string{
+						"kong.log.err('Goodbye Koko!')",
+					},
+				},
+			},
+		},
+		ConfigureForService: true,
+		ConfigureForRoute:   true,
+	},
+	{
 		Name: "pre-function",
 		Config: `{
 			"functions": [
 				"kong.log.err('Hello Koko!')"
 			]
+		}`,
+		FieldUpdateChecks: map[string][]FieldUpdateCheck{
+			">= 3.0.0": {
+				{
+					Field: "access",
+					Value: []string{
+						"kong.log.err('Hello Koko!')",
+					},
+				},
+			},
+		},
+		ConfigureForService: true,
+		ConfigureForRoute:   true,
+	},
+	{
+		Name: "pre-function",
+		Config: `{
+			"access": [
+				"kong.log.err('Hello Koko!')"
+			],
+			"functions": []
 		}`,
 		FieldUpdateChecks: map[string][]FieldUpdateCheck{
 			">= 3.0.0": {
