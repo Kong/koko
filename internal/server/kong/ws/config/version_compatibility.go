@@ -392,7 +392,6 @@ func (vc *WSVersionCompatibility) processPluginUpdates(payload string,
 							if fieldUpdate.IgnoreEmpty && fieldIsEmpty(gjson.Get(updatedRaw, configField)) {
 								break
 							}
-
 							conditionUpdate := fmt.Sprintf("config.%s", fieldUpdate.Field)
 							if fieldUpdate.Value == nil && len(fieldUpdate.ValueFromField) == 0 {
 								// Handle field removal
@@ -576,6 +575,9 @@ func (vc *WSVersionCompatibility) processCoreEntityUpdates(payload string,
 				conditionField := fmt.Sprintf("[@this].#(%s)", update.Condition)
 				if gjson.Get(updatedRaw, conditionField).Exists() {
 					for _, fieldUpdate := range update.Updates {
+						if fieldUpdate.IgnoreEmpty && fieldIsEmpty(gjson.Get(updatedRaw, configField)) {
+							break
+						}
 						conditionUpdate := fieldUpdate.Field
 						if fieldUpdate.Value == nil && len(fieldUpdate.ValueFromField) == 0 {
 							// Handle field removal
