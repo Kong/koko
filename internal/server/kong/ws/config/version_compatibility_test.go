@@ -5486,38 +5486,34 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 					},
 				},
 			},
-			uncompressedPayload: `
-		{
-			"config_table": {
-				"plugins": [
-					{
-						"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
-						"name": "plugin_1",
-						"config": {
-							"plugin_field_1": [],
-							"plugin_field_2": ["kong.log.err('Hello Koko!')"]
+			uncompressedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							"name": "plugin_1",
+							"config": {
+								"plugin_field_1": [],
+								"plugin_field_2": ["kong.log.err('Hello Koko!')"]
+							}
 						}
-					}
-				]
-			}
-		}
-		`,
+					]
+				}
+			}`,
 			dataPlaneVersion: "3.0.0",
-			expectedPayload: `
-		{
-			"config_table": {
-				"plugins": [
-					{
-						"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
-						"name": "plugin_1",
-						"config": {
-							"plugin_field_2": ["kong.log.err('Hello Koko!')"]
+			expectedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							"name": "plugin_1",
+							"config": {
+								"plugin_field_2": ["kong.log.err('Hello Koko!')"]
+							}
 						}
-					}
-				]
-			}
-		}
-		`,
+					]
+				}
+			}`,
 			expectedChanges: TrackedChanges{
 				ChangeDetails: []ChangeDetail{
 					{
@@ -5567,38 +5563,34 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 					},
 				},
 			},
-			uncompressedPayload: `
-		{
-			"config_table": {
-				"plugins": [
-					{
-						"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
-						"name": "plugin_1",
-						"config": {
-							"plugin_field_1": {},
-							"plugin_field_2": { "foo": "bar" }
+			uncompressedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							"name": "plugin_1",
+							"config": {
+								"plugin_field_1": {},
+								"plugin_field_2": { "foo": "bar" }
+							}
 						}
-					}
-				]
-			}
-		}
-		`,
+					]
+				}
+			}`,
 			dataPlaneVersion: "3.0.0",
-			expectedPayload: `
-		{
-			"config_table": {
-				"plugins": [
-					{
-						"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
-						"name": "plugin_1",
-						"config": {
-							"plugin_field_2": { "foo": "bar" }
+			expectedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							"name": "plugin_1",
+							"config": {
+								"plugin_field_2": { "foo": "bar" }
+							}
 						}
-					}
-				]
-			}
-		}
-		`,
+					]
+				}
+			}`,
 			expectedChanges: TrackedChanges{
 				ChangeDetails: []ChangeDetail{
 					{
@@ -5648,38 +5640,34 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 					},
 				},
 			},
-			uncompressedPayload: `
-		{
-			"config_table": {
-				"plugins": [
-					{
-						"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
-						"name": "plugin_1",
-						"config": {
-							"plugin_field_1": "",
-							"plugin_field_2": "foo"
+			uncompressedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							"name": "plugin_1",
+							"config": {
+								"plugin_field_1": "",
+								"plugin_field_2": "foo"
+							}
 						}
-					}
-				]
-			}
-		}
-		`,
+					]
+				}
+			}`,
 			dataPlaneVersion: "3.0.0",
-			expectedPayload: `
-		{
-			"config_table": {
-				"plugins": [
-					{
-						"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
-						"name": "plugin_1",
-						"config": {
-							"plugin_field_2": "foo"
+			expectedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							"name": "plugin_1",
+							"config": {
+								"plugin_field_2": "foo"
+							}
 						}
-					}
-				]
-			}
-		}
-		`,
+					]
+				}
+			}`,
 			expectedChanges: TrackedChanges{
 				ChangeDetails: []ChangeDetail{
 					{
@@ -5729,38 +5717,34 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 					},
 				},
 			},
-			uncompressedPayload: `
-		{
-			"config_table": {
-				"plugins": [
-					{
-						"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
-						"name": "plugin_1",
-						"config": {
-							"plugin_field_1": null,
-							"plugin_field_2": "foo"
+			uncompressedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							"name": "plugin_1",
+							"config": {
+								"plugin_field_1": null,
+								"plugin_field_2": "foo"
+							}
 						}
-					}
-				]
-			}
-		}
-		`,
+					]
+				}
+			}`,
 			dataPlaneVersion: "3.0.0",
-			expectedPayload: `
-		{
-			"config_table": {
-				"plugins": [
-					{
-						"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
-						"name": "plugin_1",
-						"config": {
-							"plugin_field_2": "foo"
+			expectedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							"name": "plugin_1",
+							"config": {
+								"plugin_field_2": "foo"
+							}
 						}
-					}
-				]
-			}
-		}
-		`,
+					]
+				}
+			}`,
 			expectedChanges: TrackedChanges{
 				ChangeDetails: []ChangeDetail{
 					{
@@ -5810,35 +5794,31 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 					},
 				},
 			},
-			uncompressedPayload: `
-		{
-			"config_table": {
-				"plugins": [
-					{
-						"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
-						"name": "plugin_1",
-						"config": {
-							"plugin_field_1": []
+			uncompressedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							"name": "plugin_1",
+							"config": {
+								"plugin_field_1": []
+							}
 						}
-					}
-				]
-			}
-		}
-		`,
+					]
+				}
+			}`,
 			dataPlaneVersion: "3.0.0",
-			expectedPayload: `
-		{
-			"config_table": {
-				"plugins": [
-					{
-						"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
-						"name": "plugin_1",
-						"config": {}
-					}
-				]
-			}
-		}
-		`,
+			expectedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							"name": "plugin_1",
+							"config": {}
+						}
+					]
+				}
+			}`,
 			expectedChanges: TrackedChanges{
 				ChangeDetails: []ChangeDetail{
 					{

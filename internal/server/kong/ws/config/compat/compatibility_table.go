@@ -840,10 +840,8 @@ var (
 			Metadata: config.ChangeMetadata{
 				ID:       config.ChangeID("P135"),
 				Severity: config.ChangeSeverityWarning,
-				Description: "For the 'pre-function' plugin, " +
-					"'config.functions' field has been used. " +
-					"This field is deprecated and it is no longer supported " +
-					"in Kong Gateway versions >= 3.0.",
+				Description: standardPluginFieldsMessage("pre-function",
+					[]string{"functions"}, "3.0", true),
 				Resolution: "Please update the plugin configuration to use " +
 					"'config.access' field in place of 'config.functions' field",
 			},
@@ -858,10 +856,8 @@ var (
 			Metadata: config.ChangeMetadata{
 				ID:       config.ChangeID("P136"),
 				Severity: config.ChangeSeverityWarning,
-				Description: "For the 'post-function' plugin, " +
-					"'config.functions' field has been used. " +
-					"This field is deprecated and it is no longer supported " +
-					"in Kong Gateway versions >= 3.0.",
+				Description: standardPluginFieldsMessage("post-function",
+					[]string{"functions"}, "3.0", true),
 				Resolution: "Please update the plugin configuration to use " +
 					"'config.access' field in place of 'config.functions' field",
 			},

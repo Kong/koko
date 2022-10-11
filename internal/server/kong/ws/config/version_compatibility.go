@@ -687,10 +687,10 @@ func shouldTrackChange(updates ConfigTableUpdates, entityJSON string) bool {
 }
 
 // fieldIsEmpty checks if a given field is one of:
-//   - Object with no nested items
-//   - Type is null
+//   - Object with no items
+//   - Value is null
 //   - Zero length array
-//   - Zero length string
+//   - Empty string
 func fieldIsEmpty(field gjson.Result) bool {
 	if field.IsObject() {
 		return len(field.Map()) == 0
