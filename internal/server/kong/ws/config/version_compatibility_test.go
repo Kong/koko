@@ -6322,3 +6322,67 @@ func TestVersionCompatibility_PerformExtraProcessing(t *testing.T) {
 		require.JSONEq(t, expectedPayload, string(uncompressedPayload))
 	})
 }
+
+func TestVersionCompatibility_ValueIsEmpty(t *testing.T) {
+	tests := []struct {
+		name          string
+		rawJSON       string
+		expectedValue bool
+	}{
+		{
+			name: "object is empty",
+			rawJSON: `{
+				"value": {}
+			}`,
+			expectedValue: true,
+		},
+		{
+			name: "object is not empty",
+			rawJSON: `{
+				"value": { "foo": "bar" }
+			}`,
+			expectedValue: false,
+		},
+		{
+			name: "string is empty",
+			rawJSON: `{
+				"value": ""
+			}`,
+			expectedValue: true,
+		},
+		{
+			name: "string is not empty",
+			rawJSON: `{
+				"value": "foo"
+			}`,
+			expectedValue: false,
+		},
+		{
+			name: "array is empty",
+			rawJSON: `{
+				"value": []
+			}`,
+			expectedValue: true,
+		},
+		{
+			name: "array is not empty",
+			rawJSON: `{
+				"value": ["foo"]
+			}`,
+			expectedValue: false,
+		},
+		{
+			name: "value is null",
+			rawJSON: `{
+				"value": null
+			}`,
+			expectedValue: true,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			require.Equal(t, test.expectedValue, valueIsEmpty(gjson.Get(test.rawJSON, "value")))
+		})
+	}
+}

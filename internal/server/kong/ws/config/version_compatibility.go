@@ -696,21 +696,21 @@ func shouldTrackChange(updates ConfigTableUpdates, entityJSON string) bool {
 
 // valueIsEmpty returns true to indicate a given gjson Result is considered
 // "empty". Empty for a given type is when the type is:
-//   - an Object containing no items
-//   - a Value that is nil (represents JSON value of null)
+//   - any null JSON value
+//   - an object containing no items
 //   - an array of zero length
 //   - an empty string
 func valueIsEmpty(value gjson.Result) bool {
+	if value.Type == gjson.Null {
+		return true
+	}
+
 	if value.IsObject() {
 		return len(value.Map()) == 0
 	}
 
 	if value.IsArray() {
 		return len(value.Array()) == 0
-	}
-
-	if value.Value() == nil {
-		return true
 	}
 
 	if value.String() == "" {
