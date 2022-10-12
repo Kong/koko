@@ -2,13 +2,13 @@ package config
 
 import (
 	"fmt"
-	"github.com/tidwall/gjson"
 	"strings"
 	"testing"
 
 	"github.com/kong/koko/internal/log"
 	"github.com/kong/koko/internal/versioning"
 	"github.com/stretchr/testify/require"
+	"github.com/tidwall/gjson"
 	"github.com/tidwall/sjson"
 	"go.uber.org/zap"
 )
@@ -5465,9 +5465,9 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 								Condition: "plugin_field_1",
 								Updates: []ConfigTableFieldUpdate{
 									{
-										Field:          "plugin_field_2",
-										ValueFromField: "plugin_field_1",
-										IgnoreEmpty:    true,
+										Field:            "plugin_field_2",
+										ValueFromField:   "plugin_field_1",
+										FieldMustBeEmpty: true,
 									},
 									{
 										Field: "plugin_field_1",
@@ -5542,9 +5542,9 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 								Condition: "plugin_field_1",
 								Updates: []ConfigTableFieldUpdate{
 									{
-										Field:          "plugin_field_2",
-										ValueFromField: "plugin_field_1",
-										IgnoreEmpty:    true,
+										Field:            "plugin_field_2",
+										ValueFromField:   "plugin_field_1",
+										FieldMustBeEmpty: true,
 									},
 									{
 										Field: "plugin_field_1",
@@ -5619,9 +5619,9 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 								Condition: "plugin_field_1",
 								Updates: []ConfigTableFieldUpdate{
 									{
-										Field:          "plugin_field_2",
-										ValueFromField: "plugin_field_1",
-										IgnoreEmpty:    true,
+										Field:            "plugin_field_2",
+										ValueFromField:   "plugin_field_1",
+										FieldMustBeEmpty: true,
 									},
 									{
 										Field: "plugin_field_1",
@@ -5696,9 +5696,9 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 								Condition: "plugin_field_1",
 								Updates: []ConfigTableFieldUpdate{
 									{
-										Field:          "plugin_field_2",
-										ValueFromField: "plugin_field_1",
-										IgnoreEmpty:    true,
+										Field:            "plugin_field_2",
+										ValueFromField:   "plugin_field_1",
+										FieldMustBeEmpty: true,
 									},
 									{
 										Field: "plugin_field_1",
@@ -5773,9 +5773,9 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 								Condition: "plugin_field_1",
 								Updates: []ConfigTableFieldUpdate{
 									{
-										Field:          "plugin_field_2",
-										ValueFromField: "plugin_field_1",
-										IgnoreEmpty:    true,
+										Field:            "plugin_field_2",
+										ValueFromField:   "plugin_field_1",
+										FieldMustBeEmpty: true,
 									},
 									{
 										Field: "plugin_field_1",
@@ -5840,9 +5840,9 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 								Condition: "plugin_field_1",
 								Updates: []ConfigTableFieldUpdate{
 									{
-										Field:          "plugin_field_2",
-										ValueFromField: "plugin_field_1",
-										IgnoreEmpty:    true,
+										Field:            "plugin_field_2",
+										ValueFromField:   "plugin_field_1",
+										FieldMustBeEmpty: true,
 									},
 									{
 										Field: "plugin_field_1",
@@ -5913,9 +5913,9 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 								Condition: "plugin_field_1",
 								Updates: []ConfigTableFieldUpdate{
 									{
-										Field:          "plugin_field_2",
-										ValueFromField: "plugin_field_1",
-										IgnoreEmpty:    true,
+										Field:            "plugin_field_2",
+										ValueFromField:   "plugin_field_1",
+										FieldMustBeEmpty: true,
 									},
 									{
 										Field: "plugin_field_1",
@@ -5986,9 +5986,9 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 								Condition: "plugin_field_1",
 								Updates: []ConfigTableFieldUpdate{
 									{
-										Field:          "plugin_field_2",
-										ValueFromField: "plugin_field_1",
-										IgnoreEmpty:    true,
+										Field:            "plugin_field_2",
+										ValueFromField:   "plugin_field_1",
+										FieldMustBeEmpty: true,
 									},
 									{
 										Field: "plugin_field_1",
@@ -6059,9 +6059,9 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 								Condition: "plugin_field_1",
 								Updates: []ConfigTableFieldUpdate{
 									{
-										Field:          "plugin_field_2",
-										ValueFromField: "plugin_field_1",
-										IgnoreEmpty:    true,
+										Field:            "plugin_field_2",
+										ValueFromField:   "plugin_field_1",
+										FieldMustBeEmpty: true,
 									},
 									{
 										Field: "plugin_field_1",
@@ -6132,9 +6132,9 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 								Condition: "plugin_field_1",
 								Updates: []ConfigTableFieldUpdate{
 									{
-										Field:          "plugin_field_2",
-										ValueFromField: "plugin_field_1",
-										IgnoreEmpty:    true,
+										Field:            "plugin_field_2",
+										ValueFromField:   "plugin_field_1",
+										FieldMustBeEmpty: true,
 									},
 									{
 										Field: "plugin_field_1",

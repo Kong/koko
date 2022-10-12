@@ -601,9 +601,9 @@ var (
 						Condition: "functions",
 						Updates: []config.ConfigTableFieldUpdate{
 							{
-								Field:          "access",
-								ValueFromField: "functions",
-								IgnoreEmpty:    true,
+								Field:            "access",
+								ValueFromField:   "functions",
+								FieldMustBeEmpty: true,
 							},
 							{
 								Field: "functions",
@@ -635,9 +635,9 @@ var (
 						Condition: "functions",
 						Updates: []config.ConfigTableFieldUpdate{
 							{
-								Field:          "access",
-								ValueFromField: "functions",
-								IgnoreEmpty:    true,
+								Field:            "access",
+								ValueFromField:   "functions",
+								FieldMustBeEmpty: true,
 							},
 							{
 								Field: "functions",

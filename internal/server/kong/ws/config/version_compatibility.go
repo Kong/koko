@@ -61,9 +61,10 @@ type ConfigTableFieldUpdate struct {
 	// ValueFromField when specified represents the name of the key whose value is
 	// retrieved and applied to the key referenced in the member Field.
 	ValueFromField string
-	// IgnoreEmpty indicates whether an empty value should be ignored when processing
-	// updates so that default values don't overwrite existing target values.
-	IgnoreEmpty bool
+	// FieldMustBeEmpty is a flag to indicate that the field update must only occur
+	// if the Field is considered empty. If the Field is not empty the entire field
+	// update process will be terminated for the remaining updates.
+	FieldMustBeEmpty bool
 }
 
 //nolint:revive
@@ -389,10 +390,14 @@ func (vc *WSVersionCompatibility) processPluginUpdates(payload string,
 					conditionField := fmt.Sprintf("[@this].#(config.%s)", update.Condition)
 					if gjson.Get(updatedRaw, conditionField).Exists() {
 						for _, fieldUpdate := range update.Updates {
-							if fieldUpdate.IgnoreEmpty && fieldIsEmpty(gjson.Get(updatedRaw, configField)) {
+							conditionUpdate := fmt.Sprintf("config.%s", fieldUpdate.Field)
+							// Ensure the original field is not empty if specified; do not overwrite
+							if fieldUpdate.FieldMustBeEmpty && !valueIsEmpty(gjson.Get(updatedRaw, conditionUpdate)) {
+								// Since this is a copy function from another field and the current field is already
+								// configured the entire field update process should short circuit
 								break
 							}
-							conditionUpdate := fmt.Sprintf("config.%s", fieldUpdate.Field)
+
 							if fieldUpdate.Value == nil && len(fieldUpdate.ValueFromField) == 0 {
 								// Handle field removal
 								updated = true
@@ -415,9 +420,8 @@ func (vc *WSVersionCompatibility) processPluginUpdates(payload string,
 								if fieldUpdate.Value != nil {
 									value = fieldUpdate.Value
 								} else {
-									valueFromField := fmt.Sprintf("config.%v", fieldUpdate.ValueFromField)
-									res := gjson.Get(updatedRaw, valueFromField)
-									if res.Exists() {
+									res := gjson.Get(updatedRaw, fmt.Sprintf("config.%v", fieldUpdate.ValueFromField))
+									if !valueIsEmpty(res) {
 										value = res.Value()
 									} else {
 										vc.logger.With(zap.String("plugin", pluginName)).
@@ -575,10 +579,13 @@ func (vc *WSVersionCompatibility) processCoreEntityUpdates(payload string,
 				conditionField := fmt.Sprintf("[@this].#(%s)", update.Condition)
 				if gjson.Get(updatedRaw, conditionField).Exists() {
 					for _, fieldUpdate := range update.Updates {
-						if fieldUpdate.IgnoreEmpty && fieldIsEmpty(gjson.Get(updatedRaw, configField)) {
+						conditionUpdate := fieldUpdate.Field
+						// Ensure the original field is not empty if specified; do not overwrite
+						if fieldUpdate.FieldMustBeEmpty && !valueIsEmpty(gjson.Get(updatedRaw, conditionUpdate)) {
+							// Since this is a copy function from another field and the current field is already
+							// configured the entire field update process should short circuit
 							break
 						}
-						conditionUpdate := fieldUpdate.Field
 						if fieldUpdate.Value == nil && len(fieldUpdate.ValueFromField) == 0 {
 							// Handle field removal
 							updated = true
@@ -603,9 +610,8 @@ func (vc *WSVersionCompatibility) processCoreEntityUpdates(payload string,
 							if fieldUpdate.Value != nil {
 								value = fieldUpdate.Value
 							} else {
-								valueFromField := fieldUpdate.ValueFromField
-								res := gjson.Get(updatedRaw, valueFromField)
-								if res.Exists() {
+								res := gjson.Get(updatedRaw, fieldUpdate.ValueFromField)
+								if !valueIsEmpty(res) {
 									value = res.Value()
 								} else {
 									vc.logger.With(zap.String("entity", entityType)).
@@ -688,25 +694,26 @@ func shouldTrackChange(updates ConfigTableUpdates, entityJSON string) bool {
 	return !updates.DisableChangeTracking(entityJSON)
 }
 
-// fieldIsEmpty checks if a given field is one of:
-//   - Object with no items
-//   - Value is null
-//   - Zero length array
-//   - Empty string
-func fieldIsEmpty(field gjson.Result) bool {
-	if field.IsObject() {
-		return len(field.Map()) == 0
+// valueIsEmpty returns true to indicate a given gjson Result is considered
+// "empty". Empty for a given type is when the type is:
+//   - an Object containing no items
+//   - a Value that is nil (represents JSON value of null)
+//   - an array of zero length
+//   - an empty string
+func valueIsEmpty(value gjson.Result) bool {
+	if value.IsObject() {
+		return len(value.Map()) == 0
 	}
 
-	if field.IsArray() {
-		return len(field.Array()) == 0
+	if value.IsArray() {
+		return len(value.Array()) == 0
 	}
 
-	if field.Value() == nil {
+	if value.Value() == nil {
 		return true
 	}
 
-	if field.String() == "" {
+	if value.String() == "" {
 		return true
 	}
 	return false
