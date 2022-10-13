@@ -5518,7 +5518,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 			expectedChanges: TrackedChanges{
 				ChangeDetails: []ChangeDetail{
 					{
-						ID: "T102",
+						ID: "T101",
 						Resources: []ResourceInfo{
 							{
 								Type: "plugin",
