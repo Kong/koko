@@ -5453,6 +5453,160 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 			}`,
 		},
 		{
+			name: "field updates should overwrite existing empty values",
+			configTableUpdates: map[string][]ConfigTableUpdates{
+				">= 3.0.0": {
+					{
+						Name: "plugin_1",
+						Type: Plugin,
+						FieldUpdates: []ConfigTableFieldCondition{
+							{
+								Field:     "plugin_field_1",
+								Condition: "plugin_field_1",
+								Updates: []ConfigTableFieldUpdate{
+									{
+										Field:            "plugin_field_2",
+										ValueFromField:   "plugin_field_1",
+										FieldMustBeEmpty: true,
+									},
+									{
+										Field: "plugin_field_1",
+									},
+								},
+							},
+						},
+						ChangeID: "T101",
+					},
+					{
+						Name: "plugin_1",
+						Type: Plugin,
+						RemoveFields: []string{
+							"plugin_field_1",
+						},
+						ChangeID: "T102",
+					},
+				},
+			},
+			uncompressedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							"name": "plugin_1",
+							"config": {
+								"plugin_field_1": ["kong.log.err('Hello Koko!')"],
+								"plugin_field_2": []
+							}
+						}
+					]
+				}
+			}`,
+			dataPlaneVersion: "3.0.0",
+			expectedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							"name": "plugin_1",
+							"config": {
+								"plugin_field_2": ["kong.log.err('Hello Koko!')"]
+							}
+						}
+					]
+				}
+			}`,
+			expectedChanges: TrackedChanges{
+				ChangeDetails: []ChangeDetail{
+					{
+						ID: "T102",
+						Resources: []ResourceInfo{
+							{
+								Type: "plugin",
+								ID:   "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "field updates do not overwrite existing values",
+			configTableUpdates: map[string][]ConfigTableUpdates{
+				">= 3.0.0": {
+					{
+						Name: "plugin_1",
+						Type: Plugin,
+						FieldUpdates: []ConfigTableFieldCondition{
+							{
+								Field:     "plugin_field_1",
+								Condition: "plugin_field_1",
+								Updates: []ConfigTableFieldUpdate{
+									{
+										Field:            "plugin_field_2",
+										ValueFromField:   "plugin_field_1",
+										FieldMustBeEmpty: true,
+									},
+									{
+										Field: "plugin_field_1",
+									},
+								},
+							},
+						},
+						ChangeID: "T101",
+					},
+					{
+						Name: "plugin_1",
+						Type: Plugin,
+						RemoveFields: []string{
+							"plugin_field_1",
+						},
+						ChangeID: "T102",
+					},
+				},
+			},
+			uncompressedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							"name": "plugin_1",
+							"config": {
+								"plugin_field_1": ["kong.log.err('Should not overwrite')"],
+								"plugin_field_2": ["kong.log.err('Hello Koko!')"]
+							}
+						}
+					]
+				}
+			}`,
+			dataPlaneVersion: "3.0.0",
+			expectedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							"name": "plugin_1",
+							"config": {
+								"plugin_field_2": ["kong.log.err('Hello Koko!')"]
+							}
+						}
+					]
+				}
+			}`,
+			expectedChanges: TrackedChanges{
+				ChangeDetails: []ChangeDetail{
+					{
+						ID: "T102",
+						Resources: []ResourceInfo{
+							{
+								Type: "plugin",
+								ID:   "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
 			name: "field updates conditionally ignore empty arrays",
 			configTableUpdates: map[string][]ConfigTableUpdates{
 				">= 3.0.0": {
