@@ -395,7 +395,7 @@ func (vc *WSVersionCompatibility) processPluginUpdates(payload string,
 							if fieldUpdate.FieldMustBeEmpty && !valueIsEmpty(gjson.Get(updatedRaw, conditionUpdate)) {
 								// Since this is a copy function from another field and the current field is already
 								// configured the entire field update process should short circuit
-								break
+								continue
 							}
 
 							if fieldUpdate.Value == nil && len(fieldUpdate.ValueFromField) == 0 {

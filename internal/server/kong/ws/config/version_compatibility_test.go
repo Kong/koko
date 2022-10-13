@@ -5554,14 +5554,6 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 						},
 						ChangeID: "T101",
 					},
-					{
-						Name: "plugin_1",
-						Type: Plugin,
-						RemoveFields: []string{
-							"plugin_field_1",
-						},
-						ChangeID: "T102",
-					},
 				},
 			},
 			uncompressedPayload: `{
@@ -5595,7 +5587,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 			expectedChanges: TrackedChanges{
 				ChangeDetails: []ChangeDetail{
 					{
-						ID: "T102",
+						ID: "T101",
 						Resources: []ResourceInfo{
 							{
 								Type: "plugin",
@@ -5631,14 +5623,6 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 						},
 						ChangeID: "T101",
 					},
-					{
-						Name: "plugin_1",
-						Type: Plugin,
-						RemoveFields: []string{
-							"plugin_field_1",
-						},
-						ChangeID: "T102",
-					},
 				},
 			},
 			uncompressedPayload: `{
@@ -5672,7 +5656,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 			expectedChanges: TrackedChanges{
 				ChangeDetails: []ChangeDetail{
 					{
-						ID: "T102",
+						ID: "T101",
 						Resources: []ResourceInfo{
 							{
 								Type: "plugin",
@@ -5708,14 +5692,6 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 						},
 						ChangeID: "T101",
 					},
-					{
-						Name: "plugin_1",
-						Type: Plugin,
-						RemoveFields: []string{
-							"plugin_field_1",
-						},
-						ChangeID: "T102",
-					},
 				},
 			},
 			uncompressedPayload: `{
@@ -5749,7 +5725,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 			expectedChanges: TrackedChanges{
 				ChangeDetails: []ChangeDetail{
 					{
-						ID: "T102",
+						ID: "T101",
 						Resources: []ResourceInfo{
 							{
 								Type: "plugin",
@@ -5785,14 +5761,6 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 						},
 						ChangeID: "T101",
 					},
-					{
-						Name: "plugin_1",
-						Type: Plugin,
-						RemoveFields: []string{
-							"plugin_field_1",
-						},
-						ChangeID: "T102",
-					},
 				},
 			},
 			uncompressedPayload: `{
@@ -5826,7 +5794,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 			expectedChanges: TrackedChanges{
 				ChangeDetails: []ChangeDetail{
 					{
-						ID: "T102",
+						ID: "T101",
 						Resources: []ResourceInfo{
 							{
 								Type: "plugin",
@@ -5862,14 +5830,6 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 						},
 						ChangeID: "T101",
 					},
-					{
-						Name: "plugin_1",
-						Type: Plugin,
-						RemoveFields: []string{
-							"plugin_field_1",
-						},
-						ChangeID: "T102",
-					},
 				},
 			},
 			uncompressedPayload: `{
@@ -5903,7 +5863,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 			expectedChanges: TrackedChanges{
 				ChangeDetails: []ChangeDetail{
 					{
-						ID: "T102",
+						ID: "T101",
 						Resources: []ResourceInfo{
 							{
 								Type: "plugin",
