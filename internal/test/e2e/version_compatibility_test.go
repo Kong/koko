@@ -226,7 +226,6 @@ func TestVersionCompatibility_PluginFieldUpdates(t *testing.T) {
 		require.NoError(t, err)
 		res := admin.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
 		res.Status(http.StatusCreated)
-		require.Equal(t, http.StatusCreated, res.Raw().StatusCode)
 	}
 
 	// fetch list of plugins from the DP
@@ -301,9 +300,7 @@ func TestVersionCompatibility_EnsureTargetFieldsAreNotOverridden(t *testing.T) {
 				"access": [
 					"kong.log.err('Hello Koko!')"
 				],
-				"functions": [
-					"kong.log.err('Should not overwrite')"
-				]
+				"functions": []
 			}`,
 			FieldUpdateChecks: map[string][]FieldUpdateCheck{
 				">= 3.0.0": {
