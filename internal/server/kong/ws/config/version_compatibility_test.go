@@ -5843,64 +5843,6 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 			expectedChanges: TrackedChanges{},
 		},
 		{
-			name: "field updates do not create new fields when ignoring empty array values",
-			configTableUpdates: map[string][]ConfigTableUpdates{
-				">= 3.0.0": {
-					{
-						Name: "plugin_1",
-						Type: Plugin,
-						DisableChangeTracking: func(rawJSON string) bool {
-							plugin := gjson.Parse(rawJSON)
-							return ValueIsEmpty(plugin.Get("config.plugin_field_1"))
-						},
-						FieldUpdates: []ConfigTableFieldCondition{
-							{
-								Field:     "plugin_field_1",
-								Condition: "plugin_field_1",
-								Updates: []ConfigTableFieldUpdate{
-									{
-										Field:            "plugin_field_2",
-										ValueFromField:   "plugin_field_1",
-										FieldMustBeEmpty: true,
-									},
-									{
-										Field: "plugin_field_1",
-									},
-								},
-							},
-						},
-						ChangeID: "T101",
-					},
-				},
-			},
-			uncompressedPayload: `{
-				"config_table": {
-					"plugins": [
-						{
-							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
-							"name": "plugin_1",
-							"config": {
-								"plugin_field_1": []
-							}
-						}
-					]
-				}
-			}`,
-			dataPlaneVersion: "3.0.0",
-			expectedPayload: `{
-				"config_table": {
-					"plugins": [
-						{
-							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
-							"name": "plugin_1",
-							"config": {}
-						}
-					]
-				}
-			}`,
-			expectedChanges: TrackedChanges{},
-		},
-		{
 			name: "core field updates conditionally ignore empty arrays",
 			configTableUpdates: map[string][]ConfigTableUpdates{
 				">= 3.0.0": {
@@ -6122,61 +6064,6 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
 							"name": "plugin_1",
 							"plugin_field_2": "foo"
-						}
-					]
-				}
-			}`,
-			expectedChanges: TrackedChanges{},
-		},
-		{
-			name: "core field updates do not create new fields when ignoring empty array values",
-			configTableUpdates: map[string][]ConfigTableUpdates{
-				">= 3.0.0": {
-					{
-						Name: "plugin_1",
-						Type: CorePlugin,
-						DisableChangeTracking: func(rawJSON string) bool {
-							plugin := gjson.Parse(rawJSON)
-							return ValueIsEmpty(plugin.Get("plugin_field_1"))
-						},
-						FieldUpdates: []ConfigTableFieldCondition{
-							{
-								Field:     "plugin_field_1",
-								Condition: "plugin_field_1",
-								Updates: []ConfigTableFieldUpdate{
-									{
-										Field:            "plugin_field_2",
-										ValueFromField:   "plugin_field_1",
-										FieldMustBeEmpty: true,
-									},
-									{
-										Field: "plugin_field_1",
-									},
-								},
-							},
-						},
-						ChangeID: "T101",
-					},
-				},
-			},
-			uncompressedPayload: `{
-				"config_table": {
-					"plugins": [
-						{
-							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
-							"name": "plugin_1",
-							"plugin_field_1": []
-						}
-					]
-				}
-			}`,
-			dataPlaneVersion: "3.0.0",
-			expectedPayload: `{
-				"config_table": {
-					"plugins": [
-						{
-							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
-							"name": "plugin_1"
 						}
 					]
 				}
