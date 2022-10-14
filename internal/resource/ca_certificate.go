@@ -97,8 +97,8 @@ func (r CACertificate) Validate(ctx context.Context) error {
 			},
 		}
 	}
-	if !cert.BasicConstraintsValid {
-		errStr := `certificate does not appear to be a CA because` +
+	if !cert.BasicConstraintsValid || !cert.IsCA {
+		errStr := `certificate does not appear to be a CA because ` +
 			`it is missing the "CA" basic constraint`
 		return validation.Error{
 			Errs: []*v1.ErrorDetail{

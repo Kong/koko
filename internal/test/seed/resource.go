@@ -28,13 +28,13 @@ var DefaultNewResourceFuncs = map[model.Type]NewResourceFunc{
 	resource.TypeCACertificate: func(_ Seeder, m proto.Message, _ int) error {
 		r := m.(*v1.CACertificate)
 		var err error
-		r.Cert, _, err = util.GenerateCertificate(defaultCertificateBits)
+		r.Cert, _, err = util.GenerateCertificate(defaultCertificateBits, true)
 		return err
 	},
 	resource.TypeCertificate: func(_ Seeder, m proto.Message, _ int) error {
 		r := m.(*v1.Certificate)
 		var err error
-		r.Cert, r.Key, err = util.GenerateCertificate(defaultCertificateBits)
+		r.Cert, r.Key, err = util.GenerateCertificate(defaultCertificateBits, false)
 		return err
 	},
 	resource.TypeConsumer: func(_ Seeder, m proto.Message, i int) error {
