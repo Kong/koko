@@ -18,9 +18,6 @@ type Opts struct {
 const namespace = "kong"
 
 func toPrometheusLabel(label ...Label) prometheus.Labels {
-	if len(label) == 0 {
-		return nil
-	}
 	labels := prometheus.Labels{}
 	for _, l := range label {
 		labels[l.Key] = l.Value

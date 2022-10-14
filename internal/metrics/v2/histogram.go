@@ -44,6 +44,7 @@ func NewHistogram(opts HistogramOpts) Histogram {
 			Subsystem: opts.Subsystem,
 			Name:      opts.Name,
 			Help:      opts.Help,
+			Buckets:   opts.Buckets,
 		},
 			opts.LabelNames,
 		),

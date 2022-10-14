@@ -5,14 +5,13 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promauto"
 )
 
-// Counter is a metrics gauge.
+// Counter is a metrics gauge which will only increase in value.
 // Please consult Prometheus documentation for a detailed understanding.
 type Counter interface {
 	// Inc increments the gauge by 1. Use Add to increment it by arbitrary
 	// non-negative values.
 	Inc(...Label)
-	// Add adds the given value to the gauge. It panics if the value is <
-	// 0.
+	// Add adds the given value to the gauge. It panics if the value is < 0.
 	Add(float64, ...Label)
 }
 

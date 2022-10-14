@@ -19,6 +19,9 @@ type Gauge interface {
 	// Add adds the given value to the Gauge. (The value can be negative,
 	// resulting in a decrease of the Gauge.)
 	Add(float64, ...Label)
+	// Sub subtracts the given value from the Gauge. (The value can be
+	// negative, resulting in an increase of the Gauge.)
+	Sub(float64, ...Label)
 }
 
 type GaugeOpts Opts
@@ -54,4 +57,8 @@ func (p prometheusGauge) Dec(label ...Label) {
 
 func (p prometheusGauge) Add(f float64, label ...Label) {
 	p.gauge.With(toPrometheusLabel(label...)).Add(f)
+}
+
+func (p prometheusGauge) Sub(f float64, label ...Label) {
+	p.gauge.With(toPrometheusLabel(label...)).Sub(f)
 }
