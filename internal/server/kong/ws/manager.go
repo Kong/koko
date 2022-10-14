@@ -26,6 +26,7 @@ import (
 	"github.com/kong/koko/internal/resource"
 	"github.com/kong/koko/internal/server/kong/ws/config"
 	"github.com/kong/koko/internal/store"
+	"github.com/prometheus/client_golang/prometheus"
 	"go.uber.org/atomic"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
@@ -44,18 +45,22 @@ type ManagerOpts struct {
 }
 
 var (
-	dpPingCounter = metricsV2.NewCounter(metricsV2.CounterOpts{
-		Subsystem:  "cp",
-		Name:       "data_plane_ping_total",
-		Help:       "Number of pings from Kong gateway data-planes",
-		LabelNames: []string{"dp_version", "protocol"},
-	})
-	wsConnClosedCounter = metricsV2.NewCounter(metricsV2.CounterOpts{
-		Subsystem:  "cp",
-		Name:       "websocket_connection_closed_total",
-		Help:       "Number of data-plane websocket connections closed",
-		LabelNames: []string{"ws_close_code"},
-	})
+	dpPingCounter = metricsV2.NewCounter(
+		prometheus.NewRegistry(),
+		metricsV2.CounterOpts{
+			Subsystem:  "cp",
+			Name:       "data_plane_ping_total",
+			Help:       "Number of pings from Kong gateway data-planes",
+			LabelNames: []string{"dp_version", "protocol"},
+		})
+	wsConnClosedCounter = metricsV2.NewCounter(
+		prometheus.NewRegistry(),
+		metricsV2.CounterOpts{
+			Subsystem:  "cp",
+			Name:       "websocket_connection_closed_total",
+			Help:       "Number of data-plane websocket connections closed",
+			LabelNames: []string{"ws_close_code"},
+		})
 )
 
 type Cluster interface {

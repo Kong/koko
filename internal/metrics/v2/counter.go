@@ -17,16 +17,17 @@ type Counter interface {
 
 type CounterOpts Opts
 
-func NewCounter(opts CounterOpts) Counter {
+func NewCounter(registry prometheus.Registerer, opts CounterOpts) Counter {
 	return &prometheusCounter{
-		counter: promauto.NewCounterVec(prometheus.CounterOpts{
-			Namespace: namespace,
-			Subsystem: opts.Subsystem,
-			Name:      opts.Name,
-			Help:      opts.Help,
-		},
-			opts.LabelNames,
-		),
+		counter: promauto.With(registry).
+			NewCounterVec(prometheus.CounterOpts{
+				Namespace: namespace,
+				Subsystem: opts.Subsystem,
+				Name:      opts.Name,
+				Help:      opts.Help,
+			},
+				opts.LabelNames,
+			),
 	}
 }
 
