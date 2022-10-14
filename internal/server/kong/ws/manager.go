@@ -22,6 +22,7 @@ import (
 	relay "github.com/kong/koko/internal/gen/grpc/kong/relay/service/v1"
 	grpcKongUtil "github.com/kong/koko/internal/gen/grpc/kong/util/v1"
 	"github.com/kong/koko/internal/metrics"
+	metricsV2 "github.com/kong/koko/internal/metrics/v2"
 	"github.com/kong/koko/internal/resource"
 	"github.com/kong/koko/internal/server/kong/ws/config"
 	"github.com/kong/koko/internal/store"
@@ -41,6 +42,21 @@ type ManagerOpts struct {
 	DPConfigLoader         config.Loader
 	DPVersionCompatibility config.VersionCompatibility
 }
+
+var (
+	dpPingCounter = metricsV2.NewCounter(metricsV2.CounterOpts{
+		Subsystem:  "cp",
+		Name:       "data_plane_ping_total",
+		Help:       "Number of pings from Kong gateway data-planes",
+		LabelNames: []string{"dp_version", "protocol"},
+	})
+	wsConnClosedCounter = metricsV2.NewCounter(metricsV2.CounterOpts{
+		Subsystem:  "cp",
+		Name:       "websocket_connection_closed_total",
+		Help:       "Number of data-plane websocket connections closed",
+		LabelNames: []string{"ws_close_code"},
+	})
+)
 
 type Cluster interface {
 	Get() string
@@ -285,6 +301,16 @@ func (m *Manager) setupPingHandler(node *Node) {
 				Value: "ws",
 			},
 		)
+		dpPingCounter.Inc(
+			metricsV2.Label{
+				Key:   "dp_version",
+				Value: node.Version,
+			},
+			metricsV2.Label{
+				Key:   "protocol",
+				Value: "ws",
+			},
+		)
 		writeWait := time.Second
 		err := c.WriteControl(websocket.PongMessage, nil,
 			time.Now().Add(writeWait))
@@ -316,6 +342,10 @@ func increaseMetricCounter(code int) {
 		Value: strconv.Itoa(code),
 	}
 	metrics.Count("websocket_connection_closed_count", 1, tags)
+	wsConnClosedCounter.Inc(metricsV2.Label{
+		Key:   "ws_close_code",
+		Value: strconv.Itoa(code),
+	})
 }
 
 func (m *Manager) startThreads() {

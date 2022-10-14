@@ -22,7 +22,7 @@ type ControlServer struct {
 // Metrics config.
 type Metrics struct {
 	// ClientType metrics client type e.g. prometheus, datadog.
-	ClientType string `yaml:"client_type" json:"client_type" env:"CLIENT_TYPE" env-default:"noop"`
+	Enabled bool `json:"enabled,omitempty"`
 }
 
 // TLS defines re-usable TLS configuration used in tls.Config.

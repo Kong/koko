@@ -7,6 +7,7 @@ import (
 	"github.com/kong/go-wrpc/wrpc"
 	config_service "github.com/kong/koko/internal/gen/wrpc/kong/services/config/v1"
 	"github.com/kong/koko/internal/metrics"
+	metricsv2 "github.com/kong/koko/internal/metrics/v2"
 	"go.uber.org/zap"
 )
 
@@ -69,6 +70,16 @@ func (c *configService) PingCP(
 		Value: node.Version,
 	},
 		metrics.Tag{
+			Key:   "protocol",
+			Value: "wrpc",
+		},
+	)
+	dpPingCounter.Inc(
+		metricsv2.Label{
+			Key:   "dp_version",
+			Value: node.Version,
+		},
+		metricsv2.Label{
 			Key:   "protocol",
 			Value: "wrpc",
 		},
