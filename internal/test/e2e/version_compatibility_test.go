@@ -298,6 +298,9 @@ func TestVersionCompatibility_EnsureTargetFieldsAreNotOverridden(t *testing.T) {
 		{
 			Name: "pre-function",
 			Config: `{
+				"access": [
+					"kong.log.err('Hello Koko!')"
+				],
 				"functions": []
 			}`,
 			FieldUpdateChecks: map[string][]FieldUpdateCheck{
