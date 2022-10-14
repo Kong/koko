@@ -134,7 +134,7 @@ func WaitForAdminAPI(t *testing.T) error {
 
 // GenerateCertificate creates a random certificate with the given
 // amount of bits, and returns the PEM encoded public & private keys.
-func GenerateCertificate(bits int) (publicKey string, privateKey string, err error) {
+func GenerateCertificate(bits int, isCA bool) (publicKey string, privateKey string, err error) {
 	caCert := &x509.Certificate{
 		SerialNumber:          big.NewInt(1),
 		Subject:               pkix.Name{Organization: []string{"Test"}},
@@ -142,6 +142,7 @@ func GenerateCertificate(bits int) (publicKey string, privateKey string, err err
 		NotAfter:              time.Now().Add(24 * time.Hour), //nolint:gomnd
 		KeyUsage:              x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
 		BasicConstraintsValid: true,
+		IsCA:                  isCA,
 	}
 
 	pk, err := rsa.GenerateKey(rand.Reader, bits)

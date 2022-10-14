@@ -76,7 +76,7 @@ p0TGlNicxb2nnhRuh1U63VkBhl3k17vClDiwqHYwe7fPzlmj6kZMaXnpK6rd4kg7
 -----END CERTIFICATE-----
 `
 
-	invalidCert = `
+	invalidCertOne = `
 -----BEGIN CERTIFICATE-----
 MIIE4DCCAsigAwIBAgIBATANBgkqhkiG9w0BAQsFADAaMRgwFgYDVQQKDA9rb25n
 X2NsdXN0ZXJpbmcwHhcNMjIwMzA5MDk0MDQ0WhcNMzIwMjI1MDk0MDQ0WjAaMRgw
@@ -105,6 +105,38 @@ AM+NHourg1pQkSdqfaPMlxXHiHihIMDnUU+TA2buOrJ+vB84i5j0u06qSj20+zHe
 XAgC4eDa8hIbDB4npueEAwmOTz6/vm+2yBgQsknrcaKyUK6dBwhq7mJqln5sHd1j
 kE8xEEqIS+ND090MMgPWS+lnhuLq2ztWwtR8xmZssembJnVCgejsDot5egFDAcYw
 R7aUSg==
+-----END CERTIFICATE-----
+`
+
+	invalidCertTwo = `
+-----BEGIN CERTIFICATE-----
+MIIE8jCCAtqgAwIBAgICEAQwDQYJKoZIhvcNAQELBQAwgYExCzAJBgNVBAYTAkFV
+MREwDwYDVQQIDAhWaWN0b3JpYTESMBAGA1UEBwwJTWVsYm91cm5lMREwDwYDVQQK
+DAhmb01NIEx0ZDEbMBkGA1UECwwSZm9NTSBSU0EgQ2xpZW50IENBMRswGQYDVQQD
+DBJmb01NIFJTQSBDbGllbnQgQ0EwHhcNMjIwMzMwMDY0NjU3WhcNMjMwNDA5MDY0
+NjU3WjAWMRQwEgYDVQQDDAtkZW1vQGxpLmxhbjCCASIwDQYJKoZIhvcNAQEBBQAD
+ggEPADCCAQoCggEBAMusWI4QGXU+NH8Iar8qSF5XU08wK7pnKavIa1z2vCSEMtRE
+UehLSJuWjn5rDut1HLVcoAcV+kPRdKBNZP56XnQFZHV6p8wBMM6xor8K9B7vknBa
+fCz2dX1+rsu3BrBO6QTOaegRdXfvHx9Qk0VHYHvRaM+o47WY7A1dts9yLVpABGCI
+1ScC9K0hoCl0Th+jkNHrVPy/1iM623Ws5TCqnr5nnQkKBuDzO/vXc4w7uijCjrXL
+TailK+9ol1p1ZCpELSMsrwn9xrzWrNFraNnj9l8z+YletQFMinaBQgMVIfBcEP4x
+YS/mVLaJmyZK2IHYrE++mfokyUt8RUXQ9HTbEbMCAwEAAaOB3TCB2jAJBgNVHRME
+AjAAMBEGCWCGSAGG+EIBAQQEAwIFoDAzBglghkgBhvhCAQ0EJhYkT3BlblNTTCBH
+ZW5lcmF0ZWQgQ2xpZW50IENlcnRpZmljYXRlMB0GA1UdDgQWBBQeax7vnvtoFvr2
+9QlRw2RQdVPjKzAfBgNVHSMEGDAWgBR39H6D/oOnso24wy0ldGFWh4CFFDAOBgNV
+HQ8BAf8EBAMCBeAwHQYDVR0lBBYwFAYIKwYBBQUHAwIGCCsGAQUFBwMEMBYGA1Ud
+EQQPMA2CC2RlbW9AbGkubGFuMA0GCSqGSIb3DQEBCwUAA4ICAQAK4//22q7CEruU
+mJPxuQI6yCK2klEA0DkGofChtk2swvEJD5lF23AlT5p4xF2GNxlV8IrtCQKd0bF8
+qvH7xc94s7sIAG+XOVSnoItLZFHf6FktBD07m5ktuP9RgcMUiPLDB74Q5Elm3uu3
+004LTpYGTQRE2PEuT2Q6SfmuO8+t9fzdgdmCcn1Js4XyvjhUnse/82K4PDw2gSnL
+2VSbNgJdXZPHH4bvdLuvtyIXJKLwjBNOSmGTyvLy5NTdxqSx9EMsorAR29ziHEbY
+wczSkxtVo9mLy532V52A4KvcG0/nQbg4GbzdGfSmdTwIZ5zOxDJZfyRIPK9npKlc
+g2WR3QJ5LYoN8CkeFcc/UPUZgzmQVWVdIWFqKP9WIPCcvDudQaiLPbzPdZXeWxmC
+wR9AkhNGUbIsGPwwp7EW8BVVGU6pMAabuaCoxCWctdtlP73LzitYSh8lTah61cyI
+ajjd5ATqkYHmqttvEjFL7pwqA0YytBuRNaMPluUCYzHNXswpdW4JtgYF7Cw22JTc
+046AnG2thgODeaqYFkoAK4LFQ+PnWsKqM8OGsth3VTlnNDH0NX5pKJ14Yvh0r2rA
+jhhv6SAtbw4k9ZJGp/Bsum58u5i/ShPy1NuML3cCjdb/u1/OkWaLhgo1J4L6a7/o
+oBjbFPiujznjahpW7JTZsiP0ZiCmJw==
 -----END CERTIFICATE-----
 `
 
@@ -199,11 +231,11 @@ func TestCACertificate_Validate(t *testing.T) {
 			},
 		},
 		{
-			name: "valid certificate, but invalid CA fails",
+			name: "valid certificate, but invalid basic constraint fails",
 			CACertificate: func() CACertificate {
 				cert := NewCACertificate()
 				_ = cert.ProcessDefaults(context.Background())
-				cert.CACertificate.Cert = invalidCert
+				cert.CACertificate.Cert = invalidCertOne
 				return cert
 			},
 			wantErr: true,
@@ -211,7 +243,25 @@ func TestCACertificate_Validate(t *testing.T) {
 				{
 					Type:  model.ErrorType_ERROR_TYPE_FIELD,
 					Field: "cert",
-					Messages: []string{`certificate does not appear to be a CA because` +
+					Messages: []string{`certificate does not appear to be a CA because ` +
+						`it is missing the "CA" basic constraint`},
+				},
+			},
+		},
+		{
+			name: "valid certificate, but invalid 'CA' basic constraint is false",
+			CACertificate: func() CACertificate {
+				cert := NewCACertificate()
+				_ = cert.ProcessDefaults(context.Background())
+				cert.CACertificate.Cert = invalidCertTwo
+				return cert
+			},
+			wantErr: true,
+			Errs: []*model.ErrorDetail{
+				{
+					Type:  model.ErrorType_ERROR_TYPE_FIELD,
+					Field: "cert",
+					Messages: []string{`certificate does not appear to be a CA because ` +
 						`it is missing the "CA" basic constraint`},
 				},
 			},

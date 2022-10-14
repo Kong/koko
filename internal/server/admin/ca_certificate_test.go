@@ -250,7 +250,7 @@ func TestCACertificateCreate(t *testing.T) {
 			v1.ErrorType_ERROR_TYPE_FIELD.String())
 		errRes.Object().ValueEqual("field", "cert")
 		errRes.Object().ValueEqual("messages", []string{
-			`certificate does not appear to be a CA because` +
+			`certificate does not appear to be a CA because ` +
 				`it is missing the "CA" basic constraint`,
 		})
 	})
