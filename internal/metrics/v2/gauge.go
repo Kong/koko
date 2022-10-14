@@ -26,16 +26,17 @@ type Gauge interface {
 
 type GaugeOpts Opts
 
-func NewGauge(opts GaugeOpts) Gauge {
+func NewGauge(registry prometheus.Registerer, opts GaugeOpts) Gauge {
 	return &prometheusGauge{
-		gauge: promauto.NewGaugeVec(prometheus.GaugeOpts{
-			Namespace: namespace,
-			Subsystem: opts.Subsystem,
-			Name:      opts.Name,
-			Help:      opts.Help,
-		},
-			opts.LabelNames,
-		),
+		gauge: promauto.With(registry).
+			NewGaugeVec(prometheus.GaugeOpts{
+				Namespace: namespace,
+				Subsystem: opts.Subsystem,
+				Name:      opts.Name,
+				Help:      opts.Help,
+			},
+				opts.LabelNames,
+			),
 	}
 }
 
