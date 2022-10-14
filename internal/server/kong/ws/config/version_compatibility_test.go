@@ -5459,6 +5459,10 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 					{
 						Name: "plugin_1",
 						Type: Plugin,
+						DisableChangeTracking: func(rawJSON string) bool {
+							plugin := gjson.Parse(rawJSON)
+							return ValueIsEmpty(plugin.Get("config.plugin_field_1"))
+						},
 						FieldUpdates: []ConfigTableFieldCondition{
 							{
 								Field:     "plugin_field_1",
@@ -5476,14 +5480,6 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 							},
 						},
 						ChangeID: "T101",
-					},
-					{
-						Name: "plugin_1",
-						Type: Plugin,
-						RemoveFields: []string{
-							"plugin_field_1",
-						},
-						ChangeID: "T102",
 					},
 				},
 			},
@@ -5536,6 +5532,10 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 					{
 						Name: "plugin_1",
 						Type: Plugin,
+						DisableChangeTracking: func(rawJSON string) bool {
+							plugin := gjson.Parse(rawJSON)
+							return ValueIsEmpty(plugin.Get("config.plugin_field_1"))
+						},
 						FieldUpdates: []ConfigTableFieldCondition{
 							{
 								Field:     "plugin_field_1",
@@ -5605,6 +5605,10 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 					{
 						Name: "plugin_1",
 						Type: Plugin,
+						DisableChangeTracking: func(rawJSON string) bool {
+							plugin := gjson.Parse(rawJSON)
+							return ValueIsEmpty(plugin.Get("config.plugin_field_1"))
+						},
 						FieldUpdates: []ConfigTableFieldCondition{
 							{
 								Field:     "plugin_field_1",
@@ -5653,19 +5657,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 					]
 				}
 			}`,
-			expectedChanges: TrackedChanges{
-				ChangeDetails: []ChangeDetail{
-					{
-						ID: "T101",
-						Resources: []ResourceInfo{
-							{
-								Type: "plugin",
-								ID:   "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
-							},
-						},
-					},
-				},
-			},
+			expectedChanges: TrackedChanges{},
 		},
 		{
 			name: "field updates conditionally ignore empty objects",
@@ -5674,6 +5666,10 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 					{
 						Name: "plugin_1",
 						Type: Plugin,
+						DisableChangeTracking: func(rawJSON string) bool {
+							plugin := gjson.Parse(rawJSON)
+							return ValueIsEmpty(plugin.Get("config.plugin_field_1"))
+						},
 						FieldUpdates: []ConfigTableFieldCondition{
 							{
 								Field:     "plugin_field_1",
@@ -5722,19 +5718,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 					]
 				}
 			}`,
-			expectedChanges: TrackedChanges{
-				ChangeDetails: []ChangeDetail{
-					{
-						ID: "T101",
-						Resources: []ResourceInfo{
-							{
-								Type: "plugin",
-								ID:   "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
-							},
-						},
-					},
-				},
-			},
+			expectedChanges: TrackedChanges{},
 		},
 		{
 			name: "field updates conditionally ignore empty strings",
@@ -5743,6 +5727,10 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 					{
 						Name: "plugin_1",
 						Type: Plugin,
+						DisableChangeTracking: func(rawJSON string) bool {
+							plugin := gjson.Parse(rawJSON)
+							return ValueIsEmpty(plugin.Get("config.plugin_field_1"))
+						},
 						FieldUpdates: []ConfigTableFieldCondition{
 							{
 								Field:     "plugin_field_1",
@@ -5791,19 +5779,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 					]
 				}
 			}`,
-			expectedChanges: TrackedChanges{
-				ChangeDetails: []ChangeDetail{
-					{
-						ID: "T101",
-						Resources: []ResourceInfo{
-							{
-								Type: "plugin",
-								ID:   "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
-							},
-						},
-					},
-				},
-			},
+			expectedChanges: TrackedChanges{},
 		},
 		{
 			name: "field updates conditionally ignore nil values",
@@ -5812,6 +5788,10 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 					{
 						Name: "plugin_1",
 						Type: Plugin,
+						DisableChangeTracking: func(rawJSON string) bool {
+							plugin := gjson.Parse(rawJSON)
+							return ValueIsEmpty(plugin.Get("config.plugin_field_1"))
+						},
 						FieldUpdates: []ConfigTableFieldCondition{
 							{
 								Field:     "plugin_field_1",
@@ -5860,19 +5840,7 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 					]
 				}
 			}`,
-			expectedChanges: TrackedChanges{
-				ChangeDetails: []ChangeDetail{
-					{
-						ID: "T101",
-						Resources: []ResourceInfo{
-							{
-								Type: "plugin",
-								ID:   "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
-							},
-						},
-					},
-				},
-			},
+			expectedChanges: TrackedChanges{},
 		},
 		{
 			name: "field updates do not create new fields when ignoring empty array values",
@@ -5881,6 +5849,10 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 					{
 						Name: "plugin_1",
 						Type: Plugin,
+						DisableChangeTracking: func(rawJSON string) bool {
+							plugin := gjson.Parse(rawJSON)
+							return ValueIsEmpty(plugin.Get("config.plugin_field_1"))
+						},
 						FieldUpdates: []ConfigTableFieldCondition{
 							{
 								Field:     "plugin_field_1",
@@ -5898,19 +5870,6 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 							},
 						},
 						ChangeID: "T101",
-					},
-					{
-						Name: "plugin_1",
-						Type: Plugin,
-						RemoveFields: []string{
-							"plugin_field_1",
-						},
-						DisableChangeTracking: func(rawJSON string) bool {
-							// do not emit change if functions is set to default value (empty array)
-							plugin := gjson.Parse(rawJSON)
-							return len(plugin.Get("config.plugin_field_1").Array()) == 0
-						},
-						ChangeID: "T102",
 					},
 				},
 			},
@@ -5942,12 +5901,16 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 			expectedChanges: TrackedChanges{},
 		},
 		{
-			name: "field updates conditionally ignore empty arrays",
+			name: "core field updates conditionally ignore empty arrays",
 			configTableUpdates: map[string][]ConfigTableUpdates{
 				">= 3.0.0": {
 					{
 						Name: "plugin_1",
 						Type: CorePlugin,
+						DisableChangeTracking: func(rawJSON string) bool {
+							plugin := gjson.Parse(rawJSON)
+							return ValueIsEmpty(plugin.Get("plugin_field_1"))
+						},
 						FieldUpdates: []ConfigTableFieldCondition{
 							{
 								Field:     "plugin_field_1",
@@ -5965,14 +5928,6 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 							},
 						},
 						ChangeID: "T101",
-					},
-					{
-						Name: "plugin_1",
-						Type: CorePlugin,
-						RemoveFields: []string{
-							"plugin_field_1",
-						},
-						ChangeID: "T102",
 					},
 				},
 			},
@@ -6000,27 +5955,19 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 					]
 				}
 			}`,
-			expectedChanges: TrackedChanges{
-				ChangeDetails: []ChangeDetail{
-					{
-						ID: "T102",
-						Resources: []ResourceInfo{
-							{
-								Type: "plugin",
-								ID:   "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
-							},
-						},
-					},
-				},
-			},
+			expectedChanges: TrackedChanges{},
 		},
 		{
-			name: "field updates conditionally ignore empty objects",
+			name: "core field updates conditionally ignore empty objects",
 			configTableUpdates: map[string][]ConfigTableUpdates{
 				">= 3.0.0": {
 					{
 						Name: "plugin_1",
 						Type: CorePlugin,
+						DisableChangeTracking: func(rawJSON string) bool {
+							plugin := gjson.Parse(rawJSON)
+							return ValueIsEmpty(plugin.Get("plugin_field_1"))
+						},
 						FieldUpdates: []ConfigTableFieldCondition{
 							{
 								Field:     "plugin_field_1",
@@ -6038,14 +5985,6 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 							},
 						},
 						ChangeID: "T101",
-					},
-					{
-						Name: "plugin_1",
-						Type: CorePlugin,
-						RemoveFields: []string{
-							"plugin_field_1",
-						},
-						ChangeID: "T102",
 					},
 				},
 			},
@@ -6073,27 +6012,19 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 					]
 				}
 			}`,
-			expectedChanges: TrackedChanges{
-				ChangeDetails: []ChangeDetail{
-					{
-						ID: "T102",
-						Resources: []ResourceInfo{
-							{
-								Type: "plugin",
-								ID:   "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
-							},
-						},
-					},
-				},
-			},
+			expectedChanges: TrackedChanges{},
 		},
 		{
-			name: "field updates conditionally ignore empty strings",
+			name: "core field updates conditionally ignore empty strings",
 			configTableUpdates: map[string][]ConfigTableUpdates{
 				">= 3.0.0": {
 					{
 						Name: "plugin_1",
 						Type: CorePlugin,
+						DisableChangeTracking: func(rawJSON string) bool {
+							plugin := gjson.Parse(rawJSON)
+							return ValueIsEmpty(plugin.Get("plugin_field_1"))
+						},
 						FieldUpdates: []ConfigTableFieldCondition{
 							{
 								Field:     "plugin_field_1",
@@ -6111,14 +6042,6 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 							},
 						},
 						ChangeID: "T101",
-					},
-					{
-						Name: "plugin_1",
-						Type: CorePlugin,
-						RemoveFields: []string{
-							"plugin_field_1",
-						},
-						ChangeID: "T102",
 					},
 				},
 			},
@@ -6146,27 +6069,19 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 					]
 				}
 			}`,
-			expectedChanges: TrackedChanges{
-				ChangeDetails: []ChangeDetail{
-					{
-						ID: "T102",
-						Resources: []ResourceInfo{
-							{
-								Type: "plugin",
-								ID:   "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
-							},
-						},
-					},
-				},
-			},
+			expectedChanges: TrackedChanges{},
 		},
 		{
-			name: "field updates conditionally ignore nil values",
+			name: "core field updates conditionally ignore nil values",
 			configTableUpdates: map[string][]ConfigTableUpdates{
 				">= 3.0.0": {
 					{
 						Name: "plugin_1",
 						Type: CorePlugin,
+						DisableChangeTracking: func(rawJSON string) bool {
+							plugin := gjson.Parse(rawJSON)
+							return ValueIsEmpty(plugin.Get("plugin_field_1"))
+						},
 						FieldUpdates: []ConfigTableFieldCondition{
 							{
 								Field:     "plugin_field_1",
@@ -6184,14 +6099,6 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 							},
 						},
 						ChangeID: "T101",
-					},
-					{
-						Name: "plugin_1",
-						Type: CorePlugin,
-						RemoveFields: []string{
-							"plugin_field_1",
-						},
-						ChangeID: "T102",
 					},
 				},
 			},
@@ -6219,27 +6126,19 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 					]
 				}
 			}`,
-			expectedChanges: TrackedChanges{
-				ChangeDetails: []ChangeDetail{
-					{
-						ID: "T102",
-						Resources: []ResourceInfo{
-							{
-								Type: "plugin",
-								ID:   "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
-							},
-						},
-					},
-				},
-			},
+			expectedChanges: TrackedChanges{},
 		},
 		{
-			name: "field updates do not create new fields when ignoring empty array values",
+			name: "core field updates do not create new fields when ignoring empty array values",
 			configTableUpdates: map[string][]ConfigTableUpdates{
 				">= 3.0.0": {
 					{
 						Name: "plugin_1",
 						Type: CorePlugin,
+						DisableChangeTracking: func(rawJSON string) bool {
+							plugin := gjson.Parse(rawJSON)
+							return ValueIsEmpty(plugin.Get("plugin_field_1"))
+						},
 						FieldUpdates: []ConfigTableFieldCondition{
 							{
 								Field:     "plugin_field_1",
@@ -6257,19 +6156,6 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 							},
 						},
 						ChangeID: "T101",
-					},
-					{
-						Name: "plugin_1",
-						Type: CorePlugin,
-						RemoveFields: []string{
-							"plugin_field_1",
-						},
-						DisableChangeTracking: func(rawJSON string) bool {
-							// do not emit change if functions is set to default value (empty array)
-							plugin := gjson.Parse(rawJSON)
-							return len(plugin.Get("config.plugin_field_1").Array()) == 0
-						},
-						ChangeID: "T102",
 					},
 				},
 			},
@@ -6496,7 +6382,7 @@ func TestVersionCompatibility_ValueIsEmpty(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			require.Equal(t, test.expectedValue, valueIsEmpty(gjson.Get(test.rawJSON, "value")))
+			require.Equal(t, test.expectedValue, ValueIsEmpty(gjson.Get(test.rawJSON, "value")))
 		})
 	}
 }

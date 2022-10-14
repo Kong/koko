@@ -282,6 +282,7 @@ func TestVersionCompatibility_EnsureTargetFieldsAreNotOverridden(t *testing.T) {
 	require.NoError(t, util.WaitForKong(t))
 	require.NoError(t, util.WaitForKongAdminAPI(t))
 
+	kongClient.RunWhenKong(t, ">=3.0.0")
 	kongAdmin, err := kongClient.NewClient(util.BasedKongAdminAPIAddr, nil)
 	require.NoError(t, err, "create go client for kong")
 	ctx := context.Background()
@@ -297,9 +298,6 @@ func TestVersionCompatibility_EnsureTargetFieldsAreNotOverridden(t *testing.T) {
 		{
 			Name: "pre-function",
 			Config: `{
-				"access": [
-					"kong.log.err('Hello Koko!')"
-				],
 				"functions": []
 			}`,
 			FieldUpdateChecks: map[string][]FieldUpdateCheck{
