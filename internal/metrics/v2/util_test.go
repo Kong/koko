@@ -1,9 +1,10 @@
 package v2
 
 import (
-	"github.com/prometheus/client_golang/prometheus"
 	"reflect"
 	"testing"
+
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 func TestToPrometheusLabel(t *testing.T) {
