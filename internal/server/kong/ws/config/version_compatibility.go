@@ -392,8 +392,6 @@ func (vc *WSVersionCompatibility) processPluginUpdates(payload string,
 							conditionUpdate := fmt.Sprintf("config.%s", fieldUpdate.Field)
 							// Ensure the original field is not empty if specified; do not overwrite
 							if fieldUpdate.FieldMustBeEmpty && !ValueIsEmpty(gjson.Get(updatedRaw, conditionUpdate)) {
-								// Since this is a copy function from another field and the current field is already
-								// configured the entire field update process should short circuit
 								continue
 							}
 
@@ -573,7 +571,6 @@ func (vc *WSVersionCompatibility) processCoreEntityUpdates(payload string,
 
 		// Field update
 		for _, update := range configTableUpdate.FieldUpdates {
-			fmt.Println("update: ", update)
 			configField := update.Field
 			if gjson.Get(updatedRaw, configField).Exists() {
 				conditionField := fmt.Sprintf("[@this].#(%s)", update.Condition)
