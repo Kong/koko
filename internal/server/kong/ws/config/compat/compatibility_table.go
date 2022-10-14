@@ -406,23 +406,6 @@ var (
 		},
 		{
 			Metadata: config.ChangeMetadata{
-				ID:       config.ChangeID("P114"),
-				Severity: config.ChangeSeverityError,
-				Description: standardPluginFieldsMessage("response-ratelimiting",
-					[]string{"redis_username"}, "2.8", false),
-				Resolution: standardUpgradeMessage("3.0"),
-			},
-			SemverRange: versionsPre280,
-			Update: config.ConfigTableUpdates{
-				Name: "response-ratelimiting",
-				Type: config.Plugin,
-				RemoveFields: []string{
-					"redis_username",
-				},
-			},
-		},
-		{
-			Metadata: config.ChangeMetadata{
 				ID:          config.ChangeID("P115"),
 				Severity:    config.ChangeSeverityError,
 				Description: standardPluginNotAvailableMessage("opentelemetry", "3.0"),
