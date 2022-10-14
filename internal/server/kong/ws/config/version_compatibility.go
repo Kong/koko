@@ -330,12 +330,14 @@ func (vc *WSVersionCompatibility) processPluginUpdates(payload string,
 						vc.logger.With(zap.String("plugin", pluginName)).
 							With(zap.String("field", configField)).
 							With(zap.String("data-plane", dataPlaneVersionStr)).
+							With(zap.String("change-id", string(configTableUpdate.ChangeID))).
 							With(zap.Error(err)).
 							Error("plugin configuration field was not removed from configuration")
 					} else {
 						vc.logger.With(zap.String("plugin", pluginName)).
 							With(zap.String("field", configField)).
 							With(zap.String("data-plane", dataPlaneVersionStr)).
+							With(zap.String("change-id", string(configTableUpdate.ChangeID))).
 							Warn("removing plugin configuration field which is incompatible with data plane")
 					}
 				}
@@ -365,6 +367,7 @@ func (vc *WSVersionCompatibility) processPluginUpdates(payload string,
 								With(zap.String("condition", array.Condition)).
 								With(zap.Int("index", arrayIndex)).
 								With(zap.String("data-plane", dataPlaneVersionStr)).
+								With(zap.String("change-id", string(configTableUpdate.ChangeID))).
 								With(zap.Error(err)).
 								Error("plugin configuration array item was not removed from configuration")
 						} else {
@@ -373,6 +376,7 @@ func (vc *WSVersionCompatibility) processPluginUpdates(payload string,
 								With(zap.String("condition", array.Condition)).
 								With(zap.Int("index", arrayIndex)).
 								With(zap.String("data-plane", dataPlaneVersionStr)).
+								With(zap.String("change-id", string(configTableUpdate.ChangeID))).
 								Warn("removing plugin configuration array item which is incompatible with data plane")
 						}
 					}
@@ -394,6 +398,7 @@ func (vc *WSVersionCompatibility) processPluginUpdates(payload string,
 									vc.logger.With(zap.String("plugin", pluginName)).
 										With(zap.String("field", conditionUpdate)).
 										With(zap.String("data-plane", dataPlaneVersionStr)).
+										With(zap.String("change-id", string(configTableUpdate.ChangeID))).
 										With(zap.Error(err)).
 										Error("plugin configuration item was not removed from configuration")
 								} else {
@@ -401,6 +406,7 @@ func (vc *WSVersionCompatibility) processPluginUpdates(payload string,
 										With(zap.String("field", configField)).
 										With(zap.String("condition", conditionUpdate)).
 										With(zap.String("data-plane", dataPlaneVersionStr)).
+										With(zap.String("change-id", string(configTableUpdate.ChangeID))).
 										Warn("removing plugin configuration item which is incompatible with data plane")
 								}
 							} else {
@@ -431,16 +437,18 @@ func (vc *WSVersionCompatibility) processPluginUpdates(payload string,
 									vc.logger.With(zap.String("plugin", pluginName)).
 										With(zap.String("field", configField)).
 										With(zap.String("condition", update.Condition)).
-										With(zap.Any("new-value", fieldUpdate.Value)).
+										With(zap.Any("new-value", value)).
 										With(zap.String("data-plane", dataPlaneVersionStr)).
+										With(zap.String("change-id", string(configTableUpdate.ChangeID))).
 										With(zap.Error(err)).
 										Error("plugin configuration field was not updated in the configuration")
 								} else {
 									vc.logger.With(zap.String("plugin", pluginName)).
 										With(zap.String("field", configField)).
 										With(zap.String("condition", update.Condition)).
-										With(zap.Any("new-value", fieldUpdate.Value)).
+										With(zap.Any("new-value", value)).
 										With(zap.String("data-plane", dataPlaneVersionStr)).
+										With(zap.String("change-id", string(configTableUpdate.ChangeID))).
 										Warn("updating plugin configuration field which is incompatible with data plane")
 								}
 							}
@@ -512,6 +520,7 @@ func (vc *WSVersionCompatibility) processCoreEntityUpdates(payload string,
 						With(zap.String("name", name)).
 						With(zap.String("field", field)).
 						With(zap.String("data-plane", dataPlaneVersionStr)).
+						With(zap.String("change-id", string(configTableUpdate.ChangeID))).
 						With(zap.Error(err)).
 						Error("entity field was not removed from configuration")
 				} else {
@@ -519,6 +528,7 @@ func (vc *WSVersionCompatibility) processCoreEntityUpdates(payload string,
 						With(zap.String("name", name)).
 						With(zap.String("field", field)).
 						With(zap.String("data-plane", dataPlaneVersionStr)).
+						With(zap.String("change-id", string(configTableUpdate.ChangeID))).
 						Warn("removing entity field which is incompatible with data plane")
 				}
 			}
@@ -548,6 +558,7 @@ func (vc *WSVersionCompatibility) processCoreEntityUpdates(payload string,
 						With(zap.String("condition", array.Condition)).
 						With(zap.Int("index", arrayIndex)).
 						With(zap.String("data-plane", dataPlaneVersionStr)).
+						With(zap.String("change-id", string(configTableUpdate.ChangeID))).
 						With(zap.Error(err)).
 						Error("plugin configuration array item was not removed from configuration")
 				} else {
@@ -557,6 +568,7 @@ func (vc *WSVersionCompatibility) processCoreEntityUpdates(payload string,
 						With(zap.String("condition", array.Condition)).
 						With(zap.Int("index", arrayIndex)).
 						With(zap.String("data-plane", dataPlaneVersionStr)).
+						With(zap.String("change-id", string(configTableUpdate.ChangeID))).
 						Warn("removing plugin configuration array item which is incompatible with data plane")
 				}
 			}
@@ -578,6 +590,7 @@ func (vc *WSVersionCompatibility) processCoreEntityUpdates(payload string,
 									With(zap.String("name", name)).
 									With(zap.String("field", conditionUpdate)).
 									With(zap.String("data-plane", dataPlaneVersionStr)).
+									With(zap.String("change-id", string(configTableUpdate.ChangeID))).
 									With(zap.Error(err)).
 									Error("entity item was not removed from configuration")
 							} else {
@@ -586,6 +599,7 @@ func (vc *WSVersionCompatibility) processCoreEntityUpdates(payload string,
 									With(zap.String("field", configField)).
 									With(zap.String("condition", conditionUpdate)).
 									With(zap.String("data-plane", dataPlaneVersionStr)).
+									With(zap.String("change-id", string(configTableUpdate.ChangeID))).
 									Warn("removing entity item which is incompatible with data plane")
 							}
 						} else {
@@ -618,8 +632,9 @@ func (vc *WSVersionCompatibility) processCoreEntityUpdates(payload string,
 									With(zap.String("name", name)).
 									With(zap.String("field", configField)).
 									With(zap.String("condition", update.Condition)).
-									With(zap.Any("new-value", fieldUpdate.Value)).
+									With(zap.Any("new-value", value)).
 									With(zap.String("data-plane", dataPlaneVersionStr)).
+									With(zap.String("change-id", string(configTableUpdate.ChangeID))).
 									With(zap.Error(err)).
 									Error("entity field was not updated int configuration")
 							} else {
@@ -627,8 +642,9 @@ func (vc *WSVersionCompatibility) processCoreEntityUpdates(payload string,
 									With(zap.String("name", name)).
 									With(zap.String("field", configField)).
 									With(zap.String("condition", update.Condition)).
-									With(zap.Any("new-value", fieldUpdate.Value)).
+									With(zap.Any("new-value", value)).
 									With(zap.String("data-plane", dataPlaneVersionStr)).
+									With(zap.String("change-id", string(configTableUpdate.ChangeID))).
 									Warn("updating entity field which is incompatible with data plane")
 							}
 						}
