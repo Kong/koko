@@ -16,9 +16,9 @@ func TestNewCounter(t *testing.T) {
 		{
 			name: "should successfully create a counter",
 			opts: CounterOpts{
-				Subsystem:  "cp",
-				Name:       "websocket_connection_closed_total",
-				Help:       "Number of data-plane websocket connections closed",
+				Subsystem:  "test_subsystem",
+				Name:       "counter_test_total",
+				Help:       "counter_test help",
 				LabelNames: []string{"ws_close_code"},
 			},
 		},
@@ -63,9 +63,9 @@ func TestPrometheusCounterAdd(t *testing.T) {
 			fields: fields{
 				registry: prometheus.NewRegistry(),
 				opts: CounterOpts{
-					Subsystem:  "cp",
-					Name:       "websocket_connection_closed_total",
-					Help:       "Number of data-plane websocket connections closed",
+					Subsystem:  "test_subsystem",
+					Name:       "counter_test_total",
+					Help:       "counter_test help",
 					LabelNames: []string{},
 				},
 			},
@@ -80,9 +80,9 @@ func TestPrometheusCounterAdd(t *testing.T) {
 			fields: fields{
 				registry: prometheus.NewRegistry(),
 				opts: CounterOpts{
-					Subsystem:  "cp",
-					Name:       "websocket_connection_closed_total",
-					Help:       "Number of data-plane websocket connections closed",
+					Subsystem:  "test_subsystem",
+					Name:       "counter_test_total",
+					Help:       "counter_test help",
 					LabelNames: []string{"foo", "bar"},
 				},
 			},
@@ -97,9 +97,9 @@ func TestPrometheusCounterAdd(t *testing.T) {
 			fields: fields{
 				registry: prometheus.NewRegistry(),
 				opts: CounterOpts{
-					Subsystem:  "cp",
-					Name:       "websocket_connection_closed_total",
-					Help:       "Number of data-plane websocket connections closed",
+					Subsystem:  "test_subsystem",
+					Name:       "counter_test_total",
+					Help:       "counter_test help",
 					LabelNames: []string{"foo", "bar"},
 				},
 			},
@@ -114,9 +114,9 @@ func TestPrometheusCounterAdd(t *testing.T) {
 			fields: fields{
 				registry: prometheus.NewRegistry(),
 				opts: CounterOpts{
-					Subsystem:  "cp",
-					Name:       "websocket_connection_closed_total",
-					Help:       "Number of data-plane websocket connections closed",
+					Subsystem:  "test_subsystem",
+					Name:       "counter_test_total",
+					Help:       "counter_test help",
 					LabelNames: []string{"foo", "bar"},
 				},
 			},
@@ -161,9 +161,9 @@ func TestPrometheusCounterInc(t *testing.T) {
 			fields: fields{
 				registry: prometheus.NewRegistry(),
 				opts: CounterOpts{
-					Subsystem:  "cp",
-					Name:       "websocket_connection_closed_total",
-					Help:       "Number of data-plane websocket connections closed",
+					Subsystem:  "test_subsystem",
+					Name:       "counter_test_total",
+					Help:       "counter_test help",
 					LabelNames: []string{},
 				},
 			},
@@ -173,9 +173,9 @@ func TestPrometheusCounterInc(t *testing.T) {
 			fields: fields{
 				registry: prometheus.NewRegistry(),
 				opts: CounterOpts{
-					Subsystem:  "cp",
-					Name:       "websocket_connection_closed_total",
-					Help:       "Number of data-plane websocket connections closed",
+					Subsystem:  "test_subsystem",
+					Name:       "counter_test_total",
+					Help:       "counter_test help",
 					LabelNames: []string{"foo", "bar"},
 				},
 			},

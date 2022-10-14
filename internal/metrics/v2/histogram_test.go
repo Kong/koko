@@ -89,7 +89,6 @@ func Test_prometheusHistogram_Observe(t *testing.T) {
 	type expected struct {
 		sampleSum   float64
 		sampleCount uint64
-		bucket      interface{}
 	}
 	tests := []struct {
 		name   string
