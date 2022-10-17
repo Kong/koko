@@ -8,6 +8,7 @@ import (
 	"github.com/kong/koko/internal/log"
 	"github.com/kong/koko/internal/versioning"
 	"github.com/stretchr/testify/require"
+	"github.com/tidwall/gjson"
 	"github.com/tidwall/sjson"
 	"go.uber.org/zap"
 )
@@ -5451,6 +5452,624 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 				}
 			}`,
 		},
+		{
+			name: "field updates should overwrite existing empty values",
+			configTableUpdates: map[string][]ConfigTableUpdates{
+				">= 3.0.0": {
+					{
+						Name: "plugin_1",
+						Type: Plugin,
+						DisableChangeTracking: func(rawJSON string) bool {
+							plugin := gjson.Parse(rawJSON)
+							return ValueIsEmpty(plugin.Get("config.plugin_field_1"))
+						},
+						FieldUpdates: []ConfigTableFieldCondition{
+							{
+								Field:     "plugin_field_1",
+								Condition: "plugin_field_1",
+								Updates: []ConfigTableFieldUpdate{
+									{
+										Field:            "plugin_field_2",
+										ValueFromField:   "plugin_field_1",
+										FieldMustBeEmpty: true,
+									},
+									{
+										Field: "plugin_field_1",
+									},
+								},
+							},
+						},
+						ChangeID: "T101",
+					},
+				},
+			},
+			uncompressedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							"name": "plugin_1",
+							"config": {
+								"plugin_field_1": ["kong.log.err('Hello Koko!')"],
+								"plugin_field_2": []
+							}
+						}
+					]
+				}
+			}`,
+			dataPlaneVersion: "3.0.0",
+			expectedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							"name": "plugin_1",
+							"config": {
+								"plugin_field_2": ["kong.log.err('Hello Koko!')"]
+							}
+						}
+					]
+				}
+			}`,
+			expectedChanges: TrackedChanges{
+				ChangeDetails: []ChangeDetail{
+					{
+						ID: "T101",
+						Resources: []ResourceInfo{
+							{
+								Type: "plugin",
+								ID:   "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "field updates do not overwrite existing values",
+			configTableUpdates: map[string][]ConfigTableUpdates{
+				">= 3.0.0": {
+					{
+						Name: "plugin_1",
+						Type: Plugin,
+						DisableChangeTracking: func(rawJSON string) bool {
+							plugin := gjson.Parse(rawJSON)
+							return ValueIsEmpty(plugin.Get("config.plugin_field_1"))
+						},
+						FieldUpdates: []ConfigTableFieldCondition{
+							{
+								Field:     "plugin_field_1",
+								Condition: "plugin_field_1",
+								Updates: []ConfigTableFieldUpdate{
+									{
+										Field:            "plugin_field_2",
+										ValueFromField:   "plugin_field_1",
+										FieldMustBeEmpty: true,
+									},
+									{
+										Field: "plugin_field_1",
+									},
+								},
+							},
+						},
+						ChangeID: "T101",
+					},
+				},
+			},
+			uncompressedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							"name": "plugin_1",
+							"config": {
+								"plugin_field_1": ["kong.log.err('Should not overwrite')"],
+								"plugin_field_2": ["kong.log.err('Hello Koko!')"]
+							}
+						}
+					]
+				}
+			}`,
+			dataPlaneVersion: "3.0.0",
+			expectedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							"name": "plugin_1",
+							"config": {
+								"plugin_field_2": ["kong.log.err('Hello Koko!')"]
+							}
+						}
+					]
+				}
+			}`,
+			expectedChanges: TrackedChanges{
+				ChangeDetails: []ChangeDetail{
+					{
+						ID: "T101",
+						Resources: []ResourceInfo{
+							{
+								Type: "plugin",
+								ID:   "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "field updates conditionally ignore empty arrays",
+			configTableUpdates: map[string][]ConfigTableUpdates{
+				">= 3.0.0": {
+					{
+						Name: "plugin_1",
+						Type: Plugin,
+						DisableChangeTracking: func(rawJSON string) bool {
+							plugin := gjson.Parse(rawJSON)
+							return ValueIsEmpty(plugin.Get("config.plugin_field_1"))
+						},
+						FieldUpdates: []ConfigTableFieldCondition{
+							{
+								Field:     "plugin_field_1",
+								Condition: "plugin_field_1",
+								Updates: []ConfigTableFieldUpdate{
+									{
+										Field:            "plugin_field_2",
+										ValueFromField:   "plugin_field_1",
+										FieldMustBeEmpty: true,
+									},
+									{
+										Field: "plugin_field_1",
+									},
+								},
+							},
+						},
+						ChangeID: "T101",
+					},
+				},
+			},
+			uncompressedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							"name": "plugin_1",
+							"config": {
+								"plugin_field_1": [],
+								"plugin_field_2": ["kong.log.err('Hello Koko!')"]
+							}
+						}
+					]
+				}
+			}`,
+			dataPlaneVersion: "3.0.0",
+			expectedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							"name": "plugin_1",
+							"config": {
+								"plugin_field_2": ["kong.log.err('Hello Koko!')"]
+							}
+						}
+					]
+				}
+			}`,
+			expectedChanges: TrackedChanges{},
+		},
+		{
+			name: "field updates conditionally ignore empty objects",
+			configTableUpdates: map[string][]ConfigTableUpdates{
+				">= 3.0.0": {
+					{
+						Name: "plugin_1",
+						Type: Plugin,
+						DisableChangeTracking: func(rawJSON string) bool {
+							plugin := gjson.Parse(rawJSON)
+							return ValueIsEmpty(plugin.Get("config.plugin_field_1"))
+						},
+						FieldUpdates: []ConfigTableFieldCondition{
+							{
+								Field:     "plugin_field_1",
+								Condition: "plugin_field_1",
+								Updates: []ConfigTableFieldUpdate{
+									{
+										Field:            "plugin_field_2",
+										ValueFromField:   "plugin_field_1",
+										FieldMustBeEmpty: true,
+									},
+									{
+										Field: "plugin_field_1",
+									},
+								},
+							},
+						},
+						ChangeID: "T101",
+					},
+				},
+			},
+			uncompressedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							"name": "plugin_1",
+							"config": {
+								"plugin_field_1": {},
+								"plugin_field_2": { "foo": "bar" }
+							}
+						}
+					]
+				}
+			}`,
+			dataPlaneVersion: "3.0.0",
+			expectedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							"name": "plugin_1",
+							"config": {
+								"plugin_field_2": { "foo": "bar" }
+							}
+						}
+					]
+				}
+			}`,
+			expectedChanges: TrackedChanges{},
+		},
+		{
+			name: "field updates conditionally ignore empty strings",
+			configTableUpdates: map[string][]ConfigTableUpdates{
+				">= 3.0.0": {
+					{
+						Name: "plugin_1",
+						Type: Plugin,
+						DisableChangeTracking: func(rawJSON string) bool {
+							plugin := gjson.Parse(rawJSON)
+							return ValueIsEmpty(plugin.Get("config.plugin_field_1"))
+						},
+						FieldUpdates: []ConfigTableFieldCondition{
+							{
+								Field:     "plugin_field_1",
+								Condition: "plugin_field_1",
+								Updates: []ConfigTableFieldUpdate{
+									{
+										Field:            "plugin_field_2",
+										ValueFromField:   "plugin_field_1",
+										FieldMustBeEmpty: true,
+									},
+									{
+										Field: "plugin_field_1",
+									},
+								},
+							},
+						},
+						ChangeID: "T101",
+					},
+				},
+			},
+			uncompressedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							"name": "plugin_1",
+							"config": {
+								"plugin_field_1": "",
+								"plugin_field_2": "foo"
+							}
+						}
+					]
+				}
+			}`,
+			dataPlaneVersion: "3.0.0",
+			expectedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							"name": "plugin_1",
+							"config": {
+								"plugin_field_2": "foo"
+							}
+						}
+					]
+				}
+			}`,
+			expectedChanges: TrackedChanges{},
+		},
+		{
+			name: "field updates conditionally ignore nil values",
+			configTableUpdates: map[string][]ConfigTableUpdates{
+				">= 3.0.0": {
+					{
+						Name: "plugin_1",
+						Type: Plugin,
+						DisableChangeTracking: func(rawJSON string) bool {
+							plugin := gjson.Parse(rawJSON)
+							return ValueIsEmpty(plugin.Get("config.plugin_field_1"))
+						},
+						FieldUpdates: []ConfigTableFieldCondition{
+							{
+								Field:     "plugin_field_1",
+								Condition: "plugin_field_1",
+								Updates: []ConfigTableFieldUpdate{
+									{
+										Field:            "plugin_field_2",
+										ValueFromField:   "plugin_field_1",
+										FieldMustBeEmpty: true,
+									},
+									{
+										Field: "plugin_field_1",
+									},
+								},
+							},
+						},
+						ChangeID: "T101",
+					},
+				},
+			},
+			uncompressedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							"name": "plugin_1",
+							"config": {
+								"plugin_field_1": null,
+								"plugin_field_2": "foo"
+							}
+						}
+					]
+				}
+			}`,
+			dataPlaneVersion: "3.0.0",
+			expectedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							"name": "plugin_1",
+							"config": {
+								"plugin_field_2": "foo"
+							}
+						}
+					]
+				}
+			}`,
+			expectedChanges: TrackedChanges{},
+		},
+		{
+			name: "core field updates conditionally ignore empty arrays",
+			configTableUpdates: map[string][]ConfigTableUpdates{
+				">= 3.0.0": {
+					{
+						Name: "plugin_1",
+						Type: CorePlugin,
+						DisableChangeTracking: func(rawJSON string) bool {
+							plugin := gjson.Parse(rawJSON)
+							return ValueIsEmpty(plugin.Get("plugin_field_1"))
+						},
+						FieldUpdates: []ConfigTableFieldCondition{
+							{
+								Field:     "plugin_field_1",
+								Condition: "plugin_field_1",
+								Updates: []ConfigTableFieldUpdate{
+									{
+										Field:            "plugin_field_2",
+										ValueFromField:   "plugin_field_1",
+										FieldMustBeEmpty: true,
+									},
+									{
+										Field: "plugin_field_1",
+									},
+								},
+							},
+						},
+						ChangeID: "T101",
+					},
+				},
+			},
+			uncompressedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							"name": "plugin_1",
+							"plugin_field_1": [],
+							"plugin_field_2": ["kong.log.err('Hello Koko!')"]
+						}
+					]
+				}
+			}`,
+			dataPlaneVersion: "3.0.0",
+			expectedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							"name": "plugin_1",
+							"plugin_field_2": ["kong.log.err('Hello Koko!')"]
+						}
+					]
+				}
+			}`,
+			expectedChanges: TrackedChanges{},
+		},
+		{
+			name: "core field updates conditionally ignore empty objects",
+			configTableUpdates: map[string][]ConfigTableUpdates{
+				">= 3.0.0": {
+					{
+						Name: "plugin_1",
+						Type: CorePlugin,
+						DisableChangeTracking: func(rawJSON string) bool {
+							plugin := gjson.Parse(rawJSON)
+							return ValueIsEmpty(plugin.Get("plugin_field_1"))
+						},
+						FieldUpdates: []ConfigTableFieldCondition{
+							{
+								Field:     "plugin_field_1",
+								Condition: "plugin_field_1",
+								Updates: []ConfigTableFieldUpdate{
+									{
+										Field:            "plugin_field_2",
+										ValueFromField:   "plugin_field_1",
+										FieldMustBeEmpty: true,
+									},
+									{
+										Field: "plugin_field_1",
+									},
+								},
+							},
+						},
+						ChangeID: "T101",
+					},
+				},
+			},
+			uncompressedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							"name": "plugin_1",
+							"plugin_field_1": {},
+							"plugin_field_2": { "foo": "bar" }
+						}
+					]
+				}
+			}`,
+			dataPlaneVersion: "3.0.0",
+			expectedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							"name": "plugin_1",
+							"plugin_field_2": { "foo": "bar" }
+						}
+					]
+				}
+			}`,
+			expectedChanges: TrackedChanges{},
+		},
+		{
+			name: "core field updates conditionally ignore empty strings",
+			configTableUpdates: map[string][]ConfigTableUpdates{
+				">= 3.0.0": {
+					{
+						Name: "plugin_1",
+						Type: CorePlugin,
+						DisableChangeTracking: func(rawJSON string) bool {
+							plugin := gjson.Parse(rawJSON)
+							return ValueIsEmpty(plugin.Get("plugin_field_1"))
+						},
+						FieldUpdates: []ConfigTableFieldCondition{
+							{
+								Field:     "plugin_field_1",
+								Condition: "plugin_field_1",
+								Updates: []ConfigTableFieldUpdate{
+									{
+										Field:            "plugin_field_2",
+										ValueFromField:   "plugin_field_1",
+										FieldMustBeEmpty: true,
+									},
+									{
+										Field: "plugin_field_1",
+									},
+								},
+							},
+						},
+						ChangeID: "T101",
+					},
+				},
+			},
+			uncompressedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							"name": "plugin_1",
+							"plugin_field_1": "",
+							"plugin_field_2": "foo"
+						}
+					]
+				}
+			}`,
+			dataPlaneVersion: "3.0.0",
+			expectedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							"name": "plugin_1",
+							"plugin_field_2": "foo"
+						}
+					]
+				}
+			}`,
+			expectedChanges: TrackedChanges{},
+		},
+		{
+			name: "core field updates conditionally ignore nil values",
+			configTableUpdates: map[string][]ConfigTableUpdates{
+				">= 3.0.0": {
+					{
+						Name: "plugin_1",
+						Type: CorePlugin,
+						DisableChangeTracking: func(rawJSON string) bool {
+							plugin := gjson.Parse(rawJSON)
+							return ValueIsEmpty(plugin.Get("plugin_field_1"))
+						},
+						FieldUpdates: []ConfigTableFieldCondition{
+							{
+								Field:     "plugin_field_1",
+								Condition: "plugin_field_1",
+								Updates: []ConfigTableFieldUpdate{
+									{
+										Field:            "plugin_field_2",
+										ValueFromField:   "plugin_field_1",
+										FieldMustBeEmpty: true,
+									},
+									{
+										Field: "plugin_field_1",
+									},
+								},
+							},
+						},
+						ChangeID: "T101",
+					},
+				},
+			},
+			uncompressedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							"name": "plugin_1",
+							"plugin_field_1": null,
+							"plugin_field_2": "foo"
+						}
+					]
+				}
+			}`,
+			dataPlaneVersion: "3.0.0",
+			expectedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							"name": "plugin_1",
+							"plugin_field_2": "foo"
+						}
+					]
+				}
+			}`,
+			expectedChanges: TrackedChanges{},
+		},
 	}
 
 	for _, test := range tests {
@@ -5589,4 +6208,68 @@ func TestVersionCompatibility_PerformExtraProcessing(t *testing.T) {
 		}`
 		require.JSONEq(t, expectedPayload, string(uncompressedPayload))
 	})
+}
+
+func TestVersionCompatibility_ValueIsEmpty(t *testing.T) {
+	tests := []struct {
+		name          string
+		rawJSON       string
+		expectedValue bool
+	}{
+		{
+			name: "object is empty",
+			rawJSON: `{
+				"value": {}
+			}`,
+			expectedValue: true,
+		},
+		{
+			name: "object is not empty",
+			rawJSON: `{
+				"value": { "foo": "bar" }
+			}`,
+			expectedValue: false,
+		},
+		{
+			name: "string is empty",
+			rawJSON: `{
+				"value": ""
+			}`,
+			expectedValue: true,
+		},
+		{
+			name: "string is not empty",
+			rawJSON: `{
+				"value": "foo"
+			}`,
+			expectedValue: false,
+		},
+		{
+			name: "array is empty",
+			rawJSON: `{
+				"value": []
+			}`,
+			expectedValue: true,
+		},
+		{
+			name: "array is not empty",
+			rawJSON: `{
+				"value": ["foo"]
+			}`,
+			expectedValue: false,
+		},
+		{
+			name: "value is null",
+			rawJSON: `{
+				"value": null
+			}`,
+			expectedValue: true,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			require.Equal(t, test.expectedValue, ValueIsEmpty(gjson.Get(test.rawJSON, "value")))
+		})
+	}
 }

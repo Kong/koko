@@ -273,6 +273,153 @@ func TestVersionCompatibility_PluginFieldUpdates(t *testing.T) {
 	}
 }
 
+func TestVersionCompatibility_EnsureTargetFieldsAreNotOverridden(t *testing.T) {
+	cleanup := run.Koko(t)
+	defer cleanup()
+
+	dpCleanup := run.KongDP(kong.GetKongConfForShared())
+	defer dpCleanup()
+	require.NoError(t, util.WaitForKong(t))
+	require.NoError(t, util.WaitForKongAdminAPI(t))
+
+	kongClient.RunWhenKong(t, ">=3.0.0")
+	kongAdmin, err := kongClient.NewClient(util.BasedKongAdminAPIAddr, nil)
+	require.NoError(t, err, "create go client for kong")
+	ctx := context.Background()
+	info, err := kongAdmin.Root(ctx)
+	require.NoError(t, err, "fetching Kong Gateway info")
+
+	dataPlaneVersion, err := versioning.NewVersion(kongClient.VersionFromInfo(info))
+	require.NoError(t, err)
+
+	admin := httpexpect.New(t, "http://localhost:3000")
+
+	pluginTests := []VersionCompatibilityPlugins{
+		{
+			Name: "pre-function",
+			Config: `{
+				"access": [
+					"kong.log.err('Hello Koko!')"
+				],
+				"functions": []
+			}`,
+			FieldUpdateChecks: map[string][]FieldUpdateCheck{
+				">= 3.0.0": {
+					{
+						Field: "access",
+						Value: []string{
+							"kong.log.err('Hello Koko!')",
+						},
+					},
+				},
+			},
+			ConfigureForService: true,
+			ConfigureForRoute:   true,
+		},
+		{
+			Name: "post-function",
+			Config: `{
+				"access": [
+					"kong.log.err('Goodbye Koko!')"
+				],
+				"functions": []
+			}`,
+			FieldUpdateChecks: map[string][]FieldUpdateCheck{
+				">= 3.0.0": {
+					{
+						Field: "access",
+						Value: []string{
+							"kong.log.err('Goodbye Koko!')",
+						},
+					},
+				},
+			},
+			ConfigureForService: true,
+			ConfigureForRoute:   true,
+		},
+	}
+
+	expectedPluginsMap := make(map[string]VersionCompatibilityPlugins, 0)
+	for _, plugin := range pluginTests {
+		if plugin.FieldUpdateChecks == nil {
+			continue
+		}
+
+		if len(plugin.VersionRange) > 0 {
+			version := versioning.MustNewRange(plugin.VersionRange)
+			if !version(dataPlaneVersion) {
+				continue
+			}
+		}
+		expectedPluginsMap[plugin.Name] = plugin
+	}
+
+	// create plugins
+	for _, plugin := range expectedPluginsMap {
+		var config structpb.Struct
+		if len(plugin.Config) > 0 {
+			require.NoError(t, json.ProtoJSONUnmarshal([]byte(plugin.Config), &config))
+		}
+
+		p := &v1.Plugin{
+			Id:        uuid.NewString(),
+			Name:      plugin.Name,
+			Config:    &config,
+			Enabled:   wrapperspb.Bool(true),
+			Protocols: []string{"http", "https"},
+		}
+
+		pluginBytes, err := json.ProtoJSONMarshal(p)
+		require.NoError(t, err)
+		res := admin.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
+		res.Status(http.StatusCreated)
+	}
+
+	// fetch list of plugins from the DP
+	dataPlanePlugins := []*kongClient.Plugin{}
+	util.WaitFunc(t, func() error {
+		dataPlanePlugins, err = kongAdmin.Plugins.ListAll(ctx)
+		if err != nil {
+			t.Log("fetch plugin failed", err)
+		}
+		if len(dataPlanePlugins) == 0 {
+			return errors.New("plugins len was 0")
+		}
+		return err
+	})
+
+	require.Equal(t, len(expectedPluginsMap), len(dataPlanePlugins), "plugins configured count does not match")
+	dpPluginsMap := make(map[string]string, 0)
+	for _, dpPlugin := range dataPlanePlugins {
+		b, err := json.ProtoJSONMarshal(dpPlugin.Config)
+		require.NoError(t, err)
+		dpPluginsMap[*dpPlugin.Name] = string(b)
+	}
+
+	for name, expectedPlugin := range expectedPluginsMap {
+		t.Run(fmt.Sprintf("%s successfully updates fields", name), func(t *testing.T) {
+			require.Contains(t, dpPluginsMap, name, "plugin not present in the DP")
+			for rawVersion, updates := range expectedPlugin.FieldUpdateChecks {
+				parsedVersion := versioning.MustNewRange(rawVersion)
+				if parsedVersion(dataPlaneVersion) {
+					for _, update := range updates {
+						want := update.Value
+						have := gjson.Get(dpPluginsMap[name], update.Field)
+						switch want.(type) {
+						case string:
+							require.Equal(t, want, have.String())
+						case []string:
+							require.ElementsMatch(t, want, have.Value())
+						default:
+							require.Equal(t, want, have.Value())
+						}
+					}
+				}
+			}
+		})
+	}
+}
+
 func TestVersionCompatibilitySyslogFacilityField(t *testing.T) {
 	cleanup := run.Koko(t)
 	defer cleanup()

@@ -595,14 +595,20 @@ var (
 			Update: config.ConfigTableUpdates{
 				Name: "pre-function",
 				Type: config.Plugin,
+				DisableChangeTracking: func(rawJSON string) bool {
+					// do not emit change if functions is set to default value (empty array)
+					plugin := gjson.Parse(rawJSON)
+					return config.ValueIsEmpty(plugin.Get("config.functions"))
+				},
 				FieldUpdates: []config.ConfigTableFieldCondition{
 					{
 						Field:     "functions",
 						Condition: "functions",
 						Updates: []config.ConfigTableFieldUpdate{
 							{
-								Field:          "access",
-								ValueFromField: "functions",
+								Field:            "access",
+								ValueFromField:   "functions",
+								FieldMustBeEmpty: true,
 							},
 							{
 								Field: "functions",
@@ -628,14 +634,20 @@ var (
 			Update: config.ConfigTableUpdates{
 				Name: "post-function",
 				Type: config.Plugin,
+				DisableChangeTracking: func(rawJSON string) bool {
+					// do not emit change if functions is set to default value (empty array)
+					plugin := gjson.Parse(rawJSON)
+					return config.ValueIsEmpty(plugin.Get("config.functions"))
+				},
 				FieldUpdates: []config.ConfigTableFieldCondition{
 					{
 						Field:     "functions",
 						Condition: "functions",
 						Updates: []config.ConfigTableFieldUpdate{
 							{
-								Field:          "access",
-								ValueFromField: "functions",
+								Field:            "access",
+								ValueFromField:   "functions",
+								FieldMustBeEmpty: true,
 							},
 							{
 								Field: "functions",
