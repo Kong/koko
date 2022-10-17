@@ -37,6 +37,7 @@ var defaultEnvVars = map[string]string{
 //nolint:gomnd
 var defaultDockerPorts = map[int]int{
 	8000: 8000, // Kong DP HTTP proxy port (`KONG_PROXY_LISTEN`).
+	8443: 8443, // Kong DP HTTPS proxy port (`KONG_PROXY_LISTEN`).
 	8001: 8001, // Kong DP HTTP admin API port (`KONG_ADMIN_LISTEN`).
 }
 
