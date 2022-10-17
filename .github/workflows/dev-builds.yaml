@@ -1,4 +1,4 @@
-name: Build and Push Development Docker Image [OSS]
+name: Development Docker Image [OSS]
 on:
   push:
     branches:
