@@ -1,4 +1,4 @@
-name: integration-test
+name: Integration Tests [OSS]
 on: pull_request
 jobs:
   integration:

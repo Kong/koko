@@ -1,4 +1,4 @@
-name: release-push
+name: Build and Push Release Docker Image [OSS]
 on:
   push:
     tags:

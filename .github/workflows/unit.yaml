@@ -1,4 +1,4 @@
-name: unit-test
+name: Unit Tests [OSS]
 on: pull_request
 jobs:
   unit-test:
