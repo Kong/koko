@@ -22,7 +22,7 @@ jobs:
       - name: Set tag
         id: tag
         run: |
-          echo "::set-output name=tag::$(git rev-parse --short HEAD)"
+          echo "tag=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
       - name: Build and push docker image
         uses: docker/build-push-action@v3
         with:
