@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var defaultConfig = Config{
+var defaultTestConfig = Config{
 	Log: Log{
 		Level:  "info",
 		Format: "json",
@@ -21,7 +21,7 @@ var defaultConfig = Config{
 		QueryTimeout: "5s",
 	},
 	Metrics: Metrics{
-		ClientType: "noop",
+		Enabled: true,
 	},
 	DisableAnonymousReports: false,
 }
@@ -39,14 +39,14 @@ func TestGet(t *testing.T) {
 	}{
 		{
 			name: "gets default configuration when no file is specified",
-			want: defaultConfig,
+			want: defaultTestConfig,
 		},
 		{
 			name: "gets default configuration when file is missing",
 			args: args{
 				filename: "does-not-exist.yaml",
 			},
-			want: defaultConfig,
+			want: defaultTestConfig,
 		},
 		{
 			name: "overrides from file",
@@ -88,7 +88,7 @@ func TestGet(t *testing.T) {
 					QueryTimeout: "2s",
 				},
 				Metrics: Metrics{
-					ClientType: "noop",
+					Enabled: true,
 				},
 				DisableAnonymousReports: true,
 			},
@@ -133,7 +133,7 @@ func TestGet(t *testing.T) {
 					QueryTimeout: "2s",
 				},
 				Metrics: Metrics{
-					ClientType: "noop",
+					Enabled: true,
 				},
 				DisableAnonymousReports: true,
 			},
@@ -170,7 +170,7 @@ func TestGet(t *testing.T) {
 					QueryTimeout: "5s",
 				},
 				Metrics: Metrics{
-					ClientType: "noop",
+					Enabled: true,
 				},
 				DisableAnonymousReports: false,
 			},
@@ -219,7 +219,7 @@ func TestGet(t *testing.T) {
 					QueryTimeout: "2s",
 				},
 				Metrics: Metrics{
-					ClientType: "noop",
+					Enabled: true,
 				},
 				DisableAnonymousReports: true,
 			},

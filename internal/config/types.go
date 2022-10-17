@@ -21,7 +21,6 @@ type ControlServer struct {
 
 // Metrics config.
 type Metrics struct {
-	// ClientType metrics client type e.g. prometheus, datadog.
 	Enabled bool `json:"enabled,omitempty"`
 }
 

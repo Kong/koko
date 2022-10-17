@@ -348,7 +348,6 @@ func TestPrometheusGaugeSet(t *testing.T) {
 			require.NoError(t, err)
 			require.Equal(t, test.expect, family[0].Metric[0].Gauge.GetValue())
 			require.Equal(t, len(test.fields.opts.LabelNames), len(family[0].Metric[0].GetLabel()))
-
 		})
 	}
 }
@@ -443,7 +442,6 @@ func TestPrometheusGaugeSub(t *testing.T) {
 			require.NoError(t, err)
 			require.Equal(t, test.expect, family[0].Metric[0].Gauge.GetValue())
 			require.Equal(t, len(test.fields.opts.LabelNames), len(family[0].Metric[0].GetLabel()))
-
 		})
 	}
 }
