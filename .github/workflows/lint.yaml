@@ -1,4 +1,4 @@
-name: lint
+name: Lint [OSS]
 on: pull_request
 jobs:
   lint:

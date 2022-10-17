@@ -1,4 +1,4 @@
-name: govulncheck
+name: Go Vulnerability Checker
 on: pull_request
 jobs:
   govulncheck:
