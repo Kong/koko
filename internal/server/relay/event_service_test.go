@@ -22,11 +22,11 @@ import (
 func TestEventService(t *testing.T) {
 	persister, err := util.GetPersister(t)
 	require.Nil(t, err)
-	store := store.New(persister, log.Logger).ForCluster("default")
+	db := store.New(persister, log.Logger).ForCluster(store.DefaultCluster)
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	opts := EventServiceOpts{
-		Store:  store,
+		Store:  db,
 		Logger: log.Logger,
 	}
 	server := NewEventService(ctx, opts)
@@ -61,13 +61,13 @@ func TestEventService(t *testing.T) {
 			defer cancel()
 			stream, err := client.FetchReconfigureEvents(ctx,
 				&relay.FetchReconfigureEventsRequest{
-					Cluster: &model.RequestCluster{Id: "default"},
+					Cluster: &model.RequestCluster{Id: store.DefaultCluster},
 				})
 			require.Nil(t, err)
 			res := resource.NewService()
 			res.Service.Host = "example.com"
 			res.Service.Path = "/"
-			err = store.Create(ctx, res)
+			err = db.Create(ctx, res)
 			require.Nil(t, err)
 
 			event, err := stream.Recv()

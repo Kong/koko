@@ -59,11 +59,11 @@ func (r *relayEventHandler) OnEvent(ctx context.Context, e Event) error {
 func TestRelayEventStreamer_RegisterUnregister(t *testing.T) {
 	persister, err := util.GetPersister(t)
 	require.Nil(t, err)
-	store := store.New(persister, log.Logger).ForCluster("default")
+	db := store.New(persister, log.Logger).ForCluster(store.DefaultCluster)
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	opts := relay.EventServiceOpts{
-		Store:  store,
+		Store:  db,
 		Logger: log.Logger,
 	}
 	server := relay.NewEventService(ctx, opts)
@@ -164,7 +164,7 @@ func TestRelayEventStreamer_RegisterUnregister(t *testing.T) {
 		res := resource.NewService()
 		res.Service.Host = "example.com"
 		res.Service.Path = "/"
-		err = store.Create(ctx, res)
+		err = db.Create(ctx, res)
 		require.NoError(t, err)
 
 		util.WaitFunc(t, func() error {
@@ -194,7 +194,7 @@ func TestRelayEventStreamer_RegisterUnregister(t *testing.T) {
 		res := resource.NewService()
 		res.Service.Host = "example.com"
 		res.Service.Path = "/"
-		err = store.Create(ctx, res)
+		err = db.Create(ctx, res)
 		require.NoError(t, err)
 
 		// Due to refresh interval for EventService defaulting to 5s and not being configurable

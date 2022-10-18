@@ -23,7 +23,7 @@ func TestRelayStatusServiceUpdateNodeStatus(t *testing.T) {
 	ctx := context.Background()
 	persister, err := util.GetPersister(t)
 	require.Nil(t, err)
-	db := store.New(persister, log.Logger).ForCluster("default")
+	db := store.New(persister, log.Logger).ForCluster(store.DefaultCluster)
 	opts := StatusServiceOpts{
 		StoreLoader: serverUtil.DefaultStoreLoader{Store: db},
 		Logger:      log.Logger,

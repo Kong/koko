@@ -49,7 +49,7 @@ type Cluster interface {
 type DefaultCluster struct{}
 
 func (d DefaultCluster) Get() string {
-	return "default"
+	return store.DefaultCluster
 }
 
 // nodeStatusCacheSize sets the size of the node status cache size.

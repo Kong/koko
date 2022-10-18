@@ -34,7 +34,7 @@ func setup(t *testing.T) (*httptest.Server, func()) {
 	require.Nil(t, err)
 	objectStore := store.New(p, log.Logger)
 
-	server, cleanup := setupWithDB(t, objectStore.ForCluster("default"))
+	server, cleanup := setupWithDB(t, objectStore.ForCluster(store.DefaultCluster))
 	return server, func() {
 		cleanup()
 	}

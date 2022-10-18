@@ -26,7 +26,7 @@ func TestCreate(t *testing.T) {
 	persister, err := util.GetPersister(t)
 	require.Nil(t, err)
 	ctx := context.Background()
-	s := New(persister, log.Logger).ForCluster("default")
+	s := New(persister, log.Logger).ForCluster(DefaultCluster)
 	sid := uuid.NewString()
 	t.Run("creating a nil object fails", func(t *testing.T) {
 		err := s.Create(ctx, nil)
@@ -165,7 +165,7 @@ func TestRead(t *testing.T) {
 	persister, err := util.GetPersister(t)
 	require.Nil(t, err)
 	ctx := context.Background()
-	s := New(persister, log.Logger).ForCluster("default")
+	s := New(persister, log.Logger).ForCluster(DefaultCluster)
 	svc := resource.NewService()
 	sid := uuid.NewString()
 	svc.Service = &v1.Service{
@@ -225,7 +225,7 @@ func TestRead(t *testing.T) {
 func TestDelete(t *testing.T) {
 	persister, err := util.GetPersister(t)
 	require.Nil(t, err)
-	s := New(persister, log.Logger).ForCluster("default")
+	s := New(persister, log.Logger).ForCluster(DefaultCluster)
 	t.Run("deleting an existing object succeeds", func(t *testing.T) {
 		svc := resource.NewService()
 		id := uuid.NewString()
@@ -255,7 +255,7 @@ func TestDelete(t *testing.T) {
 		ctx := context.Background()
 		persister, err := util.GetPersister(t)
 		require.Nil(t, err)
-		s := New(persister, log.Logger).ForCluster("default")
+		s := New(persister, log.Logger).ForCluster(DefaultCluster)
 		svc := resource.NewService()
 		sid := uuid.NewString()
 		svc.Service = &v1.Service{
@@ -290,7 +290,7 @@ func TestDelete(t *testing.T) {
 func TestUpsert(t *testing.T) {
 	persister, err := util.GetPersister(t)
 	require.Nil(t, err)
-	s := New(persister, log.Logger).ForCluster("default")
+	s := New(persister, log.Logger).ForCluster(DefaultCluster)
 	ctx := context.Background()
 
 	t.Run("upsert a nil object fails", func(t *testing.T) {
@@ -452,7 +452,7 @@ func TestUpsert(t *testing.T) {
 			ctx := context.Background()
 			persister, err := util.GetPersister(t)
 			require.Nil(t, err)
-			s := New(persister, log.Logger).ForCluster("default")
+			s := New(persister, log.Logger).ForCluster(DefaultCluster)
 			svc := resource.NewService()
 			serviceID := uuid.NewString()
 			svc.Service = &v1.Service{
@@ -520,7 +520,7 @@ func TestUpsert(t *testing.T) {
 func TestList(t *testing.T) {
 	persister, err := util.GetPersister(t)
 	require.Nil(t, err)
-	s := New(persister, log.Logger).ForCluster("default")
+	s := New(persister, log.Logger).ForCluster(DefaultCluster)
 	t.Run("list returns zero results without an error", func(t *testing.T) {
 		svcs := resource.NewList(resource.TypeService)
 		err = s.List(context.Background(), svcs)
@@ -650,7 +650,7 @@ func TestForCluster(t *testing.T) {
 func TestUpdateEvent(t *testing.T) {
 	persister, err := util.GetPersister(t)
 	require.Nil(t, err)
-	s := New(persister, log.Logger).ForCluster("default")
+	s := New(persister, log.Logger).ForCluster(DefaultCluster)
 	ctx := context.Background()
 	t.Run("empty cluster has no update event", func(t *testing.T) {
 		e := event.New()
@@ -752,7 +752,7 @@ func TestUpdateEvent(t *testing.T) {
 func TestUpdateEventForNode(t *testing.T) {
 	persister, err := util.GetPersister(t)
 	require.Nil(t, err)
-	s := New(persister, log.Logger).ForCluster("default")
+	s := New(persister, log.Logger).ForCluster(DefaultCluster)
 	ctx := context.Background()
 	t.Run("creating node doesn't create an update event", func(t *testing.T) {
 		node := resource.NewNode()
@@ -811,7 +811,7 @@ func TestStoredValue(t *testing.T) {
 		ctx := context.Background()
 		persister, err := util.GetPersister(t)
 		require.Nil(t, err)
-		s := New(persister, log.Logger).ForCluster("default")
+		s := New(persister, log.Logger).ForCluster(DefaultCluster)
 		route := resource.NewRoute()
 		id := uuid.NewString()
 		route.Route = &v1.Route{
@@ -839,7 +839,7 @@ func TestStoredValue(t *testing.T) {
 func TestPagination(t *testing.T) {
 	persister, err := util.GetPersister(t)
 	require.Nil(t, err)
-	store := New(persister, log.Logger).ForCluster("default")
+	store := New(persister, log.Logger).ForCluster(DefaultCluster)
 	ctx := context.Background()
 	// Create 10 services and perform the pagination
 	svcName := "myservice-%d"

@@ -93,7 +93,7 @@ func Run(ctx context.Context, config ServerConfig) error {
 	defer persister.Close()
 
 	store := store.New(persister, logger.With(zap.String("component",
-		"store"))).ForCluster("default")
+		"store"))).ForCluster(store.DefaultCluster)
 	storeLoader := serverUtil.DefaultStoreLoader{Store: store}
 
 	instID, err := registerInstallation(ctx, store, logger)

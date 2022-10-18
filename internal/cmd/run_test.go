@@ -77,7 +77,7 @@ func TestRun_SetInstallationID(t *testing.T) {
 func setupTestDB(t *testing.T, logger *zap.Logger) store.Store {
 	p, err := util.GetPersister(t)
 	require.NoError(t, err)
-	return store.New(p, logger.With(zap.String("component", "test-store"))).ForCluster("default")
+	return store.New(p, logger.With(zap.String("component", "test-store"))).ForCluster(store.DefaultCluster)
 }
 
 func validUUID(id string) bool {
