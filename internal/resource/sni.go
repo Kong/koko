@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
 	"github.com/kong/koko/internal/model"
@@ -46,6 +47,26 @@ func (r SNI) Resource() model.Resource {
 func (r SNI) SetResource(pr model.Resource) error { return model.SetResource(r, pr) }
 
 func (r SNI) Validate(ctx context.Context) error {
+	if hostnameCheck(r.SNI.Name) != typeName {
+		errWrap := validation.Error{}
+		errWrap.Errs = append(errWrap.Errs, &v1.ErrorDetail{
+			Type:     v1.ErrorType_ERROR_TYPE_FIELD,
+			Field:    "name",
+			Messages: []string{"must not be an IP"},
+		})
+		return errWrap
+	}
+	if len(strings.Split(r.SNI.Name, ":")) > 1 {
+		errWrap := validation.Error{}
+		errWrap.Errs = append(errWrap.Errs, &v1.ErrorDetail{
+			Type:  v1.ErrorType_ERROR_TYPE_FIELD,
+			Field: "name",
+			Messages: []string{
+				"must not contain a port",
+			},
+		})
+		return errWrap
+	}
 	err := validation.Validate(string(TypeSNI), r.SNI)
 	if err != nil {
 		return err

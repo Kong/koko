@@ -1264,6 +1264,52 @@ func TestRoute_Validate(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "setting invalid snis being an IP returns an error",
+			Route: func() Route {
+				r := NewRoute()
+				r.Route.Protocols = []string{
+					typedefs.ProtocolTLSPassthrough,
+				}
+				r.Route.Snis = []string{"1.2.3.4"}
+				_ = r.ProcessDefaults(context.Background())
+				return r
+			},
+			wantErr:                 true,
+			skipIfEnterpriseTesting: true,
+			Errs: []*model.ErrorDetail{
+				{
+					Type:  model.ErrorType_ERROR_TYPE_FIELD,
+					Field: "snis",
+					Messages: []string{
+						"must not be an IP: '1.2.3.4'",
+					},
+				},
+			},
+		},
+		{
+			name: "setting invalid snis with a port returns an error",
+			Route: func() Route {
+				r := NewRoute()
+				r.Route.Protocols = []string{
+					typedefs.ProtocolTLSPassthrough,
+				}
+				r.Route.Snis = []string{"sni:8080"}
+				_ = r.ProcessDefaults(context.Background())
+				return r
+			},
+			wantErr:                 true,
+			skipIfEnterpriseTesting: true,
+			Errs: []*model.ErrorDetail{
+				{
+					Type:  model.ErrorType_ERROR_TYPE_FIELD,
+					Field: "snis",
+					Messages: []string{
+						"must not contain a port: 'sni:8080'",
+					},
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		util.SkipTestIfEnterpriseTesting(t, tt.skipIfEnterpriseTesting)

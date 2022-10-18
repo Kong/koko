@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/imdario/mergo"
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
@@ -94,6 +95,30 @@ func (r Route) Indexes() []model.Index {
 }
 
 func (r Route) Validate(ctx context.Context) error {
+	for _, sni := range r.Route.Snis {
+		if hostnameCheck(sni) != typeName {
+			errWrap := validation.Error{}
+			errWrap.Errs = append(errWrap.Errs, &v1.ErrorDetail{
+				Type:  v1.ErrorType_ERROR_TYPE_FIELD,
+				Field: "snis",
+				Messages: []string{
+					fmt.Sprintf("must not be an IP: '%s'", sni),
+				},
+			})
+			return errWrap
+		}
+		if len(strings.Split(sni, ":")) > 1 {
+			errWrap := validation.Error{}
+			errWrap.Errs = append(errWrap.Errs, &v1.ErrorDetail{
+				Type:  v1.ErrorType_ERROR_TYPE_FIELD,
+				Field: "snis",
+				Messages: []string{
+					fmt.Sprintf("must not contain a port: '%s'", sni),
+				},
+			})
+			return errWrap
+		}
+	}
 	return validation.Validate(string(TypeRoute), r.Route)
 }
 
