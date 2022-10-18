@@ -181,6 +181,50 @@ func TestSNI_Validate(t *testing.T) {
 			},
 			wantErr: false,
 		},
+		{
+			name: "SNI with invalid name being an IP returns an error",
+			SNI: func() SNI {
+				res := NewSNI()
+				_ = res.ProcessDefaults(context.Background())
+				res.SNI.Name = "1.2.3.4"
+				res.SNI.Certificate = &v1.Certificate{
+					Id: uuid.NewString(),
+				}
+				return res
+			},
+			wantErr: true,
+			Errs: []*v1.ErrorDetail{
+				{
+					Field: "name",
+					Type:  v1.ErrorType_ERROR_TYPE_FIELD,
+					Messages: []string{
+						"must not be an IP",
+					},
+				},
+			},
+		},
+		{
+			name: "SNI with invalid name with a port returns an error",
+			SNI: func() SNI {
+				res := NewSNI()
+				_ = res.ProcessDefaults(context.Background())
+				res.SNI.Name = "one-two.example.com:8080"
+				res.SNI.Certificate = &v1.Certificate{
+					Id: uuid.NewString(),
+				}
+				return res
+			},
+			wantErr: true,
+			Errs: []*v1.ErrorDetail{
+				{
+					Field: "name",
+					Type:  v1.ErrorType_ERROR_TYPE_FIELD,
+					Messages: []string{
+						"must not contain a port",
+					},
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
