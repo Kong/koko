@@ -544,7 +544,8 @@ type ValidatePluginSchemaRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Item *v1.Plugin `protobuf:"bytes,1,opt,name=item,proto3" json:"item,omitempty"`
+	Item    *v1.Plugin         `protobuf:"bytes,1,opt,name=item,proto3" json:"item,omitempty"`
+	Cluster *v1.RequestCluster `protobuf:"bytes,2,opt,name=cluster,proto3" json:"cluster,omitempty"`
 }
 
 func (x *ValidatePluginSchemaRequest) Reset() {
@@ -582,6 +583,13 @@ func (*ValidatePluginSchemaRequest) Descriptor() ([]byte, []int) {
 func (x *ValidatePluginSchemaRequest) GetItem() *v1.Plugin {
 	if x != nil {
 		return x.Item
+	}
+	return nil
+}
+
+func (x *ValidatePluginSchemaRequest) GetCluster() *v1.RequestCluster {
+	if x != nil {
+		return x.Cluster
 	}
 	return nil
 }
@@ -1328,12 +1336,16 @@ var file_kong_admin_service_v1_schemas_proto_rawDesc = []byte{
 	0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x2d, 0x0a, 0x04, 0x69, 0x74, 0x65, 0x6d, 0x18,
 	0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x19, 0x2e, 0x6b, 0x6f, 0x6e, 0x67, 0x2e, 0x61, 0x64, 0x6d,
 	0x69, 0x6e, 0x2e, 0x6d, 0x6f, 0x64, 0x65, 0x6c, 0x2e, 0x76, 0x31, 0x2e, 0x4e, 0x6f, 0x64, 0x65,
-	0x52, 0x04, 0x69, 0x74, 0x65, 0x6d, 0x22, 0x4e, 0x0a, 0x1b, 0x56, 0x61, 0x6c, 0x69, 0x64, 0x61,
-	0x74, 0x65, 0x50, 0x6c, 0x75, 0x67, 0x69, 0x6e, 0x53, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x52, 0x65,
-	0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x2f, 0x0a, 0x04, 0x69, 0x74, 0x65, 0x6d, 0x18, 0x01, 0x20,
-	0x01, 0x28, 0x0b, 0x32, 0x1b, 0x2e, 0x6b, 0x6f, 0x6e, 0x67, 0x2e, 0x61, 0x64, 0x6d, 0x69, 0x6e,
-	0x2e, 0x6d, 0x6f, 0x64, 0x65, 0x6c, 0x2e, 0x76, 0x31, 0x2e, 0x50, 0x6c, 0x75, 0x67, 0x69, 0x6e,
-	0x52, 0x04, 0x69, 0x74, 0x65, 0x6d, 0x22, 0x4c, 0x0a, 0x1a, 0x56, 0x61, 0x6c, 0x69, 0x64, 0x61,
+	0x52, 0x04, 0x69, 0x74, 0x65, 0x6d, 0x22, 0x8d, 0x01, 0x0a, 0x1b, 0x56, 0x61, 0x6c, 0x69, 0x64,
+	0x61, 0x74, 0x65, 0x50, 0x6c, 0x75, 0x67, 0x69, 0x6e, 0x53, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x52,
+	0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x2f, 0x0a, 0x04, 0x69, 0x74, 0x65, 0x6d, 0x18, 0x01,
+	0x20, 0x01, 0x28, 0x0b, 0x32, 0x1b, 0x2e, 0x6b, 0x6f, 0x6e, 0x67, 0x2e, 0x61, 0x64, 0x6d, 0x69,
+	0x6e, 0x2e, 0x6d, 0x6f, 0x64, 0x65, 0x6c, 0x2e, 0x76, 0x31, 0x2e, 0x50, 0x6c, 0x75, 0x67, 0x69,
+	0x6e, 0x52, 0x04, 0x69, 0x74, 0x65, 0x6d, 0x12, 0x3d, 0x0a, 0x07, 0x63, 0x6c, 0x75, 0x73, 0x74,
+	0x65, 0x72, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x23, 0x2e, 0x6b, 0x6f, 0x6e, 0x67, 0x2e,
+	0x61, 0x64, 0x6d, 0x69, 0x6e, 0x2e, 0x6d, 0x6f, 0x64, 0x65, 0x6c, 0x2e, 0x76, 0x31, 0x2e, 0x52,
+	0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x43, 0x6c, 0x75, 0x73, 0x74, 0x65, 0x72, 0x52, 0x07, 0x63,
+	0x6c, 0x75, 0x73, 0x74, 0x65, 0x72, 0x22, 0x4c, 0x0a, 0x1a, 0x56, 0x61, 0x6c, 0x69, 0x64, 0x61,
 	0x74, 0x65, 0x52, 0x6f, 0x75, 0x74, 0x65, 0x53, 0x63, 0x68, 0x65, 0x6d, 0x61, 0x52, 0x65, 0x71,
 	0x75, 0x65, 0x73, 0x74, 0x12, 0x2e, 0x0a, 0x04, 0x69, 0x74, 0x65, 0x6d, 0x18, 0x01, 0x20, 0x01,
 	0x28, 0x0b, 0x32, 0x1a, 0x2e, 0x6b, 0x6f, 0x6e, 0x67, 0x2e, 0x61, 0x64, 0x6d, 0x69, 0x6e, 0x2e,
@@ -1590,40 +1602,41 @@ var file_kong_admin_service_v1_schemas_proto_depIdxs = []int32{
 	34, // 7: kong.admin.service.v1.ValidateConsumerSchemaRequest.item:type_name -> kong.admin.model.v1.Consumer
 	35, // 8: kong.admin.service.v1.ValidateNodeSchemaRequest.item:type_name -> kong.admin.model.v1.Node
 	30, // 9: kong.admin.service.v1.ValidatePluginSchemaRequest.item:type_name -> kong.admin.model.v1.Plugin
-	36, // 10: kong.admin.service.v1.ValidateRouteSchemaRequest.item:type_name -> kong.admin.model.v1.Route
-	37, // 11: kong.admin.service.v1.ValidateServiceSchemaRequest.item:type_name -> kong.admin.model.v1.Service
-	38, // 12: kong.admin.service.v1.ValidateSNISchemaRequest.item:type_name -> kong.admin.model.v1.SNI
-	39, // 13: kong.admin.service.v1.ValidateTargetSchemaRequest.item:type_name -> kong.admin.model.v1.Target
-	40, // 14: kong.admin.service.v1.ValidateUpstreamSchemaRequest.item:type_name -> kong.admin.model.v1.Upstream
-	4,  // 15: kong.admin.service.v1.SchemasService.ValidateLuaPlugin:input_type -> kong.admin.service.v1.ValidateLuaPluginRequest
-	6,  // 16: kong.admin.service.v1.SchemasService.ValidateCACertificateSchema:input_type -> kong.admin.service.v1.ValidateCACertificateSchemaRequest
-	7,  // 17: kong.admin.service.v1.SchemasService.ValidateCertificateSchema:input_type -> kong.admin.service.v1.ValidateCertificateSchemaRequest
-	9,  // 18: kong.admin.service.v1.SchemasService.ValidateConsumerSchema:input_type -> kong.admin.service.v1.ValidateConsumerSchemaRequest
-	11, // 19: kong.admin.service.v1.SchemasService.ValidatePluginSchema:input_type -> kong.admin.service.v1.ValidatePluginSchemaRequest
-	12, // 20: kong.admin.service.v1.SchemasService.ValidateRouteSchema:input_type -> kong.admin.service.v1.ValidateRouteSchemaRequest
-	13, // 21: kong.admin.service.v1.SchemasService.ValidateServiceSchema:input_type -> kong.admin.service.v1.ValidateServiceSchemaRequest
-	14, // 22: kong.admin.service.v1.SchemasService.ValidateSNISchema:input_type -> kong.admin.service.v1.ValidateSNISchemaRequest
-	15, // 23: kong.admin.service.v1.SchemasService.ValidateTargetSchema:input_type -> kong.admin.service.v1.ValidateTargetSchemaRequest
-	16, // 24: kong.admin.service.v1.SchemasService.ValidateUpstreamSchema:input_type -> kong.admin.service.v1.ValidateUpstreamSchemaRequest
-	0,  // 25: kong.admin.service.v1.SchemasService.GetSchemas:input_type -> kong.admin.service.v1.GetSchemasRequest
-	2,  // 26: kong.admin.service.v1.SchemasService.GetLuaSchemasPlugin:input_type -> kong.admin.service.v1.GetLuaSchemasPluginRequest
-	5,  // 27: kong.admin.service.v1.SchemasService.ValidateLuaPlugin:output_type -> kong.admin.service.v1.ValidateLuaPluginResponse
-	17, // 28: kong.admin.service.v1.SchemasService.ValidateCACertificateSchema:output_type -> kong.admin.service.v1.ValidateCACertificateSchemaResponse
-	18, // 29: kong.admin.service.v1.SchemasService.ValidateCertificateSchema:output_type -> kong.admin.service.v1.ValidateCertificateSchemaResponse
-	20, // 30: kong.admin.service.v1.SchemasService.ValidateConsumerSchema:output_type -> kong.admin.service.v1.ValidateConsumerSchemaResponse
-	22, // 31: kong.admin.service.v1.SchemasService.ValidatePluginSchema:output_type -> kong.admin.service.v1.ValidatePluginSchemaResponse
-	23, // 32: kong.admin.service.v1.SchemasService.ValidateRouteSchema:output_type -> kong.admin.service.v1.ValidateRouteSchemaResponse
-	24, // 33: kong.admin.service.v1.SchemasService.ValidateServiceSchema:output_type -> kong.admin.service.v1.ValidateServiceSchemaResponse
-	25, // 34: kong.admin.service.v1.SchemasService.ValidateSNISchema:output_type -> kong.admin.service.v1.ValidateSNISchemaResponse
-	26, // 35: kong.admin.service.v1.SchemasService.ValidateTargetSchema:output_type -> kong.admin.service.v1.ValidateTargetSchemaResponse
-	27, // 36: kong.admin.service.v1.SchemasService.ValidateUpstreamSchema:output_type -> kong.admin.service.v1.ValidateUpstreamSchemaResponse
-	1,  // 37: kong.admin.service.v1.SchemasService.GetSchemas:output_type -> kong.admin.service.v1.GetSchemasResponse
-	3,  // 38: kong.admin.service.v1.SchemasService.GetLuaSchemasPlugin:output_type -> kong.admin.service.v1.GetLuaSchemasPluginResponse
-	27, // [27:39] is the sub-list for method output_type
-	15, // [15:27] is the sub-list for method input_type
-	15, // [15:15] is the sub-list for extension type_name
-	15, // [15:15] is the sub-list for extension extendee
-	0,  // [0:15] is the sub-list for field type_name
+	29, // 10: kong.admin.service.v1.ValidatePluginSchemaRequest.cluster:type_name -> kong.admin.model.v1.RequestCluster
+	36, // 11: kong.admin.service.v1.ValidateRouteSchemaRequest.item:type_name -> kong.admin.model.v1.Route
+	37, // 12: kong.admin.service.v1.ValidateServiceSchemaRequest.item:type_name -> kong.admin.model.v1.Service
+	38, // 13: kong.admin.service.v1.ValidateSNISchemaRequest.item:type_name -> kong.admin.model.v1.SNI
+	39, // 14: kong.admin.service.v1.ValidateTargetSchemaRequest.item:type_name -> kong.admin.model.v1.Target
+	40, // 15: kong.admin.service.v1.ValidateUpstreamSchemaRequest.item:type_name -> kong.admin.model.v1.Upstream
+	4,  // 16: kong.admin.service.v1.SchemasService.ValidateLuaPlugin:input_type -> kong.admin.service.v1.ValidateLuaPluginRequest
+	6,  // 17: kong.admin.service.v1.SchemasService.ValidateCACertificateSchema:input_type -> kong.admin.service.v1.ValidateCACertificateSchemaRequest
+	7,  // 18: kong.admin.service.v1.SchemasService.ValidateCertificateSchema:input_type -> kong.admin.service.v1.ValidateCertificateSchemaRequest
+	9,  // 19: kong.admin.service.v1.SchemasService.ValidateConsumerSchema:input_type -> kong.admin.service.v1.ValidateConsumerSchemaRequest
+	11, // 20: kong.admin.service.v1.SchemasService.ValidatePluginSchema:input_type -> kong.admin.service.v1.ValidatePluginSchemaRequest
+	12, // 21: kong.admin.service.v1.SchemasService.ValidateRouteSchema:input_type -> kong.admin.service.v1.ValidateRouteSchemaRequest
+	13, // 22: kong.admin.service.v1.SchemasService.ValidateServiceSchema:input_type -> kong.admin.service.v1.ValidateServiceSchemaRequest
+	14, // 23: kong.admin.service.v1.SchemasService.ValidateSNISchema:input_type -> kong.admin.service.v1.ValidateSNISchemaRequest
+	15, // 24: kong.admin.service.v1.SchemasService.ValidateTargetSchema:input_type -> kong.admin.service.v1.ValidateTargetSchemaRequest
+	16, // 25: kong.admin.service.v1.SchemasService.ValidateUpstreamSchema:input_type -> kong.admin.service.v1.ValidateUpstreamSchemaRequest
+	0,  // 26: kong.admin.service.v1.SchemasService.GetSchemas:input_type -> kong.admin.service.v1.GetSchemasRequest
+	2,  // 27: kong.admin.service.v1.SchemasService.GetLuaSchemasPlugin:input_type -> kong.admin.service.v1.GetLuaSchemasPluginRequest
+	5,  // 28: kong.admin.service.v1.SchemasService.ValidateLuaPlugin:output_type -> kong.admin.service.v1.ValidateLuaPluginResponse
+	17, // 29: kong.admin.service.v1.SchemasService.ValidateCACertificateSchema:output_type -> kong.admin.service.v1.ValidateCACertificateSchemaResponse
+	18, // 30: kong.admin.service.v1.SchemasService.ValidateCertificateSchema:output_type -> kong.admin.service.v1.ValidateCertificateSchemaResponse
+	20, // 31: kong.admin.service.v1.SchemasService.ValidateConsumerSchema:output_type -> kong.admin.service.v1.ValidateConsumerSchemaResponse
+	22, // 32: kong.admin.service.v1.SchemasService.ValidatePluginSchema:output_type -> kong.admin.service.v1.ValidatePluginSchemaResponse
+	23, // 33: kong.admin.service.v1.SchemasService.ValidateRouteSchema:output_type -> kong.admin.service.v1.ValidateRouteSchemaResponse
+	24, // 34: kong.admin.service.v1.SchemasService.ValidateServiceSchema:output_type -> kong.admin.service.v1.ValidateServiceSchemaResponse
+	25, // 35: kong.admin.service.v1.SchemasService.ValidateSNISchema:output_type -> kong.admin.service.v1.ValidateSNISchemaResponse
+	26, // 36: kong.admin.service.v1.SchemasService.ValidateTargetSchema:output_type -> kong.admin.service.v1.ValidateTargetSchemaResponse
+	27, // 37: kong.admin.service.v1.SchemasService.ValidateUpstreamSchema:output_type -> kong.admin.service.v1.ValidateUpstreamSchemaResponse
+	1,  // 38: kong.admin.service.v1.SchemasService.GetSchemas:output_type -> kong.admin.service.v1.GetSchemasResponse
+	3,  // 39: kong.admin.service.v1.SchemasService.GetLuaSchemasPlugin:output_type -> kong.admin.service.v1.GetLuaSchemasPluginResponse
+	28, // [28:40] is the sub-list for method output_type
+	16, // [16:28] is the sub-list for method input_type
+	16, // [16:16] is the sub-list for extension type_name
+	16, // [16:16] is the sub-list for extension extendee
+	0,  // [0:16] is the sub-list for field type_name
 }
 
 func init() { file_kong_admin_service_v1_schemas_proto_init() }

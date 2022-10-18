@@ -1645,10 +1645,10 @@ func TestLuaValidator_GetDB(t *testing.T) {
 	storeLoader := setupStoreLoader(t)
 	require.NotNil(t, storeLoader)
 	goodValidator.storeLoader = storeLoader
-	t.Run("context not containing RequestCluster returns error", func(t *testing.T) {
+	t.Run("context not containing RequestCluster returns default store", func(t *testing.T) {
 		db, err := goodValidator.getDB(context.Background())
-		assert.Nil(t, db)
-		assert.Error(t, err, "invalid context: failed to retrieve RequestCluster from context")
+		require.NoError(t, err)
+		assert.NotNil(t, db)
 	})
 	t.Run("nil context returns error", func(t *testing.T) {
 		// disable staticcheck since nil context is being tested

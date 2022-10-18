@@ -229,7 +229,13 @@ func TestPluginValidate(t *testing.T) {
 func TestValidateJSONSchema(t *testing.T) {
 	s, cleanup := setup(t)
 	defer cleanup()
-	c := httpexpect.New(t, s.URL)
+	c := httpexpect.WithConfig(httpexpect.Config{
+		BaseURL:  s.URL,
+		Reporter: httpexpect.NewRequireReporter(t),
+		Printers: []httpexpect.Printer{
+			httpexpect.NewCompactPrinter(t),
+		},
+	})
 
 	// Ensures all registered types have a JSON schema validation endpoint.
 	t.Run("check all types have routes", func(t *testing.T) {
@@ -382,6 +388,37 @@ func TestValidateJSONSchema(t *testing.T) {
 			requestBody, _ := json.ProtoJSONMarshal(plugin)
 			res := c.POST(p).WithBytes(requestBody).Expect()
 			res.Status(http.StatusOK)
+		})
+
+		t.Run("valid custom plugin schema", func(t *testing.T) {
+			pluginSchemaBytes, _ := json.ProtoJSONMarshal(goodPluginSchema("test-plugin", "string"))
+			res := c.POST("/v1/plugin-schemas").WithBytes(pluginSchemaBytes).Expect()
+			res.Status(http.StatusCreated)
+
+			requestBody, err := json.ProtoJSONMarshal(&v1.Plugin{
+				Name:    "test-plugin",
+				Enabled: &wrappers.BoolValue{Value: true},
+			})
+			require.NoError(t, err)
+			res = c.POST(p).WithBytes(requestBody).Expect()
+			res.Status(http.StatusOK)
+		})
+
+		t.Run("unknown schema", func(t *testing.T) {
+			requestBody, _ := json.ProtoJSONMarshal(&v1.Plugin{
+				Name:    "unknown-plugin",
+				Enabled: &wrappers.BoolValue{Value: true},
+			})
+			res := c.POST(p).WithBytes(requestBody).Expect()
+			res.Status(http.StatusBadRequest)
+
+			errDetails := res.JSON().Object().Value("details").Array()
+			errDetails.Length().Equal(1)
+			errRes := errDetails.Element(0).Object()
+			errRes.Value("type").String().Equal(v1.ErrorType_ERROR_TYPE_FIELD.String())
+			messages := errRes.Value("messages").Array()
+			messages.Length().Equal(1)
+			messages.First().String().Equal("plugin(unknown-plugin) does not exist")
 		})
 
 		t.Run("invalid schema", func(t *testing.T) {

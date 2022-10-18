@@ -150,6 +150,7 @@ message ValidateNodeSchemaRequest {
 
 message ValidatePluginSchemaRequest {
   model.v1.Plugin item = 1;
+  model.v1.RequestCluster cluster = 2;
 }
 
 message ValidateRouteSchemaRequest {

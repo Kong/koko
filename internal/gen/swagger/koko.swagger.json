@@ -1901,6 +1901,12 @@
             "schema": {
               "$ref": "#/definitions/kong.admin.model.v1.Plugin"
             }
+          },
+          {
+            "name": "cluster.id",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [
