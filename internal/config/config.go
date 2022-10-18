@@ -5,34 +5,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/ghodss/yaml"
 	"github.com/ilyakaznacheev/cleanenv"
 )
-
-var (
-	defaultConfigYAML = []byte(`
-log:
-  level: info
-  format: json
-admin:
-  listeners:
-  - address: ":3000"
-    protocol: http
-database:
-  query_timeout: 5s
-metrics:
-  enabled: true
-disable_anonymous_reports: false
-`)
-	defaultConfig Config
-)
-
-func init() {
-	err := yaml.Unmarshal(defaultConfigYAML, &defaultConfig)
-	if err != nil {
-		panic(fmt.Errorf("failed to decode default config: %v", err))
-	}
-}
 
 // Get constructs the Config using the filename, env vars and defaults.
 func Get(filename string) (Config, error) {

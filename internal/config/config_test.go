@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var defaultTestConfig = Config{
+var defaultConfig = Config{
 	Log: Log{
 		Level:  "info",
 		Format: "json",
@@ -21,7 +21,7 @@ var defaultTestConfig = Config{
 		QueryTimeout: "5s",
 	},
 	Metrics: Metrics{
-		Enabled: true,
+		Enabled: false,
 	},
 	DisableAnonymousReports: false,
 }
@@ -39,14 +39,14 @@ func TestGet(t *testing.T) {
 	}{
 		{
 			name: "gets default configuration when no file is specified",
-			want: defaultTestConfig,
+			want: defaultConfig,
 		},
 		{
 			name: "gets default configuration when file is missing",
 			args: args{
 				filename: "does-not-exist.yaml",
 			},
-			want: defaultTestConfig,
+			want: defaultConfig,
 		},
 		{
 			name: "overrides from file",
@@ -147,6 +147,7 @@ func TestGet(t *testing.T) {
 					"KOKO_DATABASE_DIALECT":                        db.DialectPostgres,
 					"KOKO_DATABASE_POSTGRES_READ_REPLICA_HOSTNAME": "foobar",
 					"KOKO_DATABASE_POSTGRES_TLS_ENABLE":            "true",
+					"KOKO_METRICS_ENABLED":                         "true",
 				},
 			},
 			want: Config{

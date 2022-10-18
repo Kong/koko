@@ -28,6 +28,9 @@
       }
     }
   },
+  "metrics": {
+    "enabled": true
+  },
   "control_server": {
     "tls_cert_path": "foo.crt",
     "tls_key_path": "bar.key"
