@@ -17,6 +17,7 @@ import (
 	"github.com/kong/koko/internal/resource"
 	"github.com/kong/koko/internal/store/event"
 	"github.com/kong/koko/internal/test/util"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )
@@ -622,7 +623,9 @@ func TestNew(t *testing.T) {
 	})
 	t.Run("does not panic when both provided", func(t *testing.T) {
 		require.NotPanics(t, func() {
-			require.NotNil(t, New(persister, log.Logger))
+			store := New(persister, log.Logger)
+			require.NotNil(t, store)
+			assert.Equal(t, DefaultCluster, store.Cluster())
 		})
 	})
 }
@@ -640,6 +643,8 @@ func TestForCluster(t *testing.T) {
 	require.Panics(t, func() {
 		s.clusterKey("foo")
 	})
+
+	assert.Equal(t, "foo", s.ForCluster("foo").Cluster())
 }
 
 func TestUpdateEvent(t *testing.T) {
@@ -1003,6 +1008,12 @@ func TestFullListPaging(t *testing.T) {
 		require.Equal(t, expectedKeysBatchOne, keysAsStrings)
 		tx.Rollback()
 	})
+}
+
+func TestObjectStore_Cluster(t *testing.T) {
+	assert.Equal(t, DefaultCluster, (&ObjectStore{}).Cluster())
+	assert.Equal(t, DefaultCluster, (&ObjectStore{cluster: DefaultCluster}).Cluster())
+	assert.Equal(t, "test-cluster", (&ObjectStore{cluster: "test-cluster"}).Cluster())
 }
 
 func contains(repo []string, search string) bool {

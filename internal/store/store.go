@@ -17,12 +17,19 @@ import (
 
 const DefaultOperationTimeout = 15 * time.Second
 
+// DefaultCluster defines the cluster ID when one has not been passed in when instantiating a Store object.
+const DefaultCluster = "default"
+
 var (
 	errNoObject = fmt.Errorf("no object")
 	ErrNotFound = fmt.Errorf("not found")
 )
 
 type Store interface {
+	// Cluster returns the store's underlining cluster ID. When no specific cluster
+	// is associated to the Store, the returned value will be DefaultCluster.
+	Cluster() string
+
 	Create(context.Context, model.Object, ...CreateOptsFunc) error
 	Upsert(context.Context, model.Object, ...CreateOptsFunc) error
 	Read(context.Context, model.Object, ...ReadOptsFunc) error
@@ -86,6 +93,14 @@ func (s *ObjectStore) withTx(ctx context.Context,
 		return err
 	}
 	return tx.Commit()
+}
+
+// Cluster implements the Store interface.
+func (s *ObjectStore) Cluster() string {
+	if s.cluster != "" {
+		return s.cluster
+	}
+	return DefaultCluster
 }
 
 func (s *ObjectStore) Create(ctx context.Context, object model.Object,
