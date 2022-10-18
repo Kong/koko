@@ -263,6 +263,42 @@ func (vc *WSVersionCompatibility) processConfigTableUpdates(uncompressedPayload 
 	return processedPayload, nil
 }
 
+func (vc *WSVersionCompatibility) removeCoreEntity(
+	processedPayload string,
+	entityType string,
+	dataPlaneVersionStr string,
+	configTableKey string,
+	changeID ChangeID,
+	tracker *ChangeTracker,
+) string {
+	entityIDs := gjson.Get(processedPayload, fmt.Sprintf("config_table.%s.#.id", configTableKey))
+	for _, id := range entityIDs.Array() {
+		err := tracker.TrackForResource(changeID, ResourceInfo{
+			Type: entityType,
+			ID:   id.String(),
+		})
+		if err != nil {
+			vc.logger.Error("failed to track version compatibility change",
+				zap.String("change-id", string(changeID)),
+				zap.String("resource-type", entityType))
+		}
+	}
+
+	processedPayload, err := sjson.Delete(processedPayload, fmt.Sprintf("config_table.%s", configTableKey))
+	if err != nil {
+		vc.logger.With(zap.String("entity", entityType)).
+			With(zap.String("data-plane", dataPlaneVersionStr)).
+			With(zap.Error(err)).
+			Error("entity was not removed from configuration")
+	} else {
+		vc.logger.With(zap.String("entity", entityType)).
+			With(zap.String("data-plane", dataPlaneVersionStr)).
+			Warn("removing entity which is incompatible with data plane")
+	}
+
+	return processedPayload
+}
+
 func (vc *WSVersionCompatibility) removePlugin(
 	processedPayload string,
 	pluginName string,
@@ -694,6 +730,10 @@ func (vc *WSVersionCompatibility) processCoreEntityUpdates(payload string,
 			With(zap.String("data-plane", dataPlaneVersionStr)).
 			With(zap.Error(err)).
 			Error("error while updating entities")
+	}
+	if configTableUpdate.Remove && results.Exists() {
+		processedPayload = vc.removeCoreEntity(processedPayload, entityType,
+			dataPlaneVersionStr, configTableKey, configTableUpdate.ChangeID, tracker)
 	}
 	return processedPayload
 }

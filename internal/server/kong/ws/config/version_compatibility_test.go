@@ -6070,6 +6070,210 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 			}`,
 			expectedChanges: TrackedChanges{},
 		},
+		{
+			name: "remove core entities when indicated",
+			configTableUpdates: map[string][]ConfigTableUpdates{
+				"< 3.0.0": {
+					{
+						Name:     "service_1",
+						Type:     Service,
+						Remove:   true,
+						ChangeID: "T101",
+					},
+				},
+			},
+			uncompressedPayload: `{
+				"config_table": {
+					"services": [
+						{
+							"id": "5441b100-f441-4d4b-bcc2-3bb153e2bd41",
+							"name": "service_1",
+							"service_field_1": "element"
+						},
+						{
+							"id": "6441b100-f441-4d4b-bcc2-3bb153e2bd41",
+							"name": "service_2",
+							"service_field_1": "element"
+						}
+					],
+					"plugins": [
+						{
+							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							"name": "plugin_1",
+							"plugin_field_2": "foo"
+						}
+					]
+				}
+			}`,
+			dataPlaneVersion: "2.8.0",
+			expectedPayload: `{
+				"config_table": {
+					"plugins": [
+						{
+							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							"name": "plugin_1",
+							"plugin_field_2": "foo"
+						}
+					]
+				}
+			}`,
+			expectedChanges: TrackedChanges{
+				ChangeDetails: []ChangeDetail{
+					{
+						ID: "T101",
+						Resources: []ResourceInfo{
+							{
+								Type: "service",
+								ID:   "5441b100-f441-4d4b-bcc2-3bb153e2bd41",
+							},
+							{
+								Type: "service",
+								ID:   "6441b100-f441-4d4b-bcc2-3bb153e2bd41",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "don't remove core entities when not indicated",
+			configTableUpdates: map[string][]ConfigTableUpdates{
+				"< 3.0.0": {
+					{
+						Name:     "service_1",
+						Type:     Service,
+						Remove:   true,
+						ChangeID: "T101",
+					},
+				},
+			},
+			uncompressedPayload: `{
+				"config_table": {
+					"services": [
+						{
+							"id": "5441b100-f441-4d4b-bcc2-3bb153e2bd41",
+							"name": "service_1",
+							"service_field_1": "element"
+						},
+						{
+							"id": "6441b100-f441-4d4b-bcc2-3bb153e2bd41",
+							"name": "service_2",
+							"service_field_1": "element"
+						}
+					],
+					"plugins": [
+						{
+							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							"name": "plugin_1",
+							"plugin_field_2": "foo"
+						}
+					]
+				}
+			}`,
+			dataPlaneVersion: "3.0.0",
+			expectedPayload: `{
+				"config_table": {
+					"services": [
+						{
+							"id": "5441b100-f441-4d4b-bcc2-3bb153e2bd41",
+							"name": "service_1",
+							"service_field_1": "element"
+						},
+						{
+							"id": "6441b100-f441-4d4b-bcc2-3bb153e2bd41",
+							"name": "service_2",
+							"service_field_1": "element"
+						}
+					],
+					"plugins": [
+						{
+							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							"name": "plugin_1",
+							"plugin_field_2": "foo"
+						}
+					]
+				}
+			}`,
+			expectedChanges: TrackedChanges{},
+		},
+		{
+			name: "removing other entities doesn't remove core entities",
+			configTableUpdates: map[string][]ConfigTableUpdates{
+				"< 3.0.0": {
+					{
+						Name:     "plugin_1",
+						Type:     Plugin,
+						Remove:   true,
+						ChangeID: "T101",
+					},
+				},
+			},
+			uncompressedPayload: `{
+				"config_table": {
+					"services": [
+						{
+							"id": "5441b100-f441-4d4b-bcc2-3bb153e2bd41",
+							"name": "service_1",
+							"service_field_1": "element"
+						},
+						{
+							"id": "6441b100-f441-4d4b-bcc2-3bb153e2bd41",
+							"name": "service_2",
+							"service_field_1": "element"
+						}
+					],
+					"plugins": [
+						{
+							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							"name": "plugin_1",
+							"plugin_field_2": "foo"
+						},
+						{
+							"id": "859c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							"name": "plugin_2",
+							"plugin_field_2": "foo"
+						}
+					]
+				}
+			}`,
+			dataPlaneVersion: "2.8.0",
+			expectedPayload: `{
+				"config_table": {
+					"services": [
+						{
+							"id": "5441b100-f441-4d4b-bcc2-3bb153e2bd41",
+							"name": "service_1",
+							"service_field_1": "element"
+						},
+						{
+							"id": "6441b100-f441-4d4b-bcc2-3bb153e2bd41",
+							"name": "service_2",
+							"service_field_1": "element"
+						}
+					],
+					"plugins": [
+						{
+							"id": "859c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							"name": "plugin_2",
+							"plugin_field_2": "foo"
+						}
+					]
+				}
+			}`,
+			expectedChanges: TrackedChanges{
+				ChangeDetails: []ChangeDetail{
+					{
+						ID: "T101",
+						Resources: []ResourceInfo{
+							{
+								Type: "plugin",
+								ID:   "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	for _, test := range tests {
