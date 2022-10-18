@@ -25,14 +25,14 @@ import (
 func TestCleanupNodes(t *testing.T) {
 	persister, err := util.GetPersister(t)
 	require.Nil(t, err)
-	store := store.New(persister, log.Logger).ForCluster("default")
+	db := store.New(persister, log.Logger).ForCluster(store.DefaultCluster)
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
 	s := grpc.NewServer()
 	admin.RegisterAdminService(s, admin.HandlerOpts{
 		Logger:      log.Logger,
-		StoreLoader: serverUtil.DefaultStoreLoader{Store: store},
+		StoreLoader: serverUtil.DefaultStoreLoader{Store: db},
 	})
 
 	l := setup()

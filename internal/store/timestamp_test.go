@@ -35,7 +35,7 @@ func TestAddTS(t *testing.T) {
 	t.Run("timestamps are added to persisted resource", func(t *testing.T) {
 		persister, err := util.GetPersister(t)
 		require.Nil(t, err)
-		s := New(persister, log.Logger).ForCluster("default")
+		s := New(persister, log.Logger).ForCluster(DefaultCluster)
 		svc := resource.NewService()
 		id := uuid.NewString()
 		svc.Service = &v1.Service{
@@ -51,7 +51,7 @@ func TestAddTS(t *testing.T) {
 	t.Run("timestamps provided in input are overridden", func(t *testing.T) {
 		persister, err := util.GetPersister(t)
 		require.Nil(t, err)
-		s := New(persister, log.Logger).ForCluster("default")
+		s := New(persister, log.Logger).ForCluster(DefaultCluster)
 		svc := resource.NewService()
 		id := uuid.NewString()
 		svc.Service = &v1.Service{

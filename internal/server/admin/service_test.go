@@ -11,6 +11,7 @@ import (
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
 	"github.com/kong/koko/internal/json"
 	"github.com/kong/koko/internal/model/json/validation/typedefs"
+	"github.com/kong/koko/internal/store"
 	"github.com/kong/koko/internal/test/util"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/types/known/wrapperspb"
@@ -780,7 +781,7 @@ func TestServiceListPagination(t *testing.T) {
 	t.Run("list size 1 page 1 returns 1 service total_count=10", func(t *testing.T) {
 		// Get First Page
 		body := c.GET("/v1/services").
-			WithQuery("cluster.id", "default").
+			WithQuery("cluster.id", store.DefaultCluster).
 			WithQuery("page.size", "1").
 			WithQuery("page.number", "1").
 			Expect().Status(http.StatusOK).JSON().Object()
@@ -794,7 +795,7 @@ func TestServiceListPagination(t *testing.T) {
 		require.Equal(t, headID, firstID)
 		// Go to last page and get the last element
 		body = c.GET("/v1/services").
-			WithQuery("cluster.id", "default").
+			WithQuery("cluster.id", store.DefaultCluster).
 			WithQuery("page.size", "1").
 			WithQuery("page.number", "10").
 			Expect().Status(http.StatusOK).JSON().Object()
@@ -810,7 +811,7 @@ func TestServiceListPagination(t *testing.T) {
 	t.Run("list page_size 2 and page 1 returns 2 services with total_count=10", func(t *testing.T) {
 		// Get First Page
 		body := c.GET("/v1/services").
-			WithQuery("cluster.id", "default").
+			WithQuery("cluster.id", store.DefaultCluster).
 			WithQuery("page.size", "2").
 			WithQuery("page.number", "1").
 			Expect().Status(http.StatusOK).JSON().Object()
@@ -824,7 +825,7 @@ func TestServiceListPagination(t *testing.T) {
 		require.Equal(t, headID, firstID)
 		// Go to last page and get the last element
 		body = c.GET("/v1/services").
-			WithQuery("cluster.id", "default").
+			WithQuery("cluster.id", store.DefaultCluster).
 			WithQuery("page.size", "2").
 			WithQuery("page.number", "5").
 			Expect().Status(http.StatusOK).JSON().Object()
@@ -839,7 +840,7 @@ func TestServiceListPagination(t *testing.T) {
 	t.Run("list page_size 3 and page 1 returns 3 services with total_count=10", func(t *testing.T) {
 		// Get First Page
 		body := c.GET("/v1/services").
-			WithQuery("cluster.id", "default").
+			WithQuery("cluster.id", store.DefaultCluster).
 			WithQuery("page.size", "3").
 			WithQuery("page.number", "1").
 			Expect().Status(http.StatusOK).JSON().Object()
@@ -852,7 +853,7 @@ func TestServiceListPagination(t *testing.T) {
 		require.Equal(t, headID, firstID)
 		// Go to last page and get the last element
 		body = c.GET("/v1/services").
-			WithQuery("cluster.id", "default").
+			WithQuery("cluster.id", store.DefaultCluster).
 			WithQuery("page.size", "3").
 			WithQuery("page.number", "4").
 			Expect().Status(http.StatusOK).JSON().Object()
@@ -867,7 +868,7 @@ func TestServiceListPagination(t *testing.T) {
 	t.Run("list page_size 4 and page 1 returns 4 services with total_count=10", func(t *testing.T) {
 		// Get First Page
 		body := c.GET("/v1/services").
-			WithQuery("cluster.id", "default").
+			WithQuery("cluster.id", store.DefaultCluster).
 			WithQuery("page.size", "4").
 			WithQuery("page.number", "1").
 			Expect().Status(http.StatusOK).JSON().Object()
@@ -880,7 +881,7 @@ func TestServiceListPagination(t *testing.T) {
 		require.Equal(t, headID, firstID)
 		// Go to last page and get the last element
 		body = c.GET("/v1/services").
-			WithQuery("cluster.id", "default").
+			WithQuery("cluster.id", store.DefaultCluster).
 			WithQuery("page.size", "4").
 			WithQuery("page.number", "3").
 			Expect().Status(http.StatusOK).JSON().Object()
@@ -895,7 +896,7 @@ func TestServiceListPagination(t *testing.T) {
 	t.Run("list page_size 10 and page 1 returns 10 services with total_count=10", func(t *testing.T) {
 		// Get First Page
 		body := c.GET("/v1/services").
-			WithQuery("cluster.id", "default").
+			WithQuery("cluster.id", store.DefaultCluster).
 			WithQuery("page.size", "10").
 			WithQuery("page.number", "1").
 			Expect().Status(http.StatusOK).JSON().Object()
@@ -913,7 +914,7 @@ func TestServiceListPagination(t *testing.T) {
 	})
 	t.Run("list page_size 10 and page 10 returns no services", func(t *testing.T) {
 		body := c.GET("/v1/services").
-			WithQuery("cluster.id", "default").
+			WithQuery("cluster.id", store.DefaultCluster).
 			WithQuery("page.size", "10").
 			WithQuery("page.number", "10").
 			Expect().Status(http.StatusOK).JSON().Object()
@@ -922,7 +923,7 @@ func TestServiceListPagination(t *testing.T) {
 	t.Run("list page_size 10 and no Page returns 10 services with total_count=10", func(t *testing.T) {
 		// Get First Page
 		body := c.GET("/v1/services").
-			WithQuery("cluster.id", "default").
+			WithQuery("cluster.id", store.DefaultCluster).
 			WithQuery("page.size", "10").
 			Expect().Status(http.StatusOK).JSON().Object()
 		items := body.Value("items").Array()
@@ -940,7 +941,7 @@ func TestServiceListPagination(t *testing.T) {
 	t.Run("list no page_size and Page 1 returns 10 services with total_count=10", func(t *testing.T) {
 		// Get First Page
 		body := c.GET("/v1/services").
-			WithQuery("cluster.id", "default").
+			WithQuery("cluster.id", store.DefaultCluster).
 			WithQuery("page.number", "1").
 			Expect().Status(http.StatusOK).JSON().Object()
 		items := body.Value("items").Array()
@@ -958,7 +959,7 @@ func TestServiceListPagination(t *testing.T) {
 	t.Run("list page_size 11 and page 1 returns 10 services with total_count=10", func(t *testing.T) {
 		// Get First Page
 		body := c.GET("/v1/services").
-			WithQuery("cluster.id", "default").
+			WithQuery("cluster.id", store.DefaultCluster).
 			WithQuery("page.size", "11").
 			WithQuery("page.number", "1").
 			Expect().Status(http.StatusOK).JSON().Object()
@@ -977,7 +978,7 @@ func TestServiceListPagination(t *testing.T) {
 	t.Run("list > 1001 page size and page 1 returns error", func(t *testing.T) {
 		// Get First Page
 		body := c.GET("/v1/services").
-			WithQuery("cluster.id", "default").
+			WithQuery("cluster.id", store.DefaultCluster).
 			WithQuery("page.size", "1001").
 			WithQuery("page.number", "1").
 			Expect().Status(http.StatusBadRequest).JSON().Object()
@@ -987,7 +988,7 @@ func TestServiceListPagination(t *testing.T) {
 	t.Run("list page_size 10 and page < 0 returns error", func(t *testing.T) {
 		// Get First Page
 		body := c.GET("/v1/services").
-			WithQuery("cluster.id", "default").
+			WithQuery("cluster.id", store.DefaultCluster).
 			WithQuery("page.size", "10").
 			WithQuery("page.number", "-1").
 			Expect().Status(http.StatusBadRequest).JSON().Object()

@@ -76,7 +76,7 @@ func init() {
 func setupStoreLoader(t *testing.T) serverUtil.StoreLoader {
 	p, err := util.GetPersister(t)
 	require.NoError(t, err)
-	objectStore := store.New(p, log.Logger).ForCluster("default")
+	objectStore := store.New(p, log.Logger).ForCluster(store.DefaultCluster)
 	return serverUtil.DefaultStoreLoader{
 		Store: objectStore,
 	}
@@ -91,14 +91,14 @@ func insertPluginSchema(t *testing.T, name string, schema string, storeLoader se
 	pluginSchema.PluginSchema.Name = name
 	pluginSchema.PluginSchema.LuaSchema = schema
 
-	db, err := storeLoader.Load(context.Background(), &grpcModel.RequestCluster{Id: "default"})
+	db, err := storeLoader.Load(context.Background(), &grpcModel.RequestCluster{Id: store.DefaultCluster})
 	require.NoError(t, err)
 	return db.Create(context.Background(), pluginSchema)
 }
 
 func getValidContext() context.Context {
 	return context.WithValue(context.Background(), serverUtil.ContextKeyCluster,
-		&grpcModel.RequestCluster{Id: "default"})
+		&grpcModel.RequestCluster{Id: store.DefaultCluster})
 }
 
 func TestNewLuaValidator(t *testing.T) {

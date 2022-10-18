@@ -44,7 +44,7 @@ func TestNodeCreateUpsert(t *testing.T) {
 	objectStore := store.New(p, log.Logger)
 
 	storeLoader := serverUtil.DefaultStoreLoader{
-		Store: objectStore.ForCluster("default"),
+		Store: objectStore.ForCluster(store.DefaultCluster),
 	}
 	nodeService := &NodeService{
 		CommonOpts: CommonOpts{
@@ -132,13 +132,13 @@ func TestNodeDelete(t *testing.T) {
 	require.Nil(t, err)
 	objectStore := store.New(p, log.Logger)
 
-	db := objectStore.ForCluster("default")
+	db := objectStore.ForCluster(store.DefaultCluster)
 	ctx := context.Background()
 
 	handler, err := NewHandler(HandlerOpts{
 		Logger: log.Logger,
 		StoreLoader: serverUtil.DefaultStoreLoader{
-			Store: objectStore.ForCluster("default"),
+			Store: objectStore.ForCluster(store.DefaultCluster),
 		},
 		Validator: validator,
 	})
@@ -194,14 +194,14 @@ func TestNodeRead(t *testing.T) {
 	p, err := util.GetPersister(t)
 	require.Nil(t, err)
 	objectStore := store.New(p, log.Logger)
-	db := objectStore.ForCluster("default")
+	db := objectStore.ForCluster(store.DefaultCluster)
 
 	ctx := context.Background()
 
 	handler, err := NewHandler(HandlerOpts{
 		Logger: log.Logger,
 		StoreLoader: serverUtil.DefaultStoreLoader{
-			Store: objectStore.ForCluster("default"),
+			Store: objectStore.ForCluster(store.DefaultCluster),
 		},
 		Validator: validator,
 	})
@@ -409,7 +409,7 @@ func TestNodeList(t *testing.T) {
 	p, err := util.GetPersister(t)
 	require.Nil(t, err)
 	objectStore := store.New(p, log.Logger)
-	db := objectStore.ForCluster("default")
+	db := objectStore.ForCluster(store.DefaultCluster)
 
 	ctx := context.Background()
 
@@ -430,7 +430,7 @@ func TestNodeList(t *testing.T) {
 	handler, err := NewHandler(HandlerOpts{
 		Logger: log.Logger,
 		StoreLoader: serverUtil.DefaultStoreLoader{
-			Store: objectStore.ForCluster("default"),
+			Store: objectStore.ForCluster(store.DefaultCluster),
 		},
 		Validator: validator,
 	})
@@ -475,7 +475,7 @@ func TestNodeListWithStatus(t *testing.T) {
 	p, err := util.GetPersister(t)
 	require.Nil(t, err)
 	objectStore := store.New(p, log.Logger)
-	db := objectStore.ForCluster("default")
+	db := objectStore.ForCluster(store.DefaultCluster)
 
 	ctx := context.Background()
 
@@ -527,7 +527,7 @@ func TestNodeListWithStatus(t *testing.T) {
 	handler, err := NewHandler(HandlerOpts{
 		Logger: log.Logger,
 		StoreLoader: serverUtil.DefaultStoreLoader{
-			Store: objectStore.ForCluster("default"),
+			Store: objectStore.ForCluster(store.DefaultCluster),
 		},
 		Validator: validator,
 	})
@@ -604,9 +604,9 @@ func TestNodeService_listAllNodeStatus(t *testing.T) {
 	objectStore := store.New(p, log.Logger)
 
 	storeLoader := serverUtil.DefaultStoreLoader{
-		Store: objectStore.ForCluster("default"),
+		Store: objectStore.ForCluster(store.DefaultCluster),
 	}
-	db := objectStore.ForCluster("default")
+	db := objectStore.ForCluster(store.DefaultCluster)
 	nodeService := &NodeService{
 		CommonOpts: CommonOpts{
 			loggerFields: []zapcore.Field{zap.String("admin-service", "node")},
