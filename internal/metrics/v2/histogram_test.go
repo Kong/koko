@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -168,6 +169,8 @@ func Test_prometheusHistogram_Observe(t *testing.T) {
 			}
 			family, err := test.fields.registry.Gather()
 			require.NoError(t, err)
+			assert.Greater(t, len(family), 0)
+			assert.Greater(t, len(family[0].Metric), 0)
 			histogram := family[0].Metric[0].Histogram
 			require.Equal(t, test.expect.sampleSum, histogram.GetSampleSum())
 			require.Equal(t, test.expect.sampleCount, histogram.GetSampleCount())

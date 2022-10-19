@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -140,6 +141,8 @@ func TestPrometheusGaugeAdd(t *testing.T) {
 			g.Add(test.args.floatVal, test.args.label...)
 			family, err := test.fields.registry.Gather()
 			require.NoError(t, err)
+			assert.Greater(t, len(family), 0)
+			assert.Greater(t, len(family[0].Metric), 0)
 			require.Equal(t, test.expect, family[0].Metric[0].Gauge.GetValue())
 			require.Equal(t, len(test.fields.opts.LabelNames), len(family[0].Metric[0].GetLabel()))
 		})
@@ -196,6 +199,8 @@ func TestPrometheusGaugeDec(t *testing.T) {
 			g.Dec(test.args.label...)
 			family, err := test.fields.registry.Gather()
 			require.NoError(t, err)
+			assert.Greater(t, len(family), 0)
+			assert.Greater(t, len(family[0].Metric), 0)
 			require.Equal(t, float64(-1), family[0].Metric[0].Gauge.GetValue())
 			require.Equal(t, len(test.fields.opts.LabelNames), len(family[0].Metric[0].GetLabel()))
 		})
@@ -252,6 +257,8 @@ func TestPrometheusGaugeInc(t *testing.T) {
 			g.Inc(test.args.label...)
 			family, err := test.fields.registry.Gather()
 			require.NoError(t, err)
+			assert.Greater(t, len(family), 0)
+			assert.Greater(t, len(family[0].Metric), 0)
 			require.Equal(t, float64(1), family[0].Metric[0].Gauge.GetValue())
 			require.Equal(t, len(test.fields.opts.LabelNames), len(family[0].Metric[0].GetLabel()))
 		})
@@ -346,6 +353,8 @@ func TestPrometheusGaugeSet(t *testing.T) {
 			g.Set(test.args.floatVal, test.args.label...)
 			family, err := test.fields.registry.Gather()
 			require.NoError(t, err)
+			assert.Greater(t, len(family), 0)
+			assert.Greater(t, len(family[0].Metric), 0)
 			require.Equal(t, test.expect, family[0].Metric[0].Gauge.GetValue())
 			require.Equal(t, len(test.fields.opts.LabelNames), len(family[0].Metric[0].GetLabel()))
 		})
@@ -440,6 +449,8 @@ func TestPrometheusGaugeSub(t *testing.T) {
 			g.Sub(test.args.floatVal, test.args.label...)
 			family, err := test.fields.registry.Gather()
 			require.NoError(t, err)
+			assert.Greater(t, len(family), 0)
+			assert.Greater(t, len(family[0].Metric), 0)
 			require.Equal(t, test.expect, family[0].Metric[0].Gauge.GetValue())
 			require.Equal(t, len(test.fields.opts.LabelNames), len(family[0].Metric[0].GetLabel()))
 		})
