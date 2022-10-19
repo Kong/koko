@@ -354,7 +354,7 @@ func (v *LuaValidator) getDB(ctx context.Context) (store.Store, error) {
 	}
 	reqCluster, ok := ctx.Value(util.ContextKeyCluster).(*grpcModel.RequestCluster)
 	if !ok {
-		return nil, errors.New("invalid context: failed to retrieve RequestCluster from context")
+		reqCluster = &grpcModel.RequestCluster{Id: store.DefaultCluster}
 	}
 
 	store, err := v.storeLoader.Load(ctx, reqCluster)

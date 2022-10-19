@@ -57,20 +57,27 @@ const pluginSchemaFormat = `return {
 
 func init() {
 	var err error
-	goodValidator, err = NewLuaValidator(Opts{Logger: log.Logger})
-	if err != nil {
+	if goodValidator, err = getGoodValidatorWithStoreLoader(nil); err != nil {
 		panic(err)
 	}
-	err = goodValidator.LoadSchemasFromEmbed(plugin.Schemas, "schemas")
+}
+
+func getGoodValidatorWithStoreLoader(storeLoader serverUtil.StoreLoader) (*LuaValidator, error) {
+	v, err := NewLuaValidator(Opts{Logger: log.Logger, StoreLoader: storeLoader})
 	if err != nil {
-		panic(err)
+		return nil, err
+	}
+	if err := v.LoadSchemasFromEmbed(plugin.Schemas, "schemas"); err != nil {
+		return nil, err
 	}
 
 	// PluginSchema may already be registered; safe to ignore error
 	_ = model.RegisterType("plugin_schema", &grpcModel.PluginSchema{}, func() model.Object {
 		return resource.NewPluginSchema()
 	})
-	resource.SetValidator(goodValidator)
+	resource.SetValidator(v)
+
+	return v, nil
 }
 
 func setupStoreLoader(t *testing.T) serverUtil.StoreLoader {
@@ -99,6 +106,11 @@ func insertPluginSchema(t *testing.T, name string, schema string, storeLoader se
 func getValidContext() context.Context {
 	return context.WithValue(context.Background(), serverUtil.ContextKeyCluster,
 		&grpcModel.RequestCluster{Id: store.DefaultCluster})
+}
+
+func getValidContextWithClusterID(cluster string) context.Context {
+	return context.WithValue(context.Background(), serverUtil.ContextKeyCluster,
+		&grpcModel.RequestCluster{Id: cluster})
 }
 
 func TestNewLuaValidator(t *testing.T) {
@@ -1645,10 +1657,11 @@ func TestLuaValidator_GetDB(t *testing.T) {
 	storeLoader := setupStoreLoader(t)
 	require.NotNil(t, storeLoader)
 	goodValidator.storeLoader = storeLoader
-	t.Run("context not containing RequestCluster returns error", func(t *testing.T) {
-		db, err := goodValidator.getDB(context.Background())
-		assert.Nil(t, db)
-		assert.Error(t, err, "invalid context: failed to retrieve RequestCluster from context")
+	t.Run("context not containing RequestCluster returns default store", func(t *testing.T) {
+		db, err := goodValidator.getDB(getValidContext())
+		require.NoError(t, err)
+		assert.NotNil(t, db)
+		assert.Equal(t, store.DefaultCluster, db.Cluster())
 	})
 	t.Run("nil context returns error", func(t *testing.T) {
 		// disable staticcheck since nil context is being tested
@@ -1665,9 +1678,14 @@ func TestLuaValidator_GetDB(t *testing.T) {
 		assert.Error(t, err, "invalid StoreLoader: store loader cannot be nil")
 	})
 	t.Run("return proper database", func(t *testing.T) {
-		db, err := goodValidator.getDB(getValidContext())
+		v, err := getGoodValidatorWithStoreLoader(&testLoader{clusterID: "test-cluster"})
+		require.NoError(t, err)
+
+		db, err := v.getDB(getValidContextWithClusterID("test-cluster"))
+		require.NoError(t, err)
+
 		assert.NotNil(t, db)
-		assert.NoError(t, err)
+		assert.Equal(t, "test-cluster", db.Cluster())
 	})
 	t.Run("store loader error results in a grpc status error", func(t *testing.T) {
 		validator, err := NewLuaValidator(Opts{Logger: log.Logger})
@@ -1679,6 +1697,15 @@ func TestLuaValidator_GetDB(t *testing.T) {
 		assert.Error(t, err)
 		assert.Equal(t, codes.InvalidArgument, status.Code(err))
 	})
+}
+
+type testLoader struct {
+	serverUtil.StoreLoader
+	clusterID string
+}
+
+func (l *testLoader) Load(_ context.Context, cluster *grpcModel.RequestCluster) (store.Store, error) {
+	return (&store.ObjectStore{}).ForCluster(cluster.Id), nil
 }
 
 type badLoader struct{}
