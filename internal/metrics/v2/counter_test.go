@@ -140,7 +140,7 @@ func TestPrometheusCounterAdd(t *testing.T) {
 				assert.Greater(t, len(family), 0)
 				assert.Greater(t, len(family[0].Metric), 0)
 				require.Equal(t, test.expect, family[0].Metric[0].Counter.GetValue())
-				require.Equal(t, len(test.fields.opts.LabelNames), len(family[0].Metric[0].GetLabel()))
+				require.Len(t, family[0].Metric[0].GetLabel(), len(test.fields.opts.LabelNames))
 			}
 		})
 	}
@@ -197,7 +197,7 @@ func TestPrometheusCounterInc(t *testing.T) {
 			assert.Greater(t, len(family), 0)
 			assert.Greater(t, len(family[0].Metric), 0)
 			require.Equal(t, float64(1), family[0].Metric[0].Counter.GetValue())
-			require.Equal(t, len(test.fields.opts.LabelNames), len(family[0].Metric[0].GetLabel()))
+			require.Len(t, family[0].Metric[0].GetLabel(), len(test.fields.opts.LabelNames))
 		})
 	}
 }

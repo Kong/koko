@@ -174,6 +174,7 @@ func Test_prometheusHistogram_Observe(t *testing.T) {
 			histogram := family[0].Metric[0].Histogram
 			require.Equal(t, test.expect.sampleSum, histogram.GetSampleSum())
 			require.Equal(t, test.expect.sampleCount, histogram.GetSampleCount())
+			require.Len(t, family[0].Metric[0].GetLabel(), len(test.fields.opts.LabelNames))
 		})
 	}
 }
