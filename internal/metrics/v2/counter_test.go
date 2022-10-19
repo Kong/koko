@@ -1,6 +1,7 @@
 package v2
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -111,7 +112,7 @@ func TestPrometheusCounterAdd(t *testing.T) {
 			shouldPanic: true,
 		},
 		{
-			name: "should succeed when when input is 0",
+			name: "should succeed when input is 0",
 			fields: fields{
 				registry: prometheus.NewRegistry(),
 				opts: CounterOpts{
@@ -141,6 +142,9 @@ func TestPrometheusCounterAdd(t *testing.T) {
 				assert.Greater(t, len(family[0].Metric), 0)
 				require.Equal(t, test.expect, family[0].Metric[0].Counter.GetValue())
 				require.Len(t, family[0].Metric[0].GetLabel(), len(test.fields.opts.LabelNames))
+				require.Equal(t, fmt.Sprintf("kong_%s_%s", test.fields.opts.Subsystem, test.fields.opts.Name), *family[0].Name)
+				require.Equal(t, test.fields.opts.Help, *family[0].Help)
+				require.Equal(t, "COUNTER", family[0].Type.String())
 			}
 		})
 	}
@@ -198,6 +202,9 @@ func TestPrometheusCounterInc(t *testing.T) {
 			assert.Greater(t, len(family[0].Metric), 0)
 			require.Equal(t, float64(1), family[0].Metric[0].Counter.GetValue())
 			require.Len(t, family[0].Metric[0].GetLabel(), len(test.fields.opts.LabelNames))
+			require.Equal(t, fmt.Sprintf("kong_%s_%s", test.fields.opts.Subsystem, test.fields.opts.Name), *family[0].Name)
+			require.Equal(t, test.fields.opts.Help, *family[0].Help)
+			require.Equal(t, "COUNTER", family[0].Type.String())
 		})
 	}
 }

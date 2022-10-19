@@ -1,6 +1,7 @@
 package v2
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -121,7 +122,7 @@ func TestPrometheusGaugeAdd(t *testing.T) {
 			expect: float64(-2),
 		},
 		{
-			name: "should succeed when when input is 0",
+			name: "should succeed when input is 0",
 			fields: fields{
 				registry: prometheus.NewRegistry(),
 				opts: GaugeOpts{
@@ -146,6 +147,9 @@ func TestPrometheusGaugeAdd(t *testing.T) {
 			assert.Greater(t, len(family[0].Metric), 0)
 			require.Equal(t, test.expect, family[0].Metric[0].Gauge.GetValue())
 			require.Len(t, family[0].Metric[0].GetLabel(), len(test.fields.opts.LabelNames))
+			require.Equal(t, fmt.Sprintf("kong_%s_%s", test.fields.opts.Subsystem, test.fields.opts.Name), *family[0].Name)
+			require.Equal(t, test.fields.opts.Help, *family[0].Help)
+			require.Equal(t, "GAUGE", family[0].Type.String())
 		})
 	}
 }
@@ -204,6 +208,9 @@ func TestPrometheusGaugeDec(t *testing.T) {
 			assert.Greater(t, len(family[0].Metric), 0)
 			require.Equal(t, float64(-1), family[0].Metric[0].Gauge.GetValue())
 			require.Len(t, family[0].Metric[0].GetLabel(), len(test.fields.opts.LabelNames))
+			require.Equal(t, fmt.Sprintf("kong_%s_%s", test.fields.opts.Subsystem, test.fields.opts.Name), *family[0].Name)
+			require.Equal(t, test.fields.opts.Help, *family[0].Help)
+			require.Equal(t, "GAUGE", family[0].Type.String())
 		})
 	}
 }
@@ -262,6 +269,9 @@ func TestPrometheusGaugeInc(t *testing.T) {
 			assert.Greater(t, len(family[0].Metric), 0)
 			require.Equal(t, float64(1), family[0].Metric[0].Gauge.GetValue())
 			require.Len(t, family[0].Metric[0].GetLabel(), len(test.fields.opts.LabelNames))
+			require.Equal(t, fmt.Sprintf("kong_%s_%s", test.fields.opts.Subsystem, test.fields.opts.Name), *family[0].Name)
+			require.Equal(t, test.fields.opts.Help, *family[0].Help)
+			require.Equal(t, "GAUGE", family[0].Type.String())
 		})
 	}
 }
@@ -333,7 +343,7 @@ func TestPrometheusGaugeSet(t *testing.T) {
 			expect: float64(-2),
 		},
 		{
-			name: "should succeed when when input is 0",
+			name: "should succeed when input is 0",
 			fields: fields{
 				registry: prometheus.NewRegistry(),
 				opts: GaugeOpts{
@@ -358,6 +368,9 @@ func TestPrometheusGaugeSet(t *testing.T) {
 			assert.Greater(t, len(family[0].Metric), 0)
 			require.Equal(t, test.expect, family[0].Metric[0].Gauge.GetValue())
 			require.Len(t, family[0].Metric[0].GetLabel(), len(test.fields.opts.LabelNames))
+			require.Equal(t, fmt.Sprintf("kong_%s_%s", test.fields.opts.Subsystem, test.fields.opts.Name), *family[0].Name)
+			require.Equal(t, test.fields.opts.Help, *family[0].Help)
+			require.Equal(t, "GAUGE", family[0].Type.String())
 		})
 	}
 }
@@ -429,7 +442,7 @@ func TestPrometheusGaugeSub(t *testing.T) {
 			expect: float64(2),
 		},
 		{
-			name: "should succeed when when input is 0",
+			name: "should succeed when input is 0",
 			fields: fields{
 				registry: prometheus.NewRegistry(),
 				opts: GaugeOpts{
@@ -454,6 +467,9 @@ func TestPrometheusGaugeSub(t *testing.T) {
 			assert.Greater(t, len(family[0].Metric), 0)
 			require.Equal(t, test.expect, family[0].Metric[0].Gauge.GetValue())
 			require.Len(t, family[0].Metric[0].GetLabel(), len(test.fields.opts.LabelNames))
+			require.Equal(t, fmt.Sprintf("kong_%s_%s", test.fields.opts.Subsystem, test.fields.opts.Name), *family[0].Name)
+			require.Equal(t, test.fields.opts.Help, *family[0].Help)
+			require.Equal(t, "GAUGE", family[0].Type.String())
 		})
 	}
 }
@@ -493,6 +509,9 @@ func TestPrometheusGaugeSetToCurrentTime(t *testing.T) {
 			assert.Greater(t, len(family[0].Metric), 0)
 			require.InDelta(t, unixTime, family[0].Metric[0].Gauge.GetValue(), float64(5*time.Second))
 			require.Len(t, family[0].Metric[0].GetLabel(), len(test.fields.opts.LabelNames))
+			require.Equal(t, fmt.Sprintf("kong_%s_%s", test.fields.opts.Subsystem, test.fields.opts.Name), *family[0].Name)
+			require.Equal(t, test.fields.opts.Help, *family[0].Help)
+			require.Equal(t, "GAUGE", family[0].Type.String())
 		})
 	}
 }
