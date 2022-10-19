@@ -2,6 +2,7 @@ package v2
 
 import (
 	"testing"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
@@ -452,6 +453,45 @@ func TestPrometheusGaugeSub(t *testing.T) {
 			assert.Greater(t, len(family), 0)
 			assert.Greater(t, len(family[0].Metric), 0)
 			require.Equal(t, test.expect, family[0].Metric[0].Gauge.GetValue())
+			require.Len(t, family[0].Metric[0].GetLabel(), len(test.fields.opts.LabelNames))
+		})
+	}
+}
+
+func TestPrometheusGaugeSetToCurrentTime(t *testing.T) {
+	type fields struct {
+		registry *prometheus.Registry
+		opts     GaugeOpts
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		label  []Label
+	}{
+		{
+			name: "should set current time",
+			fields: fields{
+				registry: prometheus.NewRegistry(),
+				opts: GaugeOpts{
+					Subsystem:  "cp",
+					Name:       "gauge_test_total",
+					Help:       "gauge_test help",
+					LabelNames: []string{"foo"},
+				},
+			},
+			label: []Label{{"foo", "bar"}},
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			gauge := NewGauge(test.fields.registry, test.fields.opts)
+			gauge.SetToCurrentTime(test.label...)
+			unixTime := float64(time.Now().Unix())
+			family, err := test.fields.registry.Gather()
+			require.NoError(t, err)
+			assert.Greater(t, len(family), 0)
+			assert.Greater(t, len(family[0].Metric), 0)
+			require.InDelta(t, unixTime, family[0].Metric[0].Gauge.GetValue(), float64(5*time.Second))
 			require.Len(t, family[0].Metric[0].GetLabel(), len(test.fields.opts.LabelNames))
 		})
 	}

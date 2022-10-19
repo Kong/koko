@@ -22,6 +22,8 @@ type Gauge interface {
 	// Sub subtracts the given value from the Gauge. (The value can be
 	// negative, resulting in an increase of the Gauge.)
 	Sub(float64, ...Label)
+	// SetToCurrentTime sets the Gauge to the current Unix time in seconds.
+	SetToCurrentTime(...Label)
 }
 
 type GaugeOpts Opts
@@ -62,4 +64,8 @@ func (p prometheusGauge) Add(f float64, label ...Label) {
 
 func (p prometheusGauge) Sub(f float64, label ...Label) {
 	p.gauge.With(toPrometheusLabel(label...)).Sub(f)
+}
+
+func (p prometheusGauge) SetToCurrentTime(label ...Label) {
+	p.gauge.With(toPrometheusLabel(label...)).SetToCurrentTime()
 }
