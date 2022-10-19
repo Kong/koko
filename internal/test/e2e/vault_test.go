@@ -14,6 +14,7 @@ import (
 	"github.com/google/uuid"
 	kongClient "github.com/kong/go-kong/kong"
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
+	"github.com/kong/koko/internal/json"
 	"github.com/kong/koko/internal/test/kong"
 	"github.com/kong/koko/internal/test/run"
 	"github.com/kong/koko/internal/test/util"
@@ -103,11 +104,17 @@ func TestSecretsManagementEnvVault(t *testing.T) {
 		Name:   "env",
 		Prefix: "my-env-vault",
 		Config: &v1.Vault_Config{
-			Prefix: "KONG_MY_SECRET_",
+			Config: &v1.Vault_Config_Env{
+				Env: &v1.Vault_EnvConfig{
+					Prefix: "KONG_MY_SECRET_",
+				},
+			},
 		},
 	}
 
-	c.POST("/v1/vaults").WithJSON(vault).Expect().Status(http.StatusCreated)
+	vaultBytes, err := json.ProtoJSONMarshal(vault)
+	require.NoError(t, err)
+	c.POST("/v1/vaults").WithBytes(vaultBytes).Expect().Status(http.StatusCreated)
 
 	// create service
 	service := &v1.Service{
