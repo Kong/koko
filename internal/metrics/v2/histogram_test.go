@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/prometheus/client_golang/prometheus"
+	io_prometheus_client "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -178,7 +179,7 @@ func Test_prometheusHistogram_Observe(t *testing.T) {
 			require.Len(t, family[0].Metric[0].GetLabel(), len(test.fields.opts.LabelNames))
 			require.Equal(t, fmt.Sprintf("kong_%s_%s", test.fields.opts.Subsystem, test.fields.opts.Name), *family[0].Name)
 			require.Equal(t, test.fields.opts.Help, *family[0].Help)
-			require.Equal(t, "HISTOGRAM", family[0].Type.String())
+			require.Equal(t, io_prometheus_client.MetricType_HISTOGRAM, *family[0].Type)
 		})
 	}
 }
