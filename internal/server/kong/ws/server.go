@@ -3,11 +3,14 @@ package ws
 import (
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/gorilla/websocket"
 	"github.com/kong/go-wrpc/wrpc"
 	"github.com/kong/koko/internal/json"
+	metricsv2 "github.com/kong/koko/internal/metrics/v2"
 	"github.com/kong/koko/internal/versioning"
+	"github.com/prometheus/client_golang/prometheus"
 	"go.uber.org/zap"
 )
 
@@ -18,6 +21,15 @@ const (
 )
 
 var upgrader = websocket.Upgrader{}
+
+var dpTimeToConnect = metricsv2.NewHistogram(
+	prometheus.NewRegistry(),
+	metricsv2.HistogramOpts{
+		Subsystem:  "cp",
+		Name:       "data_plane_time_to_connect",
+		Help:       "Time it takes for initial connection between a control plane and a data plane",
+		LabelNames: []string{"dp_version", "protocol"},
+	})
 
 type HandlerOpts struct {
 	Logger        *zap.Logger
@@ -85,6 +97,7 @@ func validateRequest(r *http.Request) error {
 }
 
 func (h websocketHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	dpConnectStartTime := time.Now()
 	if err := validateRequest(r); err != nil {
 		h.logger.Error("received invalid websocket upgrade request from DP",
 			zap.Error(err),
@@ -119,6 +132,11 @@ func (h websocketHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		loggerWithNode.Error("failed to upgrade websocket connection", zap.Error(err))
 		return
 	}
+	dpConnectionDuration := time.Since(dpConnectStartTime).Milliseconds()
+	dpTimeToConnect.Observe(float64(dpConnectionDuration), metricsv2.Label{
+		Key:   "dp_version",
+		Value: nodeVersion,
+	})
 
 	node, err := NewNode(nodeOpts{
 		id:         nodeID,
