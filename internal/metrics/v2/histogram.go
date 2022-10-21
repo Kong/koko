@@ -38,17 +38,16 @@ type HistogramOpts struct {
 }
 
 func NewHistogram(registry prometheus.Registerer, opts HistogramOpts) Histogram {
+	promOpts := prometheus.HistogramOpts{
+		Namespace: namespace,
+		Subsystem: opts.Subsystem,
+		Name:      opts.Name,
+		Help:      opts.Help,
+		Buckets:   opts.Buckets,
+	}
 	return &prometheusHistogram{
 		histogram: promauto.With(registry).
-			NewHistogramVec(prometheus.HistogramOpts{
-				Namespace: namespace,
-				Subsystem: opts.Subsystem,
-				Name:      opts.Name,
-				Help:      opts.Help,
-				Buckets:   opts.Buckets,
-			},
-				opts.LabelNames,
-			),
+			NewHistogramVec(promOpts, opts.LabelNames),
 	}
 }
 

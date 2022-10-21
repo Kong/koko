@@ -170,8 +170,8 @@ func Test_prometheusHistogram_Observe(t *testing.T) {
 			}
 			family, err := test.fields.registry.Gather()
 			require.NoError(t, err)
-			assert.Greater(t, len(family), 0)
-			assert.Greater(t, len(family[0].Metric), 0)
+			assert.Len(t, family, 1)
+			assert.Len(t, family[0].Metric, 1)
 			histogram := family[0].Metric[0].Histogram
 			require.Equal(t, test.expect.sampleSum, histogram.GetSampleSum())
 			require.Equal(t, test.expect.sampleCount, histogram.GetSampleCount())
