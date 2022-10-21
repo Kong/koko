@@ -115,12 +115,18 @@ func AuthFnSharedTLS(cert tls.Certificate) (AuthFn, error) {
 	var sharedCert []byte
 	switch len(cert.Certificate) {
 	case 0:
-		return nil, fmt.Errorf("no certificate provided")
+		return nil, ErrAuth{
+			HTTPStatus: http.StatusBadRequest,
+			Message:    "no certificate provided",
+		}
 	case 1:
 		sharedCert = cert.Certificate[0]
 	default:
 		// more than 1
-		return nil, fmt.Errorf("only one shared certificate must be provided")
+		return nil, ErrAuth{
+			HTTPStatus: http.StatusBadRequest,
+			Message:    "only one shared certificate must be provided",
+		}
 	}
 	return func(r *http.Request) error {
 		peerCert, err := readTLSCertificate(r)
@@ -141,13 +147,19 @@ func AuthFnSharedTLS(cert tls.Certificate) (AuthFn, error) {
 
 func AuthFnPKITLS(rootCAs []*x509.Certificate) (AuthFn, error) {
 	if len(rootCAs) == 0 {
-		return nil, fmt.Errorf("no root CAs provided")
+		return nil, ErrAuth{
+			HTTPStatus: http.StatusBadRequest,
+			Message:    "no root CAs provided",
+		}
 	}
 	caCertPool := x509.NewCertPool()
 	for _, ca := range rootCAs {
 		if !ca.IsCA {
-			return nil, fmt.Errorf("certificate (serial number: %s) "+
-				"is not a CA certificate", ca.SerialNumber)
+			return nil, ErrAuth{
+				HTTPStatus: http.StatusBadRequest,
+				Message: fmt.Sprintf("certificate (serial number: %s) "+
+					"is not a CA certificate", ca.SerialNumber),
+			}
 		}
 		caCertPool.AddCert(ca)
 	}
