@@ -33,12 +33,12 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-var totalMutationTime = metricsv2.NewHistogram(
+var totalMutationDuration = metricsv2.NewHistogram(
 	prometheus.NewRegistry(),
 	metricsv2.HistogramOpts{
 		Subsystem:  "cp",
 		Name:       "data_plane_config_mutation_time_total",
-		Help:       "Total duration in ms it takes to reconfigure a dataplane payload",
+		Help:       "Total duration in ms it takes to mutate a dataplane payload",
 		LabelNames: []string{"status"},
 	})
 
@@ -489,14 +489,14 @@ func (m *Manager) reconcileKongPayload(ctx context.Context) error {
 	config, err := m.configLoader.Load(ctx, m.Cluster.Get())
 	mutationDuration := time.Since(mutationStartTime).Milliseconds()
 	if err != nil {
-		totalMutationTime.Observe(float64(mutationDuration),
+		totalMutationDuration.Observe(float64(mutationDuration),
 			metricsv2.Label{
 				Key:   "status",
 				Value: "fail",
 			})
 		return err
 	}
-	totalMutationTime.Observe(float64(mutationDuration),
+	totalMutationDuration.Observe(float64(mutationDuration),
 		metricsv2.Label{
 			Key:   "status",
 			Value: "success",
