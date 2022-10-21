@@ -9,18 +9,8 @@ import (
 	"time"
 
 	"github.com/kong/koko/internal/json"
-	metricsv2 "github.com/kong/koko/internal/metrics/v2"
-	"github.com/prometheus/client_golang/prometheus"
+	"github.com/kong/koko/internal/metrics"
 )
-
-var singleMutationDuration = metricsv2.NewHistogram(
-	prometheus.NewRegistry(),
-	metricsv2.HistogramOpts{
-		Subsystem:  "cp",
-		Name:       "data_plane_config_mutation_time_individual",
-		Help:       "Duration in ms it takes an individual mutator to reconfigure a dataplane payload",
-		LabelNames: []string{"status", "mutator_name"},
-	})
 
 type Map map[string]interface{}
 
@@ -67,23 +57,25 @@ func (l *KongConfigurationLoader) Load(ctx context.Context, clusterID string) (C
 			configTable)
 		mutationDuration := time.Since(mutationStartTime).Milliseconds()
 		if err != nil {
-			singleMutationDuration.Observe(float64(mutationDuration),
-				metricsv2.Label{
+			metrics.Histogram("data_plane_config_mutation_time_individual",
+				float64(mutationDuration),
+				metrics.Tag{
 					Key:   "status",
 					Value: "fail",
 				},
-				metricsv2.Label{
+				metrics.Tag{
 					Key:   "mutator_name",
 					Value: m.Name(),
 				})
 			return Content{}, err
 		}
-		singleMutationDuration.Observe(float64(mutationDuration),
-			metricsv2.Label{
+		metrics.Histogram("data_plane_config_mutation_time_individual",
+			float64(mutationDuration),
+			metrics.Tag{
 				Key:   "status",
 				Value: "success",
 			},
-			metricsv2.Label{
+			metrics.Tag{
 				Key:   "mutator_name",
 				Value: m.Name(),
 			})
