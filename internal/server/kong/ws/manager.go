@@ -22,14 +22,25 @@ import (
 	relay "github.com/kong/koko/internal/gen/grpc/kong/relay/service/v1"
 	grpcKongUtil "github.com/kong/koko/internal/gen/grpc/kong/util/v1"
 	"github.com/kong/koko/internal/metrics"
+	metricsv2 "github.com/kong/koko/internal/metrics/v2"
 	"github.com/kong/koko/internal/resource"
 	"github.com/kong/koko/internal/server/kong/ws/config"
 	"github.com/kong/koko/internal/store"
+	"github.com/prometheus/client_golang/prometheus"
 	"go.uber.org/atomic"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
+
+var totalMutationTime = metricsv2.NewHistogram(
+	prometheus.NewRegistry(),
+	metricsv2.HistogramOpts{
+		Subsystem:  "cp",
+		Name:       "data_plane_config_mutation_time_total",
+		Help:       "Total duration in ms it takes to reconfigure a dataplane payload",
+		LabelNames: []string{"status"},
+	})
 
 type ManagerOpts struct {
 	Ctx     context.Context
@@ -474,10 +485,22 @@ type ConfigClient struct {
 }
 
 func (m *Manager) reconcileKongPayload(ctx context.Context) error {
+	mutationStartTime := time.Now()
 	config, err := m.configLoader.Load(ctx, m.Cluster.Get())
+	mutationDuration := time.Since(mutationStartTime).Milliseconds()
 	if err != nil {
+		totalMutationTime.Observe(float64(mutationDuration),
+			metricsv2.Label{
+				Key:   "status",
+				Value: "fail",
+			})
 		return err
 	}
+	totalMutationTime.Observe(float64(mutationDuration),
+		metricsv2.Label{
+			Key:   "status",
+			Value: "success",
+		})
 
 	m.updateExpectedHash(ctx, config.Hash)
 	err = m.payload.UpdateBinary(context.Background(), config)
