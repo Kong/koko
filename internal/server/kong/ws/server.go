@@ -28,7 +28,7 @@ var dpTimeToConnect = metricsv2.NewHistogram(
 		Subsystem:  "cp",
 		Name:       "data_plane_time_to_connect",
 		Help:       "Time it takes for initial connection between a control plane and a data plane",
-		LabelNames: []string{"dp_version", "protocol"},
+		LabelNames: []string{"dp_version"},
 	})
 
 type HandlerOpts struct {

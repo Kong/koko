@@ -9,12 +9,15 @@ import (
 	"net"
 	"regexp"
 	"sync"
+	"unsafe"
 
 	"github.com/gorilla/websocket"
 	"github.com/kong/go-wrpc/wrpc"
 	config_service "github.com/kong/koko/internal/gen/wrpc/kong/services/config/v1"
 	"github.com/kong/koko/internal/json"
+	metricsv2 "github.com/kong/koko/internal/metrics/v2"
 	"github.com/kong/koko/internal/server/kong/ws/config"
+	"github.com/prometheus/client_golang/prometheus"
 	"go.uber.org/zap"
 )
 
@@ -26,6 +29,16 @@ const (
 )
 
 var hashRegex = regexp.MustCompile(hashRegexPat)
+
+var configSize = metricsv2.NewHistogram(
+	prometheus.NewRegistry(),
+	metricsv2.HistogramOpts{
+		Subsystem:  "cp",
+		Name:       "data_plane_config_size",
+		Help:       "Size (in bytes) of a dataplane config",
+		Buckets:    []float64{10, 100, 200, 300, 400, 500, 1000, 2500, 5000, 10000, 15000, 25000, 50000, 100000, 1000000},
+		LabelNames: []string{"dp_version"},
+	})
 
 func (s sum) String() string {
 	return string(s[:])
@@ -185,6 +198,10 @@ func (n *Node) readThread() error {
 
 func (n *Node) sendConfig(ctx context.Context, payload *Payload) error {
 	content, err := n.getPayload(ctx, payload)
+	configSize.Observe(float64(unsafe.Sizeof(content)), metricsv2.Label{
+		Key:   "dp_version",
+		Value: n.Version,
+	})
 	if err != nil {
 		return fmt.Errorf("unable to gather payload: %w", err)
 	}
