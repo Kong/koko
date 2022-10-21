@@ -5,10 +5,13 @@ import (
 	"errors"
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/bluele/gcache"
 	"github.com/kong/koko/internal/metrics"
+	metricsv2 "github.com/kong/koko/internal/metrics/v2"
 	"github.com/kong/koko/internal/server/kong/ws/config"
+	"github.com/prometheus/client_golang/prometheus"
 	"go.uber.org/zap"
 )
 
@@ -20,6 +23,15 @@ const (
 	// less than 5 in most cases and usually one or two.
 	configHashToChangesCacheSize = 1000
 )
+
+var verCompatDuration = metricsv2.NewHistogram(
+	prometheus.NewRegistry(),
+	metricsv2.HistogramOpts{
+		Subsystem:  "cp",
+		Name:       "data_plane_version_compatibility_duration",
+		Help:       "Duration in ms it takes to process version compatibility updates to a dataplane config",
+		LabelNames: []string{"dp_version", "status"},
+	})
 
 type Payload struct {
 	// configCache is a cache of configuration. It holds the originally fetched
@@ -83,6 +95,7 @@ func (p *Payload) configForVersion(version string) (cacheEntry, error) {
 
 	// cache-miss, slow path
 	if errors.Is(err, errNotFound) {
+		configUpdateProcessingStartTime := time.Now()
 		unversionedConfig, err := p.configCache.load(unversionedConfigKey)
 		if err != nil {
 			return cacheEntry{}, err
@@ -136,6 +149,16 @@ func (p *Payload) configForVersion(version string) (cacheEntry, error) {
 		}
 		// cache it
 		err = p.configCache.store(version, entry)
+		configUpdateProcessingDuration := time.Since(configUpdateProcessingStartTime).Milliseconds()
+		verCompatDuration.Observe(float64(configUpdateProcessingDuration),
+			metricsv2.Label{
+				Key:   "dp_version",
+				Value: version,
+			},
+			metricsv2.Label{
+				Key:   "status",
+				Value: "success",
+			})
 		if err != nil {
 			p.logger.Error("failed to store configuration from cache",
 				zap.Error(err),
@@ -146,7 +169,6 @@ func (p *Payload) configForVersion(version string) (cacheEntry, error) {
 		}
 		return entry, nil
 	}
-
 	// other errors
 	return cacheEntry{}, err
 }
