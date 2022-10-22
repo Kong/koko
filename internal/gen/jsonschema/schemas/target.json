@@ -51,7 +51,8 @@
     "weight": {
       "maximum": 65535,
       "minimum": 0,
-      "type": "integer"
+      "type": "integer",
+      "default": 100
     }
   },
   "additionalProperties": false,
