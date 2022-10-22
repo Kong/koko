@@ -215,6 +215,10 @@ func init() {
 						},
 					},
 				},
+				Default: []interface{}{
+					typedefs.ProtocolHTTP,
+					typedefs.ProtocolHTTPS,
+				},
 			},
 			"methods": {
 				Type: "array",
@@ -268,13 +272,16 @@ func init() {
 					http.StatusTemporaryRedirect,
 					http.StatusPermanentRedirect,
 				},
+				Default: http.StatusUpgradeRequired,
 			},
 			"regex_priority": {
 				Type:             "integer",
 				ExclusiveMinimum: -1,
+				Default:          0,
 			},
 			"strip_path": {
-				Type: "boolean",
+				Type:    "boolean",
+				Default: true,
 			},
 			"path_handling": {
 				Type: "string",
@@ -282,15 +289,19 @@ func init() {
 					"v0",
 					"v1",
 				},
+				Default: "v0",
 			},
 			"preserve_host": {
-				Type: "boolean",
+				Type:    "boolean",
+				Default: false,
 			},
 			"request_buffering": {
-				Type: "boolean",
+				Type:    "boolean",
+				Default: true,
 			},
 			"response_buffering": {
-				Type: "boolean",
+				Type:    "boolean",
+				Default: true,
 			},
 			"snis": {
 				Type:     "array",
