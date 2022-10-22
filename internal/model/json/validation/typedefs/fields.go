@@ -16,6 +16,8 @@ const (
 	maxPathLength     = 1024
 	hostnamePattern   = "[a-zA-Z0-9]([-a-zA-Z0-9]*[a-zA-Z0-9])?(.[a-zA-Z0-9]([-a-zA-Z0-9]*[a-zA-Z0-9])?)*$"
 
+	DefaultTimeout = 60000
+
 	// Allow alphanumerics, dashes, underscores, colons, periods, and tildes anywhere
 	// within the tag. Spaces are allowed, but not as the first/last character.
 	//
@@ -59,6 +61,7 @@ var Timeout = &generator.Schema{
 	Type:    "integer",
 	Minimum: intP(1),
 	Maximum: maxTimeout,
+	Default: DefaultTimeout,
 }
 
 var Protocol = &generator.Schema{

@@ -62,8 +62,8 @@ func TestService_ProcessDefaults(t *testing.T) {
 			Port:           4242,
 			Retries:        1,
 			ConnectTimeout: 42,
-			ReadTimeout:    defaultTimeout,
-			WriteTimeout:   defaultTimeout,
+			ReadTimeout:    typedefs.DefaultTimeout,
+			WriteTimeout:   typedefs.DefaultTimeout,
 			Enabled:        wrapperspb.Bool(false),
 		}, r.Resource())
 	})
@@ -81,9 +81,9 @@ func TestService_ProcessDefaults(t *testing.T) {
 			Host:           "test.org",
 			Path:           "/sample",
 			Retries:        5,
-			ReadTimeout:    defaultTimeout,
-			WriteTimeout:   defaultTimeout,
-			ConnectTimeout: defaultTimeout,
+			ReadTimeout:    typedefs.DefaultTimeout,
+			WriteTimeout:   typedefs.DefaultTimeout,
+			ConnectTimeout: typedefs.DefaultTimeout,
 			Enabled:        wrapperspb.Bool(true),
 		}, r.Resource())
 	})
@@ -101,9 +101,9 @@ func TestService_ProcessDefaults(t *testing.T) {
 			Host:           "foo",
 			Path:           "/bar",
 			Retries:        5,
-			ReadTimeout:    defaultTimeout,
-			WriteTimeout:   defaultTimeout,
-			ConnectTimeout: defaultTimeout,
+			ReadTimeout:    typedefs.DefaultTimeout,
+			WriteTimeout:   typedefs.DefaultTimeout,
+			ConnectTimeout: typedefs.DefaultTimeout,
 			Enabled:        wrapperspb.Bool(true),
 		}, r.Resource())
 	})

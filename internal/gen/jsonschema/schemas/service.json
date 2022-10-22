@@ -34,14 +34,16 @@
     "connect_timeout": {
       "maximum": 2147483646,
       "minimum": 1,
-      "type": "integer"
+      "type": "integer",
+      "default": 60000
     },
     "created_at": {
       "minimum": 1,
       "type": "integer"
     },
     "enabled": {
-      "type": "boolean"
+      "type": "boolean",
+      "default": true
     },
     "host": {
       "maxLength": 256,
@@ -82,7 +84,8 @@
     "port": {
       "maximum": 65535,
       "minimum": 1,
-      "type": "integer"
+      "type": "integer",
+      "default": 80
     },
     "protocol": {
       "enum": [
@@ -97,17 +100,20 @@
         "ws",
         "wss"
       ],
-      "type": "string"
+      "type": "string",
+      "default": "http"
     },
     "read_timeout": {
       "maximum": 2147483646,
       "minimum": 1,
-      "type": "integer"
+      "type": "integer",
+      "default": 60000
     },
     "retries": {
       "maximum": 32767,
       "minimum": 1,
-      "type": "integer"
+      "type": "integer",
+      "default": 5
     },
     "tags": {
       "items": {
@@ -138,7 +144,8 @@
     "write_timeout": {
       "maximum": 2147483646,
       "minimum": 1,
-      "type": "integer"
+      "type": "integer",
+      "default": 60000
     }
   },
   "additionalProperties": false,
