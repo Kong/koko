@@ -10,7 +10,8 @@
         "consistent-hashing",
         "least-connections"
       ],
-      "type": "string"
+      "type": "string",
+      "default": "round-robin"
     },
     "client_certificate": {
       "required": [
@@ -41,17 +42,20 @@
         "query_arg",
         "uri_capture"
       ],
-      "type": "string"
+      "type": "string",
+      "default": "none"
     },
     "hash_fallback_header": {
       "pattern": "^[A-Za-z0-9!#$%\u0026'*+-.^_|~]{1,64}$",
       "type": "string"
     },
     "hash_fallback_query_arg": {
+      "minLength": 1,
       "pattern": "^[a-zA-Z0-9-_]+$",
       "type": "string"
     },
     "hash_fallback_uri_capture": {
+      "minLength": 1,
       "pattern": "^[a-zA-Z0-9-_]+$",
       "type": "string"
     },
@@ -66,7 +70,8 @@
         "query_arg",
         "uri_capture"
       ],
-      "type": "string"
+      "type": "string",
+      "default": "none"
     },
     "hash_on_cookie": {
       "pattern": "^[a-zA-Z0-9-_]+$",
@@ -89,17 +94,20 @@
             "description": "must not contain `//`"
           }
         }
-      ]
+      ],
+      "default": "/"
     },
     "hash_on_header": {
       "pattern": "^[A-Za-z0-9!#$%\u0026'*+-.^_|~]{1,64}$",
       "type": "string"
     },
     "hash_on_query_arg": {
+      "minLength": 1,
       "pattern": "^[a-zA-Z0-9-_]+$",
       "type": "string"
     },
     "hash_on_uri_capture": {
+      "minLength": 1,
       "pattern": "^[a-zA-Z0-9-_]+$",
       "type": "string"
     },
@@ -110,7 +118,8 @@
             "concurrency": {
               "maximum": 2147483648,
               "minimum": 1,
-              "type": "integer"
+              "type": "integer",
+              "default": 10
             },
             "healthy": {
               "properties": {
@@ -121,20 +130,34 @@
                     "type": "integer"
                   },
                   "maxItems": 32,
-                  "type": "array"
+                  "type": "array",
+                  "default": [
+                    200,
+                    302
+                  ]
                 },
                 "interval": {
                   "maximum": 65535,
                   "minimum": 0,
-                  "type": "integer"
+                  "type": "integer",
+                  "default": 0
                 },
-                "success": {
+                "successes": {
                   "maximum": 255,
                   "minimum": 0,
-                  "type": "integer"
+                  "type": "integer",
+                  "default": 0
                 }
               },
-              "type": "object"
+              "type": "object",
+              "default": {
+                "http_statuses": [
+                  200,
+                  302
+                ],
+                "interval": 0,
+                "successes": 0
+              }
             },
             "http_path": {
               "type": "string",
@@ -153,7 +176,8 @@
                     "description": "must not contain `//`"
                   }
                 }
-              ]
+              ],
+              "default": "/"
             },
             "https_sni": {
               "maxLength": 256,
@@ -162,12 +186,14 @@
               "description": "must be a valid hostname"
             },
             "https_verify_certificate": {
-              "type": "boolean"
+              "type": "boolean",
+              "default": true
             },
             "timeout": {
               "maximum": 65535,
               "minimum": 0,
-              "type": "integer"
+              "type": "integer",
+              "default": 1
             },
             "type": {
               "enum": [
@@ -177,14 +203,16 @@
                 "grpc",
                 "grpcs"
               ],
-              "type": "string"
+              "type": "string",
+              "default": "http"
             },
             "unhealthy": {
               "properties": {
                 "http_failures": {
                   "maximum": 255,
                   "minimum": 0,
-                  "type": "integer"
+                  "type": "integer",
+                  "default": 0
                 },
                 "http_statuses": {
                   "items": {
@@ -193,28 +221,88 @@
                     "type": "integer"
                   },
                   "maxItems": 32,
-                  "type": "array"
+                  "type": "array",
+                  "default": [
+                    429,
+                    404,
+                    500,
+                    501,
+                    502,
+                    503,
+                    504,
+                    505
+                  ]
                 },
                 "interval": {
                   "maximum": 65535,
                   "minimum": 0,
-                  "type": "integer"
+                  "type": "integer",
+                  "default": 0
                 },
                 "tcp_failures": {
                   "maximum": 255,
                   "minimum": 0,
-                  "type": "integer"
+                  "type": "integer",
+                  "default": 0
                 },
                 "timeouts": {
                   "maximum": 255,
                   "minimum": 0,
-                  "type": "integer"
+                  "type": "integer",
+                  "default": 0
                 }
               },
-              "type": "object"
+              "type": "object",
+              "default": {
+                "http_failures": 0,
+                "http_statuses": [
+                  429,
+                  404,
+                  500,
+                  501,
+                  502,
+                  503,
+                  504,
+                  505
+                ],
+                "interval": 0,
+                "tcp_failures": 0,
+                "timeouts": 0
+              }
             }
           },
-          "type": "object"
+          "type": "object",
+          "default": {
+            "concurrency": 10,
+            "healthy": {
+              "http_statuses": [
+                200,
+                302
+              ],
+              "interval": 0,
+              "successes": 0
+            },
+            "http_path": "/",
+            "https_verify_certificate": true,
+            "timeout": 1,
+            "type": "http",
+            "unhealthy": {
+              "http_failures": 0,
+              "http_statuses": [
+                429,
+                404,
+                500,
+                501,
+                502,
+                503,
+                504,
+                505
+              ],
+              "interval": 0,
+              "tcp_failures": 0,
+              "timeouts": 0
+            }
+          }
         },
         "passive": {
           "properties": {
@@ -227,20 +315,67 @@
                     "type": "integer"
                   },
                   "maxItems": 32,
-                  "type": "array"
+                  "type": "array",
+                  "default": [
+                    200,
+                    201,
+                    202,
+                    203,
+                    204,
+                    205,
+                    206,
+                    207,
+                    208,
+                    226,
+                    300,
+                    301,
+                    302,
+                    303,
+                    304,
+                    305,
+                    306,
+                    307,
+                    308
+                  ]
                 },
-                "success": {
+                "successes": {
                   "maximum": 255,
                   "minimum": 0,
-                  "type": "integer"
+                  "type": "integer",
+                  "default": 0
                 }
               },
-              "type": "object"
+              "type": "object",
+              "default": {
+                "http_statuses": [
+                  200,
+                  201,
+                  202,
+                  203,
+                  204,
+                  205,
+                  206,
+                  207,
+                  208,
+                  226,
+                  300,
+                  301,
+                  302,
+                  303,
+                  304,
+                  305,
+                  306,
+                  307,
+                  308
+                ],
+                "successes": 0
+              }
             },
             "timeout": {
               "maximum": 65535,
               "minimum": 0,
-              "type": "integer"
+              "type": "integer",
+              "default": 1
             },
             "type": {
               "enum": [
@@ -250,14 +385,16 @@
                 "grpc",
                 "grpcs"
               ],
-              "type": "string"
+              "type": "string",
+              "default": "http"
             },
             "unhealthy": {
               "properties": {
                 "http_failures": {
                   "maximum": 255,
                   "minimum": 0,
-                  "type": "integer"
+                  "type": "integer",
+                  "default": 0
                 },
                 "http_statuses": {
                   "items": {
@@ -266,31 +403,157 @@
                     "type": "integer"
                   },
                   "maxItems": 32,
-                  "type": "array"
+                  "type": "array",
+                  "default": [
+                    429,
+                    500,
+                    503
+                  ]
                 },
                 "tcp_failures": {
                   "maximum": 255,
                   "minimum": 0,
-                  "type": "integer"
+                  "type": "integer",
+                  "default": 0
                 },
                 "timeouts": {
                   "maximum": 255,
                   "minimum": 0,
-                  "type": "integer"
+                  "type": "integer",
+                  "default": 0
                 }
               },
-              "type": "object"
+              "type": "object",
+              "default": {
+                "http_failures": 0,
+                "http_statuses": [
+                  429,
+                  500,
+                  503
+                ],
+                "tcp_failures": 0,
+                "timeouts": 0
+              }
             }
           },
-          "type": "object"
+          "type": "object",
+          "default": {
+            "healthy": {
+              "http_statuses": [
+                200,
+                201,
+                202,
+                203,
+                204,
+                205,
+                206,
+                207,
+                208,
+                226,
+                300,
+                301,
+                302,
+                303,
+                304,
+                305,
+                306,
+                307,
+                308
+              ],
+              "successes": 0
+            },
+            "type": "http",
+            "unhealthy": {
+              "http_failures": 0,
+              "http_statuses": [
+                429,
+                500,
+                503
+              ],
+              "tcp_failures": 0,
+              "timeouts": 0
+            }
+          }
         },
         "threshold": {
           "maximum": 100,
           "minimum": 0,
-          "type": "number"
+          "type": "number",
+          "default": 0
         }
       },
-      "type": "object"
+      "type": "object",
+      "default": {
+        "active": {
+          "concurrency": 10,
+          "healthy": {
+            "http_statuses": [
+              200,
+              302
+            ],
+            "interval": 0,
+            "successes": 0
+          },
+          "http_path": "/",
+          "https_verify_certificate": true,
+          "timeout": 1,
+          "type": "http",
+          "unhealthy": {
+            "http_failures": 0,
+            "http_statuses": [
+              429,
+              404,
+              500,
+              501,
+              502,
+              503,
+              504,
+              505
+            ],
+            "interval": 0,
+            "tcp_failures": 0,
+            "timeouts": 0
+          }
+        },
+        "passive": {
+          "healthy": {
+            "http_statuses": [
+              200,
+              201,
+              202,
+              203,
+              204,
+              205,
+              206,
+              207,
+              208,
+              226,
+              300,
+              301,
+              302,
+              303,
+              304,
+              305,
+              306,
+              307,
+              308
+            ],
+            "successes": 0
+          },
+          "type": "http",
+          "unhealthy": {
+            "http_failures": 0,
+            "http_statuses": [
+              429,
+              500,
+              503
+            ],
+            "tcp_failures": 0,
+            "timeouts": 0
+          }
+        },
+        "threshold": 0
+      }
     },
     "host_header": {
       "maxLength": 256,
@@ -312,7 +575,8 @@
     "slots": {
       "maximum": 65536,
       "minimum": 10,
-      "type": "integer"
+      "type": "integer",
+      "default": 10000
     },
     "tags": {
       "items": {
