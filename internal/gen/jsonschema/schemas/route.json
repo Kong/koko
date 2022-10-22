@@ -92,7 +92,8 @@
         307,
         308
       ],
-      "type": "integer"
+      "type": "integer",
+      "default": 426
     },
     "id": {
       "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
@@ -118,7 +119,8 @@
         "v0",
         "v1"
       ],
-      "type": "string"
+      "type": "string",
+      "default": "v0"
     },
     "paths": {
       "items": {
@@ -144,7 +146,8 @@
       "type": "array"
     },
     "preserve_host": {
-      "type": "boolean"
+      "type": "boolean",
+      "default": false
     },
     "protocols": {
       "items": {
@@ -214,17 +217,24 @@
           },
           "description": "must contain only one subset [ ws wss ]"
         }
+      ],
+      "default": [
+        "http",
+        "https"
       ]
     },
     "regex_priority": {
       "exclusiveMinimum": -1,
-      "type": "integer"
+      "type": "integer",
+      "default": 0
     },
     "request_buffering": {
-      "type": "boolean"
+      "type": "boolean",
+      "default": true
     },
     "response_buffering": {
-      "type": "boolean"
+      "type": "boolean",
+      "default": true
     },
     "service": {
       "required": [
@@ -292,7 +302,8 @@
       "type": "array"
     },
     "strip_path": {
-      "type": "boolean"
+      "type": "boolean",
+      "default": true
     },
     "tags": {
       "items": {
