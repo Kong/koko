@@ -3,6 +3,7 @@ package resource
 import (
 	"context"
 	"fmt"
+	"math"
 
 	"github.com/imdario/mergo"
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
@@ -15,11 +16,12 @@ import (
 )
 
 const (
-	defaultTimeout = 60000
-	defaultRetries = 5
-	defaultPort    = 80
-	maxRetries     = 32767
-	maxVerifyDepth = 64
+	defaultRetries  = 5
+	defaultPort     = 80
+	maxPort         = math.MaxUint16
+	maxRetries      = math.MaxInt16
+	maxVerifyDepth  = 64
+	defaultProtocol = typedefs.ProtocolHTTP
 	// TypeService denotes the Service type.
 	TypeService = model.Type("service")
 
@@ -32,13 +34,20 @@ const (
 )
 
 var (
+	servicePort = &generator.Schema{
+		Type:    "integer",
+		Minimum: intP(1),
+		Maximum: maxPort,
+		Default: defaultPort,
+	}
+
 	defaultService = &v1.Service{
-		Protocol:       "http",
+		Protocol:       defaultProtocol,
 		Port:           defaultPort,
 		Retries:        defaultRetries,
-		ConnectTimeout: defaultTimeout,
-		ReadTimeout:    defaultTimeout,
-		WriteTimeout:   defaultTimeout,
+		ConnectTimeout: typedefs.DefaultTimeout,
+		ReadTimeout:    typedefs.DefaultTimeout,
+		WriteTimeout:   typedefs.DefaultTimeout,
 		Enabled:        wrapperspb.Bool(true),
 	}
 	_ model.Object = Service{}
@@ -141,10 +150,15 @@ func init() {
 				Type:    "integer",
 				Minimum: intP(1),
 				Maximum: maxRetries,
+				Default: defaultRetries,
 			},
-			"protocol":        typedefs.AllProtocols,
+			"protocol": {
+				Type:    "string",
+				Enum:    typedefs.AllProtocols.Enum,
+				Default: defaultProtocol,
+			},
 			"host":            typedefs.Host,
-			"port":            typedefs.Port,
+			"port":            servicePort,
 			"path":            typedefs.Path,
 			"connect_timeout": typedefs.Timeout,
 			"read_timeout":    typedefs.Timeout,
@@ -165,7 +179,8 @@ func init() {
 			"created_at": typedefs.UnixEpoch,
 			"updated_at": typedefs.UnixEpoch,
 			"enabled": {
-				Type: "boolean",
+				Type:    "boolean",
+				Default: true,
 			},
 			"url": {
 				Type: "string",
