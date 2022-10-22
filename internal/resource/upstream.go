@@ -27,14 +27,25 @@ const (
 	maxStatus        = 999
 	maxOneByteInt    = 255
 	maxThreshold     = 100
+	maxPathLength    = 1024
 
 	defaultSlots       = 10000
 	defaultConcurrency = 10
+	defaultThreshold   = 0
 )
 
 var (
-	_               model.Object = Upstream{}
-	defaultUpstream              = &v1.Upstream{
+	_ model.Object = Upstream{}
+
+	defaultActiveHealtyHTTPStatuses   = []int32{200, 302}
+	defaultActiveUnhealtyHTTPStatuses = []int32{429, 404, 500, 501, 502, 503, 504, 505}
+	defaultPassiveHealtyHTTPStatuses  = []int32{
+		200, 201, 202, 203, 204, 205, 206, 207, 208, 226,
+		300, 301, 302, 303, 304, 305, 306, 307, 308,
+	}
+	defaultPassiveUnhealtyHTTPStatuses = []int32{429, 500, 503}
+
+	defaultUpstream = &v1.Upstream{
 		Algorithm:        "round-robin",
 		Slots:            wrapperspb.Int32(defaultSlots),
 		HashOn:           "none",
@@ -45,41 +56,79 @@ var (
 			Active: &v1.ActiveHealthcheck{
 				Concurrency: wrapperspb.Int32(defaultConcurrency),
 				Healthy: &v1.ActiveHealthyCondition{
-					HttpStatuses: []int32{200, 302},
+					HttpStatuses: defaultActiveHealtyHTTPStatuses,
 					Interval:     wrapperspb.Int32(0),
 					Successes:    wrapperspb.Int32(0),
 				},
 				HttpPath:               "/",
 				HttpsVerifyCertificate: wrapperspb.Bool(true),
-				Type:                   "http",
+				Type:                   typedefs.ProtocolHTTP,
 				Timeout:                wrapperspb.Int32(1),
 				Unhealthy: &v1.ActiveUnhealthyCondition{
 					HttpFailures: wrapperspb.Int32(0),
 					TcpFailures:  wrapperspb.Int32(0),
-					HttpStatuses: []int32{429, 404, 500, 501, 502, 503, 504, 505},
+					HttpStatuses: defaultActiveUnhealtyHTTPStatuses,
 					Timeouts:     wrapperspb.Int32(0),
 					Interval:     wrapperspb.Int32(0),
 				},
 			},
 			Passive: &v1.PassiveHealthcheck{
 				Healthy: &v1.PassiveHealthyCondition{
-					HttpStatuses: []int32{
-						200, 201, 202, 203, 204, 205, 206, 207, 208, 226,
-						300, 301, 302, 303, 304, 305, 306, 307, 308,
-					},
-					Successes: wrapperspb.Int32(0),
+					HttpStatuses: defaultPassiveHealtyHTTPStatuses,
+					Successes:    wrapperspb.Int32(0),
 				},
-				Type: "http",
+				Type: typedefs.ProtocolHTTP,
 				Unhealthy: &v1.PassiveUnhealthyCondition{
 					HttpFailures: wrapperspb.Int32(0),
 					TcpFailures:  wrapperspb.Int32(0),
-					HttpStatuses: []int32{429, 500, 503},
+					HttpStatuses: defaultPassiveUnhealtyHTTPStatuses,
 					Timeouts:     wrapperspb.Int32(0),
 				},
 			},
 		},
 	}
 
+	defaultActiveHealthy = map[string]interface{}{
+		"http_statuses": defaultActiveHealtyHTTPStatuses,
+		"interval":      0,
+		"successes":     0,
+	}
+	defaultActiveUnhealthy = map[string]interface{}{
+		"http_failures": 0,
+		"tcp_failures":  0,
+		"http_statuses": defaultActiveUnhealtyHTTPStatuses,
+		"timeouts":      0,
+		"interval":      0,
+	}
+	defaultPassiveHealthy = map[string]interface{}{
+		"http_statuses": defaultPassiveHealtyHTTPStatuses,
+		"successes":     0,
+	}
+	defaultPassiveUnhealthy = map[string]interface{}{
+		"http_failures": 0,
+		"tcp_failures":  0,
+		"http_statuses": defaultPassiveUnhealtyHTTPStatuses,
+		"timeouts":      0,
+	}
+	defaultActive = map[string]interface{}{
+		"concurrency":              defaultConcurrency,
+		"healthy":                  defaultActiveHealthy,
+		"http_path":                "/",
+		"https_verify_certificate": true,
+		"type":                     typedefs.ProtocolHTTP,
+		"timeout":                  1,
+		"unhealthy":                defaultActiveUnhealthy,
+	}
+	defaultPassive = map[string]interface{}{
+		"healthy":   defaultPassiveHealthy,
+		"type":      typedefs.ProtocolHTTP,
+		"unhealthy": defaultPassiveUnhealthy,
+	}
+	defaultHealthchecks = map[string]interface{}{
+		"threshold": defaultThreshold,
+		"active":    defaultActive,
+		"passive":   defaultPassive,
+	}
 	typedefHashOn = &generator.Schema{
 		Type: "string",
 		Enum: []interface{}{
@@ -93,25 +142,25 @@ var (
 			"query_arg",
 			"uri_capture",
 		},
+		Default: "none",
 	}
-	typedefSeconds = &generator.Schema{
+	typedefInterval = &generator.Schema{
 		Type:    "integer",
 		Minimum: intP(0),
 		Maximum: maxSeconds,
+		Default: 0,
+	}
+	typedefTimeout = &generator.Schema{
+		Type:    "integer",
+		Minimum: intP(0),
+		Maximum: maxSeconds,
+		Default: 1,
 	}
 	typedefOneByteInteger = &generator.Schema{
 		Type:    "integer",
 		Minimum: intP(0),
 		Maximum: maxOneByteInt,
-	}
-	typedefHTTPStatuses = &generator.Schema{
-		Type: "array",
-		Items: &generator.Schema{
-			Type:    "integer",
-			Minimum: intP(minStatus),
-			Maximum: maxStatus,
-		},
-		MaxItems: maxStatuses,
+		Default: 0,
 	}
 	typedefHealthCheckTypes = &generator.Schema{
 		Type: "string",
@@ -122,6 +171,27 @@ var (
 			"grpc",
 			"grpcs",
 		},
+		Default: typedefs.ProtocolHTTP,
+	}
+	typedefsPath = &generator.Schema{
+		Type: "string",
+		AllOf: []*generator.Schema{
+			{
+				Description: "must begin with `/`",
+				Pattern:     "^/.*",
+			},
+			{
+				Description: fmt.Sprintf("length must not exceed %d", maxPathLength),
+				MaxLength:   maxPathLength,
+			},
+			{
+				Not: &generator.Schema{
+					Description: "must not contain `//`",
+					Pattern:     "//",
+				},
+			},
+		},
+		Default: "/",
 	}
 )
 
@@ -261,6 +331,7 @@ func init() {
 					"consistent-hashing",
 					"least-connections",
 				},
+				Default: defaultUpstream.Algorithm,
 			},
 			"hash_on":              typedefHashOn,
 			"hash_fallback":        typedefHashOn,
@@ -270,27 +341,32 @@ func init() {
 				Type:    "string",
 				Pattern: hashFieldPattern,
 			},
-			"hash_on_cookie_path": typedefs.Path,
+			"hash_on_cookie_path": typedefsPath,
 			"hash_on_query_arg": {
-				Type:    "string",
-				Pattern: hashFieldPattern,
+				Type:      "string",
+				Pattern:   hashFieldPattern,
+				MinLength: 1,
 			},
 			"hash_fallback_query_arg": {
-				Type:    "string",
-				Pattern: hashFieldPattern,
+				Type:      "string",
+				Pattern:   hashFieldPattern,
+				MinLength: 1,
 			},
 			"hash_on_uri_capture": {
-				Type:    "string",
-				Pattern: hashFieldPattern,
+				Type:      "string",
+				Pattern:   hashFieldPattern,
+				MinLength: 1,
 			},
 			"hash_fallback_uri_capture": {
-				Type:    "string",
-				Pattern: hashFieldPattern,
+				Type:      "string",
+				Pattern:   hashFieldPattern,
+				MinLength: 1,
 			},
 			"slots": {
 				Type:    "integer",
 				Minimum: intP(minSlots),
 				Maximum: maxSlots,
+				Default: defaultSlots,
 			},
 			"host_header": typedefs.Host,
 			"healthchecks": {
@@ -300,6 +376,7 @@ func init() {
 						Type:    "number",
 						Minimum: intP(0),
 						Maximum: maxThreshold,
+						Default: defaultThreshold,
 					},
 					"active": {
 						Type: "object",
@@ -308,21 +385,33 @@ func init() {
 								Type:    "integer",
 								Minimum: intP(1),
 								Maximum: maxConcurrency,
+								Default: defaultConcurrency,
 							},
 							"https_sni": typedefs.Host,
-							"http_path": typedefs.Path,
+							"http_path": typedefsPath,
 							"https_verify_certificate": {
-								Type: "boolean",
+								Type:    "boolean",
+								Default: true,
 							},
 							"type":    typedefHealthCheckTypes,
-							"timeout": typedefSeconds,
+							"timeout": typedefTimeout,
 							"healthy": {
 								Type: "object",
 								Properties: map[string]*generator.Schema{
-									"http_statuses": typedefHTTPStatuses,
-									"interval":      typedefSeconds,
-									"success":       typedefOneByteInteger,
+									"http_statuses": {
+										Type: "array",
+										Items: &generator.Schema{
+											Type:    "integer",
+											Minimum: intP(minStatus),
+											Maximum: maxStatus,
+										},
+										MaxItems: maxStatuses,
+										Default:  defaultActiveHealtyHTTPStatuses,
+									},
+									"interval":  typedefInterval,
+									"successes": typedefOneByteInteger,
 								},
+								Default: defaultActiveHealthy,
 							},
 							"unhealthy": {
 								Type: "object",
@@ -330,23 +419,44 @@ func init() {
 									"http_failures": typedefOneByteInteger,
 									"tcp_failures":  typedefOneByteInteger,
 									"timeouts":      typedefOneByteInteger,
-									"interval":      typedefSeconds,
-									"http_statuses": typedefHTTPStatuses,
+									"interval":      typedefInterval,
+									"http_statuses": {
+										Type: "array",
+										Items: &generator.Schema{
+											Type:    "integer",
+											Minimum: intP(minStatus),
+											Maximum: maxStatus,
+										},
+										MaxItems: maxStatuses,
+										Default:  defaultActiveUnhealtyHTTPStatuses,
+									},
 								},
+								Default: defaultActiveUnhealthy,
 							},
 						},
+						Default: defaultActive,
 					},
 					"passive": {
 						Type: "object",
 						Properties: map[string]*generator.Schema{
 							"type":    typedefHealthCheckTypes,
-							"timeout": typedefSeconds,
+							"timeout": typedefTimeout,
 							"healthy": {
 								Type: "object",
 								Properties: map[string]*generator.Schema{
-									"http_statuses": typedefHTTPStatuses,
-									"success":       typedefOneByteInteger,
+									"http_statuses": {
+										Type: "array",
+										Items: &generator.Schema{
+											Type:    "integer",
+											Minimum: intP(minStatus),
+											Maximum: maxStatus,
+										},
+										MaxItems: maxStatuses,
+										Default:  defaultPassiveHealtyHTTPStatuses,
+									},
+									"successes": typedefOneByteInteger,
 								},
+								Default: defaultPassiveHealthy,
 							},
 							"unhealthy": {
 								Type: "object",
@@ -354,12 +464,24 @@ func init() {
 									"http_failures": typedefOneByteInteger,
 									"tcp_failures":  typedefOneByteInteger,
 									"timeouts":      typedefOneByteInteger,
-									"http_statuses": typedefHTTPStatuses,
+									"http_statuses": {
+										Type: "array",
+										Items: &generator.Schema{
+											Type:    "integer",
+											Minimum: intP(minStatus),
+											Maximum: maxStatus,
+										},
+										MaxItems: maxStatuses,
+										Default:  defaultPassiveUnhealtyHTTPStatuses,
+									},
 								},
+								Default: defaultPassiveUnhealthy,
 							},
 						},
+						Default: defaultPassive,
 					},
 				},
+				Default: defaultHealthchecks,
 			},
 			"client_certificate": typedefs.ReferenceObject,
 		},

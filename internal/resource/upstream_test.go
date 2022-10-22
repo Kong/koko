@@ -41,7 +41,7 @@ func TestUpstream_ProcessDefaults(t *testing.T) {
 		r.Upstream.Id = ""
 		r.Upstream.CreatedAt = 0
 		r.Upstream.UpdatedAt = 0
-		// require.Equal(t, r.Resource(), defaultUpstream)
+		require.Equal(t, r.Resource(), defaultUpstream)
 	})
 	t.Run("defaults do not override explicit values", func(t *testing.T) {
 		r := NewUpstream()
