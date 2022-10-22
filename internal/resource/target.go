@@ -162,6 +162,7 @@ func init() {
 				Type:    "integer",
 				Minimum: &zero,
 				Maximum: maxWeight,
+				Default: defaultWeight,
 			},
 			"tags":       typedefs.Tags,
 			"created_at": typedefs.UnixEpoch,
