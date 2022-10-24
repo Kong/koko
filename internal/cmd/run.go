@@ -15,7 +15,7 @@ import (
 	grpcKongUtil "github.com/kong/koko/internal/gen/grpc/kong/util/v1"
 	genJSONSchema "github.com/kong/koko/internal/gen/jsonschema"
 	"github.com/kong/koko/internal/info"
-	metricsv2 "github.com/kong/koko/internal/metrics/v2"
+	"github.com/kong/koko/internal/metrics"
 	"github.com/kong/koko/internal/model"
 	"github.com/kong/koko/internal/model/json/schema"
 	"github.com/kong/koko/internal/persistence"
@@ -63,12 +63,22 @@ func Run(ctx context.Context, config ServerConfig) error {
 
 	schema.RegisterSchemasFromFS(&genJSONSchema.KongSchemas)
 
-	if config.Metrics.Enabled {
+	err := metrics.InitMetricsClient(logger.With(zap.String("component", "metrics-collector")), config.Metrics.ClientType)
+	if err != nil {
+		return fmt.Errorf("init metrics client failure: %w", err)
+	}
+
+	defer metrics.Close()
+	if config.Metrics.Enabled && config.Metrics.ClientType == metrics.Prometheus.String() {
 		metricsLogger := logger.With(zap.String("component", "metrics"))
+		metricsHandler, err := metrics.CreateHandler(metricsLogger)
+		if err != nil {
+			return fmt.Errorf("create metrics handler failure: %w", err)
+		}
 		s, err := server.NewHTTP(server.HTTPOpts{
 			Address: ":9090",
 			Logger:  metricsLogger,
-			Handler: metricsv2.PrometheusHandler(),
+			Handler: serverUtil.HandlerWithRecovery(metricsHandler, metricsLogger),
 		})
 		if err != nil {
 			return err

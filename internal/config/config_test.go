@@ -21,7 +21,8 @@ var defaultConfig = Config{
 		QueryTimeout: "5s",
 	},
 	Metrics: Metrics{
-		Enabled: false,
+		ClientType: "noop",
+		Enabled:    false,
 	},
 	DisableAnonymousReports: false,
 }
@@ -88,7 +89,8 @@ func TestGet(t *testing.T) {
 					QueryTimeout: "2s",
 				},
 				Metrics: Metrics{
-					Enabled: true,
+					ClientType: "noop",
+					Enabled:    true,
 				},
 				DisableAnonymousReports: true,
 			},
@@ -133,7 +135,8 @@ func TestGet(t *testing.T) {
 					QueryTimeout: "2s",
 				},
 				Metrics: Metrics{
-					Enabled: true,
+					ClientType: "noop",
+					Enabled:    true,
 				},
 				DisableAnonymousReports: true,
 			},
@@ -171,7 +174,8 @@ func TestGet(t *testing.T) {
 					QueryTimeout: "5s",
 				},
 				Metrics: Metrics{
-					Enabled: true,
+					ClientType: "noop",
+					Enabled:    true,
 				},
 				DisableAnonymousReports: false,
 			},
@@ -220,7 +224,8 @@ func TestGet(t *testing.T) {
 					QueryTimeout: "2s",
 				},
 				Metrics: Metrics{
-					Enabled: true,
+					ClientType: "noop",
+					Enabled:    true,
 				},
 				DisableAnonymousReports: true,
 			},

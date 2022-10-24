@@ -21,6 +21,7 @@ database:
     read_replica:
       hostname: "read-localhost"
 metrics:
+  client_type: "noop"
   enabled: true
 control_server:
   tls_cert_path: foo.crt

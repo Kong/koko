@@ -29,6 +29,7 @@
     }
   },
   "metrics": {
+    "client_type": "noop",
     "enabled": true
   },
   "control_server": {

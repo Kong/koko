@@ -21,7 +21,8 @@ type ControlServer struct {
 
 // Metrics config.
 type Metrics struct {
-	Enabled bool `yaml:"enabled" json:"enabled" env:"ENABLED"`
+	Enabled    bool   `yaml:"enabled" json:"enabled" env:"ENABLED"`
+	ClientType string `yaml:"client_type" json:"client_type" env:"CLIENT_TYPE" env-default:"noop"`
 }
 
 // TLS defines re-usable TLS configuration used in tls.Config.
