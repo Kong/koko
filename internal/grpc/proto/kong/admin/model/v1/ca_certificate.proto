@@ -13,9 +13,7 @@ message CACertificate {
   int32 updated_at = 3;
   string cert = 4 [
     (google.api.field_behavior) = REQUIRED,
-    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-      description: "PEM encoded certificate"
-    }
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "PEM encoded certificate"}
   ];
   string cert_digest = 5;
   repeated string tags = 6;

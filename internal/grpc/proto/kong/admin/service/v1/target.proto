@@ -11,9 +11,7 @@ option go_package = "github.com/kong/koko/internal/gen/kong/admin/service/v1;v1"
 
 service TargetService {
   rpc GetTarget(GetTargetRequest) returns (GetTargetResponse) {
-    option (google.api.http) = {
-      get: "/v1/targets/{id}"
-    };
+    option (google.api.http) = {get: "/v1/targets/{id}"};
   }
   rpc CreateTarget(CreateTargetRequest) returns (CreateTargetResponse) {
     option (google.api.http) = {
@@ -28,14 +26,10 @@ service TargetService {
     };
   }
   rpc DeleteTarget(DeleteTargetRequest) returns (DeleteTargetResponse) {
-    option (google.api.http) = {
-      delete: "/v1/targets/{id}"
-    };
+    option (google.api.http) = {delete: "/v1/targets/{id}"};
   }
   rpc ListTargets(ListTargetsRequest) returns (ListTargetsResponse) {
-    option (google.api.http) = {
-      get: "/v1/targets"
-    };
+    option (google.api.http) = {get: "/v1/targets"};
   }
 }
 

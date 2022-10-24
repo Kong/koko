@@ -20,28 +20,20 @@ message Certificate {
   int32 updated_at = 3;
   string cert = 4 [
     (google.api.field_behavior) = REQUIRED,
-    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-      description: "PEM encoded certificate (referenceable)"
-    },
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "PEM encoded certificate (referenceable)"},
     (referenceable) = true
   ];
   string key = 5 [
     (google.api.field_behavior) = REQUIRED,
-    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-      description: "PEM encoded private key (referenceable)"
-    },
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "PEM encoded private key (referenceable)"},
     (referenceable) = true
   ];
   string cert_alt = 6 [
-    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-      description: "PEM encoded certificate (referenceable)",
-    },
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "PEM encoded certificate (referenceable)"},
     (referenceable) = true
   ];
   string key_alt = 7 [
-    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
-      description: "PEM encoded private key (referenceable)",
-    },
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {description: "PEM encoded private key (referenceable)"},
     (referenceable) = true
   ];
   repeated string tags = 8;

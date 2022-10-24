@@ -11,9 +11,7 @@ option go_package = "github.com/kong/koko/internal/gen/kong/admin/service/v1;v1"
 
 service ServiceService {
   rpc GetService(GetServiceRequest) returns (GetServiceResponse) {
-    option (google.api.http) = {
-      get: "/v1/services/{id}"
-    };
+    option (google.api.http) = {get: "/v1/services/{id}"};
   }
   rpc CreateService(CreateServiceRequest) returns (CreateServiceResponse) {
     option (google.api.http) = {
@@ -28,14 +26,10 @@ service ServiceService {
     };
   }
   rpc DeleteService(DeleteServiceRequest) returns (DeleteServiceResponse) {
-    option (google.api.http) = {
-      delete: "/v1/services/{id}"
-    };
+    option (google.api.http) = {delete: "/v1/services/{id}"};
   }
   rpc ListServices(ListServicesRequest) returns (ListServicesResponse) {
-    option (google.api.http) = {
-      get: "/v1/services"
-    };
+    option (google.api.http) = {get: "/v1/services"};
   }
 }
 

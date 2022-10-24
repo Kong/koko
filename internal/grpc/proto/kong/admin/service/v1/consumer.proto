@@ -11,9 +11,7 @@ option go_package = "github.com/kong/koko/internal/gen/kong/admin/service/v1;v1"
 
 service ConsumerService {
   rpc GetConsumer(GetConsumerRequest) returns (GetConsumerResponse) {
-    option (google.api.http) = {
-      get: "/v1/consumers/{id}"
-    };
+    option (google.api.http) = {get: "/v1/consumers/{id}"};
   }
   rpc CreateConsumer(CreateConsumerRequest) returns (CreateConsumerResponse) {
     option (google.api.http) = {
@@ -28,14 +26,10 @@ service ConsumerService {
     };
   }
   rpc DeleteConsumer(DeleteConsumerRequest) returns (DeleteConsumerResponse) {
-    option (google.api.http) = {
-      delete: "/v1/consumers/{id}"
-    };
+    option (google.api.http) = {delete: "/v1/consumers/{id}"};
   }
   rpc ListConsumers(ListConsumersRequest) returns (ListConsumersResponse) {
-    option (google.api.http) = {
-      get: "/v1/consumers"
-    };
+    option (google.api.http) = {get: "/v1/consumers"};
   }
 }
 

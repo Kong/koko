@@ -17,14 +17,10 @@ service PluginSchemaService {
     };
   }
   rpc GetLuaPluginSchema(GetLuaPluginSchemaRequest) returns (GetLuaPluginSchemaResponse) {
-    option (google.api.http) = {
-      get: "/v1/plugin-schemas/{name}"
-    };
+    option (google.api.http) = {get: "/v1/plugin-schemas/{name}"};
   }
   rpc ListLuaPluginSchemas(ListLuaPluginSchemasRequest) returns (ListLuaPluginSchemasResponse) {
-    option (google.api.http) = {
-      get: "/v1/plugin-schemas"
-    };
+    option (google.api.http) = {get: "/v1/plugin-schemas"};
   }
   rpc UpsertLuaPluginSchema(UpsertLuaPluginSchemaRequest) returns (UpsertLuaPluginSchemaResponse) {
     option (google.api.http) = {
@@ -33,9 +29,7 @@ service PluginSchemaService {
     };
   }
   rpc DeleteLuaPluginSchema(DeleteLuaPluginSchemaRequest) returns (DeleteLuaPluginSchemaResponse) {
-    option (google.api.http) = {
-      delete: "/v1/plugin-schemas/{name}"
-    };
+    option (google.api.http) = {delete: "/v1/plugin-schemas/{name}"};
   }
 }
 

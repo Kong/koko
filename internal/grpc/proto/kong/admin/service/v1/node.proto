@@ -11,9 +11,7 @@ option go_package = "github.com/kong/koko/internal/gen/kong/admin/service/v1;v1"
 
 service NodeService {
   rpc GetNode(GetNodeRequest) returns (GetNodeResponse) {
-    option (google.api.http) = {
-      get: "/v1/nodes/{id}"
-    };
+    option (google.api.http) = {get: "/v1/nodes/{id}"};
   }
 
   rpc CreateNode(CreateNodeRequest) returns (CreateNodeResponse);
@@ -21,14 +19,10 @@ service NodeService {
   rpc UpsertNode(UpsertNodeRequest) returns (UpsertNodeResponse);
 
   rpc DeleteNode(DeleteNodeRequest) returns (DeleteNodeResponse) {
-    option (google.api.http) = {
-      delete: "/v1/nodes/{id}"
-    };
+    option (google.api.http) = {delete: "/v1/nodes/{id}"};
   }
   rpc ListNodes(ListNodesRequest) returns (ListNodesResponse) {
-    option (google.api.http) = {
-      get: "/v1/nodes"
-    };
+    option (google.api.http) = {get: "/v1/nodes"};
   }
 }
 

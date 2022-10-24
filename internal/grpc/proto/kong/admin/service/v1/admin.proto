@@ -8,9 +8,7 @@ option go_package = "github.com/kong/koko/internal/gen/kong/admin/service/v1;v1"
 
 service MetaService {
   rpc GetVersion(GetVersionRequest) returns (GetVersionResponse) {
-    option (google.api.http) = {
-      get: "/v1/meta/version"
-    };
+    option (google.api.http) = {get: "/v1/meta/version"};
   }
 }
 

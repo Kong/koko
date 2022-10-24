@@ -11,9 +11,7 @@ option go_package = "github.com/kong/koko/internal/gen/kong/admin/service/v1;v1"
 
 service RouteService {
   rpc GetRoute(GetRouteRequest) returns (GetRouteResponse) {
-    option (google.api.http) = {
-      get: "/v1/routes/{id}"
-    };
+    option (google.api.http) = {get: "/v1/routes/{id}"};
   }
   rpc CreateRoute(CreateRouteRequest) returns (CreateRouteResponse) {
     option (google.api.http) = {
@@ -28,14 +26,10 @@ service RouteService {
     };
   }
   rpc DeleteRoute(DeleteRouteRequest) returns (DeleteRouteResponse) {
-    option (google.api.http) = {
-      delete: "/v1/routes/{id}"
-    };
+    option (google.api.http) = {delete: "/v1/routes/{id}"};
   }
   rpc ListRoutes(ListRoutesRequest) returns (ListRoutesResponse) {
-    option (google.api.http) = {
-      get: "/v1/routes"
-    };
+    option (google.api.http) = {get: "/v1/routes"};
   }
 }
 
