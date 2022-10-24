@@ -11,9 +11,7 @@ option go_package = "github.com/kong/koko/internal/gen/kong/admin/service/v1;v1"
 
 service UpstreamService {
   rpc GetUpstream(GetUpstreamRequest) returns (GetUpstreamResponse) {
-    option (google.api.http) = {
-      get: "/v1/upstreams/{id}"
-    };
+    option (google.api.http) = {get: "/v1/upstreams/{id}"};
   }
   rpc CreateUpstream(CreateUpstreamRequest) returns (CreateUpstreamResponse) {
     option (google.api.http) = {
@@ -28,14 +26,10 @@ service UpstreamService {
     };
   }
   rpc DeleteUpstream(DeleteUpstreamRequest) returns (DeleteUpstreamResponse) {
-    option (google.api.http) = {
-      delete: "/v1/upstreams/{id}"
-    };
+    option (google.api.http) = {delete: "/v1/upstreams/{id}"};
   }
   rpc ListUpstreams(ListUpstreamsRequest) returns (ListUpstreamsResponse) {
-    option (google.api.http) = {
-      get: "/v1/upstreams"
-    };
+    option (google.api.http) = {get: "/v1/upstreams"};
   }
 }
 

@@ -11,9 +11,7 @@ option go_package = "github.com/kong/koko/internal/gen/kong/admin/service/v1;v1"
 
 service CACertificateService {
   rpc GetCACertificate(GetCACertificateRequest) returns (GetCACertificateResponse) {
-    option (google.api.http) = {
-      get: "/v1/ca-certificates/{id}"
-    };
+    option (google.api.http) = {get: "/v1/ca-certificates/{id}"};
   }
   rpc CreateCACertificate(CreateCACertificateRequest) returns (CreateCACertificateResponse) {
     option (google.api.http) = {
@@ -28,14 +26,10 @@ service CACertificateService {
     };
   }
   rpc DeleteCACertificate(DeleteCACertificateRequest) returns (DeleteCACertificateResponse) {
-    option (google.api.http) = {
-      delete: "/v1/ca-certificates/{id}"
-    };
+    option (google.api.http) = {delete: "/v1/ca-certificates/{id}"};
   }
   rpc ListCACertificates(ListCACertificatesRequest) returns (ListCACertificatesResponse) {
-    option (google.api.http) = {
-      get: "/v1/ca-certificates"
-    };
+    option (google.api.http) = {get: "/v1/ca-certificates"};
   }
 }
 

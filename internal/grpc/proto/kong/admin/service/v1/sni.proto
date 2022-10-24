@@ -11,9 +11,7 @@ option go_package = "github.com/kong/koko/internal/gen/kong/admin/service/v1;v1"
 
 service SNIService {
   rpc GetSNI(GetSNIRequest) returns (GetSNIResponse) {
-    option (google.api.http) = {
-      get: "/v1/snis/{id}"
-    };
+    option (google.api.http) = {get: "/v1/snis/{id}"};
   }
   rpc CreateSNI(CreateSNIRequest) returns (CreateSNIResponse) {
     option (google.api.http) = {
@@ -28,14 +26,10 @@ service SNIService {
     };
   }
   rpc DeleteSNI(DeleteSNIRequest) returns (DeleteSNIResponse) {
-    option (google.api.http) = {
-      delete: "/v1/snis/{id}"
-    };
+    option (google.api.http) = {delete: "/v1/snis/{id}"};
   }
   rpc ListSNIs(ListSNIsRequest) returns (ListSNIsResponse) {
-    option (google.api.http) = {
-      get: "/v1/snis"
-    };
+    option (google.api.http) = {get: "/v1/snis"};
   }
 }
 

@@ -12,25 +12,17 @@ option go_package = "github.com/kong/koko/internal/gen/kong/admin/service/v1;v1"
 
 service PluginService {
   rpc GetConfiguredPlugins(GetConfiguredPluginsRequest) returns (GetConfiguredPluginsResponse) {
-    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
-      description: "Returns plugins in use. '/v1/configured_plugins' is deprecated, please use '/v1/configured-plugins'."
-    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {description: "Returns plugins in use. '/v1/configured_plugins' is deprecated, please use '/v1/configured-plugins'."};
     option (google.api.http) = {
       get: "/v1/configured_plugins"
-      additional_bindings {
-        get: "/v1/configured-plugins"
-      }
+      additional_bindings {get: "/v1/configured-plugins"}
     };
   }
   rpc GetAvailablePlugins(GetAvailablePluginsRequest) returns (GetAvailablePluginsResponse) {
-    option (google.api.http) = {
-      get: "/v1/available-plugins"
-    };
+    option (google.api.http) = {get: "/v1/available-plugins"};
   }
   rpc GetPlugin(GetPluginRequest) returns (GetPluginResponse) {
-    option (google.api.http) = {
-      get: "/v1/plugins/{id}"
-    };
+    option (google.api.http) = {get: "/v1/plugins/{id}"};
   }
   rpc CreatePlugin(CreatePluginRequest) returns (CreatePluginResponse) {
     option (google.api.http) = {
@@ -45,14 +37,10 @@ service PluginService {
     };
   }
   rpc DeletePlugin(DeletePluginRequest) returns (DeletePluginResponse) {
-    option (google.api.http) = {
-      delete: "/v1/plugins/{id}"
-    };
+    option (google.api.http) = {delete: "/v1/plugins/{id}"};
   }
   rpc ListPlugins(ListPluginsRequest) returns (ListPluginsResponse) {
-    option (google.api.http) = {
-      get: "/v1/plugins"
-    };
+    option (google.api.http) = {get: "/v1/plugins"};
   }
 }
 
