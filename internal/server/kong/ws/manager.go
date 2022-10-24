@@ -25,6 +25,7 @@ import (
 	"github.com/kong/koko/internal/resource"
 	"github.com/kong/koko/internal/server/kong/ws/config"
 	"github.com/kong/koko/internal/store"
+	"github.com/samber/lo"
 	"go.uber.org/atomic"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
@@ -476,22 +477,15 @@ type ConfigClient struct {
 func (m *Manager) reconcileKongPayload(ctx context.Context) error {
 	mutationStartTime := time.Now()
 	config, err := m.configLoader.Load(ctx, m.Cluster.Get())
-	mutationDuration := time.Since(mutationStartTime).Milliseconds()
+	metrics.Histogram(
+		"data_plane_config_mutation_total_duration_seconds",
+		time.Since(mutationStartTime).Seconds(),
+		metrics.Tag{Key: "status", Value: lo.Ternary(err == nil, "success", "fail")},
+		metrics.Tag{Key: "protocol", Value: "ws"},
+	)
 	if err != nil {
-		metrics.Histogram("data_plane_config_mutation_time_total",
-			float64(mutationDuration),
-			metrics.Tag{
-				Key:   "status",
-				Value: "fail",
-			})
 		return err
 	}
-	metrics.Histogram("data_plane_config_mutation_time_total",
-		float64(mutationDuration),
-		metrics.Tag{
-			Key:   "status",
-			Value: "success",
-		})
 
 	m.updateExpectedHash(ctx, config.Hash)
 	err = m.payload.UpdateBinary(context.Background(), config)

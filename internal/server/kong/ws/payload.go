@@ -138,16 +138,12 @@ func (p *Payload) configForVersion(version string) (cacheEntry, error) {
 		}
 		// cache it
 		err = p.configCache.store(version, entry)
-		configUpdateProcessingDuration := time.Since(configUpdateProcessingStartTime).Milliseconds()
-		metrics.Histogram("data_plane_version_compatibility_duration", float64(configUpdateProcessingDuration),
-			metrics.Tag{
-				Key:   "dp_version",
-				Value: version,
-			},
-			metrics.Tag{
-				Key:   "status",
-				Value: "success",
-			})
+		configUpdateProcessingDuration := time.Since(configUpdateProcessingStartTime).Seconds()
+		metrics.Histogram("data_plane_version_compatibility_duration_seconds", configUpdateProcessingDuration,
+			metrics.Tag{Key: "dp_version", Value: version},
+			metrics.Tag{Key: "status", Value: "success"},
+			metrics.Tag{Key: "protocol", Value: "ws"},
+		)
 		if err != nil {
 			p.logger.Error("failed to store configuration from cache",
 				zap.Error(err),

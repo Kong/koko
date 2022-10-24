@@ -10,6 +10,7 @@ import (
 
 	"github.com/kong/koko/internal/json"
 	"github.com/kong/koko/internal/metrics"
+	"github.com/samber/lo"
 )
 
 type Map map[string]interface{}
@@ -55,30 +56,16 @@ func (l *KongConfigurationLoader) Load(ctx context.Context, clusterID string) (C
 		mutationStartTime := time.Now()
 		err := m.Mutate(ctx, MutatorOpts{ClusterID: clusterID},
 			configTable)
-		mutationDuration := time.Since(mutationStartTime).Milliseconds()
+		metrics.Histogram(
+			"data_plane_config_mutation_individual_duration_seconds",
+			time.Since(mutationStartTime).Seconds(),
+			metrics.Tag{Key: "status", Value: lo.Ternary(err == nil, "success", "fail")},
+			metrics.Tag{Key: "protocol", Value: "ws"},
+			metrics.Tag{Key: "mutator_name", Value: m.Name()},
+		)
 		if err != nil {
-			metrics.Histogram("data_plane_config_mutation_time_individual",
-				float64(mutationDuration),
-				metrics.Tag{
-					Key:   "status",
-					Value: "fail",
-				},
-				metrics.Tag{
-					Key:   "mutator_name",
-					Value: m.Name(),
-				})
 			return Content{}, err
 		}
-		metrics.Histogram("data_plane_config_mutation_time_individual",
-			float64(mutationDuration),
-			metrics.Tag{
-				Key:   "status",
-				Value: "success",
-			},
-			metrics.Tag{
-				Key:   "mutator_name",
-				Value: m.Name(),
-			})
 	}
 
 	return ReconfigurePayload(configTable)
