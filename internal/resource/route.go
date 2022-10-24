@@ -170,17 +170,18 @@ func (r Route) ProcessDefaults(ctx context.Context) error {
 func buildSchema() *atcrouter.Schema {
 	schema := atcrouter.NewSchema()
 
-	for _, fieldname := range []string{
-		"net.protocol", "tls.sni",
-		"http.method", "http.host",
-		"http.path", "http.raw_path",
-		"http.headers.*",
+	for fieldType, fields := range map[atcrouter.FieldType][]string{
+		atcrouter.String: {
+			"net.protocol", "tls.sni",
+			"http.method", "http.host",
+			"http.path", "http.raw_path",
+			"http.headers.*",
+		},
+		atcrouter.Int: {"net.port"},
 	} {
-		schema.AddField(fieldname, atcrouter.String)
-	}
-
-	for _, fieldname := range []string{"net.port"} {
-		schema.AddField(fieldname, atcrouter.Int)
+		for _, fieldName := range fields {
+			schema.AddField(fieldName, fieldType)
+		}
 	}
 
 	return schema
