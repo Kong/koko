@@ -8,7 +8,7 @@ import (
 
 	"github.com/gofrs/uuid"
 	"github.com/imdario/mergo"
-	goatcrouter "github.com/kong/go-atc-router"
+	atcrouter "github.com/kong/go-atc-router"
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
 	"github.com/kong/koko/internal/model"
 	"github.com/kong/koko/internal/model/json/extension"
@@ -167,8 +167,8 @@ func (r Route) ProcessDefaults(ctx context.Context) error {
 	return nil
 }
 
-func buildSchema() *goatcrouter.Schema {
-	schema := goatcrouter.NewSchema()
+func buildSchema() *atcrouter.Schema {
+	schema := atcrouter.NewSchema()
 
 	for _, fieldname := range []string{
 		"net.protocol", "tls.sni",
@@ -176,11 +176,11 @@ func buildSchema() *goatcrouter.Schema {
 		"http.path", "http.raw_path",
 		"http.headers.*",
 	} {
-		schema.AddField(fieldname, goatcrouter.String)
+		schema.AddField(fieldname, atcrouter.String)
 	}
 
 	for _, fieldname := range []string{"net.port"} {
-		schema.AddField(fieldname, goatcrouter.Int)
+		schema.AddField(fieldname, atcrouter.Int)
 	}
 
 	return schema
@@ -195,7 +195,7 @@ func init() {
 			return false
 		}
 
-		router := goatcrouter.NewRouter(cachedSchema)
+		router := atcrouter.NewRouter(cachedSchema)
 		defer router.Free()
 		err := router.AddMatcher(0, uuid.Must(uuid.NewV4()), expression)
 		return err == nil
