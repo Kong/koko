@@ -32,7 +32,7 @@ require (
 	github.com/mattn/go-sqlite3 v1.14.15
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/prometheus/client_golang v1.13.0
-	github.com/prometheus/client_model v0.2.0
+	github.com/prometheus/client_model v0.3.0
 	github.com/samber/lo v1.33.0
 	github.com/santhosh-tekuri/jsonschema/v5 v5.0.1
 	github.com/shirou/gopsutil/v3 v3.22.9
