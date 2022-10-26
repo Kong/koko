@@ -8,8 +8,10 @@ import (
 )
 
 // Logger is setup on startup by cmd package.
-var Logger *zap.Logger
-var zapConfig zap.Config
+var (
+	Logger    *zap.Logger
+	zapConfig zap.Config
+)
 
 func init() {
 	// initialized only for testing purposes.
