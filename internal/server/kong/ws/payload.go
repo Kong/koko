@@ -10,6 +10,7 @@ import (
 	"github.com/bluele/gcache"
 	"github.com/kong/koko/internal/metrics"
 	"github.com/kong/koko/internal/server/kong/ws/config"
+	"github.com/samber/lo"
 	"go.uber.org/zap"
 )
 
@@ -84,12 +85,12 @@ func (p *Payload) configForVersion(version string) (cacheEntry, error) {
 
 	// cache-miss, slow path
 	if errors.Is(err, errNotFound) {
-		configUpdateProcessingStartTime := time.Now()
 		unversionedConfig, err := p.configCache.load(unversionedConfigKey)
 		if err != nil {
 			return cacheEntry{}, err
 		}
 		// build the config for version
+		configUpdateProcessingStartTime := time.Now()
 		updatedPayload, changes, err := p.vc.ProcessConfigTableUpdates(
 			version,
 			unversionedConfig.CompressedPayload,
@@ -128,6 +129,12 @@ func (p *Payload) configForVersion(version string) (cacheEntry, error) {
 					Value: version,
 				})
 		}
+		configUpdateProcessingDuration := time.Since(configUpdateProcessingStartTime).Seconds()
+		metrics.Histogram("data_plane_version_compatibility_duration_seconds", configUpdateProcessingDuration,
+			metrics.Tag{Key: "dp_version", Value: version},
+			metrics.Tag{Key: "status", Value: lo.Ternary(err == nil, "success", "fail")},
+			metrics.Tag{Key: "protocol", Value: "ws"},
+		)
 		// cache changes
 		err = p.configHashToChanges.Set(unversionedConfig.Hash+version, changes)
 		if err != nil {
@@ -138,12 +145,6 @@ func (p *Payload) configForVersion(version string) (cacheEntry, error) {
 		}
 		// cache it
 		err = p.configCache.store(version, entry)
-		configUpdateProcessingDuration := time.Since(configUpdateProcessingStartTime).Seconds()
-		metrics.Histogram("data_plane_version_compatibility_duration_seconds", configUpdateProcessingDuration,
-			metrics.Tag{Key: "dp_version", Value: version},
-			metrics.Tag{Key: "status", Value: "success"},
-			metrics.Tag{Key: "protocol", Value: "ws"},
-		)
 		if err != nil {
 			p.logger.Error("failed to store configuration from cache",
 				zap.Error(err),
