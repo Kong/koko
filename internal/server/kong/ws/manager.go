@@ -478,10 +478,9 @@ func (m *Manager) reconcileKongPayload(ctx context.Context) error {
 	mutationStartTime := time.Now()
 	config, err := m.configLoader.Load(ctx, m.Cluster.Get())
 	metrics.Histogram(
-		"data_plane_config_mutation_total_duration_seconds",
+		"config_mutation_total_duration_seconds",
 		time.Since(mutationStartTime).Seconds(),
 		metrics.Tag{Key: "status", Value: lo.Ternary(err == nil, "success", "fail")},
-		metrics.Tag{Key: "protocol", Value: "ws"},
 	)
 	if err != nil {
 		return err

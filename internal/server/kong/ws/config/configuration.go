@@ -57,10 +57,9 @@ func (l *KongConfigurationLoader) Load(ctx context.Context, clusterID string) (C
 		err := m.Mutate(ctx, MutatorOpts{ClusterID: clusterID},
 			configTable)
 		metrics.Histogram(
-			"data_plane_config_mutation_individual_duration_seconds",
+			"config_mutation_individual_duration_seconds",
 			time.Since(mutationStartTime).Seconds(),
 			metrics.Tag{Key: "status", Value: lo.Ternary(err == nil, "success", "fail")},
-			metrics.Tag{Key: "protocol", Value: "ws"},
 			metrics.Tag{Key: "mutator_name", Value: m.Name()},
 		)
 		if err != nil {
