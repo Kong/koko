@@ -64,7 +64,7 @@ type Config struct {
 	Database Database      `yaml:"database" json:"database" env-prefix:"KOKO_DATABASE_"`
 	// Deprecated
 	Metrics                 Metrics           `yaml:"metrics" json:"metrics" env-prefix:"KOKO_METRICS_"`
-	PrometheusMetrics       PrometheusMetrics `yaml:"prometheus_metrics" json:"prometheus_metrics" env-prefix:"KOKO_PROMETHEUS_METRICS_"`
+	PrometheusMetrics       PrometheusMetrics `yaml:"prometheus_metrics" json:"prometheus_metrics" env-prefix:"KOKO_PROMETHEUS_METRICS_"`                     //nolint:lll
 	DisableAnonymousReports bool              `yaml:"disable_anonymous_reports" json:"disable_anonymous_reports" env-prefix:"KOKO_DISABLE_ANONYMOUS_REPORTS"` //nolint:lll
 }
 
