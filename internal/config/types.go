@@ -20,9 +20,15 @@ type ControlServer struct {
 }
 
 // Metrics config.
+// Deprecated.
 type Metrics struct {
-	Enabled    bool   `yaml:"enabled" json:"enabled" env:"ENABLED"`
 	ClientType string `yaml:"client_type" json:"client_type" env:"CLIENT_TYPE" env-default:"noop"`
+}
+
+// PrometheusMetrics config.
+type PrometheusMetrics struct {
+	Enabled bool   `yaml:"enabled" json:"enabled" env:"ENABLED"`
+	Port    string `yaml:"port" json:"port" env:"PORT" env-default:":9090"`
 }
 
 // TLS defines re-usable TLS configuration used in tls.Config.
@@ -52,12 +58,14 @@ type TLS struct {
 // - values in environment variables
 // Array/Slice types are not supported within this data-structure.
 type Config struct {
-	Log                     Log           `yaml:"log" json:"log" env-prefix:"KOKO_LOG_"`
-	Admin                   AdminServer   `yaml:"admin_server" json:"admin_server" env-prefix:"KOKO_ADMIN_SERVER_"`
-	Control                 ControlServer `yaml:"control_server" json:"control_server" env-prefix:"KOKO_CONTROL_SERVER_"`
-	Database                Database      `yaml:"database" json:"database" env-prefix:"KOKO_DATABASE_"`
-	Metrics                 Metrics       `yaml:"metrics" json:"metrics" env-prefix:"KOKO_METRICS_"`
-	DisableAnonymousReports bool          `yaml:"disable_anonymous_reports" json:"disable_anonymous_reports" env-prefix:"KOKO_DISABLE_ANONYMOUS_REPORTS"` //nolint:lll
+	Log      Log           `yaml:"log" json:"log" env-prefix:"KOKO_LOG_"`
+	Admin    AdminServer   `yaml:"admin_server" json:"admin_server" env-prefix:"KOKO_ADMIN_SERVER_"`
+	Control  ControlServer `yaml:"control_server" json:"control_server" env-prefix:"KOKO_CONTROL_SERVER_"`
+	Database Database      `yaml:"database" json:"database" env-prefix:"KOKO_DATABASE_"`
+	// Deprecated
+	Metrics                 Metrics           `yaml:"metrics" json:"metrics" env-prefix:"KOKO_METRICS_"`
+	PrometheusMetrics       PrometheusMetrics `yaml:"prometheus_metrics" json:"prometheus_metrics" env-prefix:"KOKO_PROMETHEUS_METRICS_"`
+	DisableAnonymousReports bool              `yaml:"disable_anonymous_reports" json:"disable_anonymous_reports" env-prefix:"KOKO_DISABLE_ANONYMOUS_REPORTS"` //nolint:lll
 }
 
 // fetchFileContents gathers file contents from the provided fields and sets it on the applicable string field.

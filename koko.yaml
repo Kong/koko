@@ -66,6 +66,6 @@ database:
 control_server:
   tls_cert_path: cluster.crt
   tls_key_path: cluster.key
-metrics:
+prometheus_metrics:
   enabled: false
 disable_anonymous_reports: false
