@@ -22,7 +22,8 @@ database:
       hostname: "read-localhost"
 metrics:
   client_type: "noop"
-  enabled: true
+prometheus_metrics:
+  enabled: false
 control_server:
   tls_cert_path: foo.crt
   tls_key_path: bar.key
