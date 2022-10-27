@@ -38,6 +38,18 @@ const (
 	ExpressionRouteRuleTitle = "atc_route_rule"
 )
 
+func fieldForbidsOthers(fldA string, others []string) map[string]*generator.Schema {
+	out := make(map[string]*generator.Schema, len(others))
+
+	for _, other := range others {
+		out[other] = &generator.Schema{Not: &generator.Schema{
+			Description: fmt.Sprintf("When '%s' is defined, the field '%s' must not be set.", fldA, other),
+		}}
+	}
+
+	return out
+}
+
 var (
 	defaultRoute = &v1.Route{
 		Protocols:               []string{typedefs.ProtocolHTTP, typedefs.ProtocolHTTPS},
@@ -763,35 +775,10 @@ func init() {
 					Required: []string{"expression"},
 				},
 				Then: &generator.Schema{
-					Properties: map[string]*generator.Schema{
-						"hosts": {Not: &generator.Schema{
-							Description: "When 'expression' is defined, the field 'hosts' must not be set.",
-						}},
-						"headers": {Not: &generator.Schema{
-							Description: "When 'expression' is defined, the field 'headers' must not be set.",
-						}},
-						"methods": {Not: &generator.Schema{
-							Description: "When 'expression' is defined, the field 'methods' must not be set.",
-						}},
-						"paths": {Not: &generator.Schema{
-							Description: "When 'expression' is defined, the field 'paths' must not be set.",
-						}},
-						"path_handling": {Not: &generator.Schema{
-							Description: "When 'expression' is defined, the field 'path_handling' must not be set.",
-						}},
-						"regex_priority": {Not: &generator.Schema{
-							Description: "When 'expression' is defined, the field 'regex_priority' must not be set.",
-						}},
-						"snis": {Not: &generator.Schema{
-							Description: "When 'expression' is defined, the field 'snis' must not be set.",
-						}},
-						"sources": {Not: &generator.Schema{
-							Description: "When 'expression' is defined, the field 'sources' must not be set.",
-						}},
-						"destinations": {Not: &generator.Schema{
-							Description: "When 'expression' is defined, the field 'destinations' must not be set.",
-						}},
-					},
+					Properties: fieldForbidsOthers("expression", []string{
+						"hosts", "headers", "methods", "paths", "path_handling",
+						"regex_priority", "snis", "sources", "destinations",
+					}),
 				},
 			},
 		},
