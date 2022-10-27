@@ -159,7 +159,7 @@ func TestGet(t *testing.T) {
 					"KOKO_DATABASE_DIALECT":                        db.DialectPostgres,
 					"KOKO_DATABASE_POSTGRES_READ_REPLICA_HOSTNAME": "foobar",
 					"KOKO_DATABASE_POSTGRES_TLS_ENABLE":            "true",
-					"KOKO_METRICS_ENABLED":                         "true",
+					"KOKO_PROMETHEUS_METRICS_ENABLED":              "true",
 				},
 			},
 			want: Config{
@@ -186,7 +186,7 @@ func TestGet(t *testing.T) {
 					ClientType: "noop",
 				},
 				PrometheusMetrics: PrometheusMetrics{
-					Enabled: false,
+					Enabled: true,
 					Port:    ":9090",
 				},
 				DisableAnonymousReports: false,
