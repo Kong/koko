@@ -262,7 +262,7 @@ func TestCACertificate_Validate(t *testing.T) {
 					Type:  model.ErrorType_ERROR_TYPE_FIELD,
 					Field: "cert",
 					Messages: []string{`certificate does not appear to be a CA because ` +
-						`it is missing the "CA" basic constraint`},
+						`the "CA" basic constraint is set to False`},
 				},
 			},
 		},
