@@ -22,7 +22,10 @@ var defaultConfig = Config{
 	},
 	Metrics: Metrics{
 		ClientType: "noop",
-		Enabled:    false,
+	},
+	PrometheusMetrics: PrometheusMetrics{
+		Enabled: false,
+		Port:    ":9090",
 	},
 	DisableAnonymousReports: false,
 }
@@ -90,7 +93,10 @@ func TestGet(t *testing.T) {
 				},
 				Metrics: Metrics{
 					ClientType: "noop",
-					Enabled:    true,
+				},
+				PrometheusMetrics: PrometheusMetrics{
+					Enabled: false,
+					Port:    ":9090",
 				},
 				DisableAnonymousReports: true,
 			},
@@ -136,7 +142,10 @@ func TestGet(t *testing.T) {
 				},
 				Metrics: Metrics{
 					ClientType: "noop",
-					Enabled:    true,
+				},
+				PrometheusMetrics: PrometheusMetrics{
+					Enabled: false,
+					Port:    ":9090",
 				},
 				DisableAnonymousReports: true,
 			},
@@ -175,7 +184,10 @@ func TestGet(t *testing.T) {
 				},
 				Metrics: Metrics{
 					ClientType: "noop",
-					Enabled:    true,
+				},
+				PrometheusMetrics: PrometheusMetrics{
+					Enabled: false,
+					Port:    ":9090",
 				},
 				DisableAnonymousReports: false,
 			},
@@ -225,7 +237,10 @@ func TestGet(t *testing.T) {
 				},
 				Metrics: Metrics{
 					ClientType: "noop",
-					Enabled:    true,
+				},
+				PrometheusMetrics: PrometheusMetrics{
+					Enabled: false,
+					Port:    ":9090",
 				},
 				DisableAnonymousReports: true,
 			},
