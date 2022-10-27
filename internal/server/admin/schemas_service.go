@@ -174,7 +174,10 @@ func (s *SchemasService) validateSchema(ctx context.Context, item proto.Message)
 		// registered (via `model.RegisterType()`), this would never error.
 		return err
 	}
-
+	// Process entity defaults before performing schema validation.
+	if err := obj.ProcessDefaults(ctx); err != nil {
+		return s.err(ctx, err)
+	}
 	return s.err(ctx, obj.Validate(ctx))
 }
 

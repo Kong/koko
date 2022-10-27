@@ -277,23 +277,17 @@ func TestValidateJSONSchema(t *testing.T) {
 
 		body := res.JSON().Object()
 		body.Value("message").String().Equal("validation error")
-		body.Value("details").Array().Length().Equal(4)
+		body.Value("details").Array().Length().Equal(3)
 		errRes := body.Value("details").Array()
 
-		entityErr := errRes.Element(0).Object()
-		entityErr.Value("type").String().Equal(v1.ErrorType_ERROR_TYPE_ENTITY.String())
-		messages := entityErr.Value("messages").Array()
-		messages.Length().Equal(1)
-		messages.First().String().Equal("missing properties: 'id'")
-
-		createdAtErr := errRes.Element(1).Object()
+		createdAtErr := errRes.Element(0).Object()
 		createdAtErr.Value("type").String().Equal(v1.ErrorType_ERROR_TYPE_FIELD.String())
 		createdAtErr.Value("field").String().Equal("created_at")
-		messages = createdAtErr.Value("messages").Array()
+		messages := createdAtErr.Value("messages").Array()
 		messages.Length().Equal(1)
 		messages.First().String().Equal("must be >= 1 but found -1")
 
-		customIDErr := errRes.Element(2).Object()
+		customIDErr := errRes.Element(1).Object()
 		customIDErr.Value("type").String().Equal(v1.ErrorType_ERROR_TYPE_FIELD.String())
 		customIDErr.Value("field").String().Equal("custom_id")
 		messages = customIDErr.Value("messages").Array()
@@ -302,7 +296,7 @@ func TestValidateJSONSchema(t *testing.T) {
 			`must match pattern '^[0-9a-zA-Z.\-_~\(\)#%@|+]+(?: [0-9a-zA-Z.\-_~\(\)#%@|+]+)*$'`,
 		)
 
-		tagsErr := errRes.Element(3).Object()
+		tagsErr := errRes.Element(2).Object()
 		tagsErr.Value("type").String().Equal(v1.ErrorType_ERROR_TYPE_FIELD.String())
 		tagsErr.Value("field").String().Equal("tags[1]")
 		messages = tagsErr.Value("messages").Array()
