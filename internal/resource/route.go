@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/gofrs/uuid"
+	"github.com/google/uuid"
 	"github.com/imdario/mergo"
 	atcrouter "github.com/kong/go-atc-router"
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
@@ -198,7 +198,7 @@ func init() {
 
 		router := atcrouter.NewRouter(cachedSchema)
 		defer router.Free()
-		err := router.AddMatcher(0, uuid.Must(uuid.NewV4()), expression)
+		err := router.AddMatcher(0, uuid.New(), expression)
 		return err == nil
 	}
 
