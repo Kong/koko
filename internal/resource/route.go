@@ -13,6 +13,7 @@ import (
 	"github.com/kong/koko/internal/model/json/generator"
 	"github.com/kong/koko/internal/model/json/validation"
 	"github.com/kong/koko/internal/model/json/validation/typedefs"
+	"github.com/samber/lo"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
@@ -126,12 +127,18 @@ func (r Route) ProcessDefaults(ctx context.Context) error {
 	if r.Route == nil {
 		return fmt.Errorf("invalid nil resource")
 	}
-	if len(r.Route.Protocols) == 0 {
-		err := mergo.Merge(r.Route, defaultRoute,
-			mergo.WithTransformers(wrappersPBTransformer{}))
-		if err != nil {
-			return err
+	// When protocols has 'grpc' or 'grpcs', 'strip_path' cannot be set.
+	// If 'strip_path' is null, the default value (true) would be applied,
+	// so we set it to 'false' in order to prevent that.
+	if lo.Some(r.Route.Protocols, []string{typedefs.ProtocolGRPC, typedefs.ProtocolGRPCS}) {
+		if r.Route.StripPath == nil {
+			r.Route.StripPath = wrapperspb.Bool(false)
 		}
+	}
+	err := mergo.Merge(r.Route, defaultRoute,
+		mergo.WithTransformers(wrappersPBTransformer{}))
+	if err != nil {
+		return err
 	}
 	defaultID(&r.Route.Id)
 	return nil
