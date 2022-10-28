@@ -23,7 +23,7 @@ database:
 metrics:
   client_type: "noop"
   prometheus:
-    enabled: false
+    enable: false
 control_server:
   tls_cert_path: foo.crt
   tls_key_path: bar.key

@@ -81,7 +81,7 @@ func Run(ctx context.Context, config ServerConfig) error {
 	}
 
 	// TODO: Instrumentation with metrics client is deprecated and will be replaced by metricsv2 package.
-	if config.Metrics.ClientType == metrics.Datadog.String() {
+	if config.Metrics.ClientType == metrics.Datadog.String() { //nolint:staticcheck
 		err := metrics.InitMetricsClient(
 			logger.With(zap.String("component", "metrics-collector")), metrics.Datadog.String())
 		if err != nil {
