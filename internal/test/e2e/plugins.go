@@ -405,7 +405,8 @@ var VersionCompatibilityOSSPluginConfigurationTests = []VersionCompatibilityPlug
 	//
 	// DP < 3.0:
 	//   - remove 'http_span_name', 'connect_timeout'
-	//     'send_timeout', 'read_timeout'
+	//     'send_timeout', 'read_timeout',
+	//     'http_response_header_for_traceid'
 	{
 		Name: "zipkin",
 		Config: `{
@@ -414,7 +415,8 @@ var VersionCompatibilityOSSPluginConfigurationTests = []VersionCompatibilityPlug
 			"http_span_name": "method_path",
 			"connect_timeout": 2001,
 			"send_timeout": 2001,
-			"read_timeout": 2001
+			"read_timeout": 2001,
+			"http_response_header_for_traceid": "X-B3-TraceId"
 		}`,
 		FieldUpdateChecks: map[string][]FieldUpdateCheck{
 			"< 2.7.0": {

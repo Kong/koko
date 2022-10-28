@@ -83,6 +83,7 @@ var (
 		"connect_timeout",
 		"send_timeout",
 		"read_timeout",
+		"http_response_header_for_traceid",
 	}
 	prometheus30Fields = []string{
 		"status_code_metrics",
