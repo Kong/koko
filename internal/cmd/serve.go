@@ -55,7 +55,6 @@ func serveMain(ctx context.Context) error {
 		Logger:                  logger,
 		Database:                opts.Config.Database,
 		Metrics:                 opts.Config.Metrics,
-		PrometheusMetrics:       opts.Config.PrometheusMetrics,
 		DisableAnonymousReports: opts.Config.DisableAnonymousReports,
 	})
 }

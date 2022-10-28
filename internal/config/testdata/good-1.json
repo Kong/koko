@@ -30,10 +30,9 @@
   },
   "metrics": {
     "client_type": "noop",
-    "enabled": true
-  },
-  "prometheus_metrics": {
-    "enabled": false
+    "prometheus": {
+      "enable": false
+    }
   },
   "control_server": {
     "tls_cert_path": "foo.crt",

@@ -22,10 +22,10 @@ var defaultConfig = Config{
 	},
 	Metrics: Metrics{
 		ClientType: "noop",
-	},
-	PrometheusMetrics: PrometheusMetrics{
-		Enabled: false,
-		Port:    ":9090",
+		Prometheus: PrometheusMetrics{
+			Enable:  false,
+			Address: ":9090",
+		},
 	},
 	DisableAnonymousReports: false,
 }
@@ -93,10 +93,10 @@ func TestGet(t *testing.T) {
 				},
 				Metrics: Metrics{
 					ClientType: "noop",
-				},
-				PrometheusMetrics: PrometheusMetrics{
-					Enabled: false,
-					Port:    ":9090",
+					Prometheus: PrometheusMetrics{
+						Enable:  false,
+						Address: ":9090",
+					},
 				},
 				DisableAnonymousReports: true,
 			},
@@ -142,10 +142,10 @@ func TestGet(t *testing.T) {
 				},
 				Metrics: Metrics{
 					ClientType: "noop",
-				},
-				PrometheusMetrics: PrometheusMetrics{
-					Enabled: false,
-					Port:    ":9090",
+					Prometheus: PrometheusMetrics{
+						Enable:  false,
+						Address: ":9090",
+					},
 				},
 				DisableAnonymousReports: true,
 			},
@@ -159,7 +159,7 @@ func TestGet(t *testing.T) {
 					"KOKO_DATABASE_DIALECT":                        db.DialectPostgres,
 					"KOKO_DATABASE_POSTGRES_READ_REPLICA_HOSTNAME": "foobar",
 					"KOKO_DATABASE_POSTGRES_TLS_ENABLE":            "true",
-					"KOKO_PROMETHEUS_METRICS_ENABLED":              "true",
+					"KOKO_METRICS_PROMETHEUS_ENABLE":               "true",
 				},
 			},
 			want: Config{
@@ -184,10 +184,10 @@ func TestGet(t *testing.T) {
 				},
 				Metrics: Metrics{
 					ClientType: "noop",
-				},
-				PrometheusMetrics: PrometheusMetrics{
-					Enabled: true,
-					Port:    ":9090",
+					Prometheus: PrometheusMetrics{
+						Enable:  true,
+						Address: ":9090",
+					},
 				},
 				DisableAnonymousReports: false,
 			},
@@ -237,10 +237,10 @@ func TestGet(t *testing.T) {
 				},
 				Metrics: Metrics{
 					ClientType: "noop",
-				},
-				PrometheusMetrics: PrometheusMetrics{
-					Enabled: false,
-					Port:    ":9090",
+					Prometheus: PrometheusMetrics{
+						Enable:  false,
+						Address: ":9090",
+					},
 				},
 				DisableAnonymousReports: true,
 			},

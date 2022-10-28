@@ -45,10 +45,8 @@ type ServerConfig struct {
 
 	KongCPCert tls.Certificate
 
-	Logger *zap.Logger
-	// Deprecated
+	Logger                  *zap.Logger
 	Metrics                 config.Metrics
-	PrometheusMetrics       config.PrometheusMetrics
 	Database                config.Database
 	DisableAnonymousReports bool
 }
@@ -67,12 +65,12 @@ func Run(ctx context.Context, config ServerConfig) error {
 	schema.RegisterSchemasFromFS(&genJSONSchema.KongSchemas)
 
 	// TODO: Temporarily support emitting metrics for both datadog and prometheus.
-	if config.PrometheusMetrics.Enabled {
+	if config.Metrics.Prometheus.Enable {
 		metricsLogger := logger.With(zap.String("component", "metrics"))
 		metricsHandler := metricsv2.PrometheusHandler()
 
 		s, err := server.NewHTTP(server.HTTPOpts{
-			Address: config.PrometheusMetrics.Port,
+			Address: config.Metrics.Prometheus.Address,
 			Logger:  metricsLogger,
 			Handler: serverUtil.HandlerWithRecovery(serverUtil.HandlerWithLogger(metricsHandler, metricsLogger), metricsLogger),
 		})
