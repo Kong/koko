@@ -130,7 +130,7 @@ func (p *Payload) configForVersion(version string) (cacheEntry, error) {
 				})
 		}
 		configUpdateProcessingDuration := time.Since(configUpdateProcessingStartTime).Seconds()
-		metrics.Histogram("version_compatibility_configuration_duration_seconds", configUpdateProcessingDuration,
+		metrics.Histogram("configuration_transformation_duration_seconds", configUpdateProcessingDuration,
 			metrics.Tag{Key: "dp_version", Value: version},
 			metrics.Tag{Key: "status", Value: lo.Ternary(err == nil, "success", "fail")},
 		)
