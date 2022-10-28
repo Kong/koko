@@ -123,7 +123,7 @@ func (h websocketHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// Tracks how long it takes to establish the connection between the control plane and the data plane.
-	metrics.Histogram("wrpc_connection_setup_duration_seconds",
+	metrics.Histogram("connection_setup_duration_seconds",
 		time.Since(dpConnectStartTime).Seconds(),
 		metrics.Tag{Key: "dp_version", Value: nodeVersion},
 	)
