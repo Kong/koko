@@ -5,10 +5,12 @@ import (
 	"errors"
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/bluele/gcache"
 	"github.com/kong/koko/internal/metrics"
 	"github.com/kong/koko/internal/server/kong/ws/config"
+	"github.com/samber/lo"
 	"go.uber.org/zap"
 )
 
@@ -88,6 +90,7 @@ func (p *Payload) configForVersion(version string) (cacheEntry, error) {
 			return cacheEntry{}, err
 		}
 		// build the config for version
+		configUpdateProcessingStartTime := time.Now()
 		updatedPayload, changes, err := p.vc.ProcessConfigTableUpdates(
 			version,
 			unversionedConfig.CompressedPayload,
@@ -126,6 +129,11 @@ func (p *Payload) configForVersion(version string) (cacheEntry, error) {
 					Value: version,
 				})
 		}
+		configUpdateProcessingDuration := time.Since(configUpdateProcessingStartTime).Seconds()
+		metrics.Histogram("configuration_transformation_duration_seconds", configUpdateProcessingDuration,
+			metrics.Tag{Key: "dp_version", Value: version},
+			metrics.Tag{Key: "status", Value: lo.Ternary(err == nil, "success", "fail")},
+		)
 		// cache changes
 		err = p.configHashToChanges.Set(unversionedConfig.Hash+version, changes)
 		if err != nil {
@@ -146,7 +154,6 @@ func (p *Payload) configForVersion(version string) (cacheEntry, error) {
 		}
 		return entry, nil
 	}
-
 	// other errors
 	return cacheEntry{}, err
 }

@@ -6,8 +6,11 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"time"
 
 	"github.com/kong/koko/internal/json"
+	"github.com/kong/koko/internal/metrics"
+	"github.com/samber/lo"
 )
 
 type Map map[string]interface{}
@@ -50,8 +53,15 @@ func (l *KongConfigurationLoader) Register(mutator Mutator) error {
 func (l *KongConfigurationLoader) Load(ctx context.Context, clusterID string) (Content, error) {
 	var configTable DataPlaneConfig = map[string]interface{}{}
 	for _, m := range l.mutators {
+		mutationStartTime := time.Now()
 		err := m.Mutate(ctx, MutatorOpts{ClusterID: clusterID},
 			configTable)
+		metrics.Histogram(
+			"config_mutation_individual_duration_seconds",
+			time.Since(mutationStartTime).Seconds(),
+			metrics.Tag{Key: "status", Value: lo.Ternary(err == nil, "success", "fail")},
+			metrics.Tag{Key: "mutator_name", Value: m.Name()},
+		)
 		if err != nil {
 			return Content{}, err
 		}

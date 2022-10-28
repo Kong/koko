@@ -3,10 +3,12 @@ package ws
 import (
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/gorilla/websocket"
 	"github.com/kong/go-wrpc/wrpc"
 	"github.com/kong/koko/internal/json"
+	"github.com/kong/koko/internal/metrics"
 	"github.com/kong/koko/internal/versioning"
 	"go.uber.org/zap"
 )
@@ -85,6 +87,7 @@ func validateRequest(r *http.Request) error {
 }
 
 func (h websocketHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	dpConnectStartTime := time.Now()
 	if err := validateRequest(r); err != nil {
 		h.logger.Error("received invalid websocket upgrade request from DP",
 			zap.Error(err),
@@ -119,6 +122,11 @@ func (h websocketHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		loggerWithNode.Error("failed to upgrade websocket connection", zap.Error(err))
 		return
 	}
+	// Tracks how long it takes to establish the connection between the control plane and the data plane.
+	metrics.Histogram("connection_setup_duration_seconds",
+		time.Since(dpConnectStartTime).Seconds(),
+		metrics.Tag{Key: "dp_version", Value: nodeVersion},
+	)
 
 	node, err := NewNode(nodeOpts{
 		id:         nodeID,
