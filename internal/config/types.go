@@ -21,8 +21,19 @@ type ControlServer struct {
 
 // Metrics config.
 type Metrics struct {
-	// ClientType metrics client type e.g. prometheus, datadog.
+	// Deprecated: This is kept around to enable the Datadog metrics integration
+	// to continue to work, until we're ready to switch over to Prometheus.
 	ClientType string `yaml:"client_type" json:"client_type" env:"CLIENT_TYPE" env-default:"noop"`
+
+	Prometheus PrometheusMetrics `yaml:"prometheus" json:"prometheus" env-prefix:"PROMETHEUS_"`
+}
+
+// PrometheusMetrics defines the configuration for setting up the Prometheus
+// metrics exporter, which exposes an HTTP server returning metrics in the
+// Prometheus exposition format under the `/metrics` HTTP path.
+type PrometheusMetrics struct {
+	Enable  bool   `yaml:"enable" json:"enable" env:"ENABLE"`
+	Address string `yaml:"address" json:"address" env:"ADDRESS" env-default:":9090"`
 }
 
 // TLS defines re-usable TLS configuration used in tls.Config.

@@ -52,6 +52,7 @@ func WithDPAuthMode(dpAuthMode cmd.DPAuthMode) ServerConfigOpt {
 }
 
 func Koko(t *testing.T, options ...ServerConfigOpt) func() {
+	util.RegisterSchemasFromFS()
 	// build default config
 	cert, err := tls.X509KeyPair(certs.DefaultSharedCert, certs.DefaultSharedKey)
 	require.Nil(t, err)

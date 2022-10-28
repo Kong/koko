@@ -20,6 +20,10 @@ database:
       ca_bundle_path: "/tmp/foo.crt"
     read_replica:
       hostname: "read-localhost"
+metrics:
+  client_type: "noop"
+  prometheus:
+    enable: false
 control_server:
   tls_cert_path: foo.crt
   tls_key_path: bar.key

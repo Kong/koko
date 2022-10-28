@@ -16,6 +16,7 @@ import (
 	genJSONSchema "github.com/kong/koko/internal/gen/jsonschema"
 	"github.com/kong/koko/internal/info"
 	"github.com/kong/koko/internal/metrics"
+	metricsv2 "github.com/kong/koko/internal/metrics/v2"
 	"github.com/kong/koko/internal/model"
 	"github.com/kong/koko/internal/model/json/schema"
 	"github.com/kong/koko/internal/persistence"
@@ -63,27 +64,30 @@ func Run(ctx context.Context, config ServerConfig) error {
 
 	schema.RegisterSchemasFromFS(&genJSONSchema.KongSchemas)
 
-	err := metrics.InitMetricsClient(logger.With(zap.String("component", "metrics-collector")), config.Metrics.ClientType)
-	if err != nil {
-		return fmt.Errorf("init metrics client failure: %w", err)
-	}
-
-	defer metrics.Close()
-	if config.Metrics.ClientType == metrics.Prometheus.String() {
+	// TODO: Temporarily support emitting metrics for both datadog and prometheus.
+	if config.Metrics.Prometheus.Enable {
 		metricsLogger := logger.With(zap.String("component", "metrics"))
-		metricsHandler, err := metrics.CreateHandler(metricsLogger)
-		if err != nil {
-			return fmt.Errorf("create metrics handler failure: %w", err)
-		}
+		metricsHandler := metricsv2.PrometheusHandler()
+
 		s, err := server.NewHTTP(server.HTTPOpts{
-			Address: ":9090",
+			Address: config.Metrics.Prometheus.Address,
 			Logger:  metricsLogger,
-			Handler: serverUtil.HandlerWithRecovery(metricsHandler, metricsLogger),
+			Handler: serverUtil.HandlerWithRecovery(serverUtil.HandlerWithLogger(metricsHandler, metricsLogger), metricsLogger),
 		})
 		if err != nil {
 			return err
 		}
 		g.AddWithCtxE(s.Run)
+	}
+
+	// TODO: Instrumentation with metrics client is deprecated and will be replaced by metricsv2 package.
+	if config.Metrics.ClientType == metrics.Datadog.String() { //nolint:staticcheck
+		err := metrics.InitMetricsClient(
+			logger.With(zap.String("component", "metrics-collector")), metrics.Datadog.String())
+		if err != nil {
+			return fmt.Errorf("init metrics client failure: %w", err)
+		}
+		defer metrics.Close()
 	}
 
 	persister, err := setupDB(logger, config.Database)
