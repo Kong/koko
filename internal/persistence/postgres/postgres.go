@@ -28,52 +28,12 @@ type Postgres struct {
 	queryTimeout time.Duration
 }
 
-type Opts struct {
-	DBName           string
-	Hostname         string
-	ReadOnlyHostname string
-	Port             int
-	User             string
-	Password         string
-	EnableTLS        bool
-	CABundleFSPath   string
-	SQLOpen          persistence.SQLOpenFunc
-}
-
-func getDSN(opts Opts, logger *zap.Logger) (string, error) {
-	var res string
-	if opts.Hostname != "" {
-		res += fmt.Sprintf("host=%s ", opts.Hostname)
-	}
-	if opts.Port != 0 {
-		res += fmt.Sprintf("port=%d ", opts.Port)
-	}
-	if opts.User != "" {
-		res += fmt.Sprintf("user=%s ", opts.User)
-	}
-	if opts.Password != "" {
-		res += fmt.Sprintf("password=%s ", opts.Password)
-	}
-	if opts.DBName != "" {
-		res += fmt.Sprintf("dbname=%s ", opts.DBName)
-	}
-	if !opts.EnableTLS {
-		logger.Info("using non-TLS Postgres connection")
-		res += "sslmode=disable"
-		return res, nil
-	}
-	logger.Info("using TLS Postgres connection")
-	logger.Info("ca_bundle_fs_path:" + opts.CABundleFSPath)
-	if opts.CABundleFSPath == "" {
-		return "", fmt.Errorf("postgres connection requires TLS but ca_bundle_fs_path is empty")
-	}
-	res += "sslmode=verify-full sslrootcert=" + opts.CABundleFSPath
-
-	return res, nil
-}
-
 func NewSQLClient(opts Opts, logger *zap.Logger) (*sql.DB, error) {
-	dsn, err := getDSN(opts, logger)
+	if err := opts.Validate(); err != nil {
+		return nil, err
+	}
+
+	dsn, err := opts.DSN(logger)
 	if err != nil {
 		return nil, err
 	}

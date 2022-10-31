@@ -53,6 +53,9 @@ type Postgres struct {
 	TLS         PostgresTLS         `yaml:"tls" json:"tls" env-prefix:"TLS_"`
 	User        string              `yaml:"user" json:"user" env:"USER"`
 	Password    string              `yaml:"password" json:"password" env:"PASSWORD"`
+
+	// See the `Params` field on postgres.Opts for more info.
+	Params map[string]string `yaml:"params" json:"params" env:"PARAMS"`
 }
 
 // PostgresTLS defines configuration for using TLS with Postgres.
@@ -109,6 +112,7 @@ func (c *Postgres) Opts() postgres.Opts {
 		CABundleFSPath:   c.TLS.CABundlePath,
 		DBName:           c.DBName,
 		EnableTLS:        c.TLS.Enable,
+		Params:           c.Params,
 		Port:             c.Port,
 		Hostname:         c.Hostname,
 		ReadOnlyHostname: c.ReadReplica.Hostname,
