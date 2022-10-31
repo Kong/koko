@@ -28,7 +28,7 @@ require (
 	github.com/jackc/pgx/v4 v4.17.2
 	github.com/jeremywohl/flatten v1.0.1
 	github.com/kong/go-kong v0.33.1-0.20221216215022-d8d2d9de7467
-	github.com/kong/go-atc-router v0.0.0-20221027130840-0c1a22a1dad7
+	github.com/kong/go-atc-router v0.0.0-20221111113617-cca0bca3c5d9
 	github.com/kong/go-wrpc v0.0.0-20220926162517-2374aa556d56
 	github.com/kong/goks v0.6.2
 	github.com/kong/semver/v4 v4.0.1
@@ -106,7 +106,6 @@ require (
 	github.com/joho/godotenv v1.4.0 // indirect
 	github.com/klauspost/compress v1.15.12 // indirect
 	github.com/klauspost/pgzip v1.2.5 // indirect
-	github.com/kr/pretty v0.3.0 // indirect
 	github.com/lann/builder v0.0.0-20180802200727-47ae307949d0 // indirect
 	github.com/lann/ps v0.0.0-20150810152359-62de8c46ede0 // indirect
 	github.com/layeh/gopher-json v0.0.0-20201124131017-552bb3c4c3bf // indirect
@@ -133,7 +132,6 @@ require (
 	github.com/power-devops/perfstat v0.0.0-20210106213030-5aafc221ea8c // indirect
 	github.com/prometheus/common v0.37.0 // indirect
 	github.com/prometheus/procfs v0.8.0 // indirect
-	github.com/rogpeppe/go-internal v1.8.0 // indirect
 	github.com/rs/cors v1.8.2 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/sanity-io/litter v1.5.5 // indirect

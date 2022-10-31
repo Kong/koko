@@ -2,7 +2,7 @@ name: Unit Tests [OSS]
 on: pull_request
 jobs:
   unit-test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
       matrix:
@@ -27,24 +27,17 @@ jobs:
           ~/go/pkg/mod
           ~/.cache/go-build
         key: ${{ runner.os }}-go-unit-${{ hashFiles('**/go.sum') }}
-    - name: setup-db
-      run: |
-        ./scripts/setup-db.sh ${{ matrix.database }} &
-        ./scripts/wait-for-db.sh ${{ matrix.database }}
     - name: Cache go-atc-router library
       id: cache-atc
       uses: actions/cache@v3
       with:
         path: |
-          /tmp/libatc_router*
+          /tmp/lib
         key: ${{ runner.os }}-go-atc-router-${{ hashFiles('**/go.sum') }}
-    - name: Install cached library
+    - name: setup-db
       run: |
-        if [ -e /tmp/libatc_router* ]; then
-          sudo install /tmp/libatc_router* /usr/local/lib;
-        else
-          make install-deps
-        fi
+        ./scripts/setup-db.sh ${{ matrix.database }} &
+        ./scripts/wait-for-db.sh ${{ matrix.database }}
     - name: make test-race
       run: make test-race
 

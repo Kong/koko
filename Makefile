@@ -1,24 +1,27 @@
 .DEFAULT_GOAL := all
 DEFAULT_BRANCH:=$(shell git remote show origin | sed -n '/HEAD branch/s/.*: //p')
 
+ATCROUTER_LIB = /tmp/lib/libatc_router.a
+DEPS = $(ATCROUTER_LIB)
+
+$(ATCROUTER_LIB):
+	./scripts/build-library.sh go-atc-router/main/make-lib.sh /tmp/lib
+
+
 .PHONY: install-tools
 install-tools:
 	./scripts/install-tools.sh
 
-.PHONY: install-deps
-install-deps:
-	./scripts/install-deps.sh
-
 .PHONY: build
-build:
+build: $(DEPS)
 	go build -o koko main.go
 
 .PHONY: run
-run:
+run: $(DEPS)
 	go run main.go serve
 
 .PHONY: lint
-lint: verify-tidy
+lint: verify-tidy $(DEPS)
 	buf format -d --exit-code
 	buf lint
 	./bin/golangci-lint run ./...
@@ -31,14 +34,14 @@ verify-tidy:
 all: lint test
 
 .PHONY: test
-test:
+test: $(DEPS)
 	go test -tags testsetup -count 1 ./...
 
-test-race:
+test-race: $(DEPS)
 	go test -tags testsetup -count 1 -race -p 1 ./...
 
 .PHONY: test-integration
-test-integration:
+test-integration: $(DEPS)
 	go test -tags=testsetup,integration -timeout 15m -race -count 1 -p 1 ./internal/test/...
 
 .PHONY: gen
@@ -46,7 +49,7 @@ gen:
 	./scripts/update-codegen.sh
 
 .PHONY: gen-verify
-gen-verify:
+gen-verify: $(DEPS)
 	./scripts/verify-codegen.sh
 
 .PHONY: buf-format
