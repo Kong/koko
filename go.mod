@@ -36,7 +36,7 @@ require (
 	github.com/samber/lo v1.33.0
 	github.com/santhosh-tekuri/jsonschema/v5 v5.0.1
 	github.com/shirou/gopsutil/v3 v3.22.9
-	github.com/spf13/cobra v1.6.0
+	github.com/spf13/cobra v1.6.1
 	github.com/stretchr/testify v1.8.1
 	github.com/tidwall/gjson v1.14.3
 	github.com/tidwall/sjson v1.2.5
