@@ -91,10 +91,7 @@ func (opts *Opts) DSN(logger *zap.Logger) (string, error) {
 		sslMode = "disable"
 	} else {
 		logger.Info("using TLS Postgres connection")
-		logger.Info("ca_bundle_fs_path:" + opts.CABundleFSPath)
-		if opts.CABundleFSPath == "" {
-			return "", fmt.Errorf("postgres connection requires TLS but ca_bundle_fs_path is empty")
-		}
+		logger.Info("ca_bundle_path: " + opts.CABundleFSPath)
 		dsn += fmt.Sprintf(" sslrootcert=%s", opts.CABundleFSPath)
 	}
 

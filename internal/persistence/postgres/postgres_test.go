@@ -40,19 +40,6 @@ func TestDSN(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, expectedDSN, dsn)
 	})
-	t.Run("TLS DSN No CABundlePath", func(t *testing.T) {
-		opt := Opts{
-			DBName:    "koko",
-			Hostname:  "localhost",
-			Port:      DefaultPort,
-			User:      "koko",
-			Password:  "koko",
-			EnableTLS: true,
-		}
-		logger := log.Logger
-		_, err := opt.DSN(logger)
-		require.Errorf(t, err, "postgres connection requires TLS but ca_bundle_fs_path is empty")
-	})
 }
 
 func TestDSNParams(t *testing.T) {
