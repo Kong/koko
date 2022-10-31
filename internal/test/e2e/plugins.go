@@ -407,6 +407,8 @@ var VersionCompatibilityOSSPluginConfigurationTests = []VersionCompatibilityPlug
 	//   - remove 'http_span_name', 'connect_timeout'
 	//     'send_timeout', 'read_timeout',
 	//     'http_response_header_for_traceid'
+	// DP < 3.1:
+	//   - remove 'http_response_header_for_traceid'
 	{
 		Name: "zipkin",
 		Config: `{

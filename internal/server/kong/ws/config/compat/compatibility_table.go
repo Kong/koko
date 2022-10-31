@@ -68,6 +68,7 @@ const (
 	versionsPre280      = "< 2.8.0"
 	versionsPre300      = "< 3.0.0"
 	versions300AndAbove = ">= 3.0.0"
+	versionsPre310      = "< 3.1.0"
 )
 
 var (
@@ -83,7 +84,6 @@ var (
 		"connect_timeout",
 		"send_timeout",
 		"read_timeout",
-		"http_response_header_for_traceid",
 	}
 	prometheus30Fields = []string{
 		"status_code_metrics",
@@ -851,6 +851,22 @@ var (
 				Name:   config.Vault.String(),
 				Type:   config.Vault,
 				Remove: true,
+			},
+		},
+		{
+			Metadata: config.ChangeMetadata{
+				ID:       config.ChangeID("P136"),
+				Severity: config.ChangeSeverityError,
+				Description: standardPluginFieldsMessage("zipkin",
+					[]string{"http_response_header_for_traceid"},
+					"3.1", false),
+				Resolution: standardUpgradeMessage("3.1"),
+			},
+			SemverRange: versionsPre310,
+			Update: config.ConfigTableUpdates{
+				Name:         "zipkin",
+				Type:         config.Plugin,
+				RemoveFields: []string{"http_response_header_for_traceid"},
 			},
 		},
 	}
