@@ -211,7 +211,7 @@ func TestVersionCompatibility_PluginFieldUpdates(t *testing.T) {
 	for _, plugin := range expectedPluginsMap {
 		var config structpb.Struct
 		if len(plugin.Config) > 0 {
-			require.NoError(t, json.ProtoJSONUnmarshal([]byte(plugin.Config), &config))
+			require.NoError(t, json.ProtoJSONUnmarshal([]byte(plugin.Config), &config), plugin)
 		}
 
 		p := &v1.Plugin{

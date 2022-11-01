@@ -68,7 +68,7 @@ const (
 	versionsPre280      = "< 2.8.0"
 	versionsPre300      = "< 3.0.0"
 	versions300AndAbove = ">= 3.0.0"
-	versionsPre310      = "< 3.1.0"
+	versions310AndAbove = ">= 3.1.0"
 )
 
 var (
@@ -857,16 +857,30 @@ var (
 			Metadata: config.ChangeMetadata{
 				ID:       config.ChangeID("P136"),
 				Severity: config.ChangeSeverityError,
-				Description: standardPluginFieldsMessage("zipkin",
-					[]string{"http_response_header_for_traceid"},
-					"3.1", false),
-				Resolution: standardUpgradeMessage("3.1"),
+				Description: "For the 'zipkin' plugin, " +
+					"'config.http_response_header_for_traceid' field is used " +
+					"in Kong Gateway versions >= 3.1. " +
+					"The plugin configuration has been updated to use " +
+					"'config.http_response_header_for_traceid' in the data-plane.",
+				Resolution: "Please update the configuration to use " +
+					"'config.http_response_header_for_traceid'.",
 			},
-			SemverRange: versionsPre310,
+			SemverRange: versions310AndAbove,
 			Update: config.ConfigTableUpdates{
-				Name:         "zipkin",
-				Type:         config.Plugin,
-				RemoveFields: []string{"http_response_header_for_traceid"},
+				Name: "zipkin",
+				Type: config.Plugin,
+				FieldUpdates: []config.ConfigTableFieldCondition{
+					{
+						Field:     "http_response_header_for_traceid",
+						Condition: "http_response_header_for_traceid",
+						Updates: []config.ConfigTableFieldUpdate{
+							{
+								Field: "http_response_header_for_traceid",
+								Value: "X-B3-TraceId",
+							},
+						},
+					},
+				},
 			},
 		},
 	}
