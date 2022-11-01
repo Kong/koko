@@ -3,6 +3,7 @@ package util
 import (
 	"context"
 	"fmt"
+	"net/http"
 
 	"github.com/kong/go-kong/kong"
 	model "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
@@ -78,8 +79,16 @@ func fetchKongConfig() (KongConfig, error) {
 	if err != nil {
 		return KongConfig{}, fmt.Errorf("fetch SNIs: %v", err)
 	}
-	vaults, _ := client.Vaults.ListAll(ctx)
-	// TODO(ejkinger): make this request based on version compatibility
+	vaults, err := client.Vaults.ListAll(ctx)
+	if err != nil {
+		// Only return the error when the DP supports vaults (applies to DPs >= 3.0). In the event
+		// the DP does not support vaults, it'll return an HTTP 404 as it's unaware of the route.
+		//
+		// TODO(ejkinger): Make this request based on version compatibility.
+		if err, ok := err.(*kong.APIError); !ok || err.Code() != http.StatusNotFound {
+			return KongConfig{}, fmt.Errorf("unable to fetch valuts: %w", err)
+		}
+	}
 
 	var allTargets []*kong.Target
 	for _, u := range upstreams {
