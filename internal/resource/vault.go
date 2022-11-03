@@ -14,6 +14,12 @@ import (
 
 const (
 	TypeVault model.Type = "vault"
+
+	defaultHcvPort     = 8200
+	defaultHcvHost     = "127.0.0.1"
+	defaultHcvKV       = "v1"
+	defaultHcvMount    = "secret"
+	defaultHcvProtocol = typedefs.ProtocolHTTP
 )
 
 var (
@@ -24,6 +30,16 @@ var (
 		"aws",
 		"gcp",
 		"hcv",
+	}
+
+	defaultHcv = &v1.Vault_Config_Hcv{
+		Hcv: &v1.Vault_HcvConfig{
+			Host:     defaultHcvHost,
+			Port:     defaultHcvPort,
+			Kv:       defaultHcvKV,
+			Mount:    defaultHcvMount,
+			Protocol: defaultHcvProtocol,
+		},
 	}
 )
 
@@ -63,6 +79,29 @@ func (r Vault) ProcessDefaults(ctx context.Context) error {
 	if r.Vault == nil {
 		return fmt.Errorf("invalid nil resource")
 	}
+
+	if r.Vault.Name == "hcv" {
+		if r.Vault.Config.GetHcv() == nil {
+			r.Vault.Config.Config = defaultHcv
+		} else {
+			if r.Vault.Config.GetHcv().Host == "" {
+				r.Vault.Config.GetHcv().Host = defaultHcvHost
+			}
+			if r.Vault.Config.GetHcv().Kv == "" {
+				r.Vault.Config.GetHcv().Kv = defaultHcvKV
+			}
+			if r.Vault.Config.GetHcv().Mount == "" {
+				r.Vault.Config.GetHcv().Mount = defaultHcvMount
+			}
+			if r.Vault.Config.GetHcv().Port == 0 {
+				r.Vault.Config.GetHcv().Port = defaultHcvPort
+			}
+			if r.Vault.Config.GetHcv().Protocol == "" {
+				r.Vault.Config.GetHcv().Protocol = defaultHcvProtocol
+			}
+		}
+	}
+
 	defaultID(&r.Vault.Id)
 	return nil
 }
