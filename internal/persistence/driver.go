@@ -7,10 +7,13 @@ import (
 
 // Various default settings used for non-SQLite DB drivers.
 const (
-	DefaultDialTimeout     = 15 * time.Second
-	DefaultMaxConn         = 50
-	DefaultMaxConnLifetime = time.Hour
-	DefaultMaxIdleConn     = 20
+	DefaultDialTimeout       = 15 * time.Second
+	DefaultMaxConn           = 50
+	DefaultMinConn           = 2
+	DefaultMaxConnLifetime   = time.Hour
+	DefaultMaxConnIdleTime   = time.Hour
+	DefaultMaxIdleConn       = 20
+	DefaultHealthCheckPeriod = time.Minute
 )
 
 // SQLOpenFunc defines a function that can instantiate a sql.DB instance from the given DSN.

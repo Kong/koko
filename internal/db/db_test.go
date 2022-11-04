@@ -5,6 +5,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/kong/koko/internal/persistence"
 	"github.com/kong/koko/internal/persistence/mysql"
 	"github.com/kong/koko/internal/persistence/postgres"
 	"github.com/kong/koko/internal/persistence/sqlite"
@@ -41,7 +42,11 @@ func TestNewSQLDBFromConfig(t *testing.T) {
 
 	t.Run("Postgres", func(t *testing.T) {
 		config.Dialect = DialectPostgres
-		config.Postgres = postgres.Opts{SQLOpen: noOpOpenFunc}
+		poolOpts := postgres.PoolOpts{
+			MaxConns:          persistence.DefaultMaxConn,
+			HealthCheckPeriod: persistence.DefaultHealthCheckPeriod,
+		}
+		config.Postgres = postgres.Opts{SQLOpen: noOpOpenFunc, Pool: poolOpts}
 		_, err := NewSQLDBFromConfig(config)
 		assert.NoError(t, err)
 	})
