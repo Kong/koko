@@ -426,12 +426,6 @@ var VersionCompatibilityOSSPluginConfigurationTests = []VersionCompatibilityPlug
 					Value: "preserve",
 				},
 			},
-			">= 3.1.0": {
-				{
-					Field: "http_response_header_for_traceid",
-					Value: "X-B3-TraceId",
-				},
-			},
 		},
 		ConfigureForService: true,
 		ConfigureForRoute:   true,
