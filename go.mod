@@ -31,7 +31,7 @@ require (
 	github.com/kong/semver/v4 v4.0.1
 	github.com/mattn/go-sqlite3 v1.14.16
 	github.com/mitchellh/mapstructure v1.5.0
-	github.com/prometheus/client_golang v1.13.0
+	github.com/prometheus/client_golang v1.13.1
 	github.com/prometheus/client_model v0.3.0
 	github.com/samber/lo v1.33.0
 	github.com/santhosh-tekuri/jsonschema/v5 v5.0.2
