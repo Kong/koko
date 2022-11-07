@@ -35,7 +35,7 @@ require (
 	github.com/prometheus/client_model v0.3.0
 	github.com/samber/lo v1.33.0
 	github.com/santhosh-tekuri/jsonschema/v5 v5.0.2
-	github.com/shirou/gopsutil/v3 v3.22.9
+	github.com/shirou/gopsutil/v3 v3.22.10
 	github.com/spf13/cobra v1.6.1
 	github.com/stretchr/testify v1.8.1
 	github.com/tidwall/gjson v1.14.3
