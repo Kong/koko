@@ -230,7 +230,7 @@ func init() {
 			},
 			"hosts": {
 				Type:     "array",
-				Items:    typedefs.Host,
+				Items:    typedefs.WilcardHost,
 				MaxItems: maxMatchElements,
 			},
 			"paths": {

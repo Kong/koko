@@ -915,6 +915,64 @@ func TestRouteHeaderWithRegex(t *testing.T) {
 	})
 }
 
+// TestRouteWithWildcardHost ensures that we can create routes with wildcard hostnames.
+func TestRouteWithWildcardHost(t *testing.T) {
+	cleanup := run.Koko(t)
+	defer cleanup()
+
+	adminClient := httpexpect.WithConfig(httpexpect.Config{
+		BaseURL:  "http://localhost:3000",
+		Reporter: httpexpect.NewRequireReporter(t),
+		Printers: []httpexpect.Printer{
+			httpexpect.NewCompactPrinter(t),
+		},
+	})
+
+	proxyClient := httpexpect.New(t, "http://localhost:8000")
+
+	service := &v1.Service{
+		Id:   uuid.NewString(),
+		Host: "127.0.0.1",
+		Name: "test-service",
+		Path: "/",
+		Port: 8001,
+	}
+	res := adminClient.POST("/v1/services").WithJSON(service).Expect()
+	res.Status(http.StatusCreated)
+
+	route := &v1.Route{
+		Hosts:   []string{"*.example.com"},
+		Name:    "test-route",
+		Paths:   []string{"/"},
+		Service: &v1.Service{Id: service.Id},
+	}
+	res = adminClient.POST("/v1/routes").WithJSON(route).Expect()
+	res.Status(http.StatusCreated)
+
+	dpCleanup := run.KongDP(kong.GetKongConfForShared())
+	defer dpCleanup()
+
+	require.NoError(t, util.WaitForKongPort(t, 8001))
+
+	util.WaitFunc(t, func() error {
+		return util.EnsureConfig(&v1.TestingConfig{
+			Services: []*v1.Service{service},
+			Routes:   []*v1.Route{route},
+		})
+	})
+
+	// Ensure the admin API was not proxied when the host header did not match.
+	proxyClient.GET("/").Expect().Status(http.StatusNotFound)
+
+	// Ensure the admin API was properly proxied when the host header matched.
+	proxyClient.
+		GET("/").
+		WithHost("test.example.com").
+		Expect().
+		Status(http.StatusOK).
+		JSON().Object().Value("version").String().NotEmpty()
+}
+
 func TestExpectedConfigHash(t *testing.T) {
 	// ensure that expected config hash is generated and stored by manager
 	// ensure that the generated configuration matches up with the one reported

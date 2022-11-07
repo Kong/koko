@@ -44,6 +44,16 @@ func TestRouteCreate(t *testing.T) {
 		body := res.JSON().Path("$.item").Object()
 		validateGoodRoute(body)
 	})
+	t.Run("route with wildcard host is valid", func(t *testing.T) {
+		route := goodRoute()
+		route.Name = "with-wildcard-host"
+		route.Hosts = []string{"*.example.com"}
+		res := c.POST("/v1/routes").WithJSON(route).Expect()
+		res.Status(http.StatusCreated)
+		body := res.JSON().Path("$.item").Object()
+		body.Value("hosts").Array().Equal([]string{"*.example.com"})
+		validateGoodRoute(body)
+	})
 	t.Run("creating a route with ws protocol fails", func(t *testing.T) {
 		util.SkipTestIfEnterpriseTesting(t, true)
 		route := goodRoute()
