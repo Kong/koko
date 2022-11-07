@@ -182,7 +182,7 @@ func TestRoute_Validate(t *testing.T) {
 					Type:  model.ErrorType_ERROR_TYPE_FIELD,
 					Field: "hosts[0]",
 					Messages: []string{
-						"must be a valid hostname",
+						"must be a valid hostname with a wildcard prefix '*' or without",
 					},
 				},
 			},
@@ -1308,6 +1308,14 @@ func TestRoute_Validate(t *testing.T) {
 						"must not contain a port: 'sni:8080'",
 					},
 				},
+			},
+		},
+		{
+			name: "wildcard host doesn't throw an error",
+			Route: func() Route {
+				r := goodRoute()
+				r.Route.Hosts = []string{"*.example.com"}
+				return r
 			},
 		},
 	}
