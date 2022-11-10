@@ -21,6 +21,9 @@
       "name": "kong.admin.service.v1.ConsumerGroupService"
     },
     {
+      "name": "kong.admin.service.v1.KeyService"
+    },
+    {
       "name": "kong.admin.service.v1.NodeService"
     },
     {
@@ -1398,6 +1401,127 @@
         ],
         "tags": [
           "kong.admin.service.v1.StatusService"
+        ]
+      }
+    },
+    "/v1/keys": {
+      "get": {
+        "operationId": "KeyService_ListKeys",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/kong.admin.service.v1.ListKeysResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "cluster.id",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "page.size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "page.number",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "page.filter",
+            "description": "Allows callers to provide a CEL expression to filter results on `list` API calls.\n\nFor example, given a resource with the following tags, `tag1` \u0026 `tag2`, the\nfollowing CEL expressions are supported:\n\n- Matches resources that have `tag1` as any tag:\n    - `\"tag1\" in tags`\n- Matches all resources that have both `tag1` \u0026 `tag2`:\n    - `[\"tag1\", \"tag2\"].all(x, x in tags)`\n    - `\"tag1\" in tags \u0026\u0026 \"tag2\" in tags`\n- Matches resources that have `tag1` or `tag2`:\n    - `[\"tag1\", \"tag2\"].exists(x, x in tags)`\n    - `\"tag1\" in tags || \"tag2\" in tags`\n\nLimitations:\nCurrently, it is only possible to filter on tags, and supported logical\noperators/macros are limited to only what is documented above.\n\nFor further information, you may view the CEL Specification:\nhttps://github.com/google/cel-spec",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "kong.admin.service.v1.KeyService"
+        ]
+      }
+    },
+    "/v1/keys/{id}": {
+      "get": {
+        "operationId": "KeyService_GetKey",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/kong.admin.service.v1.GetKeyResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "cluster.id",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "kong.admin.service.v1.KeyService"
+        ]
+      },
+      "delete": {
+        "operationId": "KeyService_DeleteKey",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/kong.admin.service.v1.DeleteKeyResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "cluster.id",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "kong.admin.service.v1.KeyService"
         ]
       }
     },
@@ -4467,6 +4591,56 @@
       "default": "KEY_USAGE_TYPE_UNSPECIFIED",
       "title": "- KEY_USAGE_TYPE_ANY: extended usage"
     },
+    "kong.admin.model.v1.Key": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "created_at": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "updated_at": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "set": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "kid": {
+          "type": "string"
+        },
+        "jwk": {
+          "type": "string"
+        },
+        "pem": {
+          "type": "string"
+        },
+        "key_format": {
+          "$ref": "#/definitions/kong.admin.model.v1.KeyFormat"
+        }
+      }
+    },
+    "kong.admin.model.v1.KeyFormat": {
+      "type": "string",
+      "enum": [
+        "KEY_FORMAT_UNSPECIFIED",
+        "KEY_FORMAT_JWK",
+        "KEY_FORMAT_PEM",
+        "KEY_FORMAT_KID"
+      ],
+      "default": "KEY_FORMAT_UNSPECIFIED"
+    },
     "kong.admin.model.v1.Node": {
       "type": "object",
       "properties": {
@@ -5161,6 +5335,14 @@
         }
       }
     },
+    "kong.admin.service.v1.CreateKeyResponse": {
+      "type": "object",
+      "properties": {
+        "item": {
+          "$ref": "#/definitions/kong.admin.model.v1.Key"
+        }
+      }
+    },
     "kong.admin.service.v1.CreateLuaPluginSchemaResponse": {
       "type": "object",
       "properties": {
@@ -5249,6 +5431,9 @@
       "type": "object"
     },
     "kong.admin.service.v1.DeleteConsumerResponse": {
+      "type": "object"
+    },
+    "kong.admin.service.v1.DeleteKeyResponse": {
       "type": "object"
     },
     "kong.admin.service.v1.DeleteLuaPluginSchemaResponse": {
@@ -5353,6 +5538,14 @@
         "updated_at": {
           "type": "integer",
           "format": "int32"
+        }
+      }
+    },
+    "kong.admin.service.v1.GetKeyResponse": {
+      "type": "object",
+      "properties": {
+        "item": {
+          "$ref": "#/definitions/kong.admin.model.v1.Key"
         }
       }
     },
@@ -5515,6 +5708,20 @@
           "type": "array",
           "items": {
             "$ref": "#/definitions/kong.admin.model.v1.Consumer"
+          }
+        },
+        "page": {
+          "$ref": "#/definitions/kong.admin.model.v1.PaginationResponse"
+        }
+      }
+    },
+    "kong.admin.service.v1.ListKeysResponse": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/kong.admin.model.v1.Key"
           }
         },
         "page": {
@@ -5685,6 +5892,14 @@
       "properties": {
         "item": {
           "$ref": "#/definitions/kong.admin.model.v1.Consumer"
+        }
+      }
+    },
+    "kong.admin.service.v1.UpsertKeyResponse": {
+      "type": "object",
+      "properties": {
+        "item": {
+          "$ref": "#/definitions/kong.admin.model.v1.Key"
         }
       }
     },

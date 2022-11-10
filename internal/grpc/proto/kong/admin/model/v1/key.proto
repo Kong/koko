@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package kong.admin.model.v1;
+
+option go_package = "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1;v1";
+
+enum KeyFormat {
+  KEY_FORMAT_UNSPECIFIED = 0;
+  KEY_FORMAT_JWK = 1;
+  KEY_FORMAT_PEM = 2;
+  KEY_FORMAT_KID = 3;
+}
+
+message Key {
+  string id = 1;
+  int32 created_at = 2;
+  int32 updated_at = 3;
+  repeated string tags = 4;
+
+  string set = 5;
+  string name = 6;
+  string kid = 7;
+  string jwk = 8;
+  string pem = 9;
+  KeyFormat key_format = 10;
+}
