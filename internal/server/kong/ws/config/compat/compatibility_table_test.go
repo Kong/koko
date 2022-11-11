@@ -925,6 +925,7 @@ func TestDisableChangeTracking(t *testing.T) {
 					"connect_timeout": 2000,
 					"read_timeout": 5000,
 					"send_timeout": 5000,
+					"http_response_header_for_traceid": null
 				}
 			}
 		]
@@ -1138,6 +1139,53 @@ func TestDisableChangeTracking(t *testing.T) {
 				ChangeDetails: []config.ChangeDetail{
 					{
 						ID: "P116",
+						Resources: []config.ResourceInfo{
+							{
+								Type: "plugin",
+								ID:   "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "[zipkin] change is emitted with non-default value for" +
+				" http_response_header_for_traceid",
+			uncompressedPayload: `
+{
+	"config_table": {
+		"plugins": [
+			{
+				"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+				"name": "zipkin",
+				"config": {
+					"http_response_header_for_traceid": "X-B3-TraceId"
+				}
+			}
+		]
+	}
+}
+`,
+			dataPlaneVersion: "2.7.0",
+			expectedPayload: `
+{
+	"config_table": {
+		"plugins": [
+			{
+				"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+				"name": "zipkin",
+				"config": {
+				}
+			}
+		]
+	}
+}
+`,
+			expectedChanges: config.TrackedChanges{
+				ChangeDetails: []config.ChangeDetail{
+					{
+						ID: "P136",
 						Resources: []config.ResourceInfo{
 							{
 								Type: "plugin",
