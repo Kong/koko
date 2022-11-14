@@ -867,6 +867,11 @@ var (
 				Name:         "zipkin",
 				Type:         config.Plugin,
 				RemoveFields: []string{"http_response_header_for_traceid"},
+				DisableChangeTracking: func(rawJSON string) bool {
+					plugin := gjson.Parse(rawJSON)
+					traceHeader := plugin.Get("config.http_response_header_for_traceid")
+					return traceHeader.Exists() && traceHeader.Type == gjson.Null
+				},
 			},
 		},
 	}
