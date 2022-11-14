@@ -8,6 +8,7 @@ import (
 	"github.com/kong/koko/internal/model"
 	"github.com/kong/koko/internal/model/json/generator"
 	"github.com/kong/koko/internal/model/json/validation"
+	"github.com/kong/koko/internal/model/json/validation/typedefs"
 )
 
 const (
@@ -76,10 +77,20 @@ func init() {
 	}
 
 	keySchema := &generator.Schema{
-		Type:                 "object",
-		Properties:           map[string]*generator.Schema{},
+		Type: "object",
+		Properties: map[string]*generator.Schema{
+			"id":         typedefs.ID,
+			"created_at": typedefs.UnixEpoch,
+			"updated_at": typedefs.UnixEpoch,
+			"name":       typedefs.Name,
+			"set":        typedefs.ReferenceObject,
+			"kid":        {Type: "string"},
+			"jwk":        {Type: "string"},
+			"pem":        {Type: "string"},
+			"tags":       typedefs.Tags,
+		},
 		AdditionalProperties: &falsy,
-		Required:             []string{"id"},
+		Required:             []string{"id", "kid"},
 	}
 	err = generator.DefaultRegistry.Register(string(TypeKey), keySchema)
 	if err != nil {
