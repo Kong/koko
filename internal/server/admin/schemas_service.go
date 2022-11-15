@@ -187,6 +187,13 @@ func (s *SchemasService) ValidateUpstreamSchema(
 	return &v1.ValidateUpstreamSchemaResponse{}, s.validateSchema(ctx, req.Item)
 }
 
+func (s *SchemasService) ValidateKeySchema(
+	ctx context.Context,
+	req *v1.ValidateKeySchemaRequest,
+) (*v1.ValidateKeySchemaResponse, error) {
+	return &v1.ValidateKeySchemaResponse{}, s.validateSchema(ctx, req.Item)
+}
+
 // validateSchema handles the relevant entity's JSONSchema validation,
 // along with any specific validation associated to the entity.
 func (s *SchemasService) validateSchema(ctx context.Context, item proto.Message) error {

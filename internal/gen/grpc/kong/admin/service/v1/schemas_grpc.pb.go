@@ -35,6 +35,7 @@ type SchemasServiceClient interface {
 	ValidateTargetSchema(ctx context.Context, in *ValidateTargetSchemaRequest, opts ...grpc.CallOption) (*ValidateTargetSchemaResponse, error)
 	ValidateUpstreamSchema(ctx context.Context, in *ValidateUpstreamSchemaRequest, opts ...grpc.CallOption) (*ValidateUpstreamSchemaResponse, error)
 	ValidateVaultSchema(ctx context.Context, in *ValidateVaultSchemaRequest, opts ...grpc.CallOption) (*ValidateVaultSchemaResponse, error)
+	ValidateKeySchema(ctx context.Context, in *ValidateKeySchemaRequest, opts ...grpc.CallOption) (*ValidateKeySchemaResponse, error)
 	GetSchemas(ctx context.Context, in *GetSchemasRequest, opts ...grpc.CallOption) (*GetSchemasResponse, error)
 	GetLuaSchemasPlugin(ctx context.Context, in *GetLuaSchemasPluginRequest, opts ...grpc.CallOption) (*GetLuaSchemasPluginResponse, error)
 }
@@ -164,6 +165,15 @@ func (c *schemasServiceClient) ValidateVaultSchema(ctx context.Context, in *Vali
 	return out, nil
 }
 
+func (c *schemasServiceClient) ValidateKeySchema(ctx context.Context, in *ValidateKeySchemaRequest, opts ...grpc.CallOption) (*ValidateKeySchemaResponse, error) {
+	out := new(ValidateKeySchemaResponse)
+	err := c.cc.Invoke(ctx, "/kong.admin.service.v1.SchemasService/ValidateKeySchema", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *schemasServiceClient) GetSchemas(ctx context.Context, in *GetSchemasRequest, opts ...grpc.CallOption) (*GetSchemasResponse, error) {
 	out := new(GetSchemasResponse)
 	err := c.cc.Invoke(ctx, "/kong.admin.service.v1.SchemasService/GetSchemas", in, out, opts...)
@@ -199,6 +209,7 @@ type SchemasServiceServer interface {
 	ValidateTargetSchema(context.Context, *ValidateTargetSchemaRequest) (*ValidateTargetSchemaResponse, error)
 	ValidateUpstreamSchema(context.Context, *ValidateUpstreamSchemaRequest) (*ValidateUpstreamSchemaResponse, error)
 	ValidateVaultSchema(context.Context, *ValidateVaultSchemaRequest) (*ValidateVaultSchemaResponse, error)
+	ValidateKeySchema(context.Context, *ValidateKeySchemaRequest) (*ValidateKeySchemaResponse, error)
 	GetSchemas(context.Context, *GetSchemasRequest) (*GetSchemasResponse, error)
 	GetLuaSchemasPlugin(context.Context, *GetLuaSchemasPluginRequest) (*GetLuaSchemasPluginResponse, error)
 	mustEmbedUnimplementedSchemasServiceServer()
@@ -246,6 +257,9 @@ func (UnimplementedSchemasServiceServer) ValidateUpstreamSchema(context.Context,
 }
 func (UnimplementedSchemasServiceServer) ValidateVaultSchema(context.Context, *ValidateVaultSchemaRequest) (*ValidateVaultSchemaResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ValidateVaultSchema not implemented")
+}
+func (UnimplementedSchemasServiceServer) ValidateKeySchema(context.Context, *ValidateKeySchemaRequest) (*ValidateKeySchemaResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ValidateKeySchema not implemented")
 }
 func (UnimplementedSchemasServiceServer) GetSchemas(context.Context, *GetSchemasRequest) (*GetSchemasResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetSchemas not implemented")
@@ -500,6 +514,24 @@ func _SchemasService_ValidateVaultSchema_Handler(srv interface{}, ctx context.Co
 	return interceptor(ctx, in, info, handler)
 }
 
+func _SchemasService_ValidateKeySchema_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ValidateKeySchemaRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SchemasServiceServer).ValidateKeySchema(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/kong.admin.service.v1.SchemasService/ValidateKeySchema",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SchemasServiceServer).ValidateKeySchema(ctx, req.(*ValidateKeySchemaRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _SchemasService_GetSchemas_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetSchemasRequest)
 	if err := dec(in); err != nil {
@@ -594,6 +626,10 @@ var SchemasService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ValidateVaultSchema",
 			Handler:    _SchemasService_ValidateVaultSchema_Handler,
+		},
+		{
+			MethodName: "ValidateKeySchema",
+			Handler:    _SchemasService_ValidateKeySchema_Handler,
 		},
 		{
 			MethodName: "GetSchemas",

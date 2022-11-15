@@ -2589,6 +2589,38 @@
         ]
       }
     },
+    "/v1/schemas/json/key/validate": {
+      "post": {
+        "operationId": "SchemasService_ValidateKeySchema",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/kong.admin.service.v1.ValidateKeySchemaResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "item",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/kong.admin.model.v1.Vault"
+            }
+          }
+        ],
+        "tags": [
+          "kong.admin.service.v1.SchemasService"
+        ]
+      }
+    },
     "/v1/schemas/json/plugin/validate": {
       "post": {
         "operationId": "SchemasService_ValidatePluginSchema",
@@ -4560,37 +4592,6 @@
         }
       }
     },
-    "kong.admin.model.v1.KeyUsageType": {
-      "type": "string",
-      "enum": [
-        "KEY_USAGE_TYPE_UNSPECIFIED",
-        "KEY_USAGE_TYPE_DIGITAL_SIGNATURE",
-        "KEY_USAGE_TYPE_CONTENT_COMMITMENT",
-        "KEY_USAGE_TYPE_KEY_ENCIPHERMENT",
-        "KEY_USAGE_TYPE_DATA_ENCIPHERMENT",
-        "KEY_USAGE_TYPE_KEY_AGREEMENT",
-        "KEY_USAGE_TYPE_KEY_CERT_SIGN",
-        "KEY_USAGE_TYPE_CRL_SIGN",
-        "KEY_USAGE_TYPE_ENCIPHER_ONLY",
-        "KEY_USAGE_TYPE_DECIPHER_ONLY",
-        "KEY_USAGE_TYPE_ANY",
-        "KEY_USAGE_TYPE_SERVER_AUTH",
-        "KEY_USAGE_TYPE_CLIENT_AUTH",
-        "KEY_USAGE_TYPE_CODE_SIGNING",
-        "KEY_USAGE_TYPE_EMAIL_PROTECTION",
-        "KEY_USAGE_TYPE_IPSEC_END_SYSTEM",
-        "KEY_USAGE_TYPE_IPSEC_TUNNEL",
-        "KEY_USAGE_TYPE_IPSEC_USER",
-        "KEY_USAGE_TYPE_TIME_STAMPING",
-        "KEY_USAGE_TYPE_OSCP_SIGNING",
-        "KEY_USAGE_TYPE_MICROSOFT_SERVER_GATED_CRYPTO",
-        "KEY_USAGE_TYPE_NETSCAPE_SERVER_GATED_CRYPTO",
-        "KEY_USAGE_TYPE_MICROSOFT_COMMERCIAL_CODE_SIGNING",
-        "KEY_USAGE_TYPE_MICROSOFT_KERNEL_CODE_SIGNING"
-      ],
-      "default": "KEY_USAGE_TYPE_UNSPECIFIED",
-      "title": "- KEY_USAGE_TYPE_ANY: extended usage"
-    },
     "kong.admin.model.v1.Key": {
       "type": "object",
       "properties": {
@@ -4640,6 +4641,37 @@
         "KEY_FORMAT_KID"
       ],
       "default": "KEY_FORMAT_UNSPECIFIED"
+    },
+    "kong.admin.model.v1.KeyUsageType": {
+      "type": "string",
+      "enum": [
+        "KEY_USAGE_TYPE_UNSPECIFIED",
+        "KEY_USAGE_TYPE_DIGITAL_SIGNATURE",
+        "KEY_USAGE_TYPE_CONTENT_COMMITMENT",
+        "KEY_USAGE_TYPE_KEY_ENCIPHERMENT",
+        "KEY_USAGE_TYPE_DATA_ENCIPHERMENT",
+        "KEY_USAGE_TYPE_KEY_AGREEMENT",
+        "KEY_USAGE_TYPE_KEY_CERT_SIGN",
+        "KEY_USAGE_TYPE_CRL_SIGN",
+        "KEY_USAGE_TYPE_ENCIPHER_ONLY",
+        "KEY_USAGE_TYPE_DECIPHER_ONLY",
+        "KEY_USAGE_TYPE_ANY",
+        "KEY_USAGE_TYPE_SERVER_AUTH",
+        "KEY_USAGE_TYPE_CLIENT_AUTH",
+        "KEY_USAGE_TYPE_CODE_SIGNING",
+        "KEY_USAGE_TYPE_EMAIL_PROTECTION",
+        "KEY_USAGE_TYPE_IPSEC_END_SYSTEM",
+        "KEY_USAGE_TYPE_IPSEC_TUNNEL",
+        "KEY_USAGE_TYPE_IPSEC_USER",
+        "KEY_USAGE_TYPE_TIME_STAMPING",
+        "KEY_USAGE_TYPE_OSCP_SIGNING",
+        "KEY_USAGE_TYPE_MICROSOFT_SERVER_GATED_CRYPTO",
+        "KEY_USAGE_TYPE_NETSCAPE_SERVER_GATED_CRYPTO",
+        "KEY_USAGE_TYPE_MICROSOFT_COMMERCIAL_CODE_SIGNING",
+        "KEY_USAGE_TYPE_MICROSOFT_KERNEL_CODE_SIGNING"
+      ],
+      "default": "KEY_USAGE_TYPE_UNSPECIFIED",
+      "title": "- KEY_USAGE_TYPE_ANY: extended usage"
     },
     "kong.admin.model.v1.Node": {
       "type": "object",
@@ -5988,6 +6020,9 @@
       "type": "object"
     },
     "kong.admin.service.v1.ValidateConsumerSchemaResponse": {
+      "type": "object"
+    },
+    "kong.admin.service.v1.ValidateKeySchemaResponse": {
       "type": "object"
     },
     "kong.admin.service.v1.ValidateLuaPluginResponse": {

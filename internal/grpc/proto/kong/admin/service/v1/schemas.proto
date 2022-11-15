@@ -113,6 +113,13 @@ service SchemasService {
     };
   }
 
+  rpc ValidateKeySchema(ValidateKeySchemaRequest) returns (ValidateKeySchemaResponse) {
+    option (google.api.http) = {
+      post: "/v1/schemas/json/key/validate",
+      body: "item",
+    };
+  }
+
   rpc GetSchemas(GetSchemasRequest) returns (GetSchemasResponse) {
     option (google.api.http) = {
       get: "/v1/schemas/json/{name}"
@@ -208,6 +215,10 @@ message ValidateVaultSchemaRequest {
   model.v1.Vault item = 1;
 }
 
+message ValidateKeySchemaRequest {
+  model.v1.Vault item = 1;
+}
+
 message ValidateCACertificateSchemaResponse {}
 message ValidateCertificateSchemaResponse {}
 message ValidateConfigHashSchemaResponse {}
@@ -222,3 +233,4 @@ message ValidateSNISchemaResponse {}
 message ValidateTargetSchemaResponse {}
 message ValidateUpstreamSchemaResponse {}
 message ValidateVaultSchemaResponse {}
+message ValidateKeySchemaResponse {}
