@@ -14,9 +14,19 @@ service KeyService {
     option (google.api.http) = {get: "/v1/keys/{id}"};
   }
 
-  rpc CreateKey(CreateKeyRequest) returns (CreateKeyResponse);
+  rpc CreateKey(CreateKeyRequest) returns (CreateKeyResponse) {
+    option (google.api.http) = {
+      post: "/v1/keys"
+      body: "item"
+    };
+  }
 
-  rpc UpsertKey(UpsertKeyRequest) returns (UpsertKeyResponse);
+  rpc UpsertKey(UpsertKeyRequest) returns (UpsertKeyResponse) {
+    option (google.api.http) = {
+      put: "/v1/keys/{item.id}"
+      body: "item"
+    };
+  }
 
   rpc DeleteKey(DeleteKeyRequest) returns (DeleteKeyResponse) {
     option (google.api.http) = {delete: "/v1/keys/{id}"};
@@ -67,5 +77,76 @@ message ListKeysRequest {
 
 message ListKeysResponse {
   repeated model.v1.Key items = 1;
+  model.v1.PaginationResponse page = 2;
+}
+
+service KeySetService {
+  rpc GetKeySet(GetKeySetRequest) returns (GetKeySetResponse) {
+    option (google.api.http) = {get: "/v1/key-sets/{id}"};
+  }
+
+  rpc CreateKeySet(CreateKeySetRequest) returns (CreateKeySetResponse) {
+    option (google.api.http) = {
+      post: "/v1/key-sets"
+      body: "item"
+    };
+  }
+
+  rpc UpsertKeySet(UpsertKeySetRequest) returns (UpsertKeySetResponse) {
+    option (google.api.http) = {
+      put: "/v1/key-sets/{item.id}"
+      body: "item"
+    };
+  }
+
+  rpc DeleteKeySet(DeleteKeySetRequest) returns (DeleteKeySetResponse) {
+    option (google.api.http) = {delete: "/v1/key-sets/{id}"};
+  }
+  rpc ListKeySets(ListKeySetsRequest) returns (ListKeySetsResponse) {
+    option (google.api.http) = {get: "/v1/key-sets"};
+  }
+}
+
+message GetKeySetRequest {
+  string id = 1;
+  model.v1.RequestCluster cluster = 2;
+}
+
+message GetKeySetResponse {
+  model.v1.KeySet item = 1;
+}
+
+message CreateKeySetRequest {
+  model.v1.KeySet item = 1;
+  model.v1.RequestCluster cluster = 2;
+}
+
+message CreateKeySetResponse {
+  model.v1.KeySet item = 1;
+}
+
+message UpsertKeySetRequest {
+  model.v1.KeySet item = 1;
+  model.v1.RequestCluster cluster = 2;
+}
+
+message UpsertKeySetResponse {
+  model.v1.KeySet item = 1;
+}
+
+message DeleteKeySetRequest {
+  string id = 1;
+  model.v1.RequestCluster cluster = 2;
+}
+
+message DeleteKeySetResponse {}
+
+message ListKeySetsRequest {
+  model.v1.RequestCluster cluster = 1;
+  model.v1.PaginationRequest page = 2;
+}
+
+message ListKeySetsResponse {
+  repeated model.v1.KeySet items = 1;
   model.v1.PaginationResponse page = 2;
 }

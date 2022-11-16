@@ -17,10 +17,15 @@ message Key {
   int32 updated_at = 3;
   repeated string tags = 4;
 
-  string set = 5;
+  KeySet set = 5;
   string name = 6;
   string kid = 7;
   string jwk = 8;
   string pem = 9;
   KeyFormat key_format = 10;
+}
+
+message KeySet {
+  string id = 1;
+  string name = 2;
 }

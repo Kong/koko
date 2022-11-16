@@ -247,3 +247,233 @@ var KeyService_ServiceDesc = grpc.ServiceDesc{
 	Streams:  []grpc.StreamDesc{},
 	Metadata: "kong/admin/service/v1/key.proto",
 }
+
+// KeySetServiceClient is the client API for KeySetService service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type KeySetServiceClient interface {
+	GetKeySet(ctx context.Context, in *GetKeySetRequest, opts ...grpc.CallOption) (*GetKeySetResponse, error)
+	CreateKeySet(ctx context.Context, in *CreateKeySetRequest, opts ...grpc.CallOption) (*CreateKeySetResponse, error)
+	UpsertKeySet(ctx context.Context, in *UpsertKeySetRequest, opts ...grpc.CallOption) (*UpsertKeySetResponse, error)
+	DeleteKeySet(ctx context.Context, in *DeleteKeySetRequest, opts ...grpc.CallOption) (*DeleteKeySetResponse, error)
+	ListKeySets(ctx context.Context, in *ListKeySetsRequest, opts ...grpc.CallOption) (*ListKeySetsResponse, error)
+}
+
+type keySetServiceClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewKeySetServiceClient(cc grpc.ClientConnInterface) KeySetServiceClient {
+	return &keySetServiceClient{cc}
+}
+
+func (c *keySetServiceClient) GetKeySet(ctx context.Context, in *GetKeySetRequest, opts ...grpc.CallOption) (*GetKeySetResponse, error) {
+	out := new(GetKeySetResponse)
+	err := c.cc.Invoke(ctx, "/kong.admin.service.v1.KeySetService/GetKeySet", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *keySetServiceClient) CreateKeySet(ctx context.Context, in *CreateKeySetRequest, opts ...grpc.CallOption) (*CreateKeySetResponse, error) {
+	out := new(CreateKeySetResponse)
+	err := c.cc.Invoke(ctx, "/kong.admin.service.v1.KeySetService/CreateKeySet", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *keySetServiceClient) UpsertKeySet(ctx context.Context, in *UpsertKeySetRequest, opts ...grpc.CallOption) (*UpsertKeySetResponse, error) {
+	out := new(UpsertKeySetResponse)
+	err := c.cc.Invoke(ctx, "/kong.admin.service.v1.KeySetService/UpsertKeySet", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *keySetServiceClient) DeleteKeySet(ctx context.Context, in *DeleteKeySetRequest, opts ...grpc.CallOption) (*DeleteKeySetResponse, error) {
+	out := new(DeleteKeySetResponse)
+	err := c.cc.Invoke(ctx, "/kong.admin.service.v1.KeySetService/DeleteKeySet", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *keySetServiceClient) ListKeySets(ctx context.Context, in *ListKeySetsRequest, opts ...grpc.CallOption) (*ListKeySetsResponse, error) {
+	out := new(ListKeySetsResponse)
+	err := c.cc.Invoke(ctx, "/kong.admin.service.v1.KeySetService/ListKeySets", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// KeySetServiceServer is the server API for KeySetService service.
+// All implementations must embed UnimplementedKeySetServiceServer
+// for forward compatibility
+type KeySetServiceServer interface {
+	GetKeySet(context.Context, *GetKeySetRequest) (*GetKeySetResponse, error)
+	CreateKeySet(context.Context, *CreateKeySetRequest) (*CreateKeySetResponse, error)
+	UpsertKeySet(context.Context, *UpsertKeySetRequest) (*UpsertKeySetResponse, error)
+	DeleteKeySet(context.Context, *DeleteKeySetRequest) (*DeleteKeySetResponse, error)
+	ListKeySets(context.Context, *ListKeySetsRequest) (*ListKeySetsResponse, error)
+	mustEmbedUnimplementedKeySetServiceServer()
+}
+
+// UnimplementedKeySetServiceServer must be embedded to have forward compatible implementations.
+type UnimplementedKeySetServiceServer struct {
+}
+
+func (UnimplementedKeySetServiceServer) GetKeySet(context.Context, *GetKeySetRequest) (*GetKeySetResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetKeySet not implemented")
+}
+func (UnimplementedKeySetServiceServer) CreateKeySet(context.Context, *CreateKeySetRequest) (*CreateKeySetResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateKeySet not implemented")
+}
+func (UnimplementedKeySetServiceServer) UpsertKeySet(context.Context, *UpsertKeySetRequest) (*UpsertKeySetResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpsertKeySet not implemented")
+}
+func (UnimplementedKeySetServiceServer) DeleteKeySet(context.Context, *DeleteKeySetRequest) (*DeleteKeySetResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteKeySet not implemented")
+}
+func (UnimplementedKeySetServiceServer) ListKeySets(context.Context, *ListKeySetsRequest) (*ListKeySetsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListKeySets not implemented")
+}
+func (UnimplementedKeySetServiceServer) mustEmbedUnimplementedKeySetServiceServer() {}
+
+// UnsafeKeySetServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to KeySetServiceServer will
+// result in compilation errors.
+type UnsafeKeySetServiceServer interface {
+	mustEmbedUnimplementedKeySetServiceServer()
+}
+
+func RegisterKeySetServiceServer(s grpc.ServiceRegistrar, srv KeySetServiceServer) {
+	s.RegisterService(&KeySetService_ServiceDesc, srv)
+}
+
+func _KeySetService_GetKeySet_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetKeySetRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(KeySetServiceServer).GetKeySet(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/kong.admin.service.v1.KeySetService/GetKeySet",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(KeySetServiceServer).GetKeySet(ctx, req.(*GetKeySetRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _KeySetService_CreateKeySet_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateKeySetRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(KeySetServiceServer).CreateKeySet(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/kong.admin.service.v1.KeySetService/CreateKeySet",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(KeySetServiceServer).CreateKeySet(ctx, req.(*CreateKeySetRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _KeySetService_UpsertKeySet_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpsertKeySetRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(KeySetServiceServer).UpsertKeySet(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/kong.admin.service.v1.KeySetService/UpsertKeySet",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(KeySetServiceServer).UpsertKeySet(ctx, req.(*UpsertKeySetRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _KeySetService_DeleteKeySet_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteKeySetRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(KeySetServiceServer).DeleteKeySet(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/kong.admin.service.v1.KeySetService/DeleteKeySet",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(KeySetServiceServer).DeleteKeySet(ctx, req.(*DeleteKeySetRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _KeySetService_ListKeySets_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListKeySetsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(KeySetServiceServer).ListKeySets(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/kong.admin.service.v1.KeySetService/ListKeySets",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(KeySetServiceServer).ListKeySets(ctx, req.(*ListKeySetsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// KeySetService_ServiceDesc is the grpc.ServiceDesc for KeySetService service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var KeySetService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "kong.admin.service.v1.KeySetService",
+	HandlerType: (*KeySetServiceServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "GetKeySet",
+			Handler:    _KeySetService_GetKeySet_Handler,
+		},
+		{
+			MethodName: "CreateKeySet",
+			Handler:    _KeySetService_CreateKeySet_Handler,
+		},
+		{
+			MethodName: "UpsertKeySet",
+			Handler:    _KeySetService_UpsertKeySet_Handler,
+		},
+		{
+			MethodName: "DeleteKeySet",
+			Handler:    _KeySetService_DeleteKeySet_Handler,
+		},
+		{
+			MethodName: "ListKeySets",
+			Handler:    _KeySetService_ListKeySets_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "kong/admin/service/v1/key.proto",
+}

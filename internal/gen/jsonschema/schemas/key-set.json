@@ -1,0 +1,21 @@
+{
+  "required": [
+    "id",
+    "name"
+  ],
+  "properties": {
+    "id": {
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+      "type": "string",
+      "description": "must be a valid UUID"
+    },
+    "name": {
+      "maxLength": 128,
+      "minLength": 1,
+      "pattern": "^[0-9a-zA-Z.\\-_~]*$",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "type": "object"
+}
