@@ -2,9 +2,9 @@
 // versions:
 // - protoc-gen-go-grpc v1.2.0
 // - protoc             (unknown)
-// source: kong/admin/service/v1/status.proto
+// source: kong/admin/service/v2/status.proto
 
-package v1
+package v2
 
 import (
 	context "context"
@@ -22,7 +22,6 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type StatusServiceClient interface {
-	// Deprecated: Do not use.
 	GetHash(ctx context.Context, in *GetHashRequest, opts ...grpc.CallOption) (*GetHashResponse, error)
 }
 
@@ -34,10 +33,9 @@ func NewStatusServiceClient(cc grpc.ClientConnInterface) StatusServiceClient {
 	return &statusServiceClient{cc}
 }
 
-// Deprecated: Do not use.
 func (c *statusServiceClient) GetHash(ctx context.Context, in *GetHashRequest, opts ...grpc.CallOption) (*GetHashResponse, error) {
 	out := new(GetHashResponse)
-	err := c.cc.Invoke(ctx, "/kong.admin.service.v1.StatusService/GetHash", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/kong.admin.service.v2.StatusService/GetHash", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -48,7 +46,6 @@ func (c *statusServiceClient) GetHash(ctx context.Context, in *GetHashRequest, o
 // All implementations must embed UnimplementedStatusServiceServer
 // for forward compatibility
 type StatusServiceServer interface {
-	// Deprecated: Do not use.
 	GetHash(context.Context, *GetHashRequest) (*GetHashResponse, error)
 	mustEmbedUnimplementedStatusServiceServer()
 }
@@ -83,7 +80,7 @@ func _StatusService_GetHash_Handler(srv interface{}, ctx context.Context, dec fu
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/kong.admin.service.v1.StatusService/GetHash",
+		FullMethod: "/kong.admin.service.v2.StatusService/GetHash",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(StatusServiceServer).GetHash(ctx, req.(*GetHashRequest))
@@ -95,7 +92,7 @@ func _StatusService_GetHash_Handler(srv interface{}, ctx context.Context, dec fu
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var StatusService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "kong.admin.service.v1.StatusService",
+	ServiceName: "kong.admin.service.v2.StatusService",
 	HandlerType: (*StatusServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -104,5 +101,5 @@ var StatusService_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "kong/admin/service/v1/status.proto",
+	Metadata: "kong/admin/service/v2/status.proto",
 }

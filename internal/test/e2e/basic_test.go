@@ -1037,6 +1037,15 @@ func TestExpectedConfigHash(t *testing.T) {
 	expectedHash := res.JSON().Object().Value("expected_hash").String().Raw()
 	require.Equal(t, expectedHash, hashFromDPAfterFoo)
 
+	res = c.GET("/v2/expected-config-hash").Expect()
+	res.Status(http.StatusOK)
+	body := res.JSON().Path("$.item").Object()
+	body.Value("expected_hash").Equal(hashFromDPAfterFoo)
+	hashCreatedAt := body.Value("created_at")
+	hashCreatedAt.Number().Gt(0)
+	hashUpdatedAt := body.Value("updated_at")
+	hashUpdatedAt.Equal(hashCreatedAt.Raw())
+
 	// ensure that a hash is updated on the node and in the database after a
 	// configuration change
 	barService := &v1.Service{
@@ -1067,6 +1076,14 @@ func TestExpectedConfigHash(t *testing.T) {
 	newExpectedHash := res.JSON().Object().Value("expected_hash").String().Raw()
 	require.Equal(t, newExpectedHash, hashFromDPAfterBar)
 
+	res = c.GET("/v2/expected-config-hash").Expect()
+	res.Status(http.StatusOK)
+	body = res.JSON().Path("$.item").Object()
+	body.Value("expected_hash").Equal(hashFromDPAfterBar)
+	body.Value("created_at").Equal(hashCreatedAt.Raw())
+	hashUpdatedAtAfterUpdate := body.Value("updated_at")
+	hashUpdatedAtAfterUpdate.Number().Gt(hashUpdatedAt.Raw())
+
 	// ensure that deleting the 'bar' service reverts the hash back to the
 	// previous one
 
@@ -1092,4 +1109,11 @@ func TestExpectedConfigHash(t *testing.T) {
 	expectedHash = res.JSON().Object().Value("expected_hash").String().Raw()
 	require.Equal(t, expectedHash, hashAfterDelete)
 	require.Equal(t, hashFromDPAfterFoo, hashAfterDelete)
+
+	res = c.GET("/v2/expected-config-hash").Expect()
+	res.Status(http.StatusOK)
+	body = res.JSON().Path("$.item").Object()
+	body.Value("expected_hash").Equal(hashAfterDelete)
+	body.Value("created_at").Equal(hashCreatedAt.Raw())
+	body.Value("updated_at").Number().Gt(hashUpdatedAtAfterUpdate.Raw())
 }

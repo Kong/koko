@@ -4,12 +4,15 @@ package kong.admin.service.v1;
 
 import "google/api/annotations.proto";
 import "kong/admin/model/v1/cluster.proto";
+import "protoc-gen-openapiv2/options/annotations.proto";
 
 option go_package = "github.com/kong/koko/internal/gen/kong/admin/service/v1;v1";
 
 service StatusService {
   rpc GetHash(GetHashRequest) returns (GetHashResponse) {
     option (google.api.http) = {get: "/v1/expected-config-hash"};
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {description: "Returns expected config hash for configuration payload. '/v1/expected-config-hash' is deprecated, please use '/v2/expected-config-hash'."};
+    option deprecated = true;
   }
 }
 

@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package kong.admin.service.v2;
+
+import "google/api/annotations.proto";
+import "kong/admin/model/v1/cluster.proto";
+import "kong/admin/model/v1/hash.proto";
+
+option go_package = "github.com/kong/koko/internal/gen/kong/admin/service/v2;v2";
+
+service StatusService {
+  rpc GetHash(GetHashRequest) returns (GetHashResponse) {
+    option (google.api.http) = {get: "/v2/expected-config-hash"};
+  }
+}
+
+message GetHashRequest {
+  model.v1.RequestCluster cluster = 1;
+}
+
+message GetHashResponse {
+  model.v1.ConfigHash item = 1;
+}

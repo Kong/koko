@@ -51,6 +51,9 @@
       "name": "kong.admin.service.v1.VaultService"
     },
     {
+      "name": "kong.admin.service.v2.StatusService"
+    },
+    {
       "name": "kong.relay.service.v1.EventService"
     },
     {
@@ -851,6 +854,7 @@
     },
     "/v1/expected-config-hash": {
       "get": {
+        "description": "Returns expected config hash for configuration payload. '/v1/expected-config-hash' is deprecated, please use '/v2/expected-config-hash'.",
         "operationId": "StatusService_GetHash",
         "responses": {
           "200": {
@@ -3438,6 +3442,36 @@
           "kong.admin.service.v1.VaultService"
         ]
       }
+    },
+    "/v2/expected-config-hash": {
+      "get": {
+        "operationId": "StatusService_GetHash",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/kong.admin.service.v2.GetHashResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "cluster.id",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "kong.admin.service.v2.StatusService"
+        ]
+      }
     }
   },
   "definitions": {
@@ -3685,6 +3719,22 @@
           "items": {
             "$ref": "#/definitions/kong.admin.model.v1.CompatibilityIssue"
           }
+        }
+      }
+    },
+    "kong.admin.model.v1.ConfigHash": {
+      "type": "object",
+      "properties": {
+        "expected_hash": {
+          "type": "string"
+        },
+        "created_at": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "updated_at": {
+          "type": "integer",
+          "format": "int32"
         }
       }
     },
@@ -4957,6 +5007,14 @@
     },
     "kong.admin.service.v1.ValidateVaultSchemaResponse": {
       "type": "object"
+    },
+    "kong.admin.service.v2.GetHashResponse": {
+      "type": "object",
+      "properties": {
+        "item": {
+          "$ref": "#/definitions/kong.admin.model.v1.ConfigHash"
+        }
+      }
     },
     "kong.nonpublic.v1.NodeStatus": {
       "type": "object",

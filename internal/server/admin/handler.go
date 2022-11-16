@@ -8,6 +8,7 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	model "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/service/v1"
+	v2 "github.com/kong/koko/internal/gen/grpc/kong/admin/service/v2"
 	"github.com/kong/koko/internal/json"
 	"github.com/kong/koko/internal/plugin"
 	"github.com/kong/koko/internal/server"
@@ -68,8 +69,9 @@ type services struct {
 	sni           v1.SNIServiceServer
 	vault         v1.VaultServiceServer
 
-	status v1.StatusServiceServer
-	node   v1.NodeServiceServer
+	statusV1 v1.StatusServiceServer
+	statusV2 v2.StatusServiceServer
+	node     v1.NodeServiceServer
 }
 
 func buildServices(opts HandlerOpts) services {
@@ -141,7 +143,15 @@ func buildServices(opts HandlerOpts) services {
 				},
 			},
 		},
-		status: &StatusService{
+		statusV1: &StatusServiceV1{
+			CommonOpts: CommonOpts{
+				storeLoader: opts.StoreLoader,
+				loggerFields: []zapcore.Field{
+					zap.String("admin-service", "status"),
+				},
+			},
+		},
+		statusV2: &StatusServiceV2{
 			CommonOpts: CommonOpts{
 				storeLoader: opts.StoreLoader,
 				loggerFields: []zapcore.Field{
@@ -261,7 +271,13 @@ func NewHandler(opts HandlerOpts) (http.Handler, error) {
 	}
 
 	err = v1.RegisterStatusServiceHandlerServer(context.Background(),
-		mux, services.status)
+		mux, services.statusV1)
+	if err != nil {
+		return nil, err
+	}
+
+	err = v2.RegisterStatusServiceHandlerServer(context.Background(),
+		mux, services.statusV2)
 	if err != nil {
 		return nil, err
 	}
@@ -323,7 +339,8 @@ func RegisterAdminService(server *grpc.Server, opts HandlerOpts) {
 	v1.RegisterTargetServiceServer(server, services.target)
 	v1.RegisterSchemasServiceServer(server, services.schemas)
 	v1.RegisterNodeServiceServer(server, services.node)
-	v1.RegisterStatusServiceServer(server, services.status)
+	v1.RegisterStatusServiceServer(server, services.statusV1)
+	v2.RegisterStatusServiceServer(server, services.statusV2)
 	v1.RegisterCertificateServiceServer(server, services.certificate)
 	v1.RegisterCACertificateServiceServer(server, services.caCertificate)
 	v1.RegisterConsumerServiceServer(server, services.consumer)
