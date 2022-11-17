@@ -1283,3 +1283,85 @@ func TestVersionCompatibility_Zipkin310OrNewer(t *testing.T) {
 		return err
 	})
 }
+
+// Ensure valid field configuration for DP >= 3.1.
+func TestVersionCompatibility_RateLimiting310OrNewer(t *testing.T) {
+	cleanup := run.Koko(t)
+	defer cleanup()
+
+	admin := httpexpect.WithConfig(httpexpect.Config{
+		BaseURL:  "http://localhost:3000",
+		Reporter: httpexpect.NewRequireReporter(t),
+		Printers: []httpexpect.Printer{
+			httpexpect.NewCompactPrinter(t),
+		},
+	})
+
+	tests := []vcPlugins{
+		{
+			config: `{
+				"hour": 1,
+				"redis_ssl": true,
+				"redis_ssl_verify": true,
+				"redis_server_name": "redis.example.com",
+				"redis_username": "REDIS_USERNAME",
+				"redis_password": "REDIS_PASSWORD",
+				"error_code": 429,
+				"error_message": "API rate limit exceeded"
+			}`,
+			expectedConfig: `{
+				"hour": 1,
+				"redis_ssl": true,
+				"redis_ssl_verify": true,
+				"redis_server_name": "redis.example.com",
+				"redis_username": "REDIS_USERNAME",
+				"redis_password": "REDIS_PASSWORD",
+				"error_code": 429,
+				"error_message": "API rate limit exceeded"
+			}`,
+		},
+	}
+	expectedConfig := &v1.TestingConfig{
+		Plugins: make([]*v1.Plugin, 0, len(tests)),
+	}
+
+	for _, test := range tests {
+		var config structpb.Struct
+		require.NoError(t, json.ProtoJSONUnmarshal([]byte(test.config), &config))
+
+		plugin := &v1.Plugin{
+			Id:        uuid.NewString(),
+			Name:      "rate-limiting",
+			Config:    &config,
+			Enabled:   wrapperspb.Bool(true),
+			Protocols: []string{"http", "https"},
+		}
+		pluginBytes, err := json.ProtoJSONMarshal(plugin)
+		require.NoError(t, err)
+		res := admin.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
+		res.Status(http.StatusCreated)
+
+		var expected structpb.Struct
+		require.NoError(t, json.ProtoJSONUnmarshal([]byte(test.expectedConfig), &expected))
+		expectedConfig.Plugins = append(expectedConfig.Plugins, &v1.Plugin{
+			Id:        plugin.Id,
+			Name:      plugin.Name,
+			Config:    &expected,
+			Enabled:   plugin.Enabled,
+			Protocols: plugin.Protocols,
+		})
+	}
+
+	dpCleanup := run.KongDP(kong.GetKongConfForShared())
+	defer dpCleanup()
+	require.NoError(t, util.WaitForKong(t))
+	require.NoError(t, util.WaitForKongAdminAPI(t))
+
+	kongClient.RunWhenKong(t, ">=3.1.0")
+
+	util.WaitFunc(t, func() error {
+		err := util.EnsureConfig(expectedConfig)
+		t.Log("plugin validation failed", err)
+		return err
+	})
+}
