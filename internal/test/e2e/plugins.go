@@ -279,8 +279,12 @@ var VersionCompatibilityOSSPluginConfigurationTests = []VersionCompatibilityPlug
 		ConfigureForService: true,
 		ConfigureForRoute:   true,
 	},
+	// DP < 2.7:
+	//   - remove 'redis_ssl', 'redis_ssl_verify', 'redis_server_name' (P108)
+	// DP < 2.8:
+	//   - remove  'redis_username' (P112)
 	// DP < 3.1:
-	//   - remove 'error_code', 'error_message'
+	//   - remove 'error_code', 'error_message' (P137)
 	{
 		Name: "rate-limiting",
 		Config: `{
