@@ -54,6 +54,14 @@ func (c CommonOpts) getDB(ctx context.Context,
 	return store, nil
 }
 
+func (c CommonOpts) logger(ctx context.Context) *zap.Logger {
+	return util.LoggerFromContext(ctx).With(c.loggerFields...)
+}
+
+func (c CommonOpts) err(ctx context.Context, err error) error {
+	return util.HandleErr(ctx, c.logger(ctx), err)
+}
+
 type services struct {
 	service       v1.ServiceServiceServer
 	route         v1.RouteServiceServer
@@ -65,6 +73,7 @@ type services struct {
 	certificate   v1.CertificateServiceServer
 	consumer      v1.ConsumerServiceServer
 	caCertificate v1.CACertificateServiceServer
+	key           v1.KeyServiceServer
 	sni           v1.SNIServiceServer
 	vault         v1.VaultServiceServer
 	consumerGroup v1.ConsumerGroupServiceServer
@@ -198,6 +207,14 @@ func buildServices(opts HandlerOpts) services {
 				},
 			},
 		},
+		key: &KeyService{
+			CommonOpts: CommonOpts{
+				storeLoader: opts.StoreLoader,
+				loggerFields: []zapcore.Field{
+					zap.String("admin-service", "key"),
+				},
+			},
+		},
 	}
 }
 
@@ -283,6 +300,12 @@ func NewHandler(opts HandlerOpts) (http.Handler, error) {
 
 	err = v1.RegisterCertificateServiceHandlerServer(context.Background(),
 		mux, services.certificate)
+	if err != nil {
+		return nil, err
+	}
+
+	err = v1.RegisterKeyServiceHandlerServer(context.Background(),
+		mux, services.key)
 	if err != nil {
 		return nil, err
 	}

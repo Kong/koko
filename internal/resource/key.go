@@ -64,6 +64,12 @@ func (k Key) Indexes() []model.Index {
 			Value:     k.Key.Kid,
 			FieldName: "kid",
 		},
+		{
+			Name:      "name",
+			Type:      model.IndexUnique,
+			Value:     k.Key.Name,
+			FieldName: "name",
+		},
 	}
 	return res
 }
@@ -120,6 +126,12 @@ func (ks KeySet) Indexes() []model.Index {
 			Type:      model.IndexUnique,
 			Value:     ks.KeySet.Id,
 			FieldName: "id",
+		},
+		{
+			Name:      "name",
+			Type:      model.IndexUnique,
+			Value:     ks.KeySet.Name,
+			FieldName: "name",
 		},
 	}
 	return res
