@@ -221,7 +221,7 @@ func TestProcessAutoFields(t *testing.T) {
 			"year":                nil,
 			"redis_server_name":   nil,
 			"redis_timeout":       float64(2000),
-			"error_code":          429,
+			"error_code":          float64(429),
 			"error_message":       "API rate limit exceeded",
 		}
 		require.Equal(t, expectedConfig, processConfig)
