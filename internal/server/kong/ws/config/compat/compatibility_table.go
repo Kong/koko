@@ -874,6 +874,37 @@ var (
 				},
 			},
 		},
+		{
+			Metadata: config.ChangeMetadata{
+				ID:       config.ChangeID("P137"),
+				Severity: config.ChangeSeverityError,
+				Description: standardPluginFieldsMessage("rate-limiting",
+					[]string{"error_code", "error_message"},
+					"3.1", false),
+				Resolution: standardUpgradeMessage("3.1"),
+			},
+			SemverRange: versionsPre310,
+			Update: config.ConfigTableUpdates{
+				Name:         "rate-limiting",
+				Type:         config.Plugin,
+				RemoveFields: []string{"error_code", "error_message"},
+				DisableChangeTracking: func(rawJSON string) bool {
+					plugin := gjson.Parse(rawJSON)
+
+					providedErrorMessage := plugin.Get("config.error_message")
+					if providedErrorMessage.Exists() &&
+						!strings.Contains(providedErrorMessage.String(), "API rate limit exceeded") {
+						return false
+					}
+
+					providedErrorCode := plugin.Get("config.error_code")
+					if providedErrorCode.Exists() && providedErrorCode.Int() != 429 {
+						return false
+					}
+					return true
+				},
+			},
+		},
 	}
 )
 

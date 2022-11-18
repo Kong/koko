@@ -279,6 +279,12 @@ var VersionCompatibilityOSSPluginConfigurationTests = []VersionCompatibilityPlug
 		ConfigureForService: true,
 		ConfigureForRoute:   true,
 	},
+	// DP < 2.7:
+	//   - remove 'redis_ssl', 'redis_ssl_verify', 'redis_server_name' (P108)
+	// DP < 2.8:
+	//   - remove  'redis_username' (P112)
+	// DP < 3.1:
+	//   - remove 'error_code', 'error_message' (P137)
 	{
 		Name: "rate-limiting",
 		Config: `{
@@ -287,7 +293,9 @@ var VersionCompatibilityOSSPluginConfigurationTests = []VersionCompatibilityPlug
 			"redis_ssl_verify": true,
 			"redis_server_name": "redis.example.com",
 			"redis_username": "REDIS_USERNAME",
-			"redis_password": "REDIS_PASSWORD"
+			"redis_password": "REDIS_PASSWORD",
+			"error_code": 429,
+			"error_message": "API rate limit exceeded"
 		}`,
 		ConfigureForService: true,
 		ConfigureForRoute:   true,

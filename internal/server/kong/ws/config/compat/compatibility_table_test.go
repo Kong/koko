@@ -571,7 +571,9 @@ func TestDisableChangeTracking(t *testing.T) {
 					"second": 10,
 					"redis_ssl": false,
 					"redis_ssl_verify": false,
-					"redis_server_name": null
+					"redis_server_name": null,
+					"error_code": 429,
+					"error_message": "API rate limit exceeded"
 				}
 			}
 		]
@@ -737,6 +739,104 @@ func TestDisableChangeTracking(t *testing.T) {
 				ChangeDetails: []config.ChangeDetail{
 					{
 						ID: "P108",
+						Resources: []config.ResourceInfo{
+							{
+								Type: "plugin",
+								ID:   "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "[rate-limiting] change is emitted with non-default value" +
+				" for error_code",
+			uncompressedPayload: `
+{
+	"config_table": {
+		"plugins": [
+			{
+				"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+				"name": "rate-limiting",
+				"config": {
+					"second": 10,
+					"error_code": 420
+				}
+			}
+		]
+	}
+}
+`,
+			dataPlaneVersion: "2.6.0",
+			expectedPayload: `
+{
+	"config_table": {
+		"plugins": [
+			{
+				"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+				"name": "rate-limiting",
+				"config": {
+					"second": 10
+				}
+			}
+		]
+	}
+}
+`,
+			expectedChanges: config.TrackedChanges{
+				ChangeDetails: []config.ChangeDetail{
+					{
+						ID: "P137",
+						Resources: []config.ResourceInfo{
+							{
+								Type: "plugin",
+								ID:   "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "[rate-limiting] change is emitted with non-default value" +
+				" for error_message",
+			uncompressedPayload: `
+{
+	"config_table": {
+		"plugins": [
+			{
+				"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+				"name": "rate-limiting",
+				"config": {
+					"second": 10,
+					"error_message": "Enhance Your Calm"
+				}
+			}
+		]
+	}
+}
+`,
+			dataPlaneVersion: "3.0.0",
+			expectedPayload: `
+{
+	"config_table": {
+		"plugins": [
+			{
+				"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+				"name": "rate-limiting",
+				"config": {
+					"second": 10
+				}
+			}
+		]
+	}
+}
+`,
+			expectedChanges: config.TrackedChanges{
+				ChangeDetails: []config.ChangeDetail{
+					{
+						ID: "P137",
 						Resources: []config.ResourceInfo{
 							{
 								Type: "plugin",
