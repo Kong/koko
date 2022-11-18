@@ -59,9 +59,15 @@ func (k Key) SetResource(r model.Resource) error {
 func (k Key) Indexes() []model.Index {
 	res := []model.Index{
 		{
+			Name:      "id",
+			Type:      model.IndexUnique,
+			Value:     k.Key.Id,
+			FieldName: "id",
+		},
+		{
 			Name:      "kid",
 			Type:      model.IndexUnique,
-			Value:     k.Key.Kid,
+			Value:     k.Key.Jwk.Kid,
 			FieldName: "kid",
 		},
 		{
@@ -153,13 +159,12 @@ func init() {
 			"updated_at": typedefs.UnixEpoch,
 			"name":       typedefs.Name,
 			"set":        typedefs.ReferenceObject,
-			"kid":        {Type: "string"},
-			"jwk":        {Type: "string"},
-			"pem":        {Type: "string"},
+			"jwk":        typedefs.JwkKey,
+			"pem":        typedefs.PemKey,
 			"tags":       typedefs.Tags,
 		},
 		AdditionalProperties: &falsy,
-		Required:             []string{"id", "kid"},
+		Required:             []string{"id"},
 	}
 	err = generator.DefaultRegistry.Register(string(TypeKey), keySchema)
 	if err != nil {

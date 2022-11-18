@@ -13,7 +13,8 @@ import (
 func goodKey() *v1.Key {
 	return &v1.Key{
 		Id:   uuid.NewString(),
-		Kid:  uuid.NewString(),
+		Jwk:  &v1.JwkKey{Kid: uuid.NewString()},
+		Pem:  &v1.PemKey{PrivateKey: "xxx"},
 		Name: "simpleKey-" + uuid.NewString(),
 	}
 }
@@ -22,7 +23,8 @@ func validateGoodKey(body *httpexpect.Object) {
 	body.ContainsKey("id")
 	body.ContainsKey("created_at")
 	body.ContainsKey("updated_at")
-	body.ContainsKey("kid")
+	body.ContainsKey("jwk")
+	body.Path("$.jwk").Object().ContainsKey("kid")
 }
 
 func TestKeyCreate(t *testing.T) {
@@ -63,22 +65,22 @@ func TestKeyUpsert(t *testing.T) {
 		})
 	t.Run("upsert correctly updates a key", func(_ *testing.T) {
 		k := goodKey()
-		k.Jwk = "first_key_content"
+		k.Name = "first_key"
 
 		res := c.POST("/v1/keys").WithJSON(k).Expect()
 		res.Status(http.StatusCreated)
 
 		res = c.GET("/v1/keys/" + k.Id).Expect()
 		res.Status(http.StatusOK)
-		res.JSON().Path("$.item.jwk").Equal("first_key_content")
+		res.JSON().Path("$.item.name").Equal("first_key")
 
-		k.Jwk = "content_of_second_key"
+		k.Name = "second_key"
 		res = c.PUT("/v1/keys/" + k.Id).WithJSON(k).Expect()
 		res.Status(http.StatusOK)
 
 		res = c.GET("/v1/keys/" + k.Id).Expect()
 		res.Status(http.StatusOK)
-		res.JSON().Path("$.item.jwk").Equal("content_of_second_key")
+		res.JSON().Path("$.item.name").Equal("second_key")
 	})
 }
 

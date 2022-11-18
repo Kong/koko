@@ -62,28 +62,28 @@ func TestKey_Validate(t *testing.T) {
 				{
 					Type: v1.ErrorType_ERROR_TYPE_ENTITY,
 					Messages: []string{
-						"missing properties: 'id', 'kid'",
+						"missing properties: 'id'",
 					},
 				},
 			},
 		},
-		{
-			name: "key without kid isn't valid",
-			Key: func() Key {
-				k := goodKey()
-				k.Key.Kid = ""
-				return k
-			},
-			wantErr: true,
-			Errs: []*v1.ErrorDetail{
-				{
-					Type: v1.ErrorType_ERROR_TYPE_ENTITY,
-					Messages: []string{
-						"missing properties: 'kid'",
-					},
-				},
-			},
-		},
+		// {
+		// 	name: "key without kid isn't valid",
+		// 	Key: func() Key {
+		// 		k := goodKey()
+		// 		k.Key.Kid = ""
+		// 		return k
+		// 	},
+		// 	wantErr: true,
+		// 	Errs: []*v1.ErrorDetail{
+		// 		{
+		// 			Type: v1.ErrorType_ERROR_TYPE_ENTITY,
+		// 			Messages: []string{
+		// 				"missing properties: 'kid'",
+		// 			},
+		// 		},
+		// 	},
+		// },
 	}
 
 	for _, tt := range tests {

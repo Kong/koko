@@ -9,7 +9,6 @@ import (
 	"github.com/kong/koko/internal/server/util"
 	"github.com/kong/koko/internal/store"
 	"go.uber.org/zap"
-	// "github.com/kong/koko/internal/store"
 )
 
 type KeyService struct {

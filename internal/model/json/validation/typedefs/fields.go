@@ -217,4 +217,44 @@ var Reference = &generator.Schema{
 	Pattern:     ReferencePattern,
 }
 
+var PemKey = &generator.Schema{
+	Type: "object",
+	Properties: map[string]*generator.Schema{
+		"private_key": {Type: "string"},
+		"public_key":  {Type: "string"},
+	},
+	Required: []string{"private_key"},
+}
+
+var JwkKey = &generator.Schema{
+	Type: "object",
+	Properties: map[string]*generator.Schema{
+		"kid":      {Type: "string"},
+		"issuer":   {Type: "string"},
+		"kty":      {Type: "string"},
+		"use":      {Type: "string"},
+		"key_ops":  {Type: "array", Items: &generator.Schema{Type: "string"}},
+		"alg":      {Type: "string"},
+		"x5u":      {Type: "string"},
+		"x5c":      {Type: "array", Items: &generator.Schema{Type: "string"}},
+		"x5t":      {Type: "string"},
+		"x5t_S256": {Type: "string"},
+		"k":        {Type: "string"},
+		"x":        {Type: "string"},
+		"y":        {Type: "string"},
+		"crv":      {Type: "string"},
+		"n":        {Type: "string"},
+		"e":        {Type: "string"},
+		"d":        {Type: "string"},
+		"p":        {Type: "string"},
+		"dp":       {Type: "string"},
+		"dq":       {Type: "string"},
+		"qi":       {Type: "string"},
+		"oth":      {Type: "string"},
+		"r":        {Type: "string"},
+		"t":        {Type: "string"},
+	},
+	Required: []string{"kid"},
+}
+
 func intP(i int) *int { return &i }

@@ -19,10 +19,42 @@ message Key {
 
   KeySet set = 5;
   string name = 6;
-  string kid = 7;
-  string jwk = 8;
-  string pem = 9;
-  KeyFormat key_format = 10;
+  JwkKey jwk = 7;
+  PemKey pem = 8;
+  KeyFormat key_format = 9;
+}
+
+message JwkKey {
+  string kid = 1;
+  string issuer = 2;
+  string kty = 3;
+  string use = 4;
+  repeated string key_ops = 5;
+  string alg = 6;
+  string x5u = 7;
+  repeated string x5c = 8;
+  string x5t = 9;
+  string x5t_S256 = 10;
+  string k = 11;
+  string x = 12;
+  string y = 13;
+  string crv = 14;
+  string n = 15;
+  string e = 16;
+  string d = 17;
+  string p = 18;
+  string q = 19;
+  string dp = 20;
+  string dq = 21;
+  string qi = 22;
+  string oth = 23;
+  string r = 24;
+  string t = 25;
+}
+
+message PemKey {
+  string private_key = 1;
+  string public_key = 2;
 }
 
 message KeySet {
