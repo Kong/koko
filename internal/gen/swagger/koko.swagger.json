@@ -4562,6 +4562,14 @@
       "properties": {
         "expected_hash": {
           "type": "string"
+        },
+        "created_at": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "updated_at": {
+          "type": "integer",
+          "format": "int32"
         }
       }
     },

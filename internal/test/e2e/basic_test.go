@@ -1034,8 +1034,13 @@ func TestExpectedConfigHash(t *testing.T) {
 
 	res = c.GET("/v1/expected-config-hash").Expect()
 	res.Status(http.StatusOK)
-	expectedHash := res.JSON().Object().Value("expected_hash").String().Raw()
-	require.Equal(t, expectedHash, hashFromDPAfterFoo)
+	body := res.JSON().Object()
+	expectedHash := body.Value("expected_hash")
+	hashCreatedAt := body.Value("created_at")
+	hashUpdatedAt := body.Value("updated_at")
+	expectedHash.Equal(hashFromDPAfterFoo)
+	hashCreatedAt.Number().Gt(0)
+	hashUpdatedAt.Equal(hashCreatedAt.Raw())
 
 	// ensure that a hash is updated on the node and in the database after a
 	// configuration change
@@ -1064,6 +1069,12 @@ func TestExpectedConfigHash(t *testing.T) {
 
 	res = c.GET("/v1/expected-config-hash").Expect()
 	res.Status(http.StatusOK)
+	body = res.JSON().Object()
+	body.Value("expected_hash").Equal(hashFromDPAfterBar)
+	body.Value("created_at").Equal(hashCreatedAt.Raw())
+	hashUpdatedAtFromDPAfterBar := body.Value("updated_at")
+	hashUpdatedAtFromDPAfterBar.Number().Gt(hashUpdatedAt.Raw())
+
 	newExpectedHash := res.JSON().Object().Value("expected_hash").String().Raw()
 	require.Equal(t, newExpectedHash, hashFromDPAfterBar)
 
@@ -1089,7 +1100,9 @@ func TestExpectedConfigHash(t *testing.T) {
 
 	res = c.GET("/v1/expected-config-hash").Expect()
 	res.Status(http.StatusOK)
-	expectedHash = res.JSON().Object().Value("expected_hash").String().Raw()
-	require.Equal(t, expectedHash, hashAfterDelete)
+	body = res.JSON().Object()
+	body.Value("expected_hash").Equal(hashAfterDelete)
+	body.Value("created_at").Equal(hashCreatedAt.Raw())
+	body.Value("updated_at").Number().Gt(hashUpdatedAtFromDPAfterBar.Raw())
 	require.Equal(t, hashFromDPAfterFoo, hashAfterDelete)
 }

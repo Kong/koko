@@ -30,6 +30,8 @@ func (s *StatusService) GetHash(ctx context.Context,
 	}
 	return &v1.GetHashResponse{
 		ExpectedHash: result.Hash.ExpectedHash,
+		CreatedAt:    result.Hash.CreatedAt,
+		UpdatedAt:    result.Hash.UpdatedAt,
 	}, nil
 }
 
