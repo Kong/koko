@@ -176,8 +176,10 @@ func init() {
 	keysetSchema := &generator.Schema{
 		Type: "object",
 		Properties: map[string]*generator.Schema{
-			"id":   typedefs.ID,
-			"name": typedefs.Name,
+			"id":         typedefs.ID,
+			"created_at": typedefs.UnixEpoch,
+			"updated_at": typedefs.UnixEpoch,
+			"name":       typedefs.Name,
 		},
 		AdditionalProperties: &falsy,
 		Required:             []string{"id", "name"},

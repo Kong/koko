@@ -74,6 +74,7 @@ type services struct {
 	consumer      v1.ConsumerServiceServer
 	caCertificate v1.CACertificateServiceServer
 	key           v1.KeyServiceServer
+	keyset        v1.KeySetServiceServer
 	sni           v1.SNIServiceServer
 	vault         v1.VaultServiceServer
 	consumerGroup v1.ConsumerGroupServiceServer
@@ -215,6 +216,14 @@ func buildServices(opts HandlerOpts) services {
 				},
 			},
 		},
+		keyset: &KeySetService{
+			CommonOpts: CommonOpts{
+				storeLoader: opts.StoreLoader,
+				loggerFields: []zapcore.Field{
+					zap.String("admin-service", "key-set"),
+				},
+			},
+		},
 	}
 }
 
@@ -306,6 +315,12 @@ func NewHandler(opts HandlerOpts) (http.Handler, error) {
 
 	err = v1.RegisterKeyServiceHandlerServer(context.Background(),
 		mux, services.key)
+	if err != nil {
+		return nil, err
+	}
+
+	err = v1.RegisterKeySetServiceHandlerServer(context.Background(),
+		mux, services.keyset)
 	if err != nil {
 		return nil, err
 	}

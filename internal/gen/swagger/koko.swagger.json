@@ -1595,6 +1595,14 @@
             "schema": {
               "type": "object",
               "properties": {
+                "created_at": {
+                  "type": "integer",
+                  "format": "int32"
+                },
+                "updated_at": {
+                  "type": "integer",
+                  "format": "int32"
+                },
                 "name": {
                   "type": "string"
                 }
@@ -5002,6 +5010,14 @@
       "properties": {
         "id": {
           "type": "string"
+        },
+        "created_at": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "updated_at": {
+          "type": "integer",
+          "format": "int32"
         },
         "name": {
           "type": "string"
