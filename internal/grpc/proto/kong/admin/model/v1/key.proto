@@ -34,7 +34,7 @@ message JwkKey {
   string x5u = 7;
   repeated string x5c = 8;
   string x5t = 9;
-  string x5t_S256 = 10;
+  string x5t_s256 = 10;
   string k = 11;
   string x = 12;
   string y = 13;

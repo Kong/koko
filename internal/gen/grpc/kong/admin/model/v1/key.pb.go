@@ -188,31 +188,31 @@ type JwkKey struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Kid      string   `protobuf:"bytes,1,opt,name=kid,proto3" json:"kid,omitempty"`
-	Issuer   string   `protobuf:"bytes,2,opt,name=issuer,proto3" json:"issuer,omitempty"`
-	Kty      string   `protobuf:"bytes,3,opt,name=kty,proto3" json:"kty,omitempty"`
-	Use      string   `protobuf:"bytes,4,opt,name=use,proto3" json:"use,omitempty"`
-	KeyOps   []string `protobuf:"bytes,5,rep,name=key_ops,json=keyOps,proto3" json:"key_ops,omitempty"`
-	Alg      string   `protobuf:"bytes,6,opt,name=alg,proto3" json:"alg,omitempty"`
-	X5U      string   `protobuf:"bytes,7,opt,name=x5u,proto3" json:"x5u,omitempty"`
-	X5C      []string `protobuf:"bytes,8,rep,name=x5c,proto3" json:"x5c,omitempty"`
-	X5T      string   `protobuf:"bytes,9,opt,name=x5t,proto3" json:"x5t,omitempty"`
-	X5T_S256 string   `protobuf:"bytes,10,opt,name=x5t_S256,json=x5tS256,proto3" json:"x5t_S256,omitempty"`
-	K        string   `protobuf:"bytes,11,opt,name=k,proto3" json:"k,omitempty"`
-	X        string   `protobuf:"bytes,12,opt,name=x,proto3" json:"x,omitempty"`
-	Y        string   `protobuf:"bytes,13,opt,name=y,proto3" json:"y,omitempty"`
-	Crv      string   `protobuf:"bytes,14,opt,name=crv,proto3" json:"crv,omitempty"`
-	N        string   `protobuf:"bytes,15,opt,name=n,proto3" json:"n,omitempty"`
-	E        string   `protobuf:"bytes,16,opt,name=e,proto3" json:"e,omitempty"`
-	D        string   `protobuf:"bytes,17,opt,name=d,proto3" json:"d,omitempty"`
-	P        string   `protobuf:"bytes,18,opt,name=p,proto3" json:"p,omitempty"`
-	Q        string   `protobuf:"bytes,19,opt,name=q,proto3" json:"q,omitempty"`
-	Dp       string   `protobuf:"bytes,20,opt,name=dp,proto3" json:"dp,omitempty"`
-	Dq       string   `protobuf:"bytes,21,opt,name=dq,proto3" json:"dq,omitempty"`
-	Qi       string   `protobuf:"bytes,22,opt,name=qi,proto3" json:"qi,omitempty"`
-	Oth      string   `protobuf:"bytes,23,opt,name=oth,proto3" json:"oth,omitempty"`
-	R        string   `protobuf:"bytes,24,opt,name=r,proto3" json:"r,omitempty"`
-	T        string   `protobuf:"bytes,25,opt,name=t,proto3" json:"t,omitempty"`
+	Kid     string   `protobuf:"bytes,1,opt,name=kid,proto3" json:"kid,omitempty"`
+	Issuer  string   `protobuf:"bytes,2,opt,name=issuer,proto3" json:"issuer,omitempty"`
+	Kty     string   `protobuf:"bytes,3,opt,name=kty,proto3" json:"kty,omitempty"`
+	Use     string   `protobuf:"bytes,4,opt,name=use,proto3" json:"use,omitempty"`
+	KeyOps  []string `protobuf:"bytes,5,rep,name=key_ops,json=keyOps,proto3" json:"key_ops,omitempty"`
+	Alg     string   `protobuf:"bytes,6,opt,name=alg,proto3" json:"alg,omitempty"`
+	X5U     string   `protobuf:"bytes,7,opt,name=x5u,proto3" json:"x5u,omitempty"`
+	X5C     []string `protobuf:"bytes,8,rep,name=x5c,proto3" json:"x5c,omitempty"`
+	X5T     string   `protobuf:"bytes,9,opt,name=x5t,proto3" json:"x5t,omitempty"`
+	X5TS256 string   `protobuf:"bytes,10,opt,name=x5t_s256,json=x5tS256,proto3" json:"x5t_s256,omitempty"`
+	K       string   `protobuf:"bytes,11,opt,name=k,proto3" json:"k,omitempty"`
+	X       string   `protobuf:"bytes,12,opt,name=x,proto3" json:"x,omitempty"`
+	Y       string   `protobuf:"bytes,13,opt,name=y,proto3" json:"y,omitempty"`
+	Crv     string   `protobuf:"bytes,14,opt,name=crv,proto3" json:"crv,omitempty"`
+	N       string   `protobuf:"bytes,15,opt,name=n,proto3" json:"n,omitempty"`
+	E       string   `protobuf:"bytes,16,opt,name=e,proto3" json:"e,omitempty"`
+	D       string   `protobuf:"bytes,17,opt,name=d,proto3" json:"d,omitempty"`
+	P       string   `protobuf:"bytes,18,opt,name=p,proto3" json:"p,omitempty"`
+	Q       string   `protobuf:"bytes,19,opt,name=q,proto3" json:"q,omitempty"`
+	Dp      string   `protobuf:"bytes,20,opt,name=dp,proto3" json:"dp,omitempty"`
+	Dq      string   `protobuf:"bytes,21,opt,name=dq,proto3" json:"dq,omitempty"`
+	Qi      string   `protobuf:"bytes,22,opt,name=qi,proto3" json:"qi,omitempty"`
+	Oth     string   `protobuf:"bytes,23,opt,name=oth,proto3" json:"oth,omitempty"`
+	R       string   `protobuf:"bytes,24,opt,name=r,proto3" json:"r,omitempty"`
+	T       string   `protobuf:"bytes,25,opt,name=t,proto3" json:"t,omitempty"`
 }
 
 func (x *JwkKey) Reset() {
@@ -310,9 +310,9 @@ func (x *JwkKey) GetX5T() string {
 	return ""
 }
 
-func (x *JwkKey) GetX5T_S256() string {
+func (x *JwkKey) GetX5TS256() string {
 	if x != nil {
-		return x.X5T_S256
+		return x.X5TS256
 	}
 	return ""
 }
@@ -587,7 +587,7 @@ var file_kong_admin_model_v1_key_proto_rawDesc = []byte{
 	0x03, 0x78, 0x35, 0x75, 0x12, 0x10, 0x0a, 0x03, 0x78, 0x35, 0x63, 0x18, 0x08, 0x20, 0x03, 0x28,
 	0x09, 0x52, 0x03, 0x78, 0x35, 0x63, 0x12, 0x10, 0x0a, 0x03, 0x78, 0x35, 0x74, 0x18, 0x09, 0x20,
 	0x01, 0x28, 0x09, 0x52, 0x03, 0x78, 0x35, 0x74, 0x12, 0x19, 0x0a, 0x08, 0x78, 0x35, 0x74, 0x5f,
-	0x53, 0x32, 0x35, 0x36, 0x18, 0x0a, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x78, 0x35, 0x74, 0x53,
+	0x73, 0x32, 0x35, 0x36, 0x18, 0x0a, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x78, 0x35, 0x74, 0x53,
 	0x32, 0x35, 0x36, 0x12, 0x0c, 0x0a, 0x01, 0x6b, 0x18, 0x0b, 0x20, 0x01, 0x28, 0x09, 0x52, 0x01,
 	0x6b, 0x12, 0x0c, 0x0a, 0x01, 0x78, 0x18, 0x0c, 0x20, 0x01, 0x28, 0x09, 0x52, 0x01, 0x78, 0x12,
 	0x0c, 0x0a, 0x01, 0x79, 0x18, 0x0d, 0x20, 0x01, 0x28, 0x09, 0x52, 0x01, 0x79, 0x12, 0x10, 0x0a,

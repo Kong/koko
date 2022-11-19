@@ -44,6 +44,9 @@ const (
 	ConsumerGroup
 	ConsumerGroupConsumer
 	ConsumerGroupPlugin
+
+	// TopLevel is the UpdateType referring to a field in the main config_table object.
+	TopLevel
 )
 
 func (u UpdateType) String() string {
@@ -275,6 +278,9 @@ func (vc *WSVersionCompatibility) processConfigTableUpdates(uncompressedPayload 
 		case Service, CorePlugin, Route, Upstream, Vault,
 			ConsumerGroup, ConsumerGroupConsumer, ConsumerGroupPlugin:
 			processedPayload = vc.processCoreEntityUpdates(processedPayload,
+				configTableUpdate, dataPlaneVersionStr, tracker)
+		case TopLevel:
+			processedPayload = vc.processTopLevelUpdates(processedPayload,
 				configTableUpdate, dataPlaneVersionStr, tracker)
 		default:
 			return "", fmt.Errorf("unsupported value type: %d", configTableUpdate.Type)
@@ -760,6 +766,43 @@ func (vc *WSVersionCompatibility) processCoreEntityUpdates(payload string,
 		processedPayload = vc.removeCoreEntity(processedPayload, entityType,
 			dataPlaneVersionStr, configTableKey, configTableUpdate.ChangeID, tracker)
 	}
+	return processedPayload
+}
+
+func (vc *WSVersionCompatibility) processTopLevelUpdates(
+	payload string,
+	configTableUpdate ConfigTableUpdates,
+	dataPlaneVersionStr string,
+	tracker *ChangeTracker,
+) string {
+	processedPayload := payload
+	var err error
+	logger := vc.logger.With(zap.String("data-plane", dataPlaneVersionStr))
+
+	for _, key := range configTableUpdate.RemoveFields {
+		keyPath := fmt.Sprintf("config_table.%s", key)
+		if gjson.Get(processedPayload, keyPath).Exists() {
+			processedPayload, err = sjson.Delete(processedPayload, keyPath)
+			if err != nil {
+				logger.Error("error while removing top level entity",
+					zap.Error(err),
+					zap.String("entity", key))
+				continue
+			}
+			err = tracker.Track(configTableUpdate.ChangeID)
+			if err != nil {
+				logger.Error("failed to track version compatibility change",
+					zap.Error(err),
+					zap.String("change-id", string(configTableUpdate.ChangeID)),
+					zap.String("resource-type", key))
+				continue
+			}
+			logger.Warn("removing top-level entity",
+				zap.String("change-id", string(configTableUpdate.ChangeID)),
+				zap.String("resource-type", key))
+		}
+	}
+
 	return processedPayload
 }
 

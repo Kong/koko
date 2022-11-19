@@ -1015,6 +1015,21 @@ var (
 				},
 			},
 		},
+		{
+			Metadata: config.ChangeMetadata{
+				ID:          config.ChangeID("P138"),
+				Severity:    config.ChangeSeverityError,
+				Description: standardCoreEntityMessage("key", "3.1"),
+				Resolution:  standardUpgradeMessage("3.1"),
+			},
+			SemverRange: versionsPre310,
+			Update: config.ConfigTableUpdates{
+				Name:         "keys",
+				Type:         config.TopLevel,
+				RemoveFields: []string{"keys"},
+				Remove:       true,
+			},
+		},
 	}
 )
 
