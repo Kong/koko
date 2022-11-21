@@ -1205,7 +1205,7 @@ func TestTagsVersionCompatibility(t *testing.T) {
 }
 
 // Ensure valid field configuration for DP >= 3.1.
-func TestVersionCompatibility_Zipkin310OrNewer(t *testing.T) {
+func TestVersionCompatibility_310OrNewer(t *testing.T) {
 	cleanup := run.Koko(t)
 	defer cleanup()
 
@@ -1219,6 +1219,7 @@ func TestVersionCompatibility_Zipkin310OrNewer(t *testing.T) {
 
 	tests := []vcPlugins{
 		{
+			name: "zipkin",
 			config: `{
 				"local_service_name": "LOCAL_SERVICE_NAME",
 				"header_type": "ignore",
@@ -1238,67 +1239,8 @@ func TestVersionCompatibility_Zipkin310OrNewer(t *testing.T) {
 				"http_response_header_for_traceid": "X-B3-TraceId"
 			}`,
 		},
-	}
-	expectedConfig := &v1.TestingConfig{
-		Plugins: make([]*v1.Plugin, 0, len(tests)),
-	}
-
-	for _, test := range tests {
-		var config structpb.Struct
-		require.NoError(t, json.ProtoJSONUnmarshal([]byte(test.config), &config))
-
-		plugin := &v1.Plugin{
-			Id:        uuid.NewString(),
-			Name:      "zipkin",
-			Config:    &config,
-			Enabled:   wrapperspb.Bool(true),
-			Protocols: []string{"http", "https"},
-		}
-		pluginBytes, err := json.ProtoJSONMarshal(plugin)
-		require.NoError(t, err)
-		res := admin.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
-		res.Status(http.StatusCreated)
-
-		var expected structpb.Struct
-		require.NoError(t, json.ProtoJSONUnmarshal([]byte(test.expectedConfig), &expected))
-		expectedConfig.Plugins = append(expectedConfig.Plugins, &v1.Plugin{
-			Id:        plugin.Id,
-			Name:      plugin.Name,
-			Config:    &expected,
-			Enabled:   plugin.Enabled,
-			Protocols: plugin.Protocols,
-		})
-	}
-
-	dpCleanup := run.KongDP(kong.GetKongConfForShared())
-	defer dpCleanup()
-	require.NoError(t, util.WaitForKong(t))
-	require.NoError(t, util.WaitForKongAdminAPI(t))
-
-	kongClient.RunWhenKong(t, ">=3.1.0")
-
-	util.WaitFunc(t, func() error {
-		err := util.EnsureConfig(expectedConfig)
-		t.Log("plugin validation failed", err)
-		return err
-	})
-}
-
-// Ensure valid field configuration for DP >= 3.1.
-func TestVersionCompatibility_RateLimiting310OrNewer(t *testing.T) {
-	cleanup := run.Koko(t)
-	defer cleanup()
-
-	admin := httpexpect.WithConfig(httpexpect.Config{
-		BaseURL:  "http://localhost:3000",
-		Reporter: httpexpect.NewRequireReporter(t),
-		Printers: []httpexpect.Printer{
-			httpexpect.NewCompactPrinter(t),
-		},
-	})
-
-	tests := []vcPlugins{
 		{
+			name: "rate-limiting",
 			config: `{
 				"hour": 1,
 				"redis_ssl": true,
@@ -1320,6 +1262,31 @@ func TestVersionCompatibility_RateLimiting310OrNewer(t *testing.T) {
 				"error_message": "API rate limit exceeded"
 			}`,
 		},
+		{
+			name: "acme",
+			config: `{
+				"account_email": "example@example.com",
+				"allow_any_domain": true,
+				"storage_config": {
+					"redis": {
+						"ssl": true,
+						"ssl_verify": true,
+						"ssl_server_name": "test.com"
+					}
+				}
+			}`,
+			expectedConfig: `{
+				"account_email": "example@example.com",
+				"allow_any_domain": true,
+				"storage_config": {
+					"redis": {
+						"ssl": true,
+						"ssl_verify": true,
+						"ssl_server_name": "test.com"
+					}
+				}
+			}`,
+		},
 	}
 	expectedConfig := &v1.TestingConfig{
 		Plugins: make([]*v1.Plugin, 0, len(tests)),
@@ -1331,7 +1298,7 @@ func TestVersionCompatibility_RateLimiting310OrNewer(t *testing.T) {
 
 		plugin := &v1.Plugin{
 			Id:        uuid.NewString(),
-			Name:      "rate-limiting",
+			Name:      test.name,
 			Config:    &config,
 			Enabled:   wrapperspb.Bool(true),
 			Protocols: []string{"http", "https"},

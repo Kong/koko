@@ -931,7 +931,7 @@ func TestDisableChangeTracking(t *testing.T) {
 		},
 		{
 			name: "[acme] change is not emitted with default value" +
-				" for rsa_key_size",
+				" for rsa_key_size and redis config",
 			uncompressedPayload: `
 {
 	"config_table": {
@@ -940,7 +940,14 @@ func TestDisableChangeTracking(t *testing.T) {
 				"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
 				"name": "acme",
 				"config": {
-					"rsa_key_size": 4096
+					"rsa_key_size": 4096,
+					"storage_config": {
+						"redis": {
+							"ssl": false,
+							"ssl_verify": false,
+							"ssl_server_name": null
+						}
+					}
 				}
 			}
 		]
@@ -956,6 +963,59 @@ func TestDisableChangeTracking(t *testing.T) {
 				"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
 				"name": "acme",
 				"config": {
+					"storage_config": {
+						"redis": {
+						}
+					}
+				}
+			}
+		]
+	}
+}
+`,
+			expectedChanges: config.TrackedChanges{},
+		},
+		{
+			name: "[acme] change is not emitted with newer DPs",
+			uncompressedPayload: `
+{
+	"config_table": {
+		"plugins": [
+			{
+				"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+				"name": "acme",
+				"config": {
+					"rsa_key_size": 4096,
+					"storage_config": {
+						"redis": {
+							"ssl": false,
+							"ssl_verify": false,
+							"ssl_server_name": null
+						}
+					}
+				}
+			}
+		]
+	}
+}
+`,
+			dataPlaneVersion: "3.1.0",
+			expectedPayload: `
+{
+	"config_table": {
+		"plugins": [
+			{
+				"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+				"name": "acme",
+				"config": {
+					"rsa_key_size": 4096,
+					"storage_config": {
+						"redis": {
+							"ssl": false,
+							"ssl_verify": false,
+							"ssl_server_name": null
+						}
+					}
 				}
 			}
 		]
@@ -1001,6 +1061,171 @@ func TestDisableChangeTracking(t *testing.T) {
 				ChangeDetails: []config.ChangeDetail{
 					{
 						ID: "P111",
+						Resources: []config.ResourceInfo{
+							{
+								Type: "plugin",
+								ID:   "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "[acme] change is emitted with non-default value" +
+				" for ssl",
+			uncompressedPayload: `
+{
+	"config_table": {
+		"plugins": [
+			{
+				"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+				"name": "acme",
+				"config": {
+					"storage_config": {
+						"redis": {
+							"ssl": true
+						}
+					}
+				}
+			}
+		]
+	}
+}
+`,
+			dataPlaneVersion: "2.7.0",
+			expectedPayload: `
+{
+	"config_table": {
+		"plugins": [
+			{
+				"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+				"name": "acme",
+				"config": {
+					"storage_config": {
+						"redis": {
+						}
+					}
+				}
+			}
+		]
+	}
+}
+`,
+			expectedChanges: config.TrackedChanges{
+				ChangeDetails: []config.ChangeDetail{
+					{
+						ID: "P138",
+						Resources: []config.ResourceInfo{
+							{
+								Type: "plugin",
+								ID:   "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "[acme] change is emitted with non-default value" +
+				" for ssl_verify",
+			uncompressedPayload: `
+{
+	"config_table": {
+		"plugins": [
+			{
+				"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+				"name": "acme",
+				"config": {
+					"storage_config": {
+						"redis": {
+							"ssl_verify": true
+						}
+					}
+				}
+			}
+		]
+	}
+}
+`,
+			dataPlaneVersion: "2.7.0",
+			expectedPayload: `
+{
+	"config_table": {
+		"plugins": [
+			{
+				"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+				"name": "acme",
+				"config": {
+					"storage_config": {
+						"redis": {
+						}
+					}
+				}
+			}
+		]
+	}
+}
+`,
+			expectedChanges: config.TrackedChanges{
+				ChangeDetails: []config.ChangeDetail{
+					{
+						ID: "P138",
+						Resources: []config.ResourceInfo{
+							{
+								Type: "plugin",
+								ID:   "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "[acme] change is emitted with non-default value" +
+				" for ssl_server_name",
+			uncompressedPayload: `
+{
+	"config_table": {
+		"plugins": [
+			{
+				"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+				"name": "acme",
+				"config": {
+					"storage_config": {
+						"redis": {
+							"ssl_server_name": "test.com"
+						}
+					}
+				}
+			}
+		]
+	}
+}
+`,
+			dataPlaneVersion: "2.7.0",
+			expectedPayload: `
+{
+	"config_table": {
+		"plugins": [
+			{
+				"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+				"name": "acme",
+				"config": {
+					"storage_config": {
+						"redis": {
+						}
+					}
+				}
+			}
+		]
+	}
+}
+`,
+			expectedChanges: config.TrackedChanges{
+				ChangeDetails: []config.ChangeDetail{
+					{
+						ID: "P138",
 						Resources: []config.ResourceInfo{
 							{
 								Type: "plugin",

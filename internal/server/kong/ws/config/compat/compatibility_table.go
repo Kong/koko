@@ -905,6 +905,41 @@ var (
 				},
 			},
 		},
+		{
+			Metadata: config.ChangeMetadata{
+				ID:       config.ChangeID("P138"),
+				Severity: config.ChangeSeverityError,
+				Description: standardPluginFieldsMessage("acme",
+					[]string{
+						"storage_config.redis.ssl",
+						"storage_config.redis.ssl_verify",
+						"storage_config.redis.ssl_server_name",
+					},
+					"3.1", false),
+				Resolution: standardUpgradeMessage("3.1"),
+			},
+			SemverRange: versionsPre310,
+			Update: config.ConfigTableUpdates{
+				Name: "acme",
+				Type: config.Plugin,
+				RemoveFields: []string{
+					"storage_config.redis.ssl",
+					"storage_config.redis.ssl_verify",
+					"storage_config.redis.ssl_server_name",
+				},
+				DisableChangeTracking: func(rawJSON string) bool {
+					plugin := gjson.Parse(rawJSON)
+					if plugin.Get("config.storage_config.redis.ssl").Bool() {
+						return false
+					}
+					if plugin.Get("config.storage_config.redis.ssl_verify").Bool() {
+						return false
+					}
+					sslServerName := plugin.Get("config.storage_config.redis.ssl_server_name")
+					return sslServerName.Exists() && sslServerName.Type == gjson.Null
+				},
+			},
+		},
 	}
 )
 

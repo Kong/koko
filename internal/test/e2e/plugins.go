@@ -49,11 +49,20 @@ var VersionCompatibilityOSSPluginConfigurationTests = []VersionCompatibilityPlug
 	//
 	// DP < 3.0:
 	//   - remove 'allow_any_domain'
+	// DP < 3.1:
+	//   - remove 'storage_config.redis.ssl*'
 	{
 		Name: "acme",
 		Config: `{
 			"account_email": "example@example.com",
-			"allow_any_domain": true
+			"allow_any_domain": true,
+			"storage_config": {
+				"redis": {
+					"ssl": true,
+					"ssl_verify": true,
+					"ssl_server_name": "test.com"
+				}
+			}
 		}`,
 	},
 	// DP < 2.6
