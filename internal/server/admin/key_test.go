@@ -8,6 +8,7 @@ import (
 	"github.com/gavv/httpexpect/v2"
 	"github.com/google/uuid"
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
+	"github.com/stretchr/testify/require"
 )
 
 func goodKey() *v1.Key {
@@ -155,6 +156,76 @@ func TestKeyDelete(t *testing.T) {
 }
 
 func TestKeyList(t *testing.T) {
+	s, cleanup := setup(t)
+	defer cleanup()
+
+	c := httpexpect.New(t, s.URL)
+
+	k1 := goodKey()
+	res := c.POST("/v1/keys").WithJSON(k1).Expect()
+	res.Status(http.StatusCreated)
+	id1 := res.JSON().Path("$.item.id").String().Raw()
+
+	k2 := goodKey()
+	res = c.POST("/v1/keys").WithJSON(k2).Expect()
+	res.Status(http.StatusCreated)
+	id2 := res.JSON().Path("$.item.id").String().Raw()
+
+	k3 := goodKey()
+	res = c.POST("/v1/keys").WithJSON(k3).Expect()
+	res.Status(http.StatusCreated)
+	id3 := res.JSON().Path("$.item.id").String().Raw()
+
+	k4 := goodKey()
+	res = c.POST("/v1/keys").WithJSON(k4).Expect()
+	res.Status(http.StatusCreated)
+	id4 := res.JSON().Path("$.item.id").String().Raw()
+
+	k5 := goodKey()
+	res = c.POST("/v1/keys").WithJSON(k5).Expect()
+	res.Status(http.StatusCreated)
+	id5 := res.JSON().Path("$.item.id").String().Raw()
+
+	t.Run("list all keys", func(t *testing.T) {
+		body := c.GET("/v1/keys").Expect().Status(http.StatusOK).JSON()
+		ids := body.Path("$..id").Array().Raw()
+		require.ElementsMatch(t, []string{id1, id2, id3, id4, id5}, ids)
+	})
+
+	t.Run("list all keys with paging", func(t *testing.T) {
+		// first page
+		body := c.GET("/v1/keys").
+			WithQuery("page.size", 2).
+			WithQuery("page.number", 1).
+			Expect().Status(http.StatusOK).JSON().Object()
+		body.Path("$.page.total_count").Number().Equal(5)
+		body.Path("$.page.next_page_num").Number().Equal(2)
+		ids := body.Path("$.items..id").Array().Raw()
+		require.Equal(t, 2, len(ids))
+
+		// second page.
+		body = c.GET("/v1/keys").
+			WithQuery("page.size", 2).
+			WithQuery("page.number", 2).
+			Expect().Status(http.StatusOK).JSON().Object()
+		body.Path("$.page.total_count").Number().Equal(5)
+		body.Path("$.page.next_page_num").Number().Equal(3)
+		ids = append(ids, body.Path("$.items..id").Array().Raw()...)
+		require.Equal(t, 4, len(ids))
+
+		// last page.
+		body = c.GET("/v1/keys").
+			WithQuery("page.size", 2).
+			WithQuery("page.number", 3).
+			Expect().Status(http.StatusOK).JSON().Object()
+		body.Path("$.page.total_count").Number().Equal(5)
+		body.Value("page").Object().NotContainsKey("next_page_num")
+		ids = append(ids, body.Path("$.items..id").Array().Raw()...)
+		require.Equal(t, 5, len(ids))
+
+		// they're all there
+		require.ElementsMatch(t, []string{id1, id2, id3, id4, id5}, ids)
+	})
 }
 
 func goodKeySet() *v1.KeySet {

@@ -2,9 +2,12 @@ package admin
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 
+	pbModel "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/service/v1"
+	"github.com/kong/koko/internal/model"
 	"github.com/kong/koko/internal/resource"
 	"github.com/kong/koko/internal/server/util"
 	"github.com/kong/koko/internal/store"
@@ -96,6 +99,47 @@ func (s *KeyService) DeleteKey(
 	}
 	util.SetHeader(ctx, http.StatusNoContent)
 	return &v1.DeleteKeyResponse{}, nil
+}
+
+func (s *KeyService) ListKeys(ctx context.Context,
+	req *v1.ListKeysRequest,
+) (*v1.ListKeysResponse, error) {
+	db, err := s.getDB(ctx, req.Cluster)
+	if err != nil {
+		return nil, err
+	}
+
+	listFn := []store.ListOptsFunc{}
+
+	list := resource.NewList(resource.TypeKey)
+	listOptFns, err := ListOptsFromReq(req.Page)
+	if err != nil {
+		return nil, s.err(ctx, err)
+	}
+
+	listFn = append(listFn, listOptFns...)
+
+	if err := db.List(ctx, list, listFn...); err != nil {
+		return nil, s.err(ctx, err)
+	}
+
+	return &v1.ListKeysResponse{
+		Items: keysFromObjects(list.GetAll()),
+		Page:  getPaginationResponse(list.GetTotalCount(), list.GetNextPage()),
+	}, nil
+}
+
+func keysFromObjects(objects []model.Object) []*pbModel.Key {
+	res := make([]*pbModel.Key, 0, len(objects))
+	for _, object := range objects {
+		key, ok := object.Resource().(*pbModel.Key)
+		if !ok {
+			panic(fmt.Sprintf("expected type '%T' but got '%T'",
+				&pbModel.Key{}, object.Resource()))
+		}
+		res = append(res, key)
+	}
+	return res
 }
 
 type KeySetService struct {

@@ -1017,7 +1017,7 @@ var (
 		},
 		{
 			Metadata: config.ChangeMetadata{
-				ID:          config.ChangeID("P138"),
+				ID:          config.ChangeID("P140"),
 				Severity:    config.ChangeSeverityError,
 				Description: standardCoreEntityMessage("key", "3.1"),
 				Resolution:  standardUpgradeMessage("3.1"),
