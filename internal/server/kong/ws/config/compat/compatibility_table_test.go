@@ -1974,6 +1974,269 @@ func TestDisableChangeTracking(t *testing.T) {
 `,
 			expectedChanges: config.TrackedChanges{},
 		},
+		{
+			name: "[response-ratelimiting] change is not emitted with default values for redis config",
+			uncompressedPayload: `
+{
+	"config_table": {
+		"plugins": [
+			{
+				"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+				"name": "response-ratelimiting",
+				"config": {
+					"limits": {
+						"sms": {
+							"second": 42
+						}
+					},
+					"redis_ssl": false,
+					"redis_ssl_verify": false,
+					"redis_server_name": null
+				}
+			}
+		]
+	}
+}
+`,
+			dataPlaneVersion: "2.7.0",
+			expectedPayload: `
+{
+	"config_table": {
+		"plugins": [
+			{
+				"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+				"name": "response-ratelimiting",
+				"config": {
+					"limits": {
+						"sms": {
+							"second": 42
+						}
+					}
+				}
+			}
+		]
+	}
+}
+`,
+			expectedChanges: config.TrackedChanges{},
+		},
+		{
+			name: "[response-ratelimiting] change is emitted with non-default value for redis_ssl",
+			uncompressedPayload: `
+{
+	"config_table": {
+		"plugins": [
+			{
+				"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+				"name": "response-ratelimiting",
+				"config": {
+					"limits": {
+						"sms": {
+							"second": 42
+						}
+					},
+					"redis_ssl": true
+				}
+			}
+		]
+	}
+}
+`,
+			dataPlaneVersion: "2.7.0",
+			expectedPayload: `
+{
+	"config_table": {
+		"plugins": [
+			{
+				"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+				"name": "response-ratelimiting",
+				"config": {
+					"limits": {
+						"sms": {
+							"second": 42
+						}
+					}
+				}
+			}
+		]
+	}
+}
+`,
+			expectedChanges: config.TrackedChanges{
+				ChangeDetails: []config.ChangeDetail{
+					{
+						ID: "P139",
+						Resources: []config.ResourceInfo{
+							{
+								Type: "plugin",
+								ID:   "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "[response-ratelimiting] change is emitted with non-default value for redis_ssl_verify",
+			uncompressedPayload: `
+{
+	"config_table": {
+		"plugins": [
+			{
+				"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+				"name": "response-ratelimiting",
+				"config": {
+					"limits": {
+						"sms": {
+							"second": 42
+						}
+					},
+					"redis_ssl_verify": true
+				}
+			}
+		]
+	}
+}
+`,
+			dataPlaneVersion: "2.7.0",
+			expectedPayload: `
+{
+	"config_table": {
+		"plugins": [
+			{
+				"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+				"name": "response-ratelimiting",
+				"config": {
+					"limits": {
+						"sms": {
+							"second": 42
+						}
+					}
+				}
+			}
+		]
+	}
+}
+`,
+			expectedChanges: config.TrackedChanges{
+				ChangeDetails: []config.ChangeDetail{
+					{
+						ID: "P139",
+						Resources: []config.ResourceInfo{
+							{
+								Type: "plugin",
+								ID:   "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "[response-ratelimiting] change is emitted with non-default value for redis_server_name",
+			uncompressedPayload: `
+{
+	"config_table": {
+		"plugins": [
+			{
+				"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+				"name": "response-ratelimiting",
+				"config": {
+					"limits": {
+						"sms": {
+							"second": 42
+						}
+					},
+					"redis_server_name": "test.com"
+				}
+			}
+		]
+	}
+}
+`,
+			dataPlaneVersion: "2.7.0",
+			expectedPayload: `
+{
+	"config_table": {
+		"plugins": [
+			{
+				"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+				"name": "response-ratelimiting",
+				"config": {
+					"limits": {
+						"sms": {
+							"second": 42
+						}
+					}
+				}
+			}
+		]
+	}
+}
+`,
+			expectedChanges: config.TrackedChanges{
+				ChangeDetails: []config.ChangeDetail{
+					{
+						ID: "P139",
+						Resources: []config.ResourceInfo{
+							{
+								Type: "plugin",
+								ID:   "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "[response-ratelimiting] vc is not applied with 3.1 DPs",
+			uncompressedPayload: `
+{
+	"config_table": {
+		"plugins": [
+			{
+				"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+				"name": "response-ratelimiting",
+				"config": {
+					"limits": {
+						"sms": {
+							"second": 42
+						}
+					},
+					"redis_ssl": true,
+					"redis_ssl_verify": true,
+					"redis_server_name": "test.com"
+				}
+			}
+		]
+	}
+}
+`,
+			dataPlaneVersion: "3.1.0",
+			expectedPayload: `
+{
+	"config_table": {
+		"plugins": [
+			{
+				"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+				"name": "response-ratelimiting",
+				"config": {
+					"limits": {
+						"sms": {
+							"second": 42
+						}
+					},
+					"redis_ssl": true,
+					"redis_ssl_verify": true,
+					"redis_server_name": "test.com"
+				}
+			}
+		]
+	}
+}
+`,
+			expectedChanges: config.TrackedChanges{},
+		},
 	}
 	vc, err := config.NewVersionCompatibilityProcessor(config.VersionCompatibilityOpts{
 		Logger:        log.Logger,
