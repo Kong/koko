@@ -67,23 +67,45 @@ func TestKey_Validate(t *testing.T) {
 				},
 			},
 		},
-		// {
-		// 	name: "key without kid isn't valid",
-		// 	Key: func() Key {
-		// 		k := goodKey()
-		// 		k.Key.Kid = ""
-		// 		return k
-		// 	},
-		// 	wantErr: true,
-		// 	Errs: []*v1.ErrorDetail{
-		// 		{
-		// 			Type: v1.ErrorType_ERROR_TYPE_ENTITY,
-		// 			Messages: []string{
-		// 				"missing properties: 'kid'",
-		// 			},
-		// 		},
-		// 	},
-		// },
+		{
+			name: "key with jwk and without kid isn't valid",
+			Key: func() Key {
+				k := goodKey()
+				k.Key.Jwk = &v1.JwkKey{}
+				return k
+			},
+			wantErr: true,
+			Errs: []*v1.ErrorDetail{
+				{
+					Type:  v1.ErrorType_ERROR_TYPE_FIELD,
+					Field: "jwk",
+					Messages: []string{
+						"missing properties: 'kid'",
+					},
+				},
+			},
+		},
+		{
+			name: "key with valid jwk is valid",
+			Key: func() Key {
+				k := NewKey()
+				k.Key.Jwk = &v1.JwkKey{}
+				k.ProcessDefaults(context.Background())
+				return k
+			},
+		},
+		{
+			name: "key with valid pem is valid",
+			Key: func() Key {
+				k := NewKey()
+				k.Key.Pem = &v1.PemKey{
+					PublicKey:  "xx",
+					PrivateKey: "yy",
+				}
+				k.ProcessDefaults(context.Background())
+				return k
+			},
+		},
 	}
 
 	for _, tt := range tests {

@@ -45,6 +45,9 @@ func (k Key) ProcessDefaults(ctx context.Context) error {
 		return fmt.Errorf("invalid nil resource")
 	}
 	defaultID(&k.Key.Id)
+	if k.Key.Jwk != nil {
+		defaultID(&k.Key.Jwk.Kid)
+	}
 	return nil
 }
 
