@@ -260,7 +260,7 @@ func TestProcessAutoFields(t *testing.T) {
 		}
 		require.Equal(t, expectedConfig, processConfig)
 	})
-	t.Run("fails to process defaults with plugin schema which has not been loaded", func(t *testing.T) {
+	t.Run("processing defaults with plugin schema which has not been loaded return a nil config", func(t *testing.T) {
 		validator, err := NewLuaValidator(Opts{
 			Logger: log.Logger,
 		})
@@ -272,9 +272,10 @@ func TestProcessAutoFields(t *testing.T) {
 			Protocols: []string{"http", "https"},
 			Config:    &structpb.Struct{},
 		}
+		// no error should be returned, since this is not validation
 		err = validator.ProcessDefaults(getValidContext(), plugin)
-		require.NotNil(t, err)
-		require.Contains(t, err.Error(), "unmarshal JSON:")
+		require.NoError(t, err)
+		require.Nil(t, plugin.Config)
 	})
 }
 
