@@ -9,7 +9,7 @@ require (
 	github.com/bluele/gcache v0.0.2
 	github.com/bufbuild/buf v1.9.0
 	github.com/caarlos0/env/v6 v6.10.1
-	github.com/cenkalti/backoff/v4 v4.1.3
+	github.com/cenkalti/backoff/v4 v4.2.0
 	github.com/cespare/xxhash/v2 v2.1.2
 	github.com/gavv/httpexpect/v2 v2.3.1
 	github.com/go-sql-driver/mysql v1.6.0
