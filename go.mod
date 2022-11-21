@@ -33,7 +33,7 @@ require (
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/prometheus/client_golang v1.14.0
 	github.com/prometheus/client_model v0.3.0
-	github.com/samber/lo v1.34.0
+	github.com/samber/lo v1.35.0
 	github.com/santhosh-tekuri/jsonschema/v5 v5.1.0
 	github.com/shirou/gopsutil/v3 v3.22.10
 	github.com/spf13/cobra v1.6.1
