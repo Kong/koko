@@ -1287,6 +1287,29 @@ func TestVersionCompatibility_310OrNewer(t *testing.T) {
 				}
 			}`,
 		},
+		{
+			name: "response-ratelimiting",
+			config: `{
+				"limits": {
+					"sms": {
+						"second": 42
+					}
+				},
+				"redis_ssl": true,
+				"redis_ssl_verify": true,
+				"redis_server_name": "test.com"
+			}`,
+			expectedConfig: `{
+				"limits": {
+					"sms": {
+						"second": 42
+					}
+				},
+				"redis_ssl": true,
+				"redis_ssl_verify": true,
+				"redis_server_name": "test.com"
+			}`,
+		},
 	}
 	expectedConfig := &v1.TestingConfig{
 		Plugins: make([]*v1.Plugin, 0, len(tests)),

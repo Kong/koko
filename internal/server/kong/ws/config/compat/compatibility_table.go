@@ -940,6 +940,41 @@ var (
 				},
 			},
 		},
+		{
+			Metadata: config.ChangeMetadata{
+				ID:       config.ChangeID("P139"),
+				Severity: config.ChangeSeverityError,
+				Description: standardPluginFieldsMessage("response-ratelimiting",
+					[]string{
+						"redis_ssl",
+						"redis_ssl_verify",
+						"redis_server_name",
+					},
+					"3.1", false),
+				Resolution: standardUpgradeMessage("3.1"),
+			},
+			SemverRange: versionsPre310,
+			Update: config.ConfigTableUpdates{
+				Name: "response-ratelimiting",
+				Type: config.Plugin,
+				RemoveFields: []string{
+					"redis_ssl",
+					"redis_ssl_verify",
+					"redis_server_name",
+				},
+				DisableChangeTracking: func(rawJSON string) bool {
+					plugin := gjson.Parse(rawJSON)
+					if plugin.Get("config.redis_ssl").Bool() {
+						return false
+					}
+					if plugin.Get("config.redis_ssl_verify").Bool() {
+						return false
+					}
+					sslServerName := plugin.Get("config.redis_server_name")
+					return sslServerName.Exists() && sslServerName.Type == gjson.Null
+				},
+			},
+		},
 	}
 )
 

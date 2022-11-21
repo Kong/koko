@@ -324,6 +324,10 @@ var VersionCompatibilityOSSPluginConfigurationTests = []VersionCompatibilityPlug
 		ConfigureForService: true,
 		ConfigureForRoute:   true,
 	},
+	// DP < 2.8:
+	//   - remove 'redis_username'
+	// DP < 3.1:
+	//   - remove 'redis_ssl', 'redis_ssl_verify', 'redis_server_name'
 	{
 		Name: "response-ratelimiting",
 		Config: `{
@@ -332,7 +336,10 @@ var VersionCompatibilityOSSPluginConfigurationTests = []VersionCompatibilityPlug
 					"minute": 20
 				}
 			},
-			"redis_username": "REDIS_USERNAME"
+			"redis_username": "REDIS_USERNAME",
+			"redis_ssl": true,
+			"redis_ssl_verify": true,
+			"redis_server_name": "test.com"
 		}`,
 		ConfigureForService: true,
 		ConfigureForRoute:   true,
