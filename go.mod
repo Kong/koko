@@ -11,7 +11,7 @@ require (
 	github.com/caarlos0/env/v6 v6.10.1
 	github.com/cenkalti/backoff/v4 v4.2.0
 	github.com/cespare/xxhash/v2 v2.1.2
-	github.com/gavv/httpexpect/v2 v2.3.1
+	github.com/gavv/httpexpect/v2 v2.4.1
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/golang-migrate/migrate/v4 v4.15.2
 	github.com/golang/protobuf v1.5.2
@@ -153,7 +153,7 @@ require (
 	golang.org/x/text v0.4.0 // indirect
 	golang.org/x/tools v0.1.12 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	moul.io/http2curl v1.0.1-0.20190925090545-5cd742060b0e // indirect
+	moul.io/http2curl/v2 v2.3.0 // indirect
 	olympos.io/encoding/edn v0.0.0-20201019073823-d3554ca0b0a3 // indirect
 )
 
