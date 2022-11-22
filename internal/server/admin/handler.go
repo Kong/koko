@@ -383,4 +383,5 @@ func RegisterAdminService(server *grpc.Server, opts HandlerOpts) {
 	v1.RegisterSNIServiceServer(server, services.sni)
 	v1.RegisterVaultServiceServer(server, services.vault)
 	v1.RegisterConsumerGroupServiceServer(server, services.consumerGroup)
+	v1.RegisterKeyServiceServer(server, services.key)
 }
