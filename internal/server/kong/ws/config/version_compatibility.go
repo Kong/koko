@@ -782,6 +782,7 @@ func (vc *WSVersionCompatibility) processTopLevelUpdates(
 	for _, key := range configTableUpdate.RemoveFields {
 		keyPath := fmt.Sprintf("config_table.%s", key)
 		if gjson.Get(processedPayload, keyPath).Exists() {
+			wasEmpty := len(gjson.Get(processedPayload, keyPath).Array()) == 0
 			processedPayload, err = sjson.Delete(processedPayload, keyPath)
 			if err != nil {
 				logger.Error("error while removing top level entity",
@@ -789,17 +790,19 @@ func (vc *WSVersionCompatibility) processTopLevelUpdates(
 					zap.String("entity", key))
 				continue
 			}
-			err = tracker.Track(configTableUpdate.ChangeID)
-			if err != nil {
-				logger.Error("failed to track version compatibility change",
-					zap.Error(err),
+			if !wasEmpty {
+				err = tracker.Track(configTableUpdate.ChangeID)
+				if err != nil {
+					logger.Error("failed to track version compatibility change",
+						zap.Error(err),
+						zap.String("change-id", string(configTableUpdate.ChangeID)),
+						zap.String("resource-type", key))
+					continue
+				}
+				logger.Warn("removing top-level entity",
 					zap.String("change-id", string(configTableUpdate.ChangeID)),
 					zap.String("resource-type", key))
-				continue
 			}
-			logger.Warn("removing top-level entity",
-				zap.String("change-id", string(configTableUpdate.ChangeID)),
-				zap.String("resource-type", key))
 		}
 	}
 
