@@ -1030,6 +1030,21 @@ var (
 				Remove:       true,
 			},
 		},
+		{
+			Metadata: config.ChangeMetadata{
+				ID:          config.ChangeID("P141"),
+				Severity:    config.ChangeSeverityError,
+				Description: standardCoreEntityMessage("key-set", "3.1"),
+				Resolution:  standardUpgradeMessage("3.1"),
+			},
+			SemverRange: versionsPre310,
+			Update: config.ConfigTableUpdates{
+				Name:         "key_sets",
+				Type:         config.TopLevel,
+				RemoveFields: []string{"key_sets"},
+				Remove:       true,
+			},
+		},
 	}
 )
 

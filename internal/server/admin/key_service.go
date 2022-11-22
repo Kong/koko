@@ -101,7 +101,8 @@ func (s *KeyService) DeleteKey(
 	return &v1.DeleteKeyResponse{}, nil
 }
 
-func (s *KeyService) ListKeys(ctx context.Context,
+func (s *KeyService) ListKeys(
+	ctx context.Context,
 	req *v1.ListKeysRequest,
 ) (*v1.ListKeysResponse, error) {
 	db, err := s.getDB(ctx, req.Cluster)
@@ -228,4 +229,46 @@ func (s *KeySetService) DeleteKeySet(
 	}
 	util.SetHeader(ctx, http.StatusNoContent)
 	return &v1.DeleteKeySetResponse{}, nil
+}
+
+func (s *KeySetService) ListKeySets(
+	ctx context.Context,
+	req *v1.ListKeySetsRequest,
+) (*v1.ListKeySetsResponse, error) {
+	db, err := s.getDB(ctx, req.Cluster)
+	if err != nil {
+		return nil, err
+	}
+
+	listFn := []store.ListOptsFunc{}
+
+	list := resource.NewList(resource.TypeKeySet)
+	listOptFns, err := ListOptsFromReq(req.Page)
+	if err != nil {
+		return nil, s.err(ctx, err)
+	}
+
+	listFn = append(listFn, listOptFns...)
+
+	if err := db.List(ctx, list, listFn...); err != nil {
+		return nil, s.err(ctx, err)
+	}
+
+	return &v1.ListKeySetsResponse{
+		Items: keySetsFromObjects(list.GetAll()),
+		Page:  getPaginationResponse(list.GetTotalCount(), list.GetNextPage()),
+	}, nil
+}
+
+func keySetsFromObjects(objects []model.Object) []*pbModel.KeySet {
+	res := make([]*pbModel.KeySet, 0, len(objects))
+	for _, object := range objects {
+		keySet, ok := object.Resource().(*pbModel.KeySet)
+		if !ok {
+			panic(fmt.Sprintf("expected type '%T' but got '%T'",
+				&pbModel.KeySet{}, object.Resource()))
+		}
+		res = append(res, keySet)
+	}
+	return res
 }

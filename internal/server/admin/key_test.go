@@ -365,3 +365,76 @@ func TestKeySetDelete(t *testing.T) {
 		body.ValueEqual("message", " 'Not-Valid' is not a valid uuid")
 	})
 }
+
+func TestKeySetList(t *testing.T) {
+	s, cleanup := setup(t)
+	defer cleanup()
+
+	c := httpexpect.New(t, s.URL)
+
+	ks1 := goodKeySet()
+	res := c.POST("/v1/key-sets").WithJSON(ks1).Expect()
+	res.Status(http.StatusCreated)
+	id1 := res.JSON().Path("$.item.id").String().Raw()
+
+	ks2 := goodKeySet()
+	res = c.POST("/v1/key-sets").WithJSON(ks2).Expect()
+	res.Status(http.StatusCreated)
+	id2 := res.JSON().Path("$.item.id").String().Raw()
+
+	ks3 := goodKeySet()
+	res = c.POST("/v1/key-sets").WithJSON(ks3).Expect()
+	res.Status(http.StatusCreated)
+	id3 := res.JSON().Path("$.item.id").String().Raw()
+
+	ks4 := goodKeySet()
+	res = c.POST("/v1/key-sets").WithJSON(ks4).Expect()
+	res.Status(http.StatusCreated)
+	id4 := res.JSON().Path("$.item.id").String().Raw()
+
+	ks5 := goodKeySet()
+	res = c.POST("/v1/key-sets").WithJSON(ks5).Expect()
+	res.Status(http.StatusCreated)
+	id5 := res.JSON().Path("$.item.id").String().Raw()
+
+	t.Run("list all key sets", func(t *testing.T) {
+		body := c.GET("/v1/key-sets").Expect().Status(http.StatusOK).JSON()
+		ids := body.Path("$..id").Array().Raw()
+		require.ElementsMatch(t, []string{id1, id2, id3, id4, id5}, ids)
+	})
+
+	t.Run("list all key sets with paging", func(t *testing.T) {
+		// first page
+		body := c.GET("/v1/key-sets").
+			WithQuery("page.size", 2).
+			WithQuery("page.number", 1).
+			Expect().Status(http.StatusOK).JSON().Object()
+		body.Path("$.page.total_count").Number().Equal(5)
+		body.Path("$.page.next_page_num").Number().Equal(2)
+		ids := body.Path("$.items..id").Array().Raw()
+		require.Equal(t, 2, len(ids))
+
+		// second page.
+		body = c.GET("/v1/key-sets").
+			WithQuery("page.size", 2).
+			WithQuery("page.number", 2).
+			Expect().Status(http.StatusOK).JSON().Object()
+		body.Path("$.page.total_count").Number().Equal(5)
+		body.Path("$.page.next_page_num").Number().Equal(3)
+		ids = append(ids, body.Path("$.items..id").Array().Raw()...)
+		require.Equal(t, 4, len(ids))
+
+		// last page.
+		body = c.GET("/v1/key-sets").
+			WithQuery("page.size", 2).
+			WithQuery("page.number", 3).
+			Expect().Status(http.StatusOK).JSON().Object()
+		body.Path("$.page.total_count").Number().Equal(5)
+		body.Value("page").Object().NotContainsKey("next_page_num")
+		ids = append(ids, body.Path("$.items..id").Array().Raw()...)
+		require.Equal(t, 5, len(ids))
+
+		// they're all there
+		require.ElementsMatch(t, []string{id1, id2, id3, id4, id5}, ids)
+	})
+}

@@ -268,6 +268,10 @@ func Run(ctx context.Context, config ServerConfig) error {
 	if err != nil {
 		return fmt.Errorf("failed to register keys configuration loader: %w", err)
 	}
+	err = loader.Register(&kongConfigWS.KongKeySetLoader{Client: grpcClients.KeySet})
+	if err != nil {
+		return fmt.Errorf("failed to register key-sets configuration loader: %w", err)
+	}
 
 	// setup version compatibility processor
 	vcLogger := logger.With(zap.String("component", "version-compatibility"))
@@ -425,6 +429,7 @@ type grpcClients struct {
 	Certificate   v1.CertificateServiceClient
 	CACertificate v1.CACertificateServiceClient
 	Key           v1.KeyServiceClient
+	KeySet        v1.KeySetServiceClient
 	SNI           v1.SNIServiceClient
 	Vault         v1.VaultServiceClient
 
@@ -445,6 +450,7 @@ func setupGRPCClients(cc *grpc.ClientConn) grpcClients {
 		Certificate:   v1.NewCertificateServiceClient(cc),
 		CACertificate: v1.NewCACertificateServiceClient(cc),
 		Key:           v1.NewKeyServiceClient(cc),
+		KeySet:        v1.NewKeySetServiceClient(cc),
 		SNI:           v1.NewSNIServiceClient(cc),
 		Vault:         v1.NewVaultServiceClient(cc),
 
