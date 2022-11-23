@@ -229,9 +229,11 @@ func f(m map[string]interface{}) ([]*grpcModel.ErrorDetail, error) {
 func (v *LuaValidator) ProcessDefaults(ctx context.Context, plugin *grpcModel.Plugin) error {
 	start := time.Now()
 	defer func() {
-		v.logger.With(zap.String("plugin", plugin.Name),
-			zap.Duration("process-defaults-time", time.Since(start))).
-			Debug("plugin defaults processed via lua VM")
+		v.logger.With(
+			zap.String("plugin", plugin.Name),
+			zap.String("plugin-id", plugin.Id),
+			zap.Duration("process-defaults-time", time.Since(start)),
+		).Debug("plugin defaults processed via lua VM")
 	}()
 	unloadLuaPluginSchema := v.loadLuaPluginSchema(ctx, plugin.Name)
 	defer unloadLuaPluginSchema()
@@ -241,7 +243,12 @@ func (v *LuaValidator) ProcessDefaults(ctx context.Context, plugin *grpcModel.Pl
 	}
 	updatedPluginJSON, err := v.goksV.ProcessAutoFields(string(pluginJSON))
 	if err != nil {
-		return fmt.Errorf("process auto fields failed: %v", err)
+		v.logger.With(
+			zap.String("plugin", plugin.Name),
+			zap.String("plugin-id", plugin.Id),
+			zap.Error(err),
+		).Error("process auto fields failed")
+		return fmt.Errorf("process auto fields failed for %s: %v", plugin.Name, err)
 	}
 	err = json.MarshallerWithDiscard.Unmarshal([]byte(updatedPluginJSON), plugin)
 	if err != nil {
