@@ -1,3 +1,5 @@
+local typedefs = require "kong.db.schema.typedefs"
+
 local function validate_shared_dict()
   -- remove shared dictionary validation
   return true
@@ -7,6 +9,7 @@ end
 return {
   name = "prometheus",
   fields = {
+    { protocols = typedefs.protocols },
     { config = {
         type = "record",
         fields = {
