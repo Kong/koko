@@ -24,6 +24,7 @@ local phase_functions = Schema.define {
 return {
   name = plugin_name,
   fields = {
+    { protocols = typedefs.protocols },
     { consumer = typedefs.no_consumer },
     {
       config = {
