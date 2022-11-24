@@ -15,7 +15,6 @@ func goodKey() *v1.Key {
 	return &v1.Key{
 		Id:   uuid.NewString(),
 		Jwk:  &v1.JwkKey{Kid: uuid.NewString()},
-		Pem:  &v1.PemKey{PrivateKey: "xxx"},
 		Name: "simpleKey-" + uuid.NewString(),
 	}
 }

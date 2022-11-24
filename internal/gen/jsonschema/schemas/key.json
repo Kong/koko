@@ -110,10 +110,10 @@
       ],
       "properties": {
         "private_key": {
-          "type": "string"
+          "format": "pem-encoded-private-key"
         },
         "public_key": {
-          "type": "string"
+          "format": "pem-encoded-public-key"
         }
       },
       "type": "object"
@@ -149,5 +149,37 @@
     }
   },
   "additionalProperties": false,
-  "type": "object"
+  "type": "object",
+  "allOf": [
+    {
+      "oneOf": [
+        {
+          "required": [
+            "jwk"
+          ],
+          "properties": {
+            "pem": {
+              "not": {
+                "description": "there's a JWK, don't set PEM"
+              }
+            }
+          }
+        },
+        {
+          "required": [
+            "pem"
+          ],
+          "properties": {
+            "jwk": {
+              "not": {
+                "description": "there's a PEM, don't set JWK"
+              }
+            }
+          }
+        }
+      ],
+      "title": "one key format",
+      "description": "Keys must be defined either in JWK or PEM format"
+    }
+  ]
 }

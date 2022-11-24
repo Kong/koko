@@ -220,8 +220,8 @@ var Reference = &generator.Schema{
 var PemKey = &generator.Schema{
 	Type: "object",
 	Properties: map[string]*generator.Schema{
-		"private_key": {Type: "string"},
-		"public_key":  {Type: "string"},
+		"private_key": {Format: "pem-encoded-private-key"},
+		"public_key":  {Format: "pem-encoded-public-key"},
 	},
 	Required: []string{"private_key"},
 }

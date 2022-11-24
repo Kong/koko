@@ -168,6 +168,26 @@ func init() {
 		},
 		AdditionalProperties: &falsy,
 		Required:             []string{"id"},
+		AllOf: []*generator.Schema{
+			{
+				Title:       "one key format",
+				Description: "Keys must be defined either in JWK or PEM format",
+				OneOf: []*generator.Schema{
+					{
+						Required: []string{"jwk"},
+						Properties: map[string]*generator.Schema{
+							"pem": {Not: &generator.Schema{Description: "there's a JWK, don't set PEM"}},
+						},
+					},
+					{
+						Required: []string{"pem"},
+						Properties: map[string]*generator.Schema{
+							"jwk": {Not: &generator.Schema{Description: "there's a PEM, don't set JWK"}},
+						},
+					},
+				},
+			},
+		},
 	}
 	err = generator.DefaultRegistry.Register(string(TypeKey), keySchema)
 	if err != nil {
