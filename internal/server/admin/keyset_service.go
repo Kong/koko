@@ -14,57 +14,58 @@ import (
 	"go.uber.org/zap"
 )
 
-type KeyService struct {
-	v1.UnimplementedKeyServiceServer
+type KeySetService struct {
+	v1.UnimplementedKeySetServiceServer
 	CommonOpts
 }
 
-func (s *KeyService) GetKey(
+func (s *KeySetService) GetKeySet(
 	ctx context.Context,
-	req *v1.GetKeyRequest,
-) (*v1.GetKeyResponse, error) {
+	req *v1.GetKeySetRequest,
+) (*v1.GetKeySetResponse, error) {
 	logger := s.logger(ctx)
 	db, err := s.getDB(ctx, req.Cluster)
 	if err != nil {
 		return nil, err
 	}
-	result := resource.NewKey()
+	result := resource.NewKeySet()
 	err = getEntityByIDOrName(ctx, req.Id, result, store.GetByName(req.Id), db, logger)
 	if err != nil {
 		return nil, util.HandleErr(ctx, logger, err)
 	}
 
-	return &v1.GetKeyResponse{
-		Item: result.Key,
+	return &v1.GetKeySetResponse{
+		Item: result.KeySet,
 	}, nil
 }
 
-func (s *KeyService) CreateKey(
+func (s *KeySetService) CreateKeySet(
 	ctx context.Context,
-	req *v1.CreateKeyRequest,
-) (*v1.CreateKeyResponse, error) {
+	req *v1.CreateKeySetRequest,
+) (*v1.CreateKeySetResponse, error) {
 	db, err := s.getDB(ctx, req.Cluster)
 	if err != nil {
 		return nil, err
 	}
 
-	res := resource.NewKey()
-	res.Key = req.Item
+	res := resource.NewKeySet()
+	res.KeySet = req.Item
+	s.logger(ctx).Debug("copied keyset", zap.Any("keyset", res.KeySet))
 	if err := db.Create(ctx, res); err != nil {
 		s.logger(ctx).Error("error creating", zap.Error(err))
 		return nil, s.err(ctx, err)
 	}
 
 	util.SetHeader(ctx, http.StatusCreated)
-	return &v1.CreateKeyResponse{
-		Item: res.Key,
+	return &v1.CreateKeySetResponse{
+		Item: res.KeySet,
 	}, nil
 }
 
-func (s *KeyService) UpsertKey(
+func (s *KeySetService) UpsertKeySet(
 	ctx context.Context,
-	req *v1.UpsertKeyRequest,
-) (*v1.UpsertKeyResponse, error) {
+	req *v1.UpsertKeySetRequest,
+) (*v1.UpsertKeySetResponse, error) {
 	if err := validUUID(req.Item.Id); err != nil {
 		return nil, s.err(ctx, err)
 	}
@@ -72,20 +73,20 @@ func (s *KeyService) UpsertKey(
 	if err != nil {
 		return nil, err
 	}
-	res := resource.NewKey()
-	res.Key = req.Item
+	res := resource.NewKeySet()
+	res.KeySet = req.Item
 	if err := db.Upsert(ctx, res); err != nil {
 		return nil, s.err(ctx, err)
 	}
-	return &v1.UpsertKeyResponse{
-		Item: res.Key,
+	return &v1.UpsertKeySetResponse{
+		Item: res.KeySet,
 	}, nil
 }
 
-func (s *KeyService) DeleteKey(
+func (s *KeySetService) DeleteKeySet(
 	ctx context.Context,
-	req *v1.DeleteKeyRequest,
-) (*v1.DeleteKeyResponse, error) {
+	req *v1.DeleteKeySetRequest,
+) (*v1.DeleteKeySetResponse, error) {
 	if err := validUUID(req.Id); err != nil {
 		return nil, s.err(ctx, err)
 	}
@@ -93,18 +94,18 @@ func (s *KeyService) DeleteKey(
 	if err != nil {
 		return nil, err
 	}
-	err = db.Delete(ctx, store.DeleteByID(req.Id), store.DeleteByType(resource.TypeKey))
+	err = db.Delete(ctx, store.DeleteByID(req.Id), store.DeleteByType(resource.TypeKeySet))
 	if err != nil {
 		return nil, s.err(ctx, err)
 	}
 	util.SetHeader(ctx, http.StatusNoContent)
-	return &v1.DeleteKeyResponse{}, nil
+	return &v1.DeleteKeySetResponse{}, nil
 }
 
-func (s *KeyService) ListKeys(
+func (s *KeySetService) ListKeySets(
 	ctx context.Context,
-	req *v1.ListKeysRequest,
-) (*v1.ListKeysResponse, error) {
+	req *v1.ListKeySetsRequest,
+) (*v1.ListKeySetsResponse, error) {
 	db, err := s.getDB(ctx, req.Cluster)
 	if err != nil {
 		return nil, err
@@ -112,7 +113,7 @@ func (s *KeyService) ListKeys(
 
 	listFn := []store.ListOptsFunc{}
 
-	list := resource.NewList(resource.TypeKey)
+	list := resource.NewList(resource.TypeKeySet)
 	listOptFns, err := ListOptsFromReq(req.Page)
 	if err != nil {
 		return nil, s.err(ctx, err)
@@ -124,21 +125,21 @@ func (s *KeyService) ListKeys(
 		return nil, s.err(ctx, err)
 	}
 
-	return &v1.ListKeysResponse{
-		Items: keysFromObjects(list.GetAll()),
+	return &v1.ListKeySetsResponse{
+		Items: keySetsFromObjects(list.GetAll()),
 		Page:  getPaginationResponse(list.GetTotalCount(), list.GetNextPage()),
 	}, nil
 }
 
-func keysFromObjects(objects []model.Object) []*pbModel.Key {
-	res := make([]*pbModel.Key, 0, len(objects))
+func keySetsFromObjects(objects []model.Object) []*pbModel.KeySet {
+	res := make([]*pbModel.KeySet, 0, len(objects))
 	for _, object := range objects {
-		key, ok := object.Resource().(*pbModel.Key)
+		keySet, ok := object.Resource().(*pbModel.KeySet)
 		if !ok {
 			panic(fmt.Sprintf("expected type '%T' but got '%T'",
-				&pbModel.Key{}, object.Resource()))
+				&pbModel.KeySet{}, object.Resource()))
 		}
-		res = append(res, key)
+		res = append(res, keySet)
 	}
 	return res
 }
