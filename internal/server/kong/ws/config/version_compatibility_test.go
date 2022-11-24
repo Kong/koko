@@ -6279,11 +6279,10 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 			configTableUpdates: map[string][]ConfigTableUpdates{
 				"< 3.1.0": {
 					{
-						Name:         "keys",
-						Type:         TopLevel,
-						RemoveFields: []string{"keys"},
-						Remove:       true,
-						ChangeID:     "T102",
+						Name:     "keys",
+						Type:     Key,
+						Remove:   true,
+						ChangeID: "T102",
 					},
 				},
 			},
@@ -6353,8 +6352,13 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 			expectedChanges: TrackedChanges{
 				ChangeDetails: []ChangeDetail{
 					{
-						ID:        "T102",
-						Resources: []ResourceInfo{},
+						ID: "T102",
+						Resources: []ResourceInfo{
+							{
+								Type: "key",
+								ID:   "152b5c2f-c289-4ad6-a475-a0d185cb4801",
+							},
+						},
 					},
 				},
 			},

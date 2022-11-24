@@ -1024,10 +1024,9 @@ var (
 			},
 			SemverRange: versionsPre310,
 			Update: config.ConfigTableUpdates{
-				Name:         "keys",
-				Type:         config.TopLevel,
-				RemoveFields: []string{"keys"},
-				Remove:       true,
+				Name:   "keys",
+				Type:   config.Key,
+				Remove: true,
 			},
 		},
 		{
@@ -1039,10 +1038,9 @@ var (
 			},
 			SemverRange: versionsPre310,
 			Update: config.ConfigTableUpdates{
-				Name:         "key_sets",
-				Type:         config.TopLevel,
-				RemoveFields: []string{"key_sets"},
-				Remove:       true,
+				Name:   "key_sets",
+				Type:   config.KeySet,
+				Remove: true,
 			},
 		},
 	}
