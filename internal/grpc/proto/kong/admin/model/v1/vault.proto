@@ -23,6 +23,9 @@ message Vault {
     string mount = 4;
     string kv = 5;
     string token = 6;
+    string auth_method = 7;
+    string kube_role = 8;
+    string kube_api_token_file = 9;
   }
   message Config {
     oneof config {

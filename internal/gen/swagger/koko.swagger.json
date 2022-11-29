@@ -4376,6 +4376,15 @@
         },
         "token": {
           "type": "string"
+        },
+        "auth_method": {
+          "type": "string"
+        },
+        "kube_role": {
+          "type": "string"
+        },
+        "kube_api_token_file": {
+          "type": "string"
         }
       }
     },
