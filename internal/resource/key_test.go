@@ -154,6 +154,31 @@ func TestKey_Validate(t *testing.T) {
 			},
 		},
 		{
+			name: "key with invalid pem is not valid",
+			Key: func() Key {
+				k := NewKey()
+				k.Key.Pem = &v1.PemKey{
+					PublicKey:  "1234",
+					PrivateKey: "hunter2",
+				}
+				k.ProcessDefaults(context.Background())
+				return k
+			},
+			wantErr: true,
+			Errs: []*v1.ErrorDetail{
+				{
+					Type:     v1.ErrorType_ERROR_TYPE_FIELD,
+					Field:    "pem.private_key",
+					Messages: []string{"'hunter2' is not valid 'pem-encoded-private-key'"},
+				},
+				{
+					Type:     v1.ErrorType_ERROR_TYPE_FIELD,
+					Field:    "pem.public_key",
+					Messages: []string{"'1234' is not valid 'pem-encoded-public-key'"},
+				},
+			},
+		},
+		{
 			name: "key with valid pem is valid",
 			Key: func() Key {
 				k := NewKey()
