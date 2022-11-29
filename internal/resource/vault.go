@@ -15,11 +15,12 @@ import (
 const (
 	TypeVault model.Type = "vault"
 
-	defaultHcvPort     = 8200
-	defaultHcvHost     = "127.0.0.1"
-	defaultHcvKV       = "v1"
-	defaultHcvMount    = "secret"
-	defaultHcvProtocol = typedefs.ProtocolHTTP
+	defaultHcvPort       = 8200
+	defaultHcvHost       = "127.0.0.1"
+	defaultHcvKV         = "v1"
+	defaultHcvMount      = "secret"
+	defaultHcvProtocol   = typedefs.ProtocolHTTP
+	defaultHcvAuthMethod = "token"
 )
 
 var (
@@ -34,11 +35,12 @@ var (
 
 	defaultHcv = &v1.Vault_Config_Hcv{
 		Hcv: &v1.Vault_HcvConfig{
-			Host:     defaultHcvHost,
-			Port:     defaultHcvPort,
-			Kv:       defaultHcvKV,
-			Mount:    defaultHcvMount,
-			Protocol: defaultHcvProtocol,
+			Host:       defaultHcvHost,
+			Port:       defaultHcvPort,
+			Kv:         defaultHcvKV,
+			Mount:      defaultHcvMount,
+			Protocol:   defaultHcvProtocol,
+			AuthMethod: defaultHcvAuthMethod,
 		},
 	}
 )
@@ -98,6 +100,9 @@ func (r Vault) ProcessDefaults(ctx context.Context) error {
 			}
 			if r.Vault.Config.GetHcv().Protocol == "" {
 				r.Vault.Config.GetHcv().Protocol = defaultHcvProtocol
+			}
+			if r.Vault.Config.GetHcv().AuthMethod == "" {
+				r.Vault.Config.GetHcv().AuthMethod = defaultHcvAuthMethod
 			}
 		}
 	}
