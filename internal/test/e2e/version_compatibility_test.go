@@ -1419,3 +1419,56 @@ func intMin(lhs int, rhs int) int {
 	}
 	return rhs
 }
+
+func TestVersionCompatibility_KeysEntities(t *testing.T) {
+	cleanup := run.Koko(t)
+	defer cleanup()
+
+	dpCleanup := run.KongDP(kong.GetKongConfForShared())
+	defer dpCleanup()
+	require.NoError(t, util.WaitForKong(t))
+	require.NoError(t, util.WaitForKongAdminAPI(t))
+
+	admin := httpexpect.WithConfig(httpexpect.Config{
+		BaseURL:  "http://localhost:3000",
+		Reporter: httpexpect.NewRequireReporter(t),
+		Printers: []httpexpect.Printer{
+			httpexpect.NewCompactPrinter(t),
+		},
+	})
+
+	admin.POST("/v1/keys").WithJSON(&v1.Key{
+		Name: "second",
+		Jwk:  &v1.JwkKey{},
+	}).Expect().Status(http.StatusCreated)
+
+	t.Run("pre 3.0", func(t *testing.T) {
+		kongClient.RunWhenKong(t, "< 3.0.0")
+
+		util.WaitFunc(t, func() error {
+			return util.EnsureConfig(&v1.TestingConfig{})
+		})
+	})
+
+	t.Run("pre 3.1", func(t *testing.T) {
+		kongClient.RunWhenKong(t, ">= 3.0.0 < 3.1.0")
+
+		util.WaitFunc(t, func() error {
+			return util.EnsureConfig(&v1.TestingConfig{})
+		})
+	})
+
+	t.Run("3.1 and above", func(t *testing.T) {
+		kongClient.RunWhenKong(t, ">= 3.1.0")
+
+		util.WaitFunc(t, func() error {
+			return util.EnsureConfig(&v1.TestingConfig{
+				Keys: []*v1.Key{
+					{
+						Name: "second",
+					},
+				},
+			})
+		})
+	})
+}
