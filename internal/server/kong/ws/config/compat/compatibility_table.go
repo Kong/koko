@@ -570,6 +570,11 @@ var (
 				RemoveFields: []string{
 					"proxy_scheme",
 				},
+				DisableChangeTracking: func(rawJSON string) bool {
+					plugin := gjson.Parse(rawJSON)
+					// do not emit change if 'proxy_scheme' is not set
+					return config.ValueIsEmpty(plugin.Get("config.proxy_scheme"))
+				},
 			},
 		},
 		{

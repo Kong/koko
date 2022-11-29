@@ -2237,6 +2237,88 @@ func TestDisableChangeTracking(t *testing.T) {
 `,
 			expectedChanges: config.TrackedChanges{},
 		},
+		{
+			name: "[aws-lambda] change is not emitted with default" +
+				" value of 'config.proxy_scheme'",
+			uncompressedPayload: `
+{
+	"config_table": {
+		"plugins": [
+			{
+				"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+				"name": "aws-lambda",
+				"config": {
+					"proxy_scheme": null
+				}
+			}
+		]
+	}
+}
+`,
+			dataPlaneVersion: "3.0.0",
+			expectedPayload: `
+{
+	"config_table": {
+		"plugins": [
+			{
+				"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+				"name": "aws-lambda",
+				"config": {
+				}
+			}
+		]
+	}
+}
+`,
+			expectedChanges: config.TrackedChanges{},
+		},
+		{
+			name: "[aws-lambda] change is emitted with non-default" +
+				" value of 'config.proxy_scheme'",
+			uncompressedPayload: `
+{
+	"config_table": {
+		"plugins": [
+			{
+				"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+				"name": "aws-lambda",
+				"config": {
+					"proxy_scheme": "foo"
+				}
+			}
+		]
+	}
+}
+`,
+			dataPlaneVersion: "3.0.0",
+			expectedPayload: `
+{
+	"config_table": {
+		"plugins": [
+			{
+				"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+				"name": "aws-lambda",
+				"config": {
+				}
+			}
+		]
+	}
+}
+`,
+			expectedChanges: config.TrackedChanges{
+				ChangeDetails: []config.ChangeDetail{
+					{
+						ID: "P120",
+						Resources: []config.ResourceInfo{
+							{
+								Type: "plugin",
+								ID:   "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 	vc, err := config.NewVersionCompatibilityProcessor(config.VersionCompatibilityOpts{
 		Logger:        log.Logger,
