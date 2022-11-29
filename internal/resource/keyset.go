@@ -89,6 +89,7 @@ func init() {
 			"created_at": typedefs.UnixEpoch,
 			"updated_at": typedefs.UnixEpoch,
 			"name":       typedefs.Name,
+			"tags":       typedefs.Tags,
 		},
 		AdditionalProperties: &falsy,
 		Required:             []string{"id", "name"},

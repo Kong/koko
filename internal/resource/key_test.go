@@ -185,6 +185,24 @@ func TestKey_Validate(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "repeated tags isn't valid",
+			Key: func() Key {
+				k := NewKey()
+				k.Key.Jwk = &v1.JwkKey{}
+				k.Key.Tags = []string{"A1", "X3", "A1"}
+				k.ProcessDefaults(context.Background())
+				return k
+			},
+			wantErr: true,
+			Errs: []*v1.ErrorDetail{
+				{
+					Type:     v1.ErrorType_ERROR_TYPE_FIELD,
+					Field:    "tags",
+					Messages: []string{"items at index 0 and 2 are equal"},
+				},
+			},
+		},
 	}
 
 	for _, tt := range tests {

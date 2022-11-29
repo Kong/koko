@@ -19,6 +19,17 @@
       "pattern": "^[0-9a-zA-Z.\\-_~]*$",
       "type": "string"
     },
+    "tags": {
+      "items": {
+        "maxLength": 128,
+        "minLength": 1,
+        "pattern": "^(?:[0-9a-zA-Z.\\-_~:]+(?: *[0-9a-zA-Z.\\-_~:])*)?$",
+        "type": "string"
+      },
+      "maxItems": 8,
+      "uniqueItems": true,
+      "type": "array"
+    },
     "updated_at": {
       "minimum": 1,
       "type": "integer"
