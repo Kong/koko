@@ -21,7 +21,7 @@ require (
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.14.0
 	github.com/hbagdi/gang v0.1.0
-	github.com/ilyakaznacheev/cleanenv v1.4.0
+	github.com/ilyakaznacheev/cleanenv v1.4.1
 	github.com/imdario/mergo v0.3.13
 	github.com/jackc/pgx/v4 v4.17.2
 	github.com/jeremywohl/flatten v1.0.1
