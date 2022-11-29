@@ -39,6 +39,7 @@ func TestService_ProcessDefaults(t *testing.T) {
 		err := r.ProcessDefaults(context.Background())
 		require.Nil(t, err)
 		require.True(t, validUUID(r.ID()))
+		require.Nil(t, r.Service.TlsVerify)
 		// empty out the id for equality comparison
 		r.Service.Id = ""
 		r.Service.CreatedAt = 0
@@ -52,6 +53,8 @@ func TestService_ProcessDefaults(t *testing.T) {
 		r.Service.Retries = 1
 		r.Service.Protocol = "grpc"
 		r.Service.Enabled = wrapperspb.Bool(false)
+		tlsVerify := false
+		r.Service.TlsVerify = &tlsVerify
 		err := r.ProcessDefaults(context.Background())
 		require.Nil(t, err)
 		require.True(t, validUUID(r.ID()))
@@ -65,6 +68,7 @@ func TestService_ProcessDefaults(t *testing.T) {
 			ReadTimeout:    typedefs.DefaultTimeout,
 			WriteTimeout:   typedefs.DefaultTimeout,
 			Enabled:        wrapperspb.Bool(false),
+			TlsVerify:      &tlsVerify,
 		}, r.Resource())
 	})
 	t.Run("url unpacked correctly", func(t *testing.T) {
@@ -463,7 +467,8 @@ func TestService_Validate(t *testing.T) {
 			name: "tls properties cannot be set when protocol is not https",
 			Service: func() Service {
 				s := goodService()
-				s.Service.TlsVerify = true
+				tlsVerify := true
+				s.Service.TlsVerify = &tlsVerify
 				s.Service.TlsVerifyDepth = 1
 				s.Service.Protocol = "http"
 				return s
@@ -488,9 +493,19 @@ func TestService_Validate(t *testing.T) {
 			name: "tls properties can be set when protocol is  https",
 			Service: func() Service {
 				s := goodService()
-				s.Service.TlsVerify = true
+				tlsVerify := true
+				s.Service.TlsVerify = &tlsVerify
 				s.Service.TlsVerifyDepth = 1
 				s.Service.Protocol = "https"
+				return s
+			},
+			wantErr: false,
+		},
+		{
+			name: "tls_verify is optional and can be set to nil",
+			Service: func() Service {
+				s := goodService()
+				s.Service.TlsVerify = nil
 				return s
 			},
 			wantErr: false,

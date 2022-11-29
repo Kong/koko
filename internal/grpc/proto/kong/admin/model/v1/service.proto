@@ -22,7 +22,7 @@ message Service {
   string url = 12;
   int32 write_timeout = 13;
   repeated string tags = 14;
-  bool tls_verify = 15;
+  optional bool tls_verify = 15;
   int32 tls_verify_depth = 16;
   Certificate client_certificate = 17;
   repeated string ca_certificates = 18;

@@ -436,6 +436,47 @@ func TestServiceCreate(t *testing.T) {
 			// check certificate doesn't exist anymore
 			c.GET("/v1/services/" + svcID).Expect().Status(http.StatusNotFound)
 		})
+	t.Run("creates a valid service with tls_verify set", func(t *testing.T) {
+		service := goodService()
+
+		// tls_verify is optional and will not be included in the object definition
+		service.Name = "service-tls-verify"
+		res := c.POST("/v1/services").WithJSON(service).Expect()
+		res.Status(http.StatusCreated)
+		res.Header("grpc-metadata-koko-status-code").Empty()
+		body := res.JSON().Path("$.item").Object()
+		body.NotContainsKey("tls_verify")
+
+		// tls_verify can be set to nil and will not be included in the object definition
+		service.Name = "service-tls-verify-nil"
+		service.TlsVerify = nil
+		res = c.POST("/v1/services").WithJSON(service).Expect()
+		res.Status(http.StatusCreated)
+		res.Header("grpc-metadata-koko-status-code").Empty()
+		body = res.JSON().Path("$.item").Object()
+		body.NotContainsKey("tls_verify")
+
+		// tls_verify is included in the object definition if set to false
+		service.Name = "service-tls-verify-false"
+		tlsVerify := false
+		service.TlsVerify = &tlsVerify
+		res = c.POST("/v1/services").WithJSON(service).Expect()
+		res.Status(http.StatusCreated)
+		res.Header("grpc-metadata-koko-status-code").Empty()
+		body = res.JSON().Path("$.item").Object()
+		body.ValueEqual("tls_verify", false)
+
+		// tls_verify is included in the object definition if set to true
+		service.Name = "service-tls-verify-true"
+		tlsVerify = true
+		service.TlsVerify = &tlsVerify
+		service.Protocol = "https"
+		res = c.POST("/v1/services").WithJSON(service).Expect()
+		res.Status(http.StatusCreated)
+		res.Header("grpc-metadata-koko-status-code").Empty()
+		body = res.JSON().Path("$.item").Object()
+		body.ValueEqual("tls_verify", true)
+	})
 }
 
 func TestServiceUpsert(t *testing.T) {
