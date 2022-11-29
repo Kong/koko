@@ -72,12 +72,15 @@ var VersionCompatibilityOSSPluginConfigurationTests = []VersionCompatibilityPlug
 	//   - if both 'aws_region' and 'host' are set
 	//     just drop 'host' and keep 'aws_region'
 	//     since these used to be  mutually exclusive
+	//   - remove 'aws_assume_role_arn' and 'aws_role_session_name'
 	{
 		Name: "aws-lambda",
 		Config: `{
 			"aws_region": "AWS_REGION",
 			"host": "192.168.1.1",
-			"function_name": "FUNCTION_NAME"
+			"function_name": "FUNCTION_NAME",
+			"aws_assume_role_arn": "foo",
+			"aws_role_session_name": "kong"
 		}`,
 		ConfigureForService: true,
 		ConfigureForRoute:   true,
