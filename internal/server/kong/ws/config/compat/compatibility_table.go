@@ -45,7 +45,7 @@ func standardPluginNotAvailableMessage(pluginName string, versionWithFeatureSupp
 
 func standardCoreEntityMessage(entityName string, versionWithFeatureSupport string) string {
 	return fmt.Sprintf("The '%s' entity is being used, "+
-		"but Kong Gateway versions < %s do not support this entity. "+
+		"but Kong Gateway versions < %s do not support this entity. ",
 		entityName,
 		versionWithFeatureSupport,
 	)
