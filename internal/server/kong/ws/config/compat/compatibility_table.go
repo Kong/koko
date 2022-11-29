@@ -980,6 +980,41 @@ var (
 				},
 			},
 		},
+		{
+			Metadata: config.ChangeMetadata{
+				ID:       config.ChangeID("P140"),
+				Severity: config.ChangeSeverityError,
+				Description: standardPluginFieldsMessage("aws-lambda",
+					[]string{
+						"aws_assume_role_arn",
+						"aws_role_session_name",
+					}, "3.0", false),
+				Resolution: standardUpgradeMessage("3.0"),
+			},
+			SemverRange: versionsPre300,
+			Update: config.ConfigTableUpdates{
+				Name: "aws-lambda",
+				Type: config.Plugin,
+				RemoveFields: []string{
+					"aws_assume_role_arn",
+					"aws_role_session_name",
+				},
+				DisableChangeTracking: func(rawJSON string) bool {
+					plugin := gjson.Parse(rawJSON)
+					// do not emit change if 'aws_assume_role_arn' is not set and
+					// 'aws_assume_role_arn' is set to its default value
+					if !config.ValueIsEmpty(plugin.Get("config.aws_assume_role_arn")) {
+						return false
+					}
+					awsRoleSessionName := plugin.Get("config.aws_role_session_name")
+					if awsRoleSessionName.Exists() &&
+						awsRoleSessionName.String() != "kong" {
+						return false
+					}
+					return true
+				},
+			},
+		},
 	}
 )
 

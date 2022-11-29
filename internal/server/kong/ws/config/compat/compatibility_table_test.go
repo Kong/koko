@@ -2319,6 +2319,243 @@ func TestDisableChangeTracking(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "[aws-lambda] change is not emitted with default" +
+				" value of 'config.aws_assume_role_arn' and 'config.aws_role_session_name'",
+			uncompressedPayload: `
+{
+	"config_table": {
+		"plugins": [
+			{
+				"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+				"name": "aws-lambda",
+				"config": {
+					"aws_assume_role_arn": null,
+					"aws_role_session_name": "kong"
+				}
+			}
+		]
+	}
+}
+`,
+			dataPlaneVersion: "2.8.0",
+			expectedPayload: `
+{
+	"config_table": {
+		"plugins": [
+			{
+				"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+				"name": "aws-lambda",
+				"config": {
+				}
+			}
+		]
+	}
+}
+`,
+			expectedChanges: config.TrackedChanges{},
+		},
+		{
+			name: "[aws-lambda] change is not emitted with default" +
+				" value of 'config.aws_assume_role_arn'",
+			uncompressedPayload: `
+{
+	"config_table": {
+		"plugins": [
+			{
+				"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+				"name": "aws-lambda",
+				"config": {
+					"aws_assume_role_arn": null
+				}
+			}
+		]
+	}
+}
+`,
+			dataPlaneVersion: "2.8.0",
+			expectedPayload: `
+{
+	"config_table": {
+		"plugins": [
+			{
+				"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+				"name": "aws-lambda",
+				"config": {
+				}
+			}
+		]
+	}
+}
+`,
+			expectedChanges: config.TrackedChanges{},
+		},
+		{
+			name: "[aws-lambda] change is not emitted with default" +
+				" value of 'config.aws_role_session_name'",
+			uncompressedPayload: `
+{
+	"config_table": {
+		"plugins": [
+			{
+				"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+				"name": "aws-lambda",
+				"config": {
+					"aws_role_session_name": "kong"
+				}
+			}
+		]
+	}
+}
+`,
+			dataPlaneVersion: "2.8.0",
+			expectedPayload: `
+{
+	"config_table": {
+		"plugins": [
+			{
+				"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+				"name": "aws-lambda",
+				"config": {
+				}
+			}
+		]
+	}
+}
+`,
+			expectedChanges: config.TrackedChanges{},
+		},
+		{
+			name: "[aws-lambda] change is emitted with non-default" +
+				" value of 'config.aws_role_session_name'",
+			uncompressedPayload: `
+{
+	"config_table": {
+		"plugins": [
+			{
+				"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+				"name": "aws-lambda",
+				"config": {
+					"aws_role_session_name": "not-kong"
+				}
+			}
+		]
+	}
+}
+`,
+			dataPlaneVersion: "2.8.0",
+			expectedPayload: `
+{
+	"config_table": {
+		"plugins": [
+			{
+				"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+				"name": "aws-lambda",
+				"config": {
+				}
+			}
+		]
+	}
+}
+`,
+			expectedChanges: config.TrackedChanges{
+				ChangeDetails: []config.ChangeDetail{
+					{
+						ID: "P140",
+						Resources: []config.ResourceInfo{
+							{
+								Type: "plugin",
+								ID:   "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "[aws-lambda] change is emitted with non-default" +
+				" value of 'config.aws_assume_role_arn'",
+			uncompressedPayload: `
+{
+	"config_table": {
+		"plugins": [
+			{
+				"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+				"name": "aws-lambda",
+				"config": {
+					"aws_assume_role_arn": "foo"
+				}
+			}
+		]
+	}
+}
+`,
+			dataPlaneVersion: "2.8.0",
+			expectedPayload: `
+{
+	"config_table": {
+		"plugins": [
+			{
+				"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+				"name": "aws-lambda",
+				"config": {
+				}
+			}
+		]
+	}
+}
+`,
+			expectedChanges: config.TrackedChanges{
+				ChangeDetails: []config.ChangeDetail{
+					{
+						ID: "P140",
+						Resources: []config.ResourceInfo{
+							{
+								Type: "plugin",
+								ID:   "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "[aws-lambda] no change is performed nor emitted with DP>=3.0",
+			uncompressedPayload: `
+{
+	"config_table": {
+		"plugins": [
+			{
+				"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+				"name": "aws-lambda",
+				"config": {
+					"aws_assume_role_arn": "foo",
+					"aws_role_session_name": "bar"
+				}
+			}
+		]
+	}
+}
+`,
+			dataPlaneVersion: "3.0.0",
+			expectedPayload: `
+{
+	"config_table": {
+		"plugins": [
+			{
+				"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+				"name": "aws-lambda",
+				"config": {
+					"aws_assume_role_arn": "foo",
+					"aws_role_session_name": "bar"
+				}
+			}
+		]
+	}
+}
+`,
+			expectedChanges: config.TrackedChanges{},
+		},
 	}
 	vc, err := config.NewVersionCompatibilityProcessor(config.VersionCompatibilityOpts{
 		Logger:        log.Logger,
