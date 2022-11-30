@@ -848,8 +848,8 @@ var (
 			Metadata: config.ChangeMetadata{
 				ID:          config.ChangeID("P135"),
 				Severity:    config.ChangeSeverityError,
-				Description: standardCoreEntityMessage("vault", "3.0"),
-				Resolution:  standardUpgradeMessage("3.0"),
+				Description: standardCoreEntityMessage("vault", "3.1"),
+				Resolution:  standardUpgradeMessage("3.1"),
 			},
 			SemverRange: versionsPre300,
 			Update: config.ConfigTableUpdates{
