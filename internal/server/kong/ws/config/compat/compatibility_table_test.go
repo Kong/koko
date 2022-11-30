@@ -1938,7 +1938,7 @@ func TestDisableChangeTracking(t *testing.T) {
 			},
 		},
 		{
-			name: "[vault] configurations are removed for old versions",
+			name: "[vault] configurations are not removed for new versions",
 			uncompressedPayload: `
 {
 	"config_table": {
@@ -1955,7 +1955,7 @@ func TestDisableChangeTracking(t *testing.T) {
 	}
 }
 `,
-			dataPlaneVersion: "3.0.0",
+			dataPlaneVersion: "3.1.0",
 			expectedPayload: `
 {
 	"config_table": {

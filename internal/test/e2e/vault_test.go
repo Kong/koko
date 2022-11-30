@@ -196,7 +196,7 @@ func TestSecretsManagementEnvVault(t *testing.T) {
 	defer dpCleanup()
 
 	require.NoError(t, util.WaitForKongAdminAPI(t))
-	kongClient.RunWhenKong(t, ">= 3.0.0")
+	kongClient.RunWhenKong(t, ">= 3.1.0")
 
 	expectedConfig := util.KongConfig{
 		Vaults:       []*kongClient.Vault{&kongVault},
