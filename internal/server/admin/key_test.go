@@ -226,3 +226,53 @@ func TestKeyList(t *testing.T) {
 		require.ElementsMatch(t, []string{id1, id2, id3, id4, id5}, ids)
 	})
 }
+
+func TestKeyAndKeyset(t *testing.T) {
+	s, cleanup := setup(t)
+	defer cleanup()
+
+	c := httpexpect.New(t, s.URL)
+
+	// create a keyset
+	ks := &v1.KeySet{
+		Id:   uuid.NewString(),
+		Name: "set-of-keys",
+	}
+	c.POST("/v1/key-sets").WithJSON(ks).Expect().Status(http.StatusCreated)
+
+	t.Run("create a key belonging to a keyset", func(t *testing.T) {
+		k := goodKey()
+		k.Set = &v1.KeySet{Id: ks.Id}
+		res := c.POST("/v1/keys").WithJSON(k).Expect()
+		res.Status(http.StatusCreated)
+	})
+
+	t.Run("create a key without set and update to it", func(t *testing.T) {
+		k := goodKey()
+		res := c.POST("/v1/keys").WithJSON(k).Expect()
+		res.Status(http.StatusCreated)
+
+		k.Set = &v1.KeySet{Id: ks.Id}
+		res = c.PUT("/v1/keys/" + k.Id).WithJSON(k).Expect()
+		res.Status(http.StatusOK)
+	})
+
+	nonKeysetId := uuid.NewString()
+
+	t.Run("fails to create a key belonging to a non-existent keyset", func(t *testing.T) {
+		k := goodKey()
+		k.Set = &v1.KeySet{Id: nonKeysetId}
+		res := c.POST("/v1/keys").WithJSON(k).Expect()
+		res.Status(http.StatusBadRequest)
+	})
+
+	t.Run("create a key without set and fails to update to a non-existent keyset", func(t *testing.T) {
+		k := goodKey()
+		res := c.POST("/v1/keys").WithJSON(k).Expect()
+		res.Status(http.StatusCreated)
+
+		k.Set = &v1.KeySet{Id: nonKeysetId}
+		res = c.PUT("/v1/keys/" + k.Id).WithJSON(k).Expect()
+		res.Status(http.StatusBadRequest)
+	})
+}

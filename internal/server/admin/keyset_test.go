@@ -27,14 +27,14 @@ func TestKeySetCreate(t *testing.T) {
 	s, cleanup := setup(t)
 	defer cleanup()
 	c := httpexpect.New(t, s.URL)
-	t.Run("creates a valid key", func(_ *testing.T) {
+	t.Run("creates a valid keyset", func(_ *testing.T) {
 		res := c.POST("/v1/key-sets").WithJSON(goodKeySet()).Expect()
 		res.Status(http.StatusCreated)
 		res.Header("grpc-metadata-koko-status-code").Empty()
 		body := res.JSON().Path("$.item").Object()
 		validateGoodKeySet(body)
 	})
-	t.Run("recreating the same key fails", func(_ *testing.T) {
+	t.Run("recreating the same keyset fails", func(_ *testing.T) {
 		ks := goodKeySet()
 		c.POST("/v1/key-sets").WithJSON(ks).Expect().Status(http.StatusCreated)
 		c.POST("/v1/key-sets").WithJSON(ks).Expect().Status(http.StatusBadRequest)
@@ -45,7 +45,7 @@ func TestKeySetUpsert(t *testing.T) {
 	s, cleanup := setup(t)
 	defer cleanup()
 	c := httpexpect.New(t, s.URL)
-	t.Run("upsert a valid key", func(_ *testing.T) {
+	t.Run("upsert a valid keyset", func(_ *testing.T) {
 		res := c.PUT("/v1/key-sets/" + uuid.NewString()).
 			WithJSON(goodKeySet()).
 			Expect()
@@ -53,13 +53,13 @@ func TestKeySetUpsert(t *testing.T) {
 		body := res.JSON().Path("$.item").Object()
 		validateGoodKeySet(body)
 	})
-	t.Run("re-upserting the same key with different id fails",
+	t.Run("re-upserting the same keyset with different id fails",
 		func(_ *testing.T) {
 			ks := goodKeySet()
 			c.PUT("/v1/key-sets/" + ks.Id).WithJSON(ks).Expect().Status(http.StatusOK)
 			c.PUT("/v1/key-sets/" + uuid.NewString()).WithJSON(ks).Expect().Status(http.StatusBadRequest)
 		})
-	t.Run("upsert correctly updates a route", func(_ *testing.T) {
+	t.Run("upsert correctly updates a keyset", func(_ *testing.T) {
 		ks := goodKeySet()
 
 		res := c.POST("/v1/key-sets").WithJSON(ks).Expect()
@@ -69,13 +69,13 @@ func TestKeySetUpsert(t *testing.T) {
 		res.Status(http.StatusOK)
 		res.JSON().Path("$.item.name").Equal(ks.Name)
 
-		ks.Name = "notSameKeys"
+		ks.Name = "notSameKeyset"
 		res = c.PUT("/v1/key-sets/" + ks.Id).WithJSON(ks).Expect()
 		res.Status(http.StatusOK)
 
 		res = c.GET("/v1/key-sets/" + ks.Id).Expect()
 		res.Status(http.StatusOK)
-		res.JSON().Path("$.item.name").Equal("notSameKeys")
+		res.JSON().Path("$.item.name").Equal("notSameKeyset")
 	})
 }
 

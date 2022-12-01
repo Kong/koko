@@ -80,6 +80,15 @@ func (k Key) Indexes() []model.Index {
 			FieldName: "name",
 		},
 	}
+	if k.Key.Set != nil {
+		res = append(res, model.Index{
+			Name:        "set_id",
+			Type:        model.IndexForeign,
+			ForeignType: TypeKeySet,
+			FieldName:   "set.id",
+			Value:       k.Key.Set.Id,
+		})
+	}
 	return res
 }
 
