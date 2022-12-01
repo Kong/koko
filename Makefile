@@ -35,7 +35,7 @@ test-race:
 
 .PHONY: test-integration
 test-integration:
-	go test -tags=testsetup,integration -race -count 1 -p 1 ./internal/test/...
+	go test -tags=testsetup,integration -timeout 15m -race -count 1 -p 1 ./internal/test/...
 
 .PHONY: gen
 gen:
