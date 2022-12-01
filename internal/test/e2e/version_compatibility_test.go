@@ -1437,8 +1437,18 @@ func TestVersionCompatibility_KeysEntities(t *testing.T) {
 		},
 	})
 
+	// Create a service
+	service := &v1.Service{
+		Id:   uuid.NewString(),
+		Name: "foo",
+		Host: "httpbin.org",
+		Path: "/",
+	}
+	res := admin.POST("/v1/services").WithJSON(service).Expect()
+	res.Status(http.StatusCreated)
+
 	admin.POST("/v1/keys").WithJSON(&v1.Key{
-		Name: "second",
+		Name: "mellon",
 		Jwk:  &v1.JwkKey{},
 	}).Expect().Status(http.StatusCreated)
 
@@ -1446,7 +1456,9 @@ func TestVersionCompatibility_KeysEntities(t *testing.T) {
 		kongClient.RunWhenKong(t, "< 3.0.0")
 
 		util.WaitFunc(t, func() error {
-			return util.EnsureConfig(&v1.TestingConfig{})
+			return util.EnsureConfig(&v1.TestingConfig{
+				Services: []*v1.Service{{Name: "foo"}},
+			})
 		})
 	})
 
@@ -1454,7 +1466,9 @@ func TestVersionCompatibility_KeysEntities(t *testing.T) {
 		kongClient.RunWhenKong(t, ">= 3.0.0 < 3.1.0")
 
 		util.WaitFunc(t, func() error {
-			return util.EnsureConfig(&v1.TestingConfig{})
+			return util.EnsureConfig(&v1.TestingConfig{
+				Services: []*v1.Service{{Name: "foo"}},
+			})
 		})
 	})
 
@@ -1463,11 +1477,8 @@ func TestVersionCompatibility_KeysEntities(t *testing.T) {
 
 		util.WaitFunc(t, func() error {
 			return util.EnsureConfig(&v1.TestingConfig{
-				Keys: []*v1.Key{
-					{
-						Name: "second",
-					},
-				},
+				Services: []*v1.Service{{Name: "foo"}},
+				Keys:     []*v1.Key{{Name: "mellon"}},
 			})
 		})
 	})
