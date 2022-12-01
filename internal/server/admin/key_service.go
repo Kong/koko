@@ -51,7 +51,7 @@ func (s *KeyService) CreateKey(
 	res := resource.NewKey()
 	res.Key = req.Item
 	if err := db.Create(ctx, res); err != nil {
-		s.logger(ctx).Error("error creating", zap.Error(err))
+		s.logger(ctx).Error("unable to create new key entity", zap.Error(err))
 		return nil, s.err(ctx, err)
 	}
 

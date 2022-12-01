@@ -46,7 +46,7 @@ func TestKeySetUpsert(t *testing.T) {
 	defer cleanup()
 	c := httpexpect.New(t, s.URL)
 	t.Run("upsert a valid keyset", func(_ *testing.T) {
-		res := c.PUT("/v1/key-sets/" + uuid.NewString()).
+		res := c.PUT("/v1/key-sets/{}", uuid.NewString()).
 			WithJSON(goodKeySet()).
 			Expect()
 		res.Status(http.StatusOK)
@@ -56,8 +56,8 @@ func TestKeySetUpsert(t *testing.T) {
 	t.Run("re-upserting the same keyset with different id fails",
 		func(_ *testing.T) {
 			ks := goodKeySet()
-			c.PUT("/v1/key-sets/" + ks.Id).WithJSON(ks).Expect().Status(http.StatusOK)
-			c.PUT("/v1/key-sets/" + uuid.NewString()).WithJSON(ks).Expect().Status(http.StatusBadRequest)
+			c.PUT("/v1/key-sets/{}", ks.Id).WithJSON(ks).Expect().Status(http.StatusOK)
+			c.PUT("/v1/key-sets/{}", uuid.NewString()).WithJSON(ks).Expect().Status(http.StatusBadRequest)
 		})
 	t.Run("upsert correctly updates a keyset", func(_ *testing.T) {
 		ks := goodKeySet()
@@ -65,15 +65,15 @@ func TestKeySetUpsert(t *testing.T) {
 		res := c.POST("/v1/key-sets").WithJSON(ks).Expect()
 		res.Status(http.StatusCreated)
 
-		res = c.GET("/v1/key-sets/" + ks.Id).Expect()
+		res = c.GET("/v1/key-sets/{}", ks.Id).Expect()
 		res.Status(http.StatusOK)
 		res.JSON().Path("$.item.name").Equal(ks.Name)
 
 		ks.Name = "notSameKeyset"
-		res = c.PUT("/v1/key-sets/" + ks.Id).WithJSON(ks).Expect()
+		res = c.PUT("/v1/key-sets/{}", ks.Id).WithJSON(ks).Expect()
 		res.Status(http.StatusOK)
 
-		res = c.GET("/v1/key-sets/" + ks.Id).Expect()
+		res = c.GET("/v1/key-sets/{}", ks.Id).Expect()
 		res.Status(http.StatusOK)
 		res.JSON().Path("$.item.name").Equal("notSameKeyset")
 	})
@@ -89,19 +89,19 @@ func TestKeySetRead(t *testing.T) {
 	id := res.JSON().Path("$.item.id").String().Raw()
 	t.Run("reading a non-existent keyset returns 404", func(_ *testing.T) {
 		randomID := uuid.NewString()
-		c.GET("/v1/key-sets/" + randomID).Expect().Status(http.StatusNotFound)
+		c.GET("/v1/key-sets/{}", randomID).Expect().Status(http.StatusNotFound)
 	})
 	t.Run("read keyset with no name match returns 404", func(_ *testing.T) {
 		res := c.GET("/v1/key-sets/somename").Expect()
 		res.Status(http.StatusNotFound)
 	})
 	t.Run("reading a keyset return 200", func(_ *testing.T) {
-		res := c.GET("/v1/key-sets/" + id).Expect().Status(http.StatusOK)
+		res := c.GET("/v1/key-sets/{}", id).Expect().Status(http.StatusOK)
 		body := res.JSON().Path("$.item").Object()
 		validateGoodKeySet(body)
 	})
 	t.Run("reading a keyset by name return 200", func(_ *testing.T) {
-		res := c.GET("/v1/key-sets/" + ks.Name).Expect().Status(http.StatusOK)
+		res := c.GET("/v1/key-sets/{}", ks.Name).Expect().Status(http.StatusOK)
 		body := res.JSON().Path("$.item").Object()
 		validateGoodKeySet(body)
 	})
@@ -113,7 +113,7 @@ func TestKeySetRead(t *testing.T) {
 	})
 	t.Run("read request with invalid name or ID match returns 400", func(_ *testing.T) {
 		invalidRef := "234wabc?!@"
-		res = c.GET("/v1/key-sets/" + invalidRef).Expect()
+		res = c.GET("/v1/key-sets/{}", invalidRef).Expect()
 		res.Status(http.StatusBadRequest)
 		body := res.JSON().Object()
 		body.ValueEqual("message", fmt.Sprintf("invalid ID:'%s'", invalidRef))
@@ -133,7 +133,7 @@ func TestKeySetDelete(t *testing.T) {
 		c.DELETE("/v1/key-sets/" + randomID).Expect().Status(http.StatusNotFound)
 	})
 	t.Run("deleting a keyset return 204", func(_ *testing.T) {
-		c.DELETE("/v1/key-sets/" + id).Expect().Status(http.StatusNoContent)
+		c.DELETE("/v1/key-sets/{}", id).Expect().Status(http.StatusNoContent)
 	})
 	t.Run("delete request without an ID returns 400", func(_ *testing.T) {
 		res := c.DELETE("/v1/key-sets/").Expect()
@@ -142,7 +142,7 @@ func TestKeySetDelete(t *testing.T) {
 		body.ValueEqual("message", " '' is not a valid uuid")
 	})
 	t.Run("delete request with an invalid ID returns 400", func(_ *testing.T) {
-		res := c.DELETE("/v1/key-sets/" + "Not-Valid").Expect()
+		res := c.DELETE("/v1/key-sets/{}", "Not-Valid").Expect()
 		res.Status(http.StatusBadRequest)
 		body := res.JSON().Object()
 		body.ValueEqual("message", " 'Not-Valid' is not a valid uuid")

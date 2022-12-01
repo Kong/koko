@@ -59,12 +59,6 @@ func (ks KeySet) SetResource(r model.Resource) error {
 func (ks KeySet) Indexes() []model.Index {
 	res := []model.Index{
 		{
-			Name:      "id",
-			Type:      model.IndexUnique,
-			Value:     ks.KeySet.Id,
-			FieldName: "id",
-		},
-		{
 			Name:      "name",
 			Type:      model.IndexUnique,
 			Value:     ks.KeySet.Name,

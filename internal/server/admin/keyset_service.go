@@ -50,9 +50,8 @@ func (s *KeySetService) CreateKeySet(
 
 	res := resource.NewKeySet()
 	res.KeySet = req.Item
-	s.logger(ctx).Debug("copied keyset", zap.Any("keyset", res.KeySet))
 	if err := db.Create(ctx, res); err != nil {
-		s.logger(ctx).Error("error creating", zap.Error(err))
+		s.logger(ctx).Error("unable to create keyset entity", zap.Error(err))
 		return nil, s.err(ctx, err)
 	}
 

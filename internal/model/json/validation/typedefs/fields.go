@@ -217,7 +217,7 @@ var Reference = &generator.Schema{
 	Pattern:     ReferencePattern,
 }
 
-var PemKey = &generator.Schema{
+var PEMKey = &generator.Schema{
 	Type: "object",
 	Properties: map[string]*generator.Schema{
 		"private_key": {Format: "pem-encoded-private-key"},
@@ -226,7 +226,7 @@ var PemKey = &generator.Schema{
 	Required: []string{"private_key"},
 }
 
-var JwkKey = &generator.Schema{
+var JWKKey = &generator.Schema{
 	Type: "object",
 	Properties: map[string]*generator.Schema{
 		"kid":      {Type: "string"},

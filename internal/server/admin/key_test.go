@@ -50,7 +50,7 @@ func TestKeyUpsert(t *testing.T) {
 	defer cleanup()
 	c := httpexpect.New(t, s.URL)
 	t.Run("upsert a valid key", func(_ *testing.T) {
-		res := c.PUT("/v1/keys/" + uuid.NewString()).
+		res := c.PUT("/v1/keys/{}", uuid.NewString()).
 			WithJSON(goodKey()).
 			Expect()
 		res.Status(http.StatusOK)
@@ -60,8 +60,8 @@ func TestKeyUpsert(t *testing.T) {
 	t.Run("re-upserting the same key with different id fails",
 		func(_ *testing.T) {
 			k := goodKey()
-			c.PUT("/v1/keys/" + k.Id).WithJSON(k).Expect().Status(http.StatusOK)
-			c.PUT("/v1/keys/" + uuid.NewString()).WithJSON(k).Expect().Status(http.StatusBadRequest)
+			c.PUT("/v1/keys/{}", k.Id).WithJSON(k).Expect().Status(http.StatusOK)
+			c.PUT("/v1/keys/{}", uuid.NewString()).WithJSON(k).Expect().Status(http.StatusBadRequest)
 		})
 	t.Run("upsert correctly updates a key", func(_ *testing.T) {
 		k := goodKey()
@@ -70,15 +70,15 @@ func TestKeyUpsert(t *testing.T) {
 		res := c.POST("/v1/keys").WithJSON(k).Expect()
 		res.Status(http.StatusCreated)
 
-		res = c.GET("/v1/keys/" + k.Id).Expect()
+		res = c.GET("/v1/keys/{}", k.Id).Expect()
 		res.Status(http.StatusOK)
 		res.JSON().Path("$.item.name").Equal("first_key")
 
 		k.Name = "second_key"
-		res = c.PUT("/v1/keys/" + k.Id).WithJSON(k).Expect()
+		res = c.PUT("/v1/keys/{}", k.Id).WithJSON(k).Expect()
 		res.Status(http.StatusOK)
 
-		res = c.GET("/v1/keys/" + k.Id).Expect()
+		res = c.GET("/v1/keys/{}", k.Id).Expect()
 		res.Status(http.StatusOK)
 		res.JSON().Path("$.item.name").Equal("second_key")
 	})
@@ -94,19 +94,19 @@ func TestKeyRead(t *testing.T) {
 	id := res.JSON().Path("$.item.id").String().Raw()
 	t.Run("reading a non-existent key returns 404", func(_ *testing.T) {
 		randomID := uuid.NewString()
-		c.GET("/v1/keys/" + randomID).Expect().Status(http.StatusNotFound)
+		c.GET("/v1/keys/{}", randomID).Expect().Status(http.StatusNotFound)
 	})
 	t.Run("read key with no name match returns 404", func(_ *testing.T) {
 		res := c.GET("/v1/keys/somename").Expect()
 		res.Status(http.StatusNotFound)
 	})
 	t.Run("reading a key return 200", func(_ *testing.T) {
-		res := c.GET("/v1/keys/" + id).Expect().Status(http.StatusOK)
+		res := c.GET("/v1/keys/{}", id).Expect().Status(http.StatusOK)
 		body := res.JSON().Path("$.item").Object()
 		validateGoodKey(body)
 	})
 	t.Run("reading a key by name return 200", func(_ *testing.T) {
-		res := c.GET("/v1/keys/" + k.Name).Expect().Status(http.StatusOK)
+		res := c.GET("/v1/keys/{}", k.Name).Expect().Status(http.StatusOK)
 		body := res.JSON().Path("$.item").Object()
 		validateGoodKey(body)
 	})
@@ -118,7 +118,7 @@ func TestKeyRead(t *testing.T) {
 	})
 	t.Run("read request with invalid name or ID match returns 400", func(_ *testing.T) {
 		invalidRef := "234wabc?!@"
-		res = c.GET("/v1/keys/" + invalidRef).Expect()
+		res = c.GET("/v1/keys/{}", invalidRef).Expect()
 		res.Status(http.StatusBadRequest)
 		body := res.JSON().Object()
 		body.ValueEqual("message", fmt.Sprintf("invalid ID:'%s'", invalidRef))
@@ -135,10 +135,10 @@ func TestKeyDelete(t *testing.T) {
 	res.Status(http.StatusCreated)
 	t.Run("deleting a non-existent key returns 404", func(_ *testing.T) {
 		randomID := "071f5040-3e4a-46df-9d98-451e79e318fd"
-		c.DELETE("/v1/keys/" + randomID).Expect().Status(http.StatusNotFound)
+		c.DELETE("/v1/keys/{}", randomID).Expect().Status(http.StatusNotFound)
 	})
 	t.Run("deleting a key return 204", func(_ *testing.T) {
-		c.DELETE("/v1/keys/" + id).Expect().Status(http.StatusNoContent)
+		c.DELETE("/v1/keys/{}", id).Expect().Status(http.StatusNoContent)
 	})
 	t.Run("delete request without an ID returns 400", func(_ *testing.T) {
 		res := c.DELETE("/v1/keys/").Expect()
@@ -147,7 +147,7 @@ func TestKeyDelete(t *testing.T) {
 		body.ValueEqual("message", " '' is not a valid uuid")
 	})
 	t.Run("delete request with an invalid ID returns 400", func(_ *testing.T) {
-		res := c.DELETE("/v1/keys/" + "Not-Valid").Expect()
+		res := c.DELETE("/v1/keys/{}", "Not-Valid").Expect()
 		res.Status(http.StatusBadRequest)
 		body := res.JSON().Object()
 		body.ValueEqual("message", " 'Not-Valid' is not a valid uuid")
@@ -253,15 +253,15 @@ func TestKeyAndKeyset(t *testing.T) {
 		res.Status(http.StatusCreated)
 
 		k.Set = &v1.KeySet{Id: ks.Id}
-		res = c.PUT("/v1/keys/" + k.Id).WithJSON(k).Expect()
+		res = c.PUT("/v1/keys/{}", k.Id).WithJSON(k).Expect()
 		res.Status(http.StatusOK)
 	})
 
-	nonKeysetId := uuid.NewString()
+	nonKeysetID := uuid.NewString()
 
 	t.Run("fails to create a key belonging to a non-existent keyset", func(t *testing.T) {
 		k := goodKey()
-		k.Set = &v1.KeySet{Id: nonKeysetId}
+		k.Set = &v1.KeySet{Id: nonKeysetID}
 		res := c.POST("/v1/keys").WithJSON(k).Expect()
 		res.Status(http.StatusBadRequest)
 	})
@@ -271,8 +271,8 @@ func TestKeyAndKeyset(t *testing.T) {
 		res := c.POST("/v1/keys").WithJSON(k).Expect()
 		res.Status(http.StatusCreated)
 
-		k.Set = &v1.KeySet{Id: nonKeysetId}
-		res = c.PUT("/v1/keys/" + k.Id).WithJSON(k).Expect()
+		k.Set = &v1.KeySet{Id: nonKeysetID}
+		res = c.PUT("/v1/keys/{}", k.Id).WithJSON(k).Expect()
 		res.Status(http.StatusBadRequest)
 	})
 }

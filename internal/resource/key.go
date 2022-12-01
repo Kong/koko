@@ -60,26 +60,30 @@ func (k Key) SetResource(r model.Resource) error {
 }
 
 func (k Key) Indexes() []model.Index {
-	res := []model.Index{
-		{
-			Name:      "id",
-			Type:      model.IndexUnique,
-			Value:     k.Key.Id,
-			FieldName: "id",
-		},
-		{
-			Name:      "kid",
-			Type:      model.IndexUnique,
-			Value:     k.Key.Jwk.Kid,
-			FieldName: "kid",
-		},
-		{
+	if k.Key == nil {
+		return nil
+	}
+
+	res := []model.Index{}
+
+	if k.Key.Name != "" {
+		res = append(res, model.Index{
 			Name:      "name",
 			Type:      model.IndexUnique,
 			Value:     k.Key.Name,
 			FieldName: "name",
-		},
+		})
 	}
+
+	if k.Key.Jwk != nil {
+		res = append(res, model.Index{
+			Name:      "kid",
+			Type:      model.IndexUnique,
+			Value:     k.Key.Jwk.Kid,
+			FieldName: "kid",
+		})
+	}
+
 	if k.Key.Set != nil {
 		res = append(res, model.Index{
 			Name:        "set_id",
@@ -108,8 +112,8 @@ func init() {
 			"updated_at": typedefs.UnixEpoch,
 			"name":       typedefs.Name,
 			"set":        typedefs.ReferenceObject,
-			"jwk":        typedefs.JwkKey,
-			"pem":        typedefs.PemKey,
+			"jwk":        typedefs.JWKKey,
+			"pem":        typedefs.PEMKey,
 			"tags":       typedefs.Tags,
 		},
 		AdditionalProperties: &falsy,
