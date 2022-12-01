@@ -1024,7 +1024,7 @@ var (
 			},
 			SemverRange: versionsPre310,
 			Update: config.ConfigTableUpdates{
-				Name:   "keys",
+				Name:   config.Key.String(),
 				Type:   config.Key,
 				Remove: true,
 			},
@@ -1038,7 +1038,7 @@ var (
 			},
 			SemverRange: versionsPre310,
 			Update: config.ConfigTableUpdates{
-				Name:   "key_sets",
+				Name:   config.KeySet.String(),
 				Type:   config.KeySet,
 				Remove: true,
 			},
