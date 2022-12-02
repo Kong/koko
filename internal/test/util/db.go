@@ -7,6 +7,7 @@ import (
 	"github.com/ilyakaznacheev/cleanenv"
 	"github.com/kong/koko/internal/config"
 	"github.com/kong/koko/internal/db"
+	"github.com/kong/koko/internal/persistence"
 	"github.com/kong/koko/internal/persistence/postgres"
 )
 
@@ -74,6 +75,14 @@ func setDBConfig(conf *config.Database) error {
 				Port:     postgres.DefaultPort,
 				User:     "koko",
 				Password: "koko",
+				Pool: config.PostgresPool{
+					Name:              postgres.DefaultPool,
+					MaxConns:          persistence.DefaultMaxConn,
+					MinConns:          persistence.DefaultMinConn,
+					MaxConnLifetime:   persistence.DefaultMaxConnLifetime,
+					MaxConnIdleTime:   persistence.DefaultMaxConnIdleTime,
+					HealthCheckPeriod: persistence.DefaultHealthCheckPeriod,
+				},
 			}
 		}
 	default:

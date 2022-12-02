@@ -2,8 +2,11 @@ package config
 
 import (
 	"testing"
+	"time"
 
 	"github.com/kong/koko/internal/db"
+	"github.com/kong/koko/internal/persistence"
+	"github.com/kong/koko/internal/persistence/postgres"
 	"github.com/stretchr/testify/require"
 )
 
@@ -19,6 +22,9 @@ var defaultConfig = Config{
 	Database: Database{
 		Dialect:      db.DialectSQLite3,
 		QueryTimeout: "5s",
+		Postgres: Postgres{
+			Pool: defaultPostgresPool,
+		},
 	},
 	Metrics: Metrics{
 		ClientType: "noop",
@@ -30,11 +36,23 @@ var defaultConfig = Config{
 	DisableAnonymousReports: false,
 }
 
+var defaultPostgresPool = PostgresPool{
+	Name:              postgres.DefaultPool,
+	MaxConns:          persistence.DefaultMaxConn,
+	MinConns:          persistence.DefaultMinConn,
+	MaxConnLifetime:   persistence.DefaultMaxConnLifetime,
+	MaxConnIdleTime:   persistence.DefaultMaxConnIdleTime,
+	HealthCheckPeriod: persistence.DefaultHealthCheckPeriod,
+}
+
 func TestGet(t *testing.T) {
 	type args struct {
 		filename string
 		envVars  map[string]string
 	}
+	duration20m, _ := time.ParseDuration("20m")
+	duration10m, _ := time.ParseDuration("10m")
+	duration30s, _ := time.ParseDuration("30s")
 	tests := []struct {
 		name      string
 		args      args
@@ -88,6 +106,14 @@ func TestGet(t *testing.T) {
 							Enable:       true,
 							CABundlePath: "/tmp/foo.crt",
 						},
+						Pool: PostgresPool{
+							Name:              "pgx",
+							MaxConns:          30,
+							MinConns:          5,
+							MaxConnLifetime:   duration20m,
+							MaxConnIdleTime:   duration10m,
+							HealthCheckPeriod: duration30s,
+						},
 					},
 					QueryTimeout: "2s",
 				},
@@ -137,6 +163,7 @@ func TestGet(t *testing.T) {
 							Enable:       true,
 							CABundlePath: "/tmp/foo.crt",
 						},
+						Pool: defaultPostgresPool,
 					},
 					QueryTimeout: "2s",
 				},
@@ -154,12 +181,13 @@ func TestGet(t *testing.T) {
 			name: "configuration can be provided via env vars",
 			args: args{
 				envVars: map[string]string{
-					"KOKO_LOG_LEVEL":                               "error",
-					"KOKO_LOG_FORMAT":                              "FOOBAR",
-					"KOKO_DATABASE_DIALECT":                        db.DialectPostgres,
-					"KOKO_DATABASE_POSTGRES_READ_REPLICA_HOSTNAME": "foobar",
-					"KOKO_DATABASE_POSTGRES_TLS_ENABLE":            "true",
-					"KOKO_METRICS_PROMETHEUS_ENABLE":               "true",
+					"KOKO_LOG_LEVEL":                                "error",
+					"KOKO_LOG_FORMAT":                               "FOOBAR",
+					"KOKO_DATABASE_DIALECT":                         db.DialectPostgres,
+					"KOKO_DATABASE_POSTGRES_READ_REPLICA_HOSTNAME":  "foobar",
+					"KOKO_DATABASE_POSTGRES_TLS_ENABLE":             "true",
+					"KOKO_DATABASE_POSTGRES_POOL_MAX_CONN_LIFETIME": "20m",
+					"KOKO_METRICS_PROMETHEUS_ENABLE":                "true",
 				},
 			},
 			want: Config{
@@ -178,6 +206,14 @@ func TestGet(t *testing.T) {
 						},
 						TLS: PostgresTLS{
 							Enable: true,
+						},
+						Pool: PostgresPool{
+							Name:              postgres.DefaultPool,
+							MaxConns:          persistence.DefaultMaxConn,
+							MinConns:          persistence.DefaultMinConn,
+							MaxConnLifetime:   duration20m,
+							MaxConnIdleTime:   persistence.DefaultMaxConnIdleTime,
+							HealthCheckPeriod: persistence.DefaultHealthCheckPeriod,
 						},
 					},
 					QueryTimeout: "5s",
@@ -232,6 +268,7 @@ func TestGet(t *testing.T) {
 							Enable:       true,
 							CABundlePath: "/tmp/foo.crt",
 						},
+						Pool: defaultPostgresPool,
 					},
 					QueryTimeout: "2s",
 				},

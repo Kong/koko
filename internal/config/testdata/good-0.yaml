@@ -20,6 +20,13 @@ database:
       ca_bundle_path: "/tmp/foo.crt"
     read_replica:
       hostname: "read-localhost"
+    pool:
+      name: pgx
+      max_connections: 30
+      min_connections: 5
+      max_connection_idle_time: 10m
+      max_connection_lifetime: 20m
+      health_check_period: 30s
 metrics:
   client_type: "noop"
   prometheus:

@@ -53,6 +53,7 @@ type Postgres struct {
 	TLS         PostgresTLS         `yaml:"tls" json:"tls" env-prefix:"TLS_"`
 	User        string              `yaml:"user" json:"user" env:"USER"`
 	Password    string              `yaml:"password" json:"password" env:"PASSWORD"`
+	Pool        PostgresPool        `yaml:"pool" json:"pool" env-prefix:"POOL_"`
 
 	// See the `Params` field on postgres.Opts for more info.
 	Params map[string]string `yaml:"params" json:"params" env:"PARAMS"`
@@ -68,6 +69,16 @@ type PostgresTLS struct {
 // primary which shares the same connection settings as the primary DB.
 type PostgresReadReplica struct {
 	Hostname string `yaml:"hostname" json:"hostname" env:"HOSTNAME"`
+}
+
+// PostgresPool defines configuration for connections pooling.
+type PostgresPool struct {
+	Name              string        `yaml:"name" json:"name" env:"NAME" env-default:"pgx"`
+	MaxConns          int           `yaml:"max_connections" json:"max_connections" env:"MAX_CONNS" env-default:"50"`
+	MinConns          int           `yaml:"min_connections" json:"min_connections" env:"MIN_CONNS" env-default:"2"`
+	MaxConnLifetime   time.Duration `yaml:"max_connection_lifetime" json:"max_connection_lifetime" env:"MAX_CONN_LIFETIME" env-default:"1h"`    //nolint:lll
+	MaxConnIdleTime   time.Duration `yaml:"max_connection_idle_time" json:"max_connection_idle_time" env:"MAX_CONN_IDLE_TIME" env-default:"1h"` //nolint:lll
+	HealthCheckPeriod time.Duration `yaml:"health_check_period" json:"health_check_period" env:"HEALTH_CHECK_PERIOD" env-default:"1m"`          //nolint:lll
 }
 
 // SQLite defines configuration for using SQLite as the persistent store.
@@ -103,7 +114,7 @@ func (c *MySQL) Opts() (mysql.Opts, error) {
 }
 
 // Opts returns the options required to instantiate a Postgres persistence.Persister.
-func (c *Postgres) Opts() postgres.Opts {
+func (c *Postgres) Opts() (postgres.Opts, error) {
 	if c.Port == 0 {
 		c.Port = postgres.DefaultPort
 	}
@@ -113,11 +124,23 @@ func (c *Postgres) Opts() postgres.Opts {
 		DBName:           c.DBName,
 		EnableTLS:        c.TLS.Enable,
 		Params:           c.Params,
+		Pool:             c.poolOpts(),
 		Port:             c.Port,
 		Hostname:         c.Hostname,
 		ReadOnlyHostname: c.ReadReplica.Hostname,
 		User:             c.User,
 		Password:         c.Password,
+	}, nil
+}
+
+func (c *Postgres) poolOpts() postgres.PoolOpts {
+	return postgres.PoolOpts{
+		Name:              c.Pool.Name,
+		MaxConns:          c.Pool.MaxConns,
+		MinConns:          c.Pool.MinConns,
+		MaxConnLifetime:   c.Pool.MaxConnLifetime,
+		MaxConnIdleTime:   c.Pool.MaxConnIdleTime,
+		HealthCheckPeriod: c.Pool.HealthCheckPeriod,
 	}
 }
 
@@ -146,12 +169,17 @@ func ToDBConfig(config Database, logger *zap.Logger) (db.Config, error) {
 		return db.Config{}, fmt.Errorf("unable to set MySQL DB options: %w", err)
 	}
 
+	postgresOpts, err := config.Postgres.Opts()
+	if err != nil {
+		return db.Config{}, fmt.Errorf("unable to set Postgres DB options: %w", err)
+	}
+
 	return db.Config{
 		Dialect:      config.Dialect,
 		QueryTimeout: queryTimeout,
 		Logger:       logger,
 		MySQL:        mysqlOpts,
-		Postgres:     config.Postgres.Opts(),
+		Postgres:     postgresOpts,
 		SQLite:       config.SQLite.Opts(),
 	}, nil
 }

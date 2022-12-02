@@ -8,6 +8,8 @@ import (
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/google/cel-go/common/operators"
+	"github.com/jackc/pgconn"
+	"github.com/jackc/pgx/v4"
 	_ "github.com/jackc/pgx/v4/stdlib"
 	"github.com/kong/koko/internal/persistence"
 	"go.uber.org/zap"
@@ -20,14 +22,16 @@ const (
 	deleteQuery = `delete from store where key=$1`
 
 	DefaultPort = 5432
+	DefaultPool = "pgx"
 )
 
 type Postgres struct {
-	db           *sql.DB
-	readOnlyDB   *sql.DB
-	queryTimeout time.Duration
+	dbPool         Pool
+	readOnlyDBPool Pool
+	queryTimeout   time.Duration
 }
 
+// NewSQLClient creates a standard database/sql dbPool client, used for migrations.
 func NewSQLClient(opts Opts, logger *zap.Logger) (*sql.DB, error) {
 	if err := opts.Validate(); err != nil {
 		return nil, err
@@ -47,24 +51,29 @@ func NewSQLClient(opts Opts, logger *zap.Logger) (*sql.DB, error) {
 }
 
 func New(opts Opts, queryTimeout time.Duration, logger *zap.Logger) (persistence.Persister, error) {
-	db, err := NewSQLClient(opts, logger)
+	if err := opts.Validate(); err != nil {
+		return nil, err
+	}
+
+	dbPool, err := newPostgresPool(opts, logger)
 	if err != nil {
 		return nil, fmt.Errorf("unable to set up DB client: %w", err)
 	}
 	// by default, fallback to primary host for read operations
-	readOnlyDB := db
+	readOnlyDBPool := dbPool
 	if opts.ReadOnlyHostname != "" {
 		readOnlyOpts := opts
 		readOnlyOpts.Hostname = opts.ReadOnlyHostname
-		readOnlyDB, err = NewSQLClient(readOnlyOpts, logger)
+		readOnlyOpts.Pool.ReadOnly = true
+		readOnlyDBPool, err = newPostgresPool(readOnlyOpts, logger)
 		if err != nil {
 			return nil, fmt.Errorf("unable to set up read-only DB client: %w", err)
 		}
 	}
 	res := &Postgres{
-		db:           db,
-		readOnlyDB:   readOnlyDB,
-		queryTimeout: queryTimeout,
+		dbPool:         dbPool,
+		readOnlyDBPool: readOnlyDBPool,
+		queryTimeout:   queryTimeout,
 	}
 	return res, nil
 }
@@ -74,6 +83,7 @@ func (s *Postgres) Driver() persistence.Driver { return persistence.Postgres }
 
 // SetDefaultSQLOptions implements the persistence.SQLPersister interface.
 func (s *Postgres) SetDefaultSQLOptions(db *sql.DB) error {
+	// default settings are set here because the standard DB client is only used for migrations.
 	db.SetMaxOpenConns(persistence.DefaultMaxConn)
 	db.SetMaxIdleConns(persistence.DefaultMaxIdleConn)
 	db.SetConnMaxLifetime(persistence.DefaultMaxConnLifetime)
@@ -81,34 +91,35 @@ func (s *Postgres) SetDefaultSQLOptions(db *sql.DB) error {
 }
 
 func (s *Postgres) Get(ctx context.Context, key string) ([]byte, error) {
-	q := postgresQuery{query: s.readOnlyDB, queryTimeout: s.queryTimeout}
+	q := postgresQuery{query: s.readOnlyDBPool, queryTimeout: s.queryTimeout}
 	return q.Get(ctx, key)
 }
 
 func (s *Postgres) Put(ctx context.Context, key string, value []byte) error {
-	q := postgresQuery{query: s.db, queryTimeout: s.queryTimeout}
+	q := postgresQuery{query: s.dbPool, queryTimeout: s.queryTimeout}
 	return q.Put(ctx, key, value)
 }
 
 func (s *Postgres) Delete(ctx context.Context, key string) error {
-	q := postgresQuery{query: s.db, queryTimeout: s.queryTimeout}
+	q := postgresQuery{query: s.dbPool, queryTimeout: s.queryTimeout}
 	return q.Delete(ctx, key)
 }
 
 func (s *Postgres) List(ctx context.Context, prefix string, opts *persistence.ListOpts) (persistence.ListResult,
 	error,
 ) {
-	q := postgresQuery{query: s.readOnlyDB, queryTimeout: s.queryTimeout}
+	q := postgresQuery{query: s.readOnlyDBPool, queryTimeout: s.queryTimeout}
 	return q.List(ctx, prefix, opts)
 }
 
 func (s *Postgres) Tx(ctx context.Context) (persistence.Tx, error) {
-	tx, err := s.db.BeginTx(ctx, nil)
+	tx, err := s.dbPool.BeginTx(ctx, pgx.TxOptions{})
 	if err != nil {
 		return nil, err
 	}
 	return &postgresTx{
-		tx: tx,
+		ctx: ctx,
+		tx:  tx,
 		query: postgresQuery{
 			query:        tx,
 			queryTimeout: s.queryTimeout,
@@ -117,56 +128,32 @@ func (s *Postgres) Tx(ctx context.Context) (persistence.Tx, error) {
 }
 
 func (s *Postgres) Close() error {
-	return s.db.Close()
+	s.dbPool.Close()
+	return nil
 }
 
-type postgresTx struct {
-	tx    *sql.Tx
-	query postgresQuery
-}
-
-func (t *postgresTx) Commit() error {
-	return t.tx.Commit()
-}
-
-func (t *postgresTx) Rollback() error {
-	return t.tx.Rollback()
-}
-
-func (t *postgresTx) Get(ctx context.Context, key string) ([]byte, error) {
-	return t.query.Get(ctx, key)
-}
-
-func (t *postgresTx) Put(ctx context.Context, key string, value []byte) error {
-	return t.query.Put(ctx, key, value)
-}
-
-func (t *postgresTx) Delete(ctx context.Context, key string) error {
-	return t.query.Delete(ctx, key)
-}
-
-func (t *postgresTx) List(
-	ctx context.Context,
-	prefix string,
-	opts *persistence.ListOpts,
-) (persistence.ListResult, error) {
-	return t.query.List(ctx, prefix, opts)
+// pgxQueryer is the interface that wraps the required query methods of pgx. This is required
+// to be able to use a pgxpool.Pool, a pgxpool.Conn or a pgx.Tx to execute a query.
+type pgxQueryer interface {
+	Query(ctx context.Context, sql string, args ...interface{}) (pgx.Rows, error)
+	QueryRow(ctx context.Context, sql string, args ...interface{}) pgx.Row
+	Exec(ctx context.Context, sql string, arguments ...interface{}) (pgconn.CommandTag, error)
 }
 
 type postgresQuery struct {
-	query        sq.StdSqlCtx
+	query        pgxQueryer
 	queryTimeout time.Duration
 }
 
 func (t *postgresQuery) Get(ctx context.Context, key string) ([]byte, error) {
 	ctx, cancel := context.WithTimeout(ctx, t.queryTimeout)
 	defer cancel()
-	row := t.query.QueryRowContext(ctx, getQuery, key)
+	row := t.query.QueryRow(ctx, getQuery, key)
 	var resKey string
 	var value []byte
 	err := row.Scan(&resKey, &value)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if err == pgx.ErrNoRows {
 			return nil, persistence.ErrNotFound{Key: key}
 		}
 		return nil, err
@@ -177,14 +164,11 @@ func (t *postgresQuery) Get(ctx context.Context, key string) ([]byte, error) {
 func (t *postgresQuery) Put(ctx context.Context, key string, value []byte) error {
 	ctx, cancel := context.WithTimeout(ctx, t.queryTimeout)
 	defer cancel()
-	res, err := t.query.ExecContext(ctx, insertQuery, key, value)
+	res, err := t.query.Exec(ctx, insertQuery, key, value)
 	if err != nil {
 		return err
 	}
-	rowCount, err := res.RowsAffected()
-	if err != nil {
-		return err
-	}
+	rowCount := res.RowsAffected()
 	if rowCount != 1 {
 		return persistence.ErrInvalidRowsAffected
 	}
@@ -194,14 +178,11 @@ func (t *postgresQuery) Put(ctx context.Context, key string, value []byte) error
 func (t *postgresQuery) Delete(ctx context.Context, key string) error {
 	ctx, cancel := context.WithTimeout(ctx, t.queryTimeout)
 	defer cancel()
-	res, err := t.query.ExecContext(ctx, deleteQuery, key)
+	res, err := t.query.Exec(ctx, deleteQuery, key)
 	if err != nil {
 		return err
 	}
-	rowCount, err := res.RowsAffected()
-	if err != nil {
-		return err
-	}
+	rowCount := res.RowsAffected()
 	if rowCount == 0 {
 		return persistence.ErrNotFound{Key: key}
 	}
@@ -239,7 +220,7 @@ func (t *postgresQuery) List(
 	if err != nil {
 		return persistence.ListResult{}, err
 	}
-	rows, err := t.query.QueryContext(ctx, sql, placeholders...)
+	rows, err := t.query.Query(ctx, sql, placeholders...)
 	if err != nil {
 		return persistence.ListResult{}, err
 	}

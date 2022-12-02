@@ -53,6 +53,9 @@ type Opts struct {
 	// information about connection parameters.
 	// See: https://www.postgresql.org/docs/current/runtime-config.html for more information about runtime parameters.
 	Params map[string]string
+
+	// Pool defines configuration for connections pooling.
+	Pool PoolOpts
 }
 
 // Validate ensures the provided Postgres options are a valid configuration.
