@@ -55,7 +55,7 @@ func standardCoreEntityFieldsMessage(entityName string, fields []string, version
 	quotedFields := "'" + strings.Join(fields, "', '") + "'"
 	return fmt.Sprintf("For the '%s' entity, "+
 		"one or more of the following schema fields are set: %s "+
-		"but Kong Gateway versions < %s do not support these fields. "+
+		"but Kong Gateway versions < %s do not support these fields. ",
 		entityName,
 		quotedFields,
 		versionWithFeatureSupport,
