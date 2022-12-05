@@ -49,7 +49,7 @@ func TestVersionCompatibility(t *testing.T) {
 	dataPlaneVersion, err := versioning.NewVersion(kongClient.VersionFromInfo(info))
 	require.NoError(t, err)
 
-	admin := httpexpect.New(t, "http://localhost:3000")
+	admin := httpexpect.Default(t, "http://localhost:3000")
 	expectedConfig := &v1.TestingConfig{
 		Services: make([]*v1.Service, 1),
 		Routes:   make([]*v1.Route, 1),
@@ -189,7 +189,7 @@ func TestVersionCompatibility_PluginFieldUpdates(t *testing.T) {
 	dataPlaneVersion, err := versioning.NewVersion(kongClient.VersionFromInfo(info))
 	require.NoError(t, err)
 
-	admin := httpexpect.New(t, "http://localhost:3000")
+	admin := httpexpect.Default(t, "http://localhost:3000")
 
 	// Remove plugins that may not be expected due to data plane version or aren't subject to compatibility updates
 	expectedPluginsMap := make(map[string]VersionCompatibilityPlugins, 0)
@@ -292,7 +292,7 @@ func TestVersionCompatibility_EnsureTargetFieldsAreNotOverridden(t *testing.T) {
 	dataPlaneVersion, err := versioning.NewVersion(kongClient.VersionFromInfo(info))
 	require.NoError(t, err)
 
-	admin := httpexpect.New(t, "http://localhost:3000")
+	admin := httpexpect.Default(t, "http://localhost:3000")
 
 	pluginTests := []VersionCompatibilityPlugins{
 		{
@@ -429,7 +429,7 @@ func TestVersionCompatibilitySyslogFacilityField(t *testing.T) {
 	require.NoError(t, util.WaitForKong(t))
 	require.NoError(t, util.WaitForKongAdminAPI(t))
 
-	admin := httpexpect.New(t, "http://localhost:3000")
+	admin := httpexpect.Default(t, "http://localhost:3000")
 
 	tests := []VersionCompatibilityPlugins{
 		{

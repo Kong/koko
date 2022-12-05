@@ -45,7 +45,7 @@ func validateGoodService(body *httpexpect.Object) {
 func TestServiceCreate(t *testing.T) {
 	s, cleanup := setup(t)
 	defer cleanup()
-	c := httpexpect.New(t, s.URL)
+	c := httpexpect.Default(t, s.URL)
 	t.Run("creates a valid service", func(t *testing.T) {
 		res := c.POST("/v1/services").WithJSON(goodService()).Expect()
 		res.Status(http.StatusCreated)
@@ -482,7 +482,7 @@ func TestServiceCreate(t *testing.T) {
 func TestServiceUpsert(t *testing.T) {
 	s, cleanup := setup(t)
 	defer cleanup()
-	c := httpexpect.New(t, s.URL)
+	c := httpexpect.Default(t, s.URL)
 	t.Run("upserts a valid service", func(t *testing.T) {
 		res := c.PUT("/v1/services/" + uuid.NewString()).
 			WithJSON(goodService()).
@@ -633,7 +633,7 @@ func TestServiceUpsert(t *testing.T) {
 func TestServiceDelete(t *testing.T) {
 	s, cleanup := setup(t)
 	defer cleanup()
-	c := httpexpect.New(t, s.URL)
+	c := httpexpect.Default(t, s.URL)
 	svc := goodService()
 	res := c.POST("/v1/services").WithJSON(svc).Expect()
 	id := res.JSON().Path("$.item.id").String().Raw()
@@ -717,7 +717,7 @@ func TestServiceDelete(t *testing.T) {
 func TestServiceRead(t *testing.T) {
 	s, cleanup := setup(t)
 	defer cleanup()
-	c := httpexpect.New(t, s.URL)
+	c := httpexpect.Default(t, s.URL)
 	svc := goodService()
 	res := c.POST("/v1/services").WithJSON(svc).Expect()
 	id := res.JSON().Path("$.item.id").String().Raw()
@@ -766,7 +766,7 @@ func TestServiceRead(t *testing.T) {
 func TestServiceList(t *testing.T) {
 	s, cleanup := setup(t)
 	defer cleanup()
-	c := httpexpect.New(t, s.URL)
+	c := httpexpect.Default(t, s.URL)
 	svc := goodService()
 	res := c.POST("/v1/services").WithJSON(svc).Expect()
 	id1 := res.JSON().Path("$.item.id").String().Raw()
@@ -795,7 +795,7 @@ func TestServiceList(t *testing.T) {
 func TestServiceListPagination(t *testing.T) {
 	s, cleanup := setup(t)
 	defer cleanup()
-	c := httpexpect.New(t, s.URL)
+	c := httpexpect.Default(t, s.URL)
 	// Create ten services
 	svcName := "myservice-%d"
 	svc := goodService()

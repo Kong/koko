@@ -180,7 +180,7 @@ Vd2k4e2sXh4=
 func TestCACertificateCreate(t *testing.T) {
 	s, cleanup := setup(t)
 	defer cleanup()
-	c := httpexpect.New(t, s.URL)
+	c := httpexpect.Default(t, s.URL)
 
 	t.Run("creates a valid certificate", func(t *testing.T) {
 		cert := &v1.CACertificate{
@@ -293,7 +293,7 @@ func TestCACertificateCreate(t *testing.T) {
 func TestCACertificateUpsert(t *testing.T) {
 	s, cleanup := setup(t)
 	defer cleanup()
-	c := httpexpect.New(t, s.URL)
+	c := httpexpect.Default(t, s.URL)
 
 	t.Run("upserts a valid certificate", func(t *testing.T) {
 		id := uuid.NewString()
@@ -370,7 +370,7 @@ func TestCACertificateUpsert(t *testing.T) {
 func TestCACertificateRead(t *testing.T) {
 	s, cleanup := setup(t)
 	defer cleanup()
-	c := httpexpect.New(t, s.URL)
+	c := httpexpect.Default(t, s.URL)
 	res := c.POST("/v1/ca-certificates").WithJSON(&v1.CACertificate{
 		Cert: goodCACertOne,
 	}).Expect()
@@ -398,7 +398,7 @@ func TestCACertificateRead(t *testing.T) {
 func TestCACertificateDelete(t *testing.T) {
 	s, cleanup := setup(t)
 	defer cleanup()
-	c := httpexpect.New(t, s.URL)
+	c := httpexpect.Default(t, s.URL)
 	cert := &v1.CACertificate{
 		Cert: goodCACertOne,
 	}
@@ -421,7 +421,7 @@ func TestCACertificateDelete(t *testing.T) {
 func TestCACertificateList(t *testing.T) {
 	s, cleanup := setup(t)
 	defer cleanup()
-	c := httpexpect.New(t, s.URL)
+	c := httpexpect.Default(t, s.URL)
 
 	ids := make([]string, 0, 4)
 	certs := []*v1.CACertificate{

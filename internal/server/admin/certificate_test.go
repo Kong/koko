@@ -225,7 +225,7 @@ vv0pR1pJE1rqxjUX9TWJ4+9XcDRrMdIttTm1RQ40GqEY8/kMxL5+KZiW
 func TestCertificateCreate(t *testing.T) {
 	s, cleanup := setup(t)
 	defer cleanup()
-	c := httpexpect.New(t, s.URL)
+	c := httpexpect.Default(t, s.URL)
 
 	t.Run("creates a valid certificate", func(t *testing.T) {
 		certificate := &v1.Certificate{
@@ -262,7 +262,7 @@ func TestCertificateCreate(t *testing.T) {
 func TestCertificateUpsert(t *testing.T) {
 	s, cleanup := setup(t)
 	defer cleanup()
-	c := httpexpect.New(t, s.URL)
+	c := httpexpect.Default(t, s.URL)
 
 	t.Run("upserts a valid certificate", func(t *testing.T) {
 		id := uuid.NewString()
@@ -335,7 +335,7 @@ func TestCertificateUpsert(t *testing.T) {
 func TestCertificateRead(t *testing.T) {
 	s, cleanup := setup(t)
 	defer cleanup()
-	c := httpexpect.New(t, s.URL)
+	c := httpexpect.Default(t, s.URL)
 	certificate := &v1.Certificate{
 		Cert: goodCertTwo,
 		Key:  goodKeyTwo,
@@ -364,7 +364,7 @@ func TestCertificateRead(t *testing.T) {
 func TestCertificateDelete(t *testing.T) {
 	s, cleanup := setup(t)
 	defer cleanup()
-	c := httpexpect.New(t, s.URL)
+	c := httpexpect.Default(t, s.URL)
 	certificate := &v1.Certificate{
 		Cert: goodCertTwo,
 		Key:  goodKeyTwo,
@@ -388,7 +388,7 @@ func TestCertificateDelete(t *testing.T) {
 func TestCertificateList(t *testing.T) {
 	s, cleanup := setup(t)
 	defer cleanup()
-	c := httpexpect.New(t, s.URL)
+	c := httpexpect.Default(t, s.URL)
 
 	ids := make([]string, 0, 4)
 	certs := []*v1.Certificate{

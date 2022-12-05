@@ -21,7 +21,7 @@ func goodConsumer() *v1.Consumer {
 func TestConsumerCreate(t *testing.T) {
 	s, cleanup := setup(t)
 	defer cleanup()
-	c := httpexpect.New(t, s.URL)
+	c := httpexpect.Default(t, s.URL)
 	t.Run("creates a valid consumer", func(t *testing.T) {
 		res := c.POST("/v1/consumers").WithJSON(goodConsumer()).Expect()
 		res.Status(http.StatusCreated)
@@ -133,7 +133,7 @@ func TestConsumerCreate(t *testing.T) {
 func TestConsumerUpsert(t *testing.T) {
 	s, cleanup := setup(t)
 	defer cleanup()
-	c := httpexpect.New(t, s.URL)
+	c := httpexpect.Default(t, s.URL)
 	t.Run("upserts a valid consumer", func(t *testing.T) {
 		res := c.PUT("/v1/consumers/" + uuid.NewString()).
 			WithJSON(goodConsumer()).
@@ -242,7 +242,7 @@ func TestConsumerUpsert(t *testing.T) {
 func TestConsumerRead(t *testing.T) {
 	s, cleanup := setup(t)
 	defer cleanup()
-	c := httpexpect.New(t, s.URL)
+	c := httpexpect.Default(t, s.URL)
 	consumer := goodConsumer()
 	res := c.POST("/v1/consumers").WithJSON(consumer).Expect()
 	res.Status(http.StatusCreated)
@@ -332,7 +332,7 @@ func TestConsumerRead(t *testing.T) {
 func TestConsumerList(t *testing.T) {
 	s, cleanup := setup(t)
 	defer cleanup()
-	c := httpexpect.New(t, s.URL)
+	c := httpexpect.Default(t, s.URL)
 	consumer := goodConsumer()
 	idList := make([]string, 0, 3)
 	customIDList := make([]string, 0, 3)

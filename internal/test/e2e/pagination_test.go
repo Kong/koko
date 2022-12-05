@@ -97,7 +97,7 @@ func TestCPPagination(t *testing.T) {
 	dpCleanup := run.KongDP(kong.GetKongConfForShared())
 	defer dpCleanup()
 
-	c := httpexpect.New(t, "http://localhost:3000")
+	c := httpexpect.Default(t, "http://localhost:3000")
 
 	services := make([]*v1.Service, numberOfEntities)
 	routes := make([]*v1.Route, numberOfEntities)

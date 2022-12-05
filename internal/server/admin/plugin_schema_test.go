@@ -62,7 +62,7 @@ func validatePluginSchema(name, fieldType string, body *httpexpect.Object) {
 func TestPluginSchema_Create(t *testing.T) {
 	s, cleanup := setup(t)
 	defer cleanup()
-	c := httpexpect.New(t, s.URL)
+	c := httpexpect.Default(t, s.URL)
 	t.Run("create a Lua plugin using the plugin-schemas endpoint", func(t *testing.T) {
 		pluginSchemaBytes, err := json.ProtoJSONMarshal(goodPluginSchema("new-lua-plugin", "string"))
 		assert.NoError(t, err)
@@ -138,7 +138,7 @@ func TestPluginSchema_Create(t *testing.T) {
 func TestPluginSchema_Get(t *testing.T) {
 	s, cleanup := setup(t)
 	defer cleanup()
-	c := httpexpect.New(t, s.URL)
+	c := httpexpect.Default(t, s.URL)
 
 	pluginSchemaBytes, err := json.ProtoJSONMarshal(goodPluginSchema("new-lua-plugin", "string"))
 	assert.NoError(t, err)
@@ -197,7 +197,7 @@ func TestPluginSchema_Get(t *testing.T) {
 func TestPluginSchema_List(t *testing.T) {
 	s, cleanup := setup(t)
 	defer cleanup()
-	c := httpexpect.New(t, s.URL)
+	c := httpexpect.Default(t, s.URL)
 
 	pluginSchemaNames := make([]string, 0, 6)
 	for i := 1; i <= 6; i++ {
@@ -252,7 +252,7 @@ func TestPluginSchema_List(t *testing.T) {
 func TestPluginSchema_Put(t *testing.T) {
 	s, cleanup := setup(t)
 	defer cleanup()
-	c := httpexpect.New(t, s.URL)
+	c := httpexpect.Default(t, s.URL)
 
 	t.Run("creating a new schema using PUT succeeds", func(t *testing.T) {
 		pluginSchemaBytes, err := json.ProtoJSONMarshal(goodPluginSchema("put-new-lua-plugin", "string"))
@@ -354,7 +354,7 @@ func TestPluginSchema_Put(t *testing.T) {
 func TestPluginSchema_Delete(t *testing.T) {
 	s, cleanup := setup(t)
 	defer cleanup()
-	c := httpexpect.New(t, s.URL)
+	c := httpexpect.Default(t, s.URL)
 
 	// create a plugin schema
 	pluginSchemaName := "new-lua-plugin"
