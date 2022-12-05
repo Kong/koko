@@ -13,7 +13,7 @@ import (
 func TestTargetCreate(t *testing.T) {
 	s, cleanup := setup(t)
 	defer cleanup()
-	c := httpexpect.New(t, s.URL)
+	c := httpexpect.Default(t, s.URL)
 
 	upstream := goodUpstream()
 	upstream.Id = uuid.NewString()
@@ -165,7 +165,7 @@ func TestTargetCreate(t *testing.T) {
 func TestTargetUpsert(t *testing.T) {
 	s, cleanup := setup(t)
 	defer cleanup()
-	c := httpexpect.New(t, s.URL)
+	c := httpexpect.Default(t, s.URL)
 
 	upstream := goodUpstream()
 	upstream.Id = uuid.NewString()
@@ -269,7 +269,7 @@ func TestTargetUpsert(t *testing.T) {
 func TestTargetDelete(t *testing.T) {
 	s, cleanup := setup(t)
 	defer cleanup()
-	c := httpexpect.New(t, s.URL)
+	c := httpexpect.Default(t, s.URL)
 	upstream := goodUpstream()
 	res := c.POST("/v1/upstreams").WithJSON(upstream).Expect()
 	res.Status(http.StatusCreated)
@@ -309,7 +309,7 @@ func TestTargetDelete(t *testing.T) {
 func TestTargetRead(t *testing.T) {
 	s, cleanup := setup(t)
 	defer cleanup()
-	c := httpexpect.New(t, s.URL)
+	c := httpexpect.Default(t, s.URL)
 	upstream := goodUpstream()
 	res := c.POST("/v1/upstreams").WithJSON(upstream).Expect()
 	res.Status(http.StatusCreated)
@@ -347,7 +347,7 @@ func TestTargetRead(t *testing.T) {
 func TestTargetList(t *testing.T) {
 	s, cleanup := setup(t)
 	defer cleanup()
-	c := httpexpect.New(t, s.URL)
+	c := httpexpect.Default(t, s.URL)
 
 	upstream := &v1.Upstream{
 		Name: "foo",

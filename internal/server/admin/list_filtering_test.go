@@ -141,7 +141,7 @@ func TestListFiltering(t *testing.T) {
 
 			for i, tt := range tests {
 				t.Run(tt.name, func(t *testing.T) {
-					testListFilteringForType(t, httpexpect.New(t, server.URL), &tests[i], resourceInfo)
+					testListFilteringForType(t, httpexpect.Default(t, server.URL), &tests[i], resourceInfo)
 				})
 			}
 		})
@@ -200,7 +200,7 @@ func TestListFilteringWithSpaces(t *testing.T) {
 				}
 				for _, tt := range tests {
 					t.Run(tt.pageRequest.Filter, func(t *testing.T) {
-						testListFilteringForType(t, httpexpect.New(t, server.URL), tt, resourceInfo)
+						testListFilteringForType(t, httpexpect.Default(t, server.URL), tt, resourceInfo)
 					})
 				}
 			}
@@ -231,7 +231,7 @@ func TestListFilteringWithReferenceListing(t *testing.T) {
 		t.Run(tt.apiPath, func(t *testing.T) {
 			for queryArg, refField := range tt.refFields {
 				t.Run("by "+string(refField), func(t *testing.T) {
-					res := httpexpect.New(t, s.URL).
+					res := httpexpect.Default(t, s.URL).
 						GET("/v1/"+tt.apiPath).
 						WithQuery("page.filter", `"tag-1" in tags`).
 						WithQuery(queryArg, refID).

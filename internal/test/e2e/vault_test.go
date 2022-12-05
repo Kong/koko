@@ -96,7 +96,7 @@ func TestSecretsManagementEnvVault(t *testing.T) {
 	cleanup := run.Koko(t)
 	defer cleanup()
 
-	c := httpexpect.New(t, "http://localhost:3000")
+	c := httpexpect.Default(t, "http://localhost:3000")
 
 	// create vault entity
 	vault := &v1.Vault{

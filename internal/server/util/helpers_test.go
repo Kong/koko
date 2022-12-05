@@ -28,7 +28,7 @@ func TestHandlerWithRecovery(t *testing.T) {
 		require.NoError(t, err)
 		s := httptest.NewServer(HandlerWithRecovery(thisWillPanic(), l))
 		defer s.Close()
-		c := httpexpect.New(t, s.URL)
+		c := httpexpect.Default(t, s.URL)
 		res := c.POST("/v1/resource/id").WithHeader("content-type", "application/json").Expect()
 		res.Status(http.StatusInternalServerError)
 		res.ContentType("application/json")

@@ -47,7 +47,7 @@ func TestCompatibilityIssueAPI(t *testing.T) {
 	pluginBytes, err := json.ProtoJSONMarshal(plugin)
 	require.NoError(t, err)
 
-	adminClient := httpexpect.New(t, "http://localhost:3000")
+	adminClient := httpexpect.Default(t, "http://localhost:3000")
 	res := adminClient.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
 	res.Status(http.StatusCreated)
 

@@ -24,7 +24,7 @@ func goodUpstream() *v1.Upstream {
 func TestUpstreamCreate(t *testing.T) {
 	s, cleanup := setup(t)
 	defer cleanup()
-	c := httpexpect.New(t, s.URL)
+	c := httpexpect.Default(t, s.URL)
 	t.Run("creates a valid upstream", func(t *testing.T) {
 		upstream := goodUpstream()
 		c.Matcher(assertGoodUpstream(t, upstream)).
@@ -115,7 +115,7 @@ func TestUpstreamCreate(t *testing.T) {
 func TestUpstreamUpsert(t *testing.T) {
 	s, cleanup := setup(t)
 	defer cleanup()
-	c := httpexpect.New(t, s.URL)
+	c := httpexpect.Default(t, s.URL)
 	t.Run("upserts a valid upstream", func(t *testing.T) {
 		upstream := goodUpstream()
 		upstream.Id = uuid.NewString()
@@ -215,7 +215,7 @@ func TestUpstreamUpsert(t *testing.T) {
 func TestUpstreamDelete(t *testing.T) {
 	s, cleanup := setup(t)
 	defer cleanup()
-	c := httpexpect.New(t, s.URL)
+	c := httpexpect.Default(t, s.URL)
 	upstream := goodUpstream()
 	res := c.POST("/v1/upstreams").WithJSON(upstream).Expect()
 	id := res.JSON().Path("$.item.id").String().Raw()
@@ -244,7 +244,7 @@ func TestUpstreamDelete(t *testing.T) {
 func TestUpstreamRead(t *testing.T) {
 	s, cleanup := setup(t)
 	defer cleanup()
-	c := httpexpect.New(t, s.URL)
+	c := httpexpect.Default(t, s.URL)
 	upstream := goodUpstream()
 	res := c.POST("/v1/upstreams").WithJSON(upstream).Expect()
 	id := res.JSON().Path("$.item.id").String().Raw()
@@ -291,7 +291,7 @@ func TestUpstreamRead(t *testing.T) {
 func TestUpstreamList(t *testing.T) {
 	s, cleanup := setup(t)
 	defer cleanup()
-	c := httpexpect.New(t, s.URL)
+	c := httpexpect.Default(t, s.URL)
 	upstream := goodUpstream()
 	res := c.POST("/v1/upstreams").WithJSON(upstream).Expect()
 	id1 := res.JSON().Path("$.item.id").String().Raw()

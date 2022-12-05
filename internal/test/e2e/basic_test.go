@@ -80,7 +80,7 @@ func TestSharedMTLS(t *testing.T) {
 		Host: "httpbin.org",
 		Path: "/",
 	}
-	c := httpexpect.New(t, "http://localhost:3000")
+	c := httpexpect.Default(t, "http://localhost:3000")
 	res := c.POST("/v1/services").WithJSON(service).Expect()
 	res.Status(http.StatusCreated)
 	route := &v1.Route{
@@ -119,7 +119,7 @@ func TestPKIMTLS(t *testing.T) {
 		Host: "httpbin.org",
 		Path: "/",
 	}
-	c := httpexpect.New(t, "http://localhost:3000")
+	c := httpexpect.Default(t, "http://localhost:3000")
 	res := c.POST("/v1/services").WithJSON(service).Expect()
 	res.Status(http.StatusCreated)
 	route := &v1.Route{
@@ -186,7 +186,7 @@ func TestNodesEndpoint(t *testing.T) {
 		Host: "httpbin.org",
 		Path: "/",
 	}
-	c := httpexpect.New(t, "http://localhost:3000")
+	c := httpexpect.Default(t, "http://localhost:3000")
 	res := c.POST("/v1/services").WithJSON(service).Expect()
 	res.Status(http.StatusCreated)
 	route := &v1.Route{
@@ -243,7 +243,7 @@ func TestPluginSync(t *testing.T) {
 		Host: "example.com",
 		Path: "/",
 	}
-	c := httpexpect.New(t, "http://localhost:3000")
+	c := httpexpect.Default(t, "http://localhost:3000")
 	res := c.POST("/v1/services").WithJSON(service).Expect()
 	res.Status(http.StatusCreated)
 
@@ -263,7 +263,7 @@ func TestPluginSync(t *testing.T) {
 		Username: "testConsumer",
 	}
 	// create the consumer in CP
-	c = httpexpect.New(t, "http://localhost:3000")
+	c = httpexpect.Default(t, "http://localhost:3000")
 	res = c.POST("/v1/consumers").WithJSON(consumer).Expect()
 	res.Status(http.StatusCreated)
 
@@ -348,7 +348,7 @@ func TestUpstreamSync(t *testing.T) {
 		Id:   uuid.NewString(),
 		Name: "foo",
 	}
-	c := httpexpect.New(t, "http://localhost:3000")
+	c := httpexpect.Default(t, "http://localhost:3000")
 	res := c.POST("/v1/upstreams").WithJSON(upstream).Expect()
 	res.Status(http.StatusCreated)
 
@@ -372,7 +372,7 @@ func TestUpstreamWithClientCertificateSync(t *testing.T) {
 	cleanup := run.Koko(t)
 	defer cleanup()
 
-	c := httpexpect.New(t, "http://localhost:3000")
+	c := httpexpect.Default(t, "http://localhost:3000")
 
 	certificate := &v1.Certificate{
 		Id:   uuid.NewString(),
@@ -405,7 +405,7 @@ func TestServiceWithClientCertificateSync(t *testing.T) {
 	cleanup := run.Koko(t)
 	defer cleanup()
 
-	c := httpexpect.New(t, "http://localhost:3000")
+	c := httpexpect.Default(t, "http://localhost:3000")
 
 	certificate := &v1.Certificate{
 		Id:   uuid.NewString(),
@@ -448,7 +448,7 @@ func TestConsumerSync(t *testing.T) {
 		Username: "testConsumer",
 	}
 	// create the consumer in CP
-	c := httpexpect.New(t, "http://localhost:3000")
+	c := httpexpect.Default(t, "http://localhost:3000")
 	res := c.POST("/v1/consumers").WithJSON(consumer).Expect()
 	res.Status(http.StatusCreated)
 
@@ -479,7 +479,7 @@ func TestCertificateSync(t *testing.T) {
 		Cert: string(certs.DefaultSharedCert),
 		Key:  string(certs.DefaultSharedKey),
 	}
-	c := httpexpect.New(t, "http://localhost:3000")
+	c := httpexpect.Default(t, "http://localhost:3000")
 	res := c.POST("/v1/certificates").WithJSON(certificate).Expect()
 	res.Status(http.StatusCreated)
 
@@ -507,7 +507,7 @@ func TestCACertificateSync(t *testing.T) {
 		Id:   uuid.NewString(),
 		Cert: caCert,
 	}
-	c := httpexpect.New(t, "http://localhost:3000")
+	c := httpexpect.Default(t, "http://localhost:3000")
 	res := c.POST("/v1/ca-certificates").WithJSON(certificate).Expect()
 	res.Status(http.StatusCreated)
 
@@ -536,7 +536,7 @@ func TestSNISync(t *testing.T) {
 		Cert: string(certs.DefaultSharedCert),
 		Key:  string(certs.DefaultSharedKey),
 	}
-	c := httpexpect.New(t, "http://localhost:3000")
+	c := httpexpect.Default(t, "http://localhost:3000")
 	c.POST("/v1/certificates").WithJSON(certificate).Expect().Status(http.StatusCreated)
 
 	sni := &v1.SNI{
@@ -596,7 +596,7 @@ func TestVaultSync(t *testing.T) {
 	}
 	vaultBytes, err := json.ProtoJSONMarshal(vault)
 	require.NoError(t, err)
-	c := httpexpect.New(t, "http://localhost:3000")
+	c := httpexpect.Default(t, "http://localhost:3000")
 	c.POST("/v1/vaults").WithBytes(vaultBytes).Expect().Status(http.StatusCreated)
 
 	dpCleanup := run.KongDP(kong.GetKongConfForShared())
@@ -640,7 +640,7 @@ func TestVaultRemoval(t *testing.T) {
 		Name:   "env",
 		Prefix: "test-vault-1",
 	}
-	c := httpexpect.New(t, "http://localhost:3000")
+	c := httpexpect.Default(t, "http://localhost:3000")
 	c.POST("/v1/services").WithJSON(service).Expect().Status(http.StatusCreated)
 	c.POST("/v1/vaults").WithJSON(vault).Expect().Status(http.StatusCreated)
 	c.POST("/v1/routes").WithJSON(route).Expect().Status(http.StatusCreated)
@@ -675,7 +675,7 @@ func TestTargetSync(t *testing.T) {
 		Id:   uid,
 		Name: "foo",
 	}
-	c := httpexpect.New(t, "http://localhost:3000")
+	c := httpexpect.Default(t, "http://localhost:3000")
 	res := c.POST("/v1/upstreams").WithJSON(upstream).Expect()
 	res.Status(http.StatusCreated)
 
@@ -709,7 +709,7 @@ func TestServiceSync(t *testing.T) {
 	defer cleanup()
 
 	enabledService := goodService()
-	c := httpexpect.New(t, "http://localhost:3000")
+	c := httpexpect.Default(t, "http://localhost:3000")
 	res := c.POST("/v1/services").WithJSON(enabledService).Expect()
 	res.Status(http.StatusCreated)
 
@@ -744,7 +744,7 @@ func TestServiceWithEnabledFieldSync(t *testing.T) {
 	cleanup := run.Koko(t)
 	defer cleanup()
 
-	c := httpexpect.New(t, "http://localhost:3000")
+	c := httpexpect.Default(t, "http://localhost:3000")
 
 	// add enabled service
 	enabledService := goodService()
@@ -791,7 +791,7 @@ func TestRouteHeader(t *testing.T) {
 		Host: "httpbin.org",
 		Path: "/",
 	}
-	c := httpexpect.New(t, "http://localhost:3000")
+	c := httpexpect.Default(t, "http://localhost:3000")
 	res := c.POST("/v1/services").WithJSON(service).Expect()
 	res.Status(http.StatusCreated)
 	route := &v1.Route{
@@ -851,7 +851,7 @@ func TestRouteHeaderWithRegex(t *testing.T) {
 		Host: "httpbin.org",
 		Path: "/",
 	}
-	c := httpexpect.New(t, "http://localhost:3000")
+	c := httpexpect.Default(t, "http://localhost:3000")
 	res := c.POST("/v1/services").WithJSON(service).Expect()
 	res.Status(http.StatusCreated)
 	route := &v1.Route{
@@ -895,7 +895,7 @@ func TestRouteHeaderWithRegex(t *testing.T) {
 				"foo to have 1 value but got %v", len(route.Headers["foo"]))
 		}
 
-		pc := httpexpect.New(t, "http://localhost:8000")
+		pc := httpexpect.Default(t, "http://localhost:8000")
 
 		pc.GET("/foo").
 			Expect().
@@ -928,7 +928,7 @@ func TestRouteWithWildcardHost(t *testing.T) {
 		},
 	})
 
-	proxyClient := httpexpect.New(t, "http://localhost:8000")
+	proxyClient := httpexpect.Default(t, "http://localhost:8000")
 
 	service := &v1.Service{
 		Id:   uuid.NewString(),
@@ -986,7 +986,7 @@ func TestExpectedConfigHash(t *testing.T) {
 		Host: "httpbin.org",
 		Path: "/",
 	}
-	c := httpexpect.New(t, "http://localhost:3000")
+	c := httpexpect.Default(t, "http://localhost:3000")
 	res := c.POST("/v1/services").WithJSON(fooService).Expect()
 	res.Status(http.StatusCreated)
 	fooRoute := &v1.Route{

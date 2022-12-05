@@ -36,7 +36,7 @@ func validateGoodRoute(body *httpexpect.Object) {
 func TestRouteCreate(t *testing.T) {
 	s, cleanup := setup(t)
 	defer cleanup()
-	c := httpexpect.New(t, s.URL)
+	c := httpexpect.Default(t, s.URL)
 	t.Run("creates a valid route", func(t *testing.T) {
 		res := c.POST("/v1/routes").WithJSON(goodRoute()).Expect()
 		res.Status(http.StatusCreated)
@@ -172,7 +172,7 @@ func TestRouteCreate(t *testing.T) {
 func TestRouteUpsert(t *testing.T) {
 	s, cleanup := setup(t)
 	defer cleanup()
-	c := httpexpect.New(t, s.URL)
+	c := httpexpect.Default(t, s.URL)
 	t.Run("upsert a valid route", func(t *testing.T) {
 		res := c.PUT("/v1/routes/" + uuid.NewString()).
 			WithJSON(goodRoute()).
@@ -315,7 +315,7 @@ func TestRouteUpsert(t *testing.T) {
 func TestRouteDelete(t *testing.T) {
 	s, cleanup := setup(t)
 	defer cleanup()
-	c := httpexpect.New(t, s.URL)
+	c := httpexpect.Default(t, s.URL)
 	svc := goodRoute()
 	res := c.POST("/v1/routes").WithJSON(svc).Expect()
 	id := res.JSON().Path("$.item.id").String().Raw()
@@ -344,7 +344,7 @@ func TestRouteDelete(t *testing.T) {
 func TestRouteRead(t *testing.T) {
 	s, cleanup := setup(t)
 	defer cleanup()
-	c := httpexpect.New(t, s.URL)
+	c := httpexpect.Default(t, s.URL)
 	svc := goodRoute()
 	res := c.POST("/v1/routes").WithJSON(svc).Expect()
 	id := res.JSON().Path("$.item.id").String().Raw()
@@ -385,7 +385,7 @@ func TestRouteRead(t *testing.T) {
 func TestRouteList(t *testing.T) {
 	s, cleanup := setup(t)
 	defer cleanup()
-	c := httpexpect.New(t, s.URL)
+	c := httpexpect.Default(t, s.URL)
 
 	svc := &v1.Service{
 		Name: "foo",

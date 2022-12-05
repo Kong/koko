@@ -24,7 +24,7 @@ import (
 func TestSchemasGetEntity(t *testing.T) {
 	s, cleanup := setup(t)
 	defer cleanup()
-	c := httpexpect.New(t, s.URL)
+	c := httpexpect.Default(t, s.URL)
 
 	t.Run("get a valid entity", func(t *testing.T) {
 		paths := []string{
@@ -69,7 +69,7 @@ func TestSchemasGetEntity(t *testing.T) {
 func TestSchemasGetPlugin(t *testing.T) {
 	s, cleanup := setup(t)
 	defer cleanup()
-	c := httpexpect.New(t, s.URL)
+	c := httpexpect.Default(t, s.URL)
 
 	t.Run("get a valid plugin schema", func(t *testing.T) {
 		paths := []string{
@@ -141,7 +141,7 @@ func TestPluginValidate(t *testing.T) {
 		},
 	}
 
-	c, p := httpexpect.New(t, s.URL), "/v1/schemas/lua/plugins/validate"
+	c, p := httpexpect.Default(t, s.URL), "/v1/schemas/lua/plugins/validate"
 
 	t.Run("validate a global plugin with valid config", func(t *testing.T) {
 		pluginBytes, err := json.ProtoJSONMarshal(goodKeyAuthPlugin())

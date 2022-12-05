@@ -14,7 +14,7 @@ import (
 func TestVaultCreate(t *testing.T) {
 	s, cleanup := setup(t)
 	defer cleanup()
-	c := httpexpect.New(t, s.URL)
+	c := httpexpect.Default(t, s.URL)
 
 	t.Run("creates a valid vault", func(t *testing.T) {
 		vault := &v1.Vault{
@@ -71,7 +71,7 @@ func TestVaultCreate(t *testing.T) {
 func TestVaultUpsert(t *testing.T) {
 	s, cleanup := setup(t)
 	defer cleanup()
-	c := httpexpect.New(t, s.URL)
+	c := httpexpect.Default(t, s.URL)
 
 	t.Run("upserts a valid vault", func(t *testing.T) {
 		id := uuid.NewString()
@@ -183,7 +183,7 @@ func TestVaultUpsert(t *testing.T) {
 func TestVaultRead(t *testing.T) {
 	s, cleanup := setup(t)
 	defer cleanup()
-	c := httpexpect.New(t, s.URL)
+	c := httpexpect.Default(t, s.URL)
 	vault := &v1.Vault{
 		Name:   "env",
 		Prefix: "test-vault-5",
@@ -231,7 +231,7 @@ func TestVaultRead(t *testing.T) {
 func TestVaultDelete(t *testing.T) {
 	s, cleanup := setup(t)
 	defer cleanup()
-	c := httpexpect.New(t, s.URL)
+	c := httpexpect.Default(t, s.URL)
 	vault := &v1.Vault{
 		Name:   "env",
 		Prefix: "test-vault-1",
@@ -264,7 +264,7 @@ func TestVaultDelete(t *testing.T) {
 func TestVaultList(t *testing.T) {
 	s, cleanup := setup(t)
 	defer cleanup()
-	c := httpexpect.New(t, s.URL)
+	c := httpexpect.Default(t, s.URL)
 
 	ids := make([]string, 0, 4)
 	vaults := []*v1.Vault{

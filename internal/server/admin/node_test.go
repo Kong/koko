@@ -147,7 +147,7 @@ func TestNodeDelete(t *testing.T) {
 
 	s := httptest.NewServer(handler)
 	defer s.Close()
-	c := httpexpect.New(t, s.URL)
+	c := httpexpect.Default(t, s.URL)
 
 	t.Run("deleting a non-existent node returns 404", func(t *testing.T) {
 		c.DELETE("/v1/nodes/" + uuid.NewString()).Expect().Status(http.StatusNotFound)
@@ -210,7 +210,7 @@ func TestNodeRead(t *testing.T) {
 
 	s := httptest.NewServer(handler)
 	defer s.Close()
-	c := httpexpect.New(t, s.URL)
+	c := httpexpect.Default(t, s.URL)
 
 	t.Run("reading a non-existent node returns 404", func(t *testing.T) {
 		c.GET("/v1/nodes/" + uuid.NewString()).Expect().Status(http.StatusNotFound)
@@ -439,7 +439,7 @@ func TestNodeList(t *testing.T) {
 
 	s := httptest.NewServer(handler)
 	defer s.Close()
-	c := httpexpect.New(t, s.URL)
+	c := httpexpect.Default(t, s.URL)
 
 	t.Run("list returns multiple nodes", func(t *testing.T) {
 		body := c.GET("/v1/nodes").Expect().Status(http.StatusOK).JSON().Object()
@@ -536,7 +536,7 @@ func TestNodeListWithStatus(t *testing.T) {
 
 	s := httptest.NewServer(handler)
 	defer s.Close()
-	c := httpexpect.New(t, s.URL)
+	c := httpexpect.Default(t, s.URL)
 
 	body := c.GET("/v1/nodes").Expect().Status(http.StatusOK).JSON().Object()
 	items := body.Value("items").Array()

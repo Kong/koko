@@ -45,7 +45,7 @@ func validateKeyAuthPlugin(body *httpexpect.Object) {
 func TestPluginCreate(t *testing.T) {
 	s, cleanup := setup(t)
 	defer cleanup()
-	c := httpexpect.New(t, s.URL)
+	c := httpexpect.Default(t, s.URL)
 	t.Run("creates a valid global plugin", func(t *testing.T) {
 		pluginBytes, err := json.ProtoJSONMarshal(goodKeyAuthPlugin())
 		require.Nil(t, err)
@@ -305,7 +305,7 @@ func TestPluginCreate(t *testing.T) {
 func TestPluginUpsert(t *testing.T) {
 	s, cleanup := setup(t)
 	defer cleanup()
-	c := httpexpect.New(t, s.URL)
+	c := httpexpect.Default(t, s.URL)
 	t.Run("upsert a valid plugin", func(t *testing.T) {
 		pluginBytes, err := json.ProtoJSONMarshal(goodKeyAuthPlugin())
 		require.Nil(t, err)
@@ -457,7 +457,7 @@ func TestPluginUpsert(t *testing.T) {
 func TestPluginDelete(t *testing.T) {
 	s, cleanup := setup(t)
 	defer cleanup()
-	c := httpexpect.New(t, s.URL)
+	c := httpexpect.Default(t, s.URL)
 	pluginBytes, err := json.ProtoJSONMarshal(goodKeyAuthPlugin())
 	require.Nil(t, err)
 	res := c.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
@@ -487,7 +487,7 @@ func TestPluginDelete(t *testing.T) {
 func TestPluginRead(t *testing.T) {
 	s, cleanup := setup(t)
 	defer cleanup()
-	c := httpexpect.New(t, s.URL)
+	c := httpexpect.Default(t, s.URL)
 	pluginBytes, err := json.ProtoJSONMarshal(goodKeyAuthPlugin())
 	require.Nil(t, err)
 	res := c.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
@@ -513,7 +513,7 @@ func TestPluginRead(t *testing.T) {
 func TestConfiguredPluginsList(t *testing.T) {
 	s, cleanup := setup(t)
 	defer cleanup()
-	c := httpexpect.New(t, s.URL)
+	c := httpexpect.Default(t, s.URL)
 
 	svc := &v1.Service{
 		Id:   uuid.NewString(),
@@ -604,7 +604,7 @@ func TestConfiguredPluginsList(t *testing.T) {
 func TestPluginList(t *testing.T) {
 	s, cleanup := setup(t)
 	defer cleanup()
-	c := httpexpect.New(t, s.URL)
+	c := httpexpect.Default(t, s.URL)
 
 	svc := &v1.Service{
 		Name: "foo",
@@ -914,7 +914,7 @@ func TestPluginList(t *testing.T) {
 func TestPluginListByConsumer(t *testing.T) {
 	s, cleanup := setup(t)
 	defer cleanup()
-	c := httpexpect.New(t, s.URL)
+	c := httpexpect.Default(t, s.URL)
 
 	consumer := goodConsumer()
 	res := c.POST("/v1/consumers").WithJSON(consumer).Expect()
@@ -984,7 +984,7 @@ func TestAvailablePlugins(t *testing.T) {
 	s, cleanup := setup(t)
 	defer cleanup()
 
-	c := httpexpect.New(t, s.URL)
+	c := httpexpect.Default(t, s.URL)
 	body := c.GET("/v1/available-plugins").Expect().Status(http.StatusOK).JSON().Object()
 	names := body.Value("names").Array().Iter()
 	actual := make([]string, 0, len(names))
@@ -1036,7 +1036,7 @@ func TestAvailableAndCustomPlugins(t *testing.T) {
 	s, cleanup := setup(t)
 	defer cleanup()
 
-	c := httpexpect.New(t, s.URL)
+	c := httpexpect.Default(t, s.URL)
 	// Add custom plugin
 	pluginSchemaBytes, err := json.ProtoJSONMarshal(goodPluginSchema("abc-lua-plugin", "string"))
 	assert.NoError(t, err)

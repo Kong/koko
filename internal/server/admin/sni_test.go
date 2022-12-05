@@ -118,7 +118,7 @@ mpEidaFIHN/a8TrYUkCPmxs=
 func TestSNICreate(t *testing.T) {
 	s, cleanup := setup(t)
 	defer cleanup()
-	c := httpexpect.New(t, s.URL)
+	c := httpexpect.Default(t, s.URL)
 
 	// create certificate
 	res := c.POST("/v1/certificates").WithJSON(&v1.Certificate{
@@ -174,7 +174,7 @@ func TestSNICreate(t *testing.T) {
 func TestSNIUpsert(t *testing.T) {
 	s, cleanup := setup(t)
 	defer cleanup()
-	c := httpexpect.New(t, s.URL)
+	c := httpexpect.Default(t, s.URL)
 
 	// create certificate
 	res := c.POST("/v1/certificates").WithJSON(&v1.Certificate{
@@ -226,7 +226,7 @@ func TestSNIUpsert(t *testing.T) {
 func TestSNIRead(t *testing.T) {
 	s, cleanup := setup(t)
 	defer cleanup()
-	c := httpexpect.New(t, s.URL)
+	c := httpexpect.Default(t, s.URL)
 
 	// create certificate
 	res := c.POST("/v1/certificates").WithJSON(&v1.Certificate{
@@ -295,7 +295,7 @@ func TestSNIRead(t *testing.T) {
 func TestSNIDelete(t *testing.T) {
 	s, cleanup := setup(t)
 	defer cleanup()
-	c := httpexpect.New(t, s.URL)
+	c := httpexpect.Default(t, s.URL)
 
 	// create certificate
 	res := c.POST("/v1/certificates").WithJSON(&v1.Certificate{
@@ -326,7 +326,7 @@ func TestSNIDelete(t *testing.T) {
 func TestSNIList(t *testing.T) {
 	s, cleanup := setup(t)
 	defer cleanup()
-	c := httpexpect.New(t, s.URL)
+	c := httpexpect.Default(t, s.URL)
 
 	// create certificates
 	res := c.POST("/v1/certificates").WithJSON(&v1.Certificate{
