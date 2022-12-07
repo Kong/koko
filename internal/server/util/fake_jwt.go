@@ -72,7 +72,7 @@ type TokenTimes struct {
 }
 
 //nolint:gomnd,forcetypeassert
-func GetKAuthBearerTokenHeader(user *FakeUser, tt *TokenTimes) (string, error) {
+func GetAuthBearerTokenHeader(user *FakeUser, tt *TokenTimes) (string, error) {
 	if user == nil {
 		user = &FakeUser{
 			ID: uuid.NewString(),

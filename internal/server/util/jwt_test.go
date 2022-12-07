@@ -23,7 +23,7 @@ func TestJWTEncryptDecrypt(t *testing.T) {
 		EXP: nowInSeconds + (60 * 15), // 15 min
 		NBF: nowInSeconds - 60,
 	}
-	header, err := GetKAuthBearerTokenHeader(user, tt)
+	header, err := GetAuthBearerTokenHeader(user, tt)
 	require.NoError(t, err)
 	claims, err := ParseUnverifiedAuthorization(header)
 	require.NoError(t, err)
@@ -50,7 +50,7 @@ func TestJWTEncryptVerifyDecrypt(t *testing.T) {
 		EXP: nowInSeconds + (60 * 15), // 15 min
 		NBF: nowInSeconds - 60,
 	}
-	header, err := GetKAuthBearerTokenHeader(user, tt)
+	header, err := GetAuthBearerTokenHeader(user, tt)
 	require.NoError(t, err)
 	claims, err := FakeJWTService.ParseAuthorization(header)
 	require.NoError(t, err)
