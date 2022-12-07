@@ -13,6 +13,8 @@ require (
 	github.com/cespare/xxhash/v2 v2.1.2
 	github.com/gavv/httpexpect/v2 v2.6.1
 	github.com/go-sql-driver/mysql v1.7.0
+	github.com/golang-jwt/jwt v3.2.2+incompatible
+	github.com/golang-jwt/jwt/v4 v4.4.3
 	github.com/golang-migrate/migrate/v4 v4.15.2
 	github.com/golang/protobuf v1.5.2
 	github.com/google/cel-go v0.12.5

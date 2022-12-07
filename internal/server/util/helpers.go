@@ -10,6 +10,7 @@ import (
 	grpcRecovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	pbModel "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
+	"github.com/kong/koko/internal/json"
 	"github.com/kong/koko/internal/model/json/validation"
 	"github.com/kong/koko/internal/store"
 	"go.uber.org/zap"
@@ -79,8 +80,11 @@ func logPanic(req *http.Request, err interface{}, logger *zap.Logger) {
 }
 
 func RequestContextWithLogger(req *http.Request, logger *zap.Logger) *http.Request {
+	loggerWithSpan := LoggerWithSpan(req.Context(), logger)
+	authorization := req.Header.Get("Authorization")
+	loggerWithAuth := LoggerWithAuthElements(authorization, loggerWithSpan)
 	return req.WithContext(context.WithValue(req.Context(), LoggerKey,
-		LoggerWithSpan(req.Context(), logger)))
+		loggerWithAuth))
 }
 
 func LoggerFromContext(ctx context.Context) *zap.Logger {
@@ -94,6 +98,28 @@ func LoggerWithSpan(ctx context.Context, l *zap.Logger) *zap.Logger {
 	if span, ok := ctx.Value(SpanKey).(SpanValue); ok {
 		return l.With(zap.String(span.TraceIDLogKey(), span.TraceID()),
 			zap.String(span.SpanIDLogKey(), span.SpanID()))
+	}
+	return l
+}
+
+func LoggerWithAuthElements(authorization string, l *zap.Logger) *zap.Logger {
+	if len(authorization) > 0 {
+		if claims, err := ParseUnverifiedAuthorization(authorization); err == nil {
+			var loggerWithAuth *zap.Logger
+			if len(claims.Subject) > 0 {
+				loggerWithAuth = l.With(zap.String("principal_id", claims.Subject))
+			}
+			if len(claims.Oid) > 0 {
+				if loggerWithAuth != nil {
+					loggerWithAuth = loggerWithAuth.With(zap.String("org_id", claims.Oid))
+				} else {
+					loggerWithAuth = l.With(zap.String("org_id", claims.Oid))
+				}
+			}
+			if loggerWithAuth != nil {
+				return loggerWithAuth
+			}
+		}
 	}
 	return l
 }
@@ -169,6 +195,12 @@ func HandleErr(ctx context.Context, logger *zap.Logger, err error) error {
 	}
 
 	logger = LoggerWithSpan(ctx, logger)
+
+	if marshal, err2 := json.Marshal(err); err2 == nil {
+		logger.Info("internal error mapping", zap.String("error", string(marshal)),
+			zap.String("error_type", fmt.Sprintf("%T", err)))
+	}
+
 	if errors.Is(err, store.ErrNotFound) {
 		return status.Error(codes.NotFound, "")
 	}
