@@ -67,7 +67,8 @@ func (s *JwtService) ParseAuthorization(tokenString string) (*JWTClaims, error) 
 		return nil, status.New(codes.Unauthenticated, "unsupported Auth method").Err()
 	}
 
-	token, err := jwt.Parse(tokenSlice[1], func(token *jwt.Token) (interface{}, error) {
+	parser := jwt.NewParser(jwt.WithJSONNumber())
+	token, err := parser.Parse(tokenSlice[1], func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
 			return nil, errors.New("invalid token")
 		}
