@@ -41,7 +41,7 @@ func New(opts NewJwtServiceOpts) (*JwtService, error) {
 
 	raw, rest := pem.Decode([]byte(parsedStr))
 	if len(rest) > 0 {
-		return nil, errors.New("rest found, Jwt key invalid")
+		return nil, errors.New("unable to fully decode, Jwt key invalid")
 	}
 	rsaPublicKey, err := x509.ParsePKIXPublicKey(raw.Bytes)
 	if err != nil {
@@ -60,10 +60,7 @@ var errNoClaim = errors.New("unable to parse claims")
 
 func (s *JwtService) ParseAuthorization(tokenString string) (*JWTClaims, error) {
 	tokenSlice := strings.Split(tokenString, " ")
-	if len(tokenSlice) < 2 { //nolint: gomnd
-		return nil, status.New(codes.Unauthenticated, "unsupported Auth method").Err()
-	}
-	if tokenSlice[0] != "Bearer" {
+	if len(tokenSlice) < 2 || tokenSlice[0] != "Bearer" {
 		return nil, status.New(codes.Unauthenticated, "unsupported Auth method").Err()
 	}
 
@@ -90,10 +87,7 @@ func (s *JwtService) ParseAuthorization(tokenString string) (*JWTClaims, error) 
 // ParseUnverifiedAuthorization Do not use this unless you know what you are doing.
 func ParseUnverifiedAuthorization(tokenString string) (*JWTClaims, error) {
 	tokenSlice := strings.Split(tokenString, " ")
-	if len(tokenSlice) < 2 { //nolint: gomnd
-		return nil, status.New(codes.Unauthenticated, "unsupported Auth method").Err()
-	}
-	if tokenSlice[0] != "Bearer" {
+	if len(tokenSlice) < 2 || tokenSlice[0] != "Bearer" {
 		return nil, status.New(codes.Unauthenticated, "unsupported Auth method").Err()
 	}
 	parser := jwt.NewParser(jwt.WithJSONNumber())
