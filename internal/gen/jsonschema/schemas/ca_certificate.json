@@ -37,6 +37,7 @@
       "type": "integer"
     }
   },
+  "additionalProperties": false,
   "x-koko-config": {
     "disableValidateEndpoint": false,
     "resourceAPIPath": "ca-certificates"

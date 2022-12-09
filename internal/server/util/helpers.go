@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"regexp"
 	"strconv"
 
 	grpcRecovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
@@ -12,6 +13,7 @@ import (
 	pbModel "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
 	"github.com/kong/koko/internal/json"
 	"github.com/kong/koko/internal/model/json/validation"
+	"github.com/kong/koko/internal/model/json/validation/typedefs"
 	"github.com/kong/koko/internal/store"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
@@ -24,6 +26,8 @@ import (
 const (
 	StatusCodeKey = "koko-status-code"
 )
+
+var referenceRegex = regexp.MustCompile(typedefs.ReferencePattern)
 
 type spanKey int
 
@@ -272,4 +276,12 @@ func grpcRecoveryHandler(logger *zap.Logger) grpcRecovery.Option {
 		logger.Error(zap.Any("panic-message", p).String)
 		return status.Errorf(codes.Internal, "internal server error")
 	})
+}
+
+// IsReference returns true if the passed string format matches
+// the 'reference' format used in Kong.
+//
+// Ref: https://github.com/Kong/kong/blob/5d721ac9ae1df36049013599d0253bd39cb6f758/kong/pdk/vault.lua#L320-L328
+func IsReference(v string) bool {
+	return referenceRegex.MatchString(v)
 }

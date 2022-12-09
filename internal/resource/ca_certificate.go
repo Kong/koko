@@ -4,17 +4,20 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"regexp"
 	"time"
 
 	"github.com/kong/koko/internal/crypto"
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
+	"github.com/kong/koko/internal/json"
 	"github.com/kong/koko/internal/model"
 	"github.com/kong/koko/internal/model/json/extension"
 	"github.com/kong/koko/internal/model/json/generator"
 	"github.com/kong/koko/internal/model/json/validation"
 	"github.com/kong/koko/internal/model/json/validation/typedefs"
+	"google.golang.org/protobuf/proto"
 )
 
 const (
@@ -163,6 +166,46 @@ func (r CACertificate) Indexes() []model.Index {
 	}
 }
 
+// MarshalResourceJSON is used here to make sure that CA certificate
+// metadata, which cannot be passed via API, are still included
+// in the marshalled object.
+//
+// At the same time, we don't want to store the metadata object in the
+// database, so here we are creating a clone of the original object and
+// setting the metadata to nil. This way the original object, which
+// includes the metadata, will be returned to the caller, while the
+// clone object, which doesn't include the metadata, will be stored in
+// the database.
+func (r CACertificate) MarshalResourceJSON() ([]byte, error) {
+	if !isReference(r.CACertificate.Cert) {
+		if err := extractCACertInfo(r.CACertificate); err != nil {
+			return nil, err
+		}
+	}
+	newCert := proto.Clone(r.CACertificate)
+	newCertObj, ok := newCert.(*v1.CACertificate)
+	if !ok {
+		return nil, errors.New("unexpected type while converting CACertificate clone")
+	}
+	newCertObj.Metadata = nil
+	return json.Marshal(newCertObj)
+}
+
+// UnmarshalResourceJSON is used here to make sure that CA certificate
+// metadata, which cannot be passed via API, are still included
+// in the unmarshalled object.
+func (r CACertificate) UnmarshalResourceJSON(cert []byte) error {
+	if err := json.Unmarshal(cert, &r.CACertificate); err != nil {
+		return err
+	}
+	if !isReference(r.CACertificate.Cert) {
+		if err := extractCACertInfo(r.CACertificate); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func init() {
 	err := model.RegisterType(TypeCACertificate, &v1.CACertificate{}, func() model.Object {
 		return NewCACertificate()
@@ -190,6 +233,7 @@ func init() {
 			"id",
 			"cert",
 		},
+		AdditionalProperties: &falsy,
 		XKokoConfig: &extension.Config{
 			ResourceAPIPath: "ca-certificates",
 		},
@@ -198,4 +242,22 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
+}
+
+func extractCACertInfo(cert *v1.CACertificate) error {
+	decoded, err := crypto.ParsePEMCert([]byte(cert.Cert))
+	if err != nil {
+		return fmt.Errorf("decoding certificate: %w", err)
+	}
+	if cert.Metadata != nil {
+		return nil
+	}
+	cert.Metadata = &v1.CertificateMetadata{
+		Issuer:    decoded.Issuer.String(),
+		Subject:   decoded.Subject.String(),
+		KeyUsages: extractKeyUsages(decoded),
+		Expiry:    int32(decoded.NotAfter.Unix()),
+		SanNames:  decoded.DNSNames,
+	}
+	return nil
 }

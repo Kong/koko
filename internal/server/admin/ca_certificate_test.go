@@ -113,6 +113,30 @@ iDbjPTAXNw==
 -----END CERTIFICATE-----
 `
 
+	goodCACertFive = `-----BEGIN CERTIFICATE-----
+MIIDZzCCAk+gAwIBAgIUSXskUBcsOh4tgvhi5MliI8wbpuYwDQYJKoZIhvcNAQEL
+BQAwFjEUMBIGA1UEAwwLZXhhbXBsZS5jb20wHhcNMjIxMjE0MTMxMzQ5WhcNMzIx
+MjExMTMxMzQ5WjAWMRQwEgYDVQQDDAtleGFtcGxlLmNvbTCCASIwDQYJKoZIhvcN
+AQEBBQADggEPADCCAQoCggEBAMRLfEqflv0IsO7G6N0JPx71vngiRV3khcSBq4Eq
+ySUk2r1ojm/mns4lHYSA4YlVeBVk5YIERsL1N7MZWQs0aCODMx1bjINp0oNd5MyN
+fbQNlqhLh5N05mI1WV9Hn5KQGXZxxT5AeL1Y56RXry72t6LC5XJuWzPtOqnw/I3D
+wgwPcn8WTMOOvqQXkGNnHmDAd+fZyp1MuRaVdl63ELD0YjnQ0tu7TDzjfHff+8nI
+KsK505R/EUGRa2yCEwvU2q//ohNBSDKJr4LxyuFLCOtZ1wlTI0skeCoLEN3xjAER
+d3q6qIFJW8GfZl7IrG+jLXnEnw6tdzan1YSV9gQXRvB1Ej8CAwEAAaOBrDCBqTAd
+BgNVHQ4EFgQUWior1ZGNfrOndXtUIxHLiE4YWaYwHwYDVR0jBBgwFoAUWior1ZGN
+frOndXtUIxHLiE4YWaYwDwYDVR0TAQH/BAUwAwEB/zAnBgNVHREEIDAeggtleGFt
+cGxlLmNvbYIPd3d3LmV4YW1wbGUuY29tMA4GA1UdDwEB/wQEAwIFoDAdBgNVHSUE
+FjAUBggrBgEFBQcDAQYIKwYBBQUHAwIwDQYJKoZIhvcNAQELBQADggEBAFzJ1IgW
+qW3W7acduv7XmIzByIZx92Yj/fmjpHtb2kVRLBBkuLm5uD0Ng1jm0RQbZe9K1gdD
+zNyG0MSD4qgBFKS3yMHsa2H9svJ6QAAe0dPMX3tSA+UzaJP3yudjCmgxeKYXhzjQ
+7HdAp/yjo8mxAu8R6Pu1VvVU/ZTcsFuJLBKWSDdoB3hcdg9YDeS9LUR9Sgii3BnF
+MLDBebiwb5+dd0IQpQzMSDc1WNXNSLSHo40WS/mGUvDSLeIKW0V/yWX3hAakyg4r
+waHpVltXO7M8pST7SQekx4LBgpm9tDdrH2VSLmpqWDefRoHBFJCcKbhC532NfX0W
+FeNAwJWh/ME3d1k=
+-----END CERTIFICATE-----`
+
+	digestFive = "d7cae555070f9710f3eca60e64ec4d7c1defe2acb76fae3aede95e2d61fc0dc6"
+
 	badCertOne = `
 -----BEGIN CERTIFICATE-----
 MIIE4DCCAsigAwIBAgIBATANBgkqhkiG9w0BAQsFADAaMRgwFgYDVQQKDA9rb25n
@@ -182,6 +206,98 @@ func TestCACertificateCreate(t *testing.T) {
 	defer cleanup()
 	c := httpexpect.Default(t, s.URL)
 
+	t.Run("creating a certificate with subject fails", func(t *testing.T) {
+		cert := &v1.CACertificate{
+			Cert: goodCACertOne,
+			Metadata: &v1.CertificateMetadata{
+				Subject: "XXX",
+			},
+		}
+		res := c.POST("/v1/ca-certificates").WithJSON(cert).Expect()
+		res.Status(http.StatusBadRequest)
+		body := res.JSON().Object()
+		body.ValueEqual("message", "validation error")
+		body.Value("details").Array().Length().Equal(1)
+		err := body.Value("details").Array().Element(0).Object()
+		err.ValueEqual("type", v1.ErrorType_ERROR_TYPE_ENTITY.String())
+		err.Value("messages").Array().Length().Equal(1)
+		err.Value("messages").Array().Element(0).String().
+			Equal("additionalProperties 'metadata' not allowed")
+	})
+	t.Run("creating a certificate with issuer fails", func(t *testing.T) {
+		cert := &v1.CACertificate{
+			Cert: goodCACertOne,
+			Metadata: &v1.CertificateMetadata{
+				Issuer: "XXX",
+			},
+		}
+		res := c.POST("/v1/ca-certificates").WithJSON(cert).Expect()
+		res.Status(http.StatusBadRequest)
+		body := res.JSON().Object()
+		body.ValueEqual("message", "validation error")
+		body.Value("details").Array().Length().Equal(1)
+		err := body.Value("details").Array().Element(0).Object()
+		err.ValueEqual("type", v1.ErrorType_ERROR_TYPE_ENTITY.String())
+		err.Value("messages").Array().Length().Equal(1)
+		err.Value("messages").Array().Element(0).String().
+			Equal("additionalProperties 'metadata' not allowed")
+	})
+	t.Run("creating a certificate with san fails", func(t *testing.T) {
+		cert := &v1.CACertificate{
+			Cert: goodCACertOne,
+			Metadata: &v1.CertificateMetadata{
+				SanNames: []string{"XXX"},
+			},
+		}
+		res := c.POST("/v1/ca-certificates").WithJSON(cert).Expect()
+		res.Status(http.StatusBadRequest)
+		body := res.JSON().Object()
+		body.ValueEqual("message", "validation error")
+		body.Value("details").Array().Length().Equal(1)
+		err := body.Value("details").Array().Element(0).Object()
+		err.ValueEqual("type", v1.ErrorType_ERROR_TYPE_ENTITY.String())
+		err.Value("messages").Array().Length().Equal(1)
+		err.Value("messages").Array().Element(0).String().
+			Equal("additionalProperties 'metadata' not allowed")
+	})
+	t.Run("creating a certificate with key_usages fails", func(t *testing.T) {
+		cert := &v1.CACertificate{
+			Cert: goodCACertOne,
+			Metadata: &v1.CertificateMetadata{
+				KeyUsages: []v1.KeyUsageType{
+					v1.KeyUsageType_KEY_USAGE_TYPE_ANY,
+				},
+			},
+		}
+		res := c.POST("/v1/ca-certificates").WithJSON(cert).Expect()
+		res.Status(http.StatusBadRequest)
+		body := res.JSON().Object()
+		body.ValueEqual("message", "validation error")
+		body.Value("details").Array().Length().Equal(1)
+		err := body.Value("details").Array().Element(0).Object()
+		err.ValueEqual("type", v1.ErrorType_ERROR_TYPE_ENTITY.String())
+		err.Value("messages").Array().Length().Equal(1)
+		err.Value("messages").Array().Element(0).String().
+			Equal("additionalProperties 'metadata' not allowed")
+	})
+	t.Run("creating a certificate with expiry fails", func(t *testing.T) {
+		cert := &v1.CACertificate{
+			Cert: goodCACertOne,
+			Metadata: &v1.CertificateMetadata{
+				Expiry: 0,
+			},
+		}
+		res := c.POST("/v1/ca-certificates").WithJSON(cert).Expect()
+		res.Status(http.StatusBadRequest)
+		body := res.JSON().Object()
+		body.ValueEqual("message", "validation error")
+		body.Value("details").Array().Length().Equal(1)
+		err := body.Value("details").Array().Element(0).Object()
+		err.ValueEqual("type", v1.ErrorType_ERROR_TYPE_ENTITY.String())
+		err.Value("messages").Array().Length().Equal(1)
+		err.Value("messages").Array().Element(0).String().
+			Equal("additionalProperties 'metadata' not allowed")
+	})
 	t.Run("creates a valid certificate", func(t *testing.T) {
 		cert := &v1.CACertificate{
 			Cert: goodCACertOne,
@@ -191,6 +307,37 @@ func TestCACertificateCreate(t *testing.T) {
 		res.Header("grpc-metadata-koko-status-code").Empty()
 		body := res.JSON().Path("$.item").Object()
 		body.Value("cert").String().Equal(cert.Cert)
+		body.Path("$.metadata").Object().ContainsKey("subject")
+		body.Path("$.metadata").Object().ContainsKey("issuer")
+		body.Path("$.metadata").Object().ContainsKey("expiry")
+	})
+	t.Run("creates a valid certificate with all metadata", func(t *testing.T) {
+		cert := &v1.CACertificate{
+			Cert: goodCACertFive,
+		}
+		res := c.POST("/v1/ca-certificates").WithJSON(cert).Expect()
+		res.Status(http.StatusCreated)
+		res.Header("grpc-metadata-koko-status-code").Empty()
+		body := res.JSON().Path("$.item").Object()
+		body.Value("cert").String().Equal(cert.Cert)
+		body.Path("$.metadata").Object().Value("subject").Equal("CN=example.com")
+		body.Path("$.metadata").Object().Value("issuer").Equal("CN=example.com")
+		body.Path("$.metadata").Object().ContainsKey("expiry")
+		body.Path("$.metadata").Object().Value("key_usages").Array().Equal(
+			[]string{
+				v1.KeyUsageType_KEY_USAGE_TYPE_DIGITAL_SIGNATURE.String(),
+				v1.KeyUsageType_KEY_USAGE_TYPE_KEY_ENCIPHERMENT.String(),
+				v1.KeyUsageType_KEY_USAGE_TYPE_ENCIPHER_ONLY.String(),
+				v1.KeyUsageType_KEY_USAGE_TYPE_SERVER_AUTH.String(),
+				v1.KeyUsageType_KEY_USAGE_TYPE_CLIENT_AUTH.String(),
+			},
+		)
+		body.Path("$.metadata").Object().Value("san_names").Array().Equal(
+			[]string{
+				"example.com",
+				"www.example.com",
+			},
+		)
 	})
 	t.Run("creates a valid certificate and check digest", func(t *testing.T) {
 		cert := &v1.CACertificate{
@@ -372,7 +519,7 @@ func TestCACertificateRead(t *testing.T) {
 	defer cleanup()
 	c := httpexpect.Default(t, s.URL)
 	res := c.POST("/v1/ca-certificates").WithJSON(&v1.CACertificate{
-		Cert: goodCACertOne,
+		Cert: goodCACertFive,
 	}).Expect()
 	res.Status(http.StatusCreated)
 	id := res.JSON().Path("$.item.id").String().Raw()
@@ -390,8 +537,26 @@ func TestCACertificateRead(t *testing.T) {
 			Expect().Status(http.StatusOK)
 		body := res.JSON().Path("$.item").Object()
 		body.Value("id").Equal(id)
-		body.Value("cert").Equal(goodCACertOne)
-		body.Value("cert_digest").Equal(digestOne)
+		body.Value("cert").Equal(goodCACertFive)
+		body.Value("cert_digest").Equal(digestFive)
+		body.Path("$.metadata").Object().Value("subject").Equal("CN=example.com")
+		body.Path("$.metadata").Object().Value("issuer").Equal("CN=example.com")
+		body.Path("$.metadata").Object().ContainsKey("expiry")
+		body.Path("$.metadata").Object().Value("key_usages").Array().Equal(
+			[]string{
+				v1.KeyUsageType_KEY_USAGE_TYPE_DIGITAL_SIGNATURE.String(),
+				v1.KeyUsageType_KEY_USAGE_TYPE_KEY_ENCIPHERMENT.String(),
+				v1.KeyUsageType_KEY_USAGE_TYPE_ENCIPHER_ONLY.String(),
+				v1.KeyUsageType_KEY_USAGE_TYPE_SERVER_AUTH.String(),
+				v1.KeyUsageType_KEY_USAGE_TYPE_CLIENT_AUTH.String(),
+			},
+		)
+		body.Path("$.metadata").Object().Value("san_names").Array().Equal(
+			[]string{
+				"example.com",
+				"www.example.com",
+			},
+		)
 	})
 }
 
