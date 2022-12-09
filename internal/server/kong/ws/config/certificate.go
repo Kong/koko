@@ -47,6 +47,8 @@ func (l *KongCertificateLoader) Mutate(ctx context.Context,
 			return err
 		}
 		delete(m, "updated_at")
+		// delete API only fields
+		delete(m, "metadata")
 		res = append(res, m)
 	}
 	config["certificates"] = res

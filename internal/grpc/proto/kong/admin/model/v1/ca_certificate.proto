@@ -3,6 +3,7 @@ syntax = "proto3";
 package kong.admin.model.v1;
 
 import "google/api/field_behavior.proto";
+import "kong/admin/model/v1/certificate.proto";
 import "protoc-gen-openapiv2/options/annotations.proto";
 
 option go_package = "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1;v1";
@@ -17,4 +18,5 @@ message CACertificate {
   ];
   string cert_digest = 5;
   repeated string tags = 6;
+  CertificateMetadata metadata = 7;
 }

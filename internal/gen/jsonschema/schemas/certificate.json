@@ -98,6 +98,7 @@
       "type": "integer"
     }
   },
+  "additionalProperties": false,
   "dependencies": {
     "cert_alt": {
       "required": [

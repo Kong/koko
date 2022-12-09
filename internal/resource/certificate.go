@@ -4,15 +4,18 @@ import (
 	"bytes"
 	"context"
 	"crypto/x509"
+	"errors"
 	"fmt"
 
 	"github.com/kong/koko/internal/crypto"
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
+	"github.com/kong/koko/internal/json"
 	"github.com/kong/koko/internal/model"
 	"github.com/kong/koko/internal/model/json/extension"
 	"github.com/kong/koko/internal/model/json/generator"
 	"github.com/kong/koko/internal/model/json/validation"
 	"github.com/kong/koko/internal/model/json/validation/typedefs"
+	"google.golang.org/protobuf/proto"
 )
 
 const (
@@ -152,6 +155,46 @@ func (r Certificate) Indexes() []model.Index {
 	return nil
 }
 
+// MarshalResourceJSON is used here to make sure that certificate
+// metadata, which cannot be passed via API, are still included
+// in the marshalled object.
+//
+// At the same time, we don't want to store the metadata object in the
+// database, so here we are creating a clone of the original object and
+// setting the metadata to nil. This way the original object, which
+// includes the metadata, will be returned to the caller, while the
+// clone object, which doesn't include the metadata, will be stored in
+// the database.
+func (r Certificate) MarshalResourceJSON() ([]byte, error) {
+	if !isReference(r.Certificate.Cert) {
+		if err := extractCertInfo(r.Certificate); err != nil {
+			return nil, err
+		}
+	}
+	newCert := proto.Clone(r.Certificate)
+	newCertObj, ok := newCert.(*v1.Certificate)
+	if !ok {
+		return nil, errors.New("unexpected type while converting Certificate clone")
+	}
+	newCertObj.Metadata = nil
+	return json.Marshal(r.Certificate)
+}
+
+// UnmarshalResourceJSON is used here to make sure that certificate
+// metadata, which cannot be passed via API, are still included
+// in the unmarshalled object.
+func (r Certificate) UnmarshalResourceJSON(cert []byte) error {
+	if err := json.Unmarshal(cert, &r.Certificate); err != nil {
+		return err
+	}
+	if !isReference(r.Certificate.Cert) {
+		if err := extractCertInfo(r.Certificate); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func init() {
 	err := model.RegisterType(TypeCertificate, &v1.Certificate{}, func() model.Object {
 		return NewCertificate()
@@ -228,6 +271,7 @@ func init() {
 				},
 			},
 		},
+		AdditionalProperties: &falsy,
 		XKokoConfig: &extension.Config{
 			ResourceAPIPath: "certificates",
 		},
@@ -236,4 +280,84 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
+}
+
+func extractKeyUsages(cert *x509.Certificate) []v1.KeyUsageType {
+	keyUsages := []v1.KeyUsageType{}
+	if cert.KeyUsage&x509.KeyUsageDigitalSignature != 0 {
+		keyUsages = append(keyUsages, v1.KeyUsageType_KEY_USAGE_TYPE_DIGITAL_SIGNATURE)
+	}
+	if cert.KeyUsage&x509.KeyUsageContentCommitment != 0 {
+		keyUsages = append(keyUsages, v1.KeyUsageType_KEY_USAGE_TYPE_CONTENT_COMMITMENT)
+	}
+	if cert.KeyUsage&x509.KeyUsageKeyEncipherment != 0 {
+		keyUsages = append(keyUsages, v1.KeyUsageType_KEY_USAGE_TYPE_KEY_ENCIPHERMENT)
+	}
+	if cert.KeyUsage&x509.KeyUsageDataEncipherment != 0 {
+		keyUsages = append(keyUsages, v1.KeyUsageType_KEY_USAGE_TYPE_DATA_ENCIPHERMENT)
+	}
+	if cert.KeyUsage&x509.KeyUsageKeyAgreement != 0 {
+		keyUsages = append(keyUsages, v1.KeyUsageType_KEY_USAGE_TYPE_KEY_AGREEMENT)
+	}
+	if cert.KeyUsage&x509.KeyUsageCertSign != 0 {
+		keyUsages = append(keyUsages, v1.KeyUsageType_KEY_USAGE_TYPE_KEY_CERT_SIGN)
+	}
+	if cert.KeyUsage&x509.KeyUsageCRLSign != 0 {
+		keyUsages = append(keyUsages, v1.KeyUsageType_KEY_USAGE_TYPE_CRL_SIGN)
+	}
+	if x509.KeyUsageEncipherOnly != 0 {
+		keyUsages = append(keyUsages, v1.KeyUsageType_KEY_USAGE_TYPE_ENCIPHER_ONLY)
+	}
+	if cert.KeyUsage&x509.KeyUsageDecipherOnly != 0 {
+		keyUsages = append(keyUsages, v1.KeyUsageType_KEY_USAGE_TYPE_DECIPHER_ONLY)
+	}
+
+	for _, ext := range cert.ExtKeyUsage {
+		switch ext {
+		case x509.ExtKeyUsageAny:
+			keyUsages = append(keyUsages, v1.KeyUsageType_KEY_USAGE_TYPE_ANY)
+		case x509.ExtKeyUsageServerAuth:
+			keyUsages = append(keyUsages, v1.KeyUsageType_KEY_USAGE_TYPE_SERVER_AUTH)
+		case x509.ExtKeyUsageClientAuth:
+			keyUsages = append(keyUsages, v1.KeyUsageType_KEY_USAGE_TYPE_CLIENT_AUTH)
+		case x509.ExtKeyUsageCodeSigning:
+			keyUsages = append(keyUsages, v1.KeyUsageType_KEY_USAGE_TYPE_CODE_SIGNING)
+		case x509.ExtKeyUsageEmailProtection:
+			keyUsages = append(keyUsages, v1.KeyUsageType_KEY_USAGE_TYPE_EMAIL_PROTECTION)
+		case x509.ExtKeyUsageIPSECEndSystem:
+			keyUsages = append(keyUsages, v1.KeyUsageType_KEY_USAGE_TYPE_IPSEC_END_SYSTEM)
+		case x509.ExtKeyUsageIPSECTunnel:
+			keyUsages = append(keyUsages, v1.KeyUsageType_KEY_USAGE_TYPE_IPSEC_TUNNEL)
+		case x509.ExtKeyUsageIPSECUser:
+			keyUsages = append(keyUsages, v1.KeyUsageType_KEY_USAGE_TYPE_IPSEC_USER)
+		case x509.ExtKeyUsageTimeStamping:
+			keyUsages = append(keyUsages, v1.KeyUsageType_KEY_USAGE_TYPE_TIME_STAMPING)
+		case x509.ExtKeyUsageOCSPSigning:
+			keyUsages = append(keyUsages, v1.KeyUsageType_KEY_USAGE_TYPE_OSCP_SIGNING)
+		case x509.ExtKeyUsageMicrosoftServerGatedCrypto:
+			keyUsages = append(keyUsages, v1.KeyUsageType_KEY_USAGE_TYPE_MICROSOFT_SERVER_GATED_CRYPTO)
+		case x509.ExtKeyUsageNetscapeServerGatedCrypto:
+			keyUsages = append(keyUsages, v1.KeyUsageType_KEY_USAGE_TYPE_NETSCAPE_SERVER_GATED_CRYPTO)
+		case x509.ExtKeyUsageMicrosoftCommercialCodeSigning:
+			keyUsages = append(keyUsages, v1.KeyUsageType_KEY_USAGE_TYPE_MICROSOFT_COMMERCIAL_CODE_SIGNING)
+		case x509.ExtKeyUsageMicrosoftKernelCodeSigning:
+			keyUsages = append(keyUsages, v1.KeyUsageType_KEY_USAGE_TYPE_MICROSOFT_KERNEL_CODE_SIGNING)
+		}
+	}
+	return keyUsages
+}
+
+func extractCertInfo(cert *v1.Certificate) error {
+	decoded, err := crypto.ParsePEMCert([]byte(cert.Cert))
+	if err != nil {
+		return fmt.Errorf("decoding certificate: %w", err)
+	}
+	cert.Metadata = &v1.CertificateMetadata{
+		Issuer:    decoded.Issuer.String(),
+		Subject:   decoded.Subject.String(),
+		KeyUsages: extractKeyUsages(decoded),
+		Expiry:    int32(decoded.NotAfter.Unix()),
+		SanNames:  decoded.DNSNames,
+	}
+	return nil
 }

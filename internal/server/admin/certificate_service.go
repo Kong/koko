@@ -35,6 +35,10 @@ func (s *CertificateService) GetCertificate(ctx context.Context,
 	if err != nil {
 		return nil, s.err(ctx, err)
 	}
+	// retrieve the snis currently using this certificate
+	if err := addSNIMetadata(ctx, result.Certificate, db); err != nil {
+		return nil, err
+	}
 	return &v1.GetCertificateResponse{
 		Item: result.Certificate,
 	}, nil
@@ -112,8 +116,12 @@ func (s *CertificateService) ListCertificates(ctx context.Context,
 	if err := db.List(ctx, list, listOptFns...); err != nil {
 		return nil, s.err(ctx, err)
 	}
+	allCerts, err := certificatesFromObjects(ctx, db, list.GetAll())
+	if err != nil {
+		return nil, err
+	}
 	return &v1.ListCertificatesResponse{
-		Items: certificatesFromObjects(list.GetAll()),
+		Items: allCerts,
 		Page:  getPaginationResponse(list.GetTotalCount(), list.GetNextPage()),
 	}, nil
 }
@@ -126,7 +134,30 @@ func (s *CertificateService) logger(ctx context.Context) *zap.Logger {
 	return util.LoggerFromContext(ctx).With(s.loggerFields...)
 }
 
-func certificatesFromObjects(objects []model.Object) []*pb.Certificate {
+func addSNIMetadata(ctx context.Context, cert *pb.Certificate, db store.Store) error {
+	snis, err := getAllSNIsForCertificate(ctx, cert.Id, db)
+	if err != nil {
+		return fmt.Errorf(
+			"retrieving snis used by certificate '%s': %w",
+			cert.Id, err,
+		)
+	}
+	if len(snis) > 0 {
+		if cert.Metadata == nil {
+			cert.Metadata = &pb.CertificateMetadata{Snis: make([]string, len(snis))}
+		} else if cert.Metadata.Snis == nil {
+			cert.Metadata.Snis = make([]string, len(snis))
+		}
+	}
+	for i, sni := range snis {
+		cert.Metadata.Snis[i] = sni.Name
+	}
+	return nil
+}
+
+func certificatesFromObjects(
+	ctx context.Context, db store.Store, objects []model.Object,
+) ([]*pb.Certificate, error) {
 	res := make([]*pb.Certificate, 0, len(objects))
 	for _, object := range objects {
 		cert, ok := object.Resource().(*pb.Certificate)
@@ -134,7 +165,49 @@ func certificatesFromObjects(objects []model.Object) []*pb.Certificate {
 			panic(fmt.Sprintf("expected type '%T' but got '%T'",
 				&pb.Certificate{}, object.Resource()))
 		}
+		// retrieve the snis currently using this certificate
+		if err := addSNIMetadata(ctx, cert, db); err != nil {
+			return nil, err
+		}
 		res = append(res, cert)
 	}
-	return res
+	return res, nil
+}
+
+func getAllSNIsForCertificate(
+	ctx context.Context, certID string, db store.Store,
+) ([]*pb.SNI, error) {
+	var snis []*pb.SNI
+	var page int32 = 1
+	for {
+		res, page, err := getSNIsPage(ctx, certID, page, db)
+		if err != nil {
+			return nil, err
+		}
+		snis = append(snis, res...)
+		if page == 0 {
+			break
+		}
+	}
+	return snis, nil
+}
+
+func getSNIsPage(
+	ctx context.Context, certID string, page int32, db store.Store,
+) ([]*pb.SNI, int, error) {
+	listFn := []store.ListOptsFunc{}
+	listFn = append(listFn, store.ListFor(resource.TypeCertificate, certID))
+	listOptFns, err := ListOptsFromReq(&pb.PaginationRequest{
+		Number: page,
+		Size:   store.MaxPageSize,
+	})
+	if err != nil {
+		return nil, 0, err
+	}
+	listFn = append(listFn, listOptFns...)
+	list := resource.NewList(resource.TypeSNI)
+	if err := db.List(ctx, list, listFn...); err != nil {
+		return nil, 0, err
+	}
+	return snisFromObjects(list.GetAll()), list.GetNextPage(), nil
 }
