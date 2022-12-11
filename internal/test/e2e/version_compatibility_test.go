@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/gavv/httpexpect/v2"
@@ -84,91 +85,113 @@ func TestVersionCompatibility(t *testing.T) {
 	// Note: All plugin configurations will be removed from the expected configuration due to
 	// version compatibility layer transforming the configuration during transmission of the
 	// payload to the data plane.
-	for _, test := range VersionCompatibilityOSSPluginConfigurationTests {
-		var config structpb.Struct
-		if len(test.Config) > 0 {
-			require.Nil(t, json.ProtoJSONUnmarshal([]byte(test.Config), &config))
+	chunk := 25
+	for i := 0; i < len(VersionCompatibilityOSSPluginConfigurationTests); i += chunk {
+		min := intMin(i+chunk, len(VersionCompatibilityOSSPluginConfigurationTests))
+		batch := VersionCompatibilityOSSPluginConfigurationTests[i:min]
+		var names []string
+		for _, plugin := range batch {
+			names = append(names, plugin.Name)
 		}
+		t.Run(strings.Join(names, "_"), func(t *testing.T) {
+			pluginIDs := []string{}
+			for _, test := range batch {
+				var config structpb.Struct
+				if len(test.Config) > 0 {
+					require.Nil(t, json.ProtoJSONUnmarshal([]byte(test.Config), &config))
+				}
 
-		// Determine if the plugin should be added to the expected plugin configurations
-		addExpectedPlugin := true
-		if len(test.VersionRange) > 0 {
-			version := versioning.MustNewRange(test.VersionRange)
-			if !version(dataPlaneVersion) {
-				addExpectedPlugin = false
+				// Determine if the plugin should be added to the expected plugin configurations
+				addExpectedPlugin := true
+				if len(test.VersionRange) > 0 {
+					version := versioning.MustNewRange(test.VersionRange)
+					if !version(dataPlaneVersion) {
+						addExpectedPlugin = false
+					}
+				}
+
+				// Configure plugins globally and add to expected plugins configuration
+				plugin := &v1.Plugin{
+					Id:        uuid.NewString(),
+					Name:      test.Name,
+					Config:    &config,
+					Enabled:   wrapperspb.Bool(true),
+					Protocols: []string{"http", "https"},
+				}
+				pluginIDs = append(pluginIDs, plugin.Id)
+				pluginBytes, err := json.ProtoJSONMarshal(plugin)
+				require.Nil(t, err)
+				res := admin.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
+				res.Status(http.StatusCreated)
+				if addExpectedPlugin {
+					expectedConfig.Plugins = append(expectedConfig.Plugins, &v1.Plugin{
+						Id:        plugin.Id,
+						Name:      plugin.Name,
+						Enabled:   plugin.Enabled,
+						Protocols: plugin.Protocols,
+					})
+				}
+
+				// Configure plugin on service and add to expected plugins configuration
+				if test.ConfigureForService {
+					// Generate a new plugin ID and associate it with the service
+					plugin.Id = uuid.NewString()
+					pluginIDs = append(pluginIDs, plugin.Id)
+					plugin.Service = &v1.Service{Id: service.Id}
+					pluginBytes, err = json.ProtoJSONMarshal(plugin)
+					require.Nil(t, err)
+					res := admin.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
+					res.Status(http.StatusCreated)
+					if addExpectedPlugin {
+						expectedConfig.Plugins = append(expectedConfig.Plugins, &v1.Plugin{
+							Id:        plugin.Id,
+							Name:      plugin.Name,
+							Enabled:   plugin.Enabled,
+							Protocols: plugin.Protocols,
+						})
+					}
+				}
+
+				// Configure plugin on route and add to expected plugins configuration
+				if test.ConfigureForRoute {
+					// Generate a new plugin ID and associate it with the route; resetting the possible associated
+					// service
+					plugin.Id = uuid.NewString()
+					pluginIDs = append(pluginIDs, plugin.Id)
+					plugin.Service = nil
+					plugin.Route = &v1.Route{Id: route.Id}
+					pluginBytes, err = json.ProtoJSONMarshal(plugin)
+					require.Nil(t, err)
+					res := admin.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
+					res.Status(http.StatusCreated)
+					if addExpectedPlugin {
+						expectedConfig.Plugins = append(expectedConfig.Plugins, &v1.Plugin{
+							Id:        plugin.Id,
+							Name:      plugin.Name,
+							Enabled:   plugin.Enabled,
+							Protocols: plugin.Protocols,
+						})
+					}
+				}
 			}
-		}
 
-		// Configure plugins globally and add to expected plugins configuration
-		plugin := &v1.Plugin{
-			Id:        uuid.NewString(),
-			Name:      test.Name,
-			Config:    &config,
-			Enabled:   wrapperspb.Bool(true),
-			Protocols: []string{"http", "https"},
-		}
-		pluginBytes, err := json.ProtoJSONMarshal(plugin)
-		require.Nil(t, err)
-		res := admin.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
-		res.Status(http.StatusCreated)
-		if addExpectedPlugin {
-			expectedConfig.Plugins = append(expectedConfig.Plugins, &v1.Plugin{
-				Id:        plugin.Id,
-				Name:      plugin.Name,
-				Enabled:   plugin.Enabled,
-				Protocols: plugin.Protocols,
+			// Validate the service, route, and plugin configurations
+			util.WaitFunc(t, func() error {
+				err := util.EnsureConfig(expectedConfig)
+				if err != nil {
+					t.Log("config validation failed", err)
+				}
+				return err
 			})
-		}
 
-		// Configure plugin on service and add to expected plugins configuration
-		if test.ConfigureForService {
-			// Generate a new plugin ID and associate it with the service
-			plugin.Id = uuid.NewString()
-			plugin.Service = &v1.Service{Id: service.Id}
-			pluginBytes, err = json.ProtoJSONMarshal(plugin)
-			require.Nil(t, err)
-			res := admin.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
-			res.Status(http.StatusCreated)
-			if addExpectedPlugin {
-				expectedConfig.Plugins = append(expectedConfig.Plugins, &v1.Plugin{
-					Id:        plugin.Id,
-					Name:      plugin.Name,
-					Enabled:   plugin.Enabled,
-					Protocols: plugin.Protocols,
-				})
+			// Remove all batched plugin configurations and reset expected plugins
+			for _, pluginID := range pluginIDs {
+				res := admin.DELETE(fmt.Sprintf("/v1/plugins/%s", pluginID)).Expect()
+				res.Status(http.StatusNoContent)
 			}
-		}
-
-		// Configure plugin on route and add to expected plugins configuration
-		if test.ConfigureForRoute {
-			// Generate a new plugin ID and associate it with the route; resetting the possible associated
-			// service
-			plugin.Id = uuid.NewString()
-			plugin.Service = nil
-			plugin.Route = &v1.Route{Id: route.Id}
-			pluginBytes, err = json.ProtoJSONMarshal(plugin)
-			require.Nil(t, err)
-			res := admin.POST("/v1/plugins").WithBytes(pluginBytes).Expect()
-			res.Status(http.StatusCreated)
-			if addExpectedPlugin {
-				expectedConfig.Plugins = append(expectedConfig.Plugins, &v1.Plugin{
-					Id:        plugin.Id,
-					Name:      plugin.Name,
-					Enabled:   plugin.Enabled,
-					Protocols: plugin.Protocols,
-				})
-			}
-		}
+			expectedConfig.Plugins = []*v1.Plugin{}
+		})
 	}
-
-	// Validate the service, route, and plugin configurations
-	util.WaitFunc(t, func() error {
-		err := util.EnsureConfig(expectedConfig)
-		if err != nil {
-			t.Log("config validation failed", err)
-		}
-		return err
-	})
 }
 
 func TestVersionCompatibility_PluginFieldUpdates(t *testing.T) {
@@ -1388,4 +1411,11 @@ func TestVersionCompatibility_310OrNewer(t *testing.T) {
 		t.Log("plugin validation failed", err)
 		return err
 	})
+}
+
+func intMin(lhs int, rhs int) int {
+	if lhs < rhs {
+		return lhs
+	}
+	return rhs
 }
