@@ -17,7 +17,7 @@ require (
 	github.com/golang-jwt/jwt/v4 v4.4.3
 	github.com/golang-migrate/migrate/v4 v4.15.2
 	github.com/golang/protobuf v1.5.2
-	github.com/google/cel-go v0.12.5
+	github.com/google/cel-go v0.13.0
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/websocket v1.5.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
@@ -61,7 +61,7 @@ require (
 	github.com/Microsoft/go-winio v0.6.0 // indirect
 	github.com/ajg/form v1.5.1 // indirect
 	github.com/andybalholm/brotli v1.0.4 // indirect
-	github.com/antlr/antlr4/runtime/Go/antlr v0.0.0-20220418222510-f25a4f6275ed // indirect
+	github.com/antlr/antlr4/runtime/Go/antlr v1.4.10 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bufbuild/connect-go v1.0.0 // indirect
 	github.com/bufbuild/protocompile v0.1.0 // indirect
