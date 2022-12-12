@@ -649,7 +649,15 @@ func (m *Manager) updateEventHandler(ctx context.Context) {
 	m.logger.Info("reconciling payload")
 	backoffer := newBackOff(ctx, 1*time.Minute) // retry for a minute
 	err := backoff.RetryNotify(func() error {
-		return m.reconcileKongPayload(ctx)
+		err := m.reconcileKongPayload(ctx)
+		if s, ok := status.FromError(err); ok {
+			if s.Code() == codes.InvalidArgument &&
+				strings.Contains(s.Message(), "cluster not found") {
+				m.logger.Error("cluster not found, skipping retry")
+				err = backoff.Permanent(err)
+			}
+		}
+		return err
 	}, backoffer, func(err error, duration time.Duration) {
 		m.logger.With(
 			zap.Error(err),
@@ -658,7 +666,6 @@ func (m *Manager) updateEventHandler(ctx context.Context) {
 	})
 	if err != nil {
 		// TODO(hbagdi): retry again in some time
-		// TODO(hbagdi): add a metric to track total reconciliation failures
 		m.logger.With(
 			zap.Error(err)).
 			Error("failed to reconcile configuration")
