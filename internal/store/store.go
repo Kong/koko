@@ -262,17 +262,16 @@ func (s *ObjectStore) clock() string {
 }
 
 func preProcess(ctx context.Context, object model.Object) error {
-	err := object.ProcessDefaults(ctx)
-	if err != nil {
+	if err := object.ProcessDefaults(ctx); err != nil {
 		return err
 	}
 	addTS(object.Resource())
 
-	err = object.Validate(ctx)
-	if err != nil {
+	if err := object.Validate(ctx); err != nil {
 		return err
 	}
-	return nil
+
+	return model.Indexes(object.Indexes()).Validate()
 }
 
 func (s *ObjectStore) Read(ctx context.Context, object model.Object,
