@@ -134,7 +134,7 @@ func (s *ObjectStore) Create(ctx context.Context, object model.Object,
 		if err := s.updateEvent(ctx, tx, object); err != nil {
 			return err
 		}
-		return tx.Put(ctx, id, value)
+		return tx.Insert(ctx, id, value)
 	})
 }
 

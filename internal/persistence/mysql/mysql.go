@@ -8,6 +8,7 @@ import (
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
+	"github.com/go-sql-driver/mysql"
 	"github.com/google/cel-go/common/operators"
 	"github.com/kong/koko/internal/json"
 	"github.com/kong/koko/internal/persistence"
@@ -16,7 +17,11 @@ import (
 )
 
 // ErrMariaDBUnsupported is the error returned when db.DialectMariaDB is attempted to be used.
-var ErrMariaDBUnsupported = errors.New("MariaDB is currently unsupported")
+var (
+	ErrMariaDBUnsupported = errors.New("MariaDB is currently unsupported")
+)
+
+const duplicateEntryErrorCode uint16 = 1062
 
 // MySQL defines a persistence store integration for databases that speak the MySQL protocol.
 //
@@ -51,6 +56,10 @@ func (s *MySQL) SetDefaultSQLOptions(db *sql.DB) error {
 
 func (s *MySQL) Get(ctx context.Context, key string) ([]byte, error) {
 	return (&mysqlQuery{s.readOnlyDB, s.queryTimeout}).Get(ctx, key)
+}
+
+func (s *MySQL) Insert(ctx context.Context, key string, value []byte) error {
+	return (&mysqlQuery{s.db, s.queryTimeout}).Insert(ctx, key, value)
 }
 
 func (s *MySQL) Put(ctx context.Context, key string, value []byte) error {
@@ -159,6 +168,28 @@ func (t *mysqlQuery) Get(ctx context.Context, key string) ([]byte, error) {
 	}
 
 	return value, nil
+}
+
+func (t *mysqlQuery) Insert(ctx context.Context, key string, value []byte) error {
+	rawSQL, placeholders, err := sq.StatementBuilder.
+		Insert("store").
+		Columns("`key`", "value").
+		Values(key, value).
+		ToSql()
+	if err != nil {
+		return err
+	}
+	ctx, cancel := context.WithTimeout(ctx, t.queryTimeout)
+	defer cancel()
+	if _, err = t.ExecContext(ctx, rawSQL, placeholders...); err != nil {
+		if mySQLErr, ok := err.(*mysql.MySQLError); ok {
+			if mySQLErr.Number == duplicateEntryErrorCode {
+				return persistence.ErrUniqueViolation
+			}
+		}
+		return err
+	}
+	return nil
 }
 
 func (t *mysqlQuery) Put(ctx context.Context, key string, value []byte) error {

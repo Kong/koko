@@ -93,8 +93,13 @@ func (s *ObjectStore) createIndexes(ctx context.Context,
 				return err
 			}
 
-			err = tx.Put(ctx, key, value)
+			err = tx.Insert(ctx, key, value)
 			if err != nil {
+				if err == persistence.ErrUniqueViolation {
+					return ErrConstraint{
+						Index: index,
+					}
+				}
 				return fmt.Errorf("add '%s(%s)' index for '%s' type", index.Name,
 					index.Type, object.Type())
 			}
@@ -112,8 +117,13 @@ func (s *ObjectStore) createIndexes(ctx context.Context,
 				return err
 			}
 
-			err = tx.Put(ctx, key, value)
+			err = tx.Insert(ctx, key, value)
 			if err != nil {
+				if err == persistence.ErrUniqueViolation {
+					return ErrConstraint{
+						Index: index,
+					}
+				}
 				return err
 			}
 

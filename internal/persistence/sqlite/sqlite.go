@@ -9,15 +9,18 @@ import (
 	sq "github.com/Masterminds/squirrel"
 	"github.com/google/cel-go/common/operators"
 	"github.com/kong/koko/internal/persistence"
-	_ "github.com/mattn/go-sqlite3"
+	"github.com/mattn/go-sqlite3"
 	"go.uber.org/zap"
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 )
 
 const (
 	getQuery    = `SELECT * from store where key=$1`
-	insertQuery = `replace into store(key,value) values($1,$2);`
+	putQuery    = `replace into store(key,value) values($1,$2);`
+	insertQuery = `insert into store(key,value) values($1,$2);`
 	deleteQuery = `delete from store where key=$1`
+
+	primaryKeyConstraintErrorCode = 1555
 )
 
 type SQLite struct {
@@ -87,6 +90,11 @@ func (s *SQLite) Get(ctx context.Context, key string) ([]byte, error) {
 	return q.Get(ctx, key)
 }
 
+func (s *SQLite) Insert(ctx context.Context, key string, value []byte) error {
+	q := sqliteQuery{query: s.db, queryTimeout: s.queryTimeout}
+	return q.Insert(ctx, key, value)
+}
+
 func (s *SQLite) Put(ctx context.Context, key string, value []byte) error {
 	q := sqliteQuery{query: s.db, queryTimeout: s.queryTimeout}
 	return q.Put(ctx, key, value)
@@ -137,6 +145,10 @@ func (t *sqliteTx) Get(ctx context.Context, key string) ([]byte, error) {
 	return t.query.Get(ctx, key)
 }
 
+func (t *sqliteTx) Insert(ctx context.Context, key string, value []byte) error {
+	return t.query.Insert(ctx, key, value)
+}
+
 func (t *sqliteTx) Put(ctx context.Context, key string, value []byte) error {
 	return t.query.Put(ctx, key, value)
 }
@@ -174,10 +186,32 @@ func (t *sqliteQuery) Get(ctx context.Context, key string) ([]byte, error) {
 	return value, err
 }
 
-func (t *sqliteQuery) Put(ctx context.Context, key string, value []byte) error {
+func (t *sqliteQuery) Insert(ctx context.Context, key string, value []byte) error {
 	ctx, cancel := context.WithTimeout(ctx, t.queryTimeout)
 	defer cancel()
 	res, err := t.query.ExecContext(ctx, insertQuery, key, value)
+	if err != nil {
+		if sqliteErr, ok := err.(sqlite3.Error); ok {
+			if sqliteErr.ExtendedCode == primaryKeyConstraintErrorCode {
+				return persistence.ErrUniqueViolation
+			}
+		}
+		return err
+	}
+	rowCount, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rowCount != 1 {
+		return persistence.ErrInvalidRowsAffected
+	}
+	return nil
+}
+
+func (t *sqliteQuery) Put(ctx context.Context, key string, value []byte) error {
+	ctx, cancel := context.WithTimeout(ctx, t.queryTimeout)
+	defer cancel()
+	res, err := t.query.ExecContext(ctx, putQuery, key, value)
 	if err != nil {
 		return err
 	}
