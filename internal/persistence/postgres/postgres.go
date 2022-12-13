@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strings"
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
@@ -227,6 +228,9 @@ func (t *postgresQuery) List(
 	ctx, cancel := context.WithTimeout(ctx, t.queryTimeout)
 	defer cancel()
 	kvlist := make([]persistence.KVResult, 0, opts.Limit)
+
+	// Replacing any wildcard operators with the proper wildcard operator for Postgres.
+	prefix = strings.ReplaceAll(prefix, persistence.WildcardOperator, "%")
 
 	query := sq.StatementBuilder.
 		PlaceholderFormat(sq.Dollar).

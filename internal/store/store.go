@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -449,8 +450,20 @@ func (s *ObjectStore) referencedList(ctx context.Context, list model.ObjectList,
 		if err != nil {
 			return err
 		}
-		err = s.readByTypeID(ctx, s.store, typ, key[keyPrefixLen:], object)
-		if err != nil {
+
+		// When `opt.ReferenceReverseLookup` is not true, we're extracting <id> from the below key:
+		// `c/.../ix/f/<typ>/<opt.ReferenceID>/<opt.ReferenceType>/<id>`
+		//
+		// When it is true, we're extracting the <id> from the below key:
+		// `c/.../ix/f/<typ>/<id>/<opt.ReferenceType>/<opt.ReferenceID>`
+		id := key[keyPrefixLen:]
+		if opt.ReferenceReverseLookup {
+			startIdx := strings.Index(keyPrefix, persistence.WildcardOperator)
+			endIdx := strings.Index(key[startIdx:], "/")
+			id = key[startIdx : startIdx+endIdx]
+		}
+
+		if err := s.readByTypeID(ctx, s.store, typ, id, object); err != nil {
 			return err
 		}
 		list.Add(object)
@@ -464,8 +477,13 @@ func (s *ObjectStore) referencedList(ctx context.Context, list model.ObjectList,
 }
 
 func (s *ObjectStore) referencedListKey(typ model.Type, opt *ListOpts) string {
-	return s.clusterKey(fmt.Sprintf("ix/f/%s/%s/%s/",
-		opt.ReferenceType, opt.ReferenceID, typ))
+	parts := []string{string(opt.ReferenceType), opt.ReferenceID, string(typ)}
+	suffix := "/"
+	if opt.ReferenceReverseLookup {
+		parts = []string{string(typ), persistence.WildcardOperator, string(opt.ReferenceType), opt.ReferenceID}
+		suffix = ""
+	}
+	return s.clusterKey(strings.Join(append([]string{"ix", "f"}, parts...), "/")) + suffix
 }
 
 func (s *ObjectStore) listKey(typ model.Type) string {
