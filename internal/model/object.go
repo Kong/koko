@@ -50,6 +50,35 @@ type ObjectWithResourceDTO interface {
 	UnmarshalResourceJSON([]byte) error
 }
 
+// ObjectWithOptions is used to define an object that has options that differ from DefaultObjectOptions.
+//
+// TODO(tjasko): Eventually we'll likely want to enforce this to be used on all objects, however
+// given the current limited use-case, it feels appropriate to not require it.
+type ObjectWithOptions interface {
+	// Options returns the options that represent this model object. Any options must be
+	// fixed values and must never dynamically change based on the object's contents.
+	Options() ObjectOptions
+}
+
+// ObjectOptions defines various options that can influence how this object is handled & stored.
+type ObjectOptions struct {
+	// CascadeOnDelete refers to that in the event this object is used in foreign key relations
+	// (either one-to-one or one-to-many), this setting dictates whether the object should be
+	// automatically cascaded when its foreign key relation is deleted.
+	//
+	// For example, when a consumer is deleted that is associated to a consumer group, we do not
+	// want the consumer group to be deleted, as it's perfectly valid to have a consumer group
+	// with no consumers associated to it. Likewise, when consumer is deleted that is associated
+	// to specific route(s), we do indeed want it to delete those route(s) as well.
+	CascadeOnDelete bool
+}
+
+// DefaultObjectOptions defines the configuration of a model object
+// that does not implement the ObjectWithOptions interface.
+var DefaultObjectOptions = ObjectOptions{
+	CascadeOnDelete: true,
+}
+
 type TypeIndex string
 
 const (

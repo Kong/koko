@@ -221,10 +221,28 @@ func (s *ObjectStore) onDeleteCascade(ctx context.Context,
 		for _, ref := range listResult.KVList {
 			refTypeID := strings.TrimPrefix(string(ref.Key), key+"/")
 			typeAndID := strings.Split(refTypeID, "/")
-			typ := typeAndID[0]
+			typ := model.Type(typeAndID[0])
 			id := typeAndID[1]
-			err := s.delete(ctx, tx, model.Type(typ), id)
-			if err != nil {
+
+			// Handle deletion of the foreign key relation, but skip cascading
+			// the entire object whenever applicable.
+			//
+			// This is useful for one-to-many relationships, like what is used
+			// for consumer groups. As when a consumer is deleted, we'll want
+			// to delete the association, but not the consumer group itself.
+			if !model.OptionsForType(typ).CascadeOnDelete {
+				if err := tx.Delete(ctx, string(ref.Key)); err != nil {
+					return err
+				}
+				continue
+			}
+
+			// Handle deletion of the foreign key relation along with deleting
+			// the entire object.
+			//
+			// For example, when a consumer is deleted that has route(s)
+			// associated to it, those routes will be entirely deleted.
+			if err := s.delete(ctx, tx, typ, id); err != nil {
 				return err
 			}
 		}
