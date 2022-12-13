@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
@@ -231,6 +232,9 @@ func (t *mysqlQuery) List(
 ) (persistence.ListResult, error) {
 	ctx, cancel := context.WithTimeout(ctx, t.queryTimeout)
 	defer cancel()
+
+	// Replacing any wildcard operators with the proper wildcard operator for MySQL.
+	prefix = strings.ReplaceAll(prefix, persistence.WildcardOperator, "%")
 
 	query := sq.StatementBuilder.
 		Select("`key`", "value", "COUNT(*) OVER() AS full_count").

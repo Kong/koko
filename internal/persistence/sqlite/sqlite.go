@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strings"
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
@@ -214,6 +215,9 @@ func (t *sqliteQuery) Delete(ctx context.Context, key string) error {
 func (t *sqliteQuery) List(ctx context.Context, prefix string,
 	opts *persistence.ListOpts,
 ) (persistence.ListResult, error) {
+	// Replacing any wildcard operators with the proper wildcard operator for SQLLite.
+	prefix = strings.ReplaceAll(prefix, persistence.WildcardOperator, "*")
+
 	query := sq.StatementBuilder.
 		PlaceholderFormat(sq.Dollar).
 		Select("s.key", "s.value", "COUNT(*) OVER() AS full_count").

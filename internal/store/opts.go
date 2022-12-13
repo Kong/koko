@@ -73,10 +73,12 @@ func DeleteByType(typ model.Type) DeleteOptsFunc {
 }
 
 type ListOpts struct {
-	ReferenceType model.Type
-	ReferenceID   string
-	PageSize      int
-	Page          int
+	ReferenceType          model.Type
+	ReferenceID            string
+	ReferenceReverseLookup bool
+
+	PageSize int
+	Page     int
 
 	// CEL expression used for filtering.
 	// Read more: https://github.com/google/cel-spec
@@ -124,10 +126,49 @@ func NewListOpts(fns ...ListOptsFunc) (*ListOpts, error) {
 	return res, nil
 }
 
+// ListFor allows a list call to return the objects passed into resource.NewList() and
+// filter the results based on the passed in foreign relation.
+//
+// As such, this is used to list the resource(s) that have the associated foreign key index.
+//
+// Given the following routes:
+//   - id: route-1
+//     service: {id: service-1}
+//   - id: route-2
+//
+// When calling `ListFor(resource.TypeService, "service-1")` with
+// `resource.NewList(resource.TypeRoute)`
+//
+// Then this would return the route with ID `route-1`.
 func ListFor(typ model.Type, id string) ListOptsFunc {
 	return func(opt *ListOpts) {
 		opt.ReferenceType = typ
 		opt.ReferenceID = id
+	}
+}
+
+// ListReverseFor is like ListFor(), however the only difference
+// is the foreign key indexes reside on the passed in type instead
+// of the type passed into resource.NewList().
+//
+// As such, this is used to list the foreign resources themselves.
+//
+// Given the following routes:
+//   - id: route-1
+//     service: {id: service-1}
+//   - id: route-2
+//     service: {id: service-1}
+//   - id: route-3
+//
+// When calling `ListFor(resource.TypeRoute, "route-1")` with
+// `resource.NewList(resource.TypeService)`.
+//
+// Then this would return the service with ID `service-1`.
+func ListReverseFor(typ model.Type, id string) ListOptsFunc {
+	return func(opt *ListOpts) {
+		opt.ReferenceType = typ
+		opt.ReferenceID = id
+		opt.ReferenceReverseLookup = true
 	}
 }
 
