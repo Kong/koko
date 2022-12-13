@@ -75,13 +75,14 @@ func (r Route) Resource() model.Resource {
 func (r Route) SetResource(pr model.Resource) error { return model.SetResource(r, pr) }
 
 func (r Route) Indexes() []model.Index {
-	res := []model.Index{
-		{
+	res := make([]model.Index, 0)
+	if r.Route.Name != "" {
+		res = append(res, model.Index{
 			Name:      "name",
 			Type:      model.IndexUnique,
 			Value:     r.Route.Name,
 			FieldName: "name",
-		},
+		})
 	}
 	if r.Route.Service != nil {
 		res = append(res, model.Index{

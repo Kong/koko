@@ -104,13 +104,14 @@ func (r Service) ProcessDefaults(ctx context.Context) error {
 }
 
 func (r Service) Indexes() []model.Index {
-	indexes := []model.Index{
-		{
+	indexes := make([]model.Index, 0)
+	if r.Service.Name != "" {
+		indexes = append(indexes, model.Index{
 			Name:      "name",
 			Type:      model.IndexUnique,
 			Value:     r.Service.Name,
 			FieldName: "name",
-		},
+		})
 	}
 	for _, certID := range r.Service.CaCertificates {
 		indexes = append(indexes, model.Index{

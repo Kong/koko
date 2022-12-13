@@ -149,6 +149,10 @@ func (r CACertificate) ProcessDefaults(ctx context.Context) error {
 }
 
 func (r CACertificate) Indexes() []model.Index {
+	if r.CACertificate.CertDigest == "" {
+		return nil
+	}
+
 	return []model.Index{
 		{
 			Name:      "cert_digest",
