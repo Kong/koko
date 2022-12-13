@@ -5,7 +5,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
+	"github.com/samber/lo"
+	"github.com/yalp/jsonpath"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -86,12 +89,22 @@ const (
 	IndexForeign TypeIndex = "foreign"
 )
 
+// Index defines an index/foreign key based on the defined Index.Type
+// & its applicable fields. Unless noted, all fields are required.
+//
+// NOTE: If any pointer values are introduced here, Indexes.Validate()
+// must be updated to better handle duplicate indexes.
 type Index struct {
 	// Name of the Index.
 	Name string
 	// FieldName is the name of the field this constraint applies on.
 	// This is used for annotating errors.
+	//
 	// Use JSON path notation (foo.bar.baz) for nested fields.
+	// The `$.` prefix is automatically assumed.
+	//
+	// TODO(tjasko): This is not required when calling Index.Validate(), should it be? It'll require some
+	//  code changes, as it's currently not specified everywhere (mostly for certain unique indexes).
 	FieldName string
 	// Type is the type of the Index.
 	Type TypeIndex
@@ -102,6 +115,9 @@ type Index struct {
 	Value string
 }
 
+// Indexes is a list of Index objects.
+type Indexes []Index
+
 type ObjectList interface {
 	Type() Type
 	Add(Object)
@@ -111,6 +127,67 @@ type ObjectList interface {
 	SetTotalCount(count int)
 	SetNextPage(pageNum int)
 	GetNextPage() int
+}
+
+// Validate ensures the provided Index object is a valid configuration.
+func (i *Index) Validate() error {
+	for field, friendlyName := range map[string]string{
+		i.Name:         "name",
+		string(i.Type): "type",
+		i.Value:        "value",
+	} {
+		if field == "" {
+			return fmt.Errorf("index %s is not set", friendlyName)
+		}
+	}
+
+	if i.FieldName != "" {
+		const jsonPathPrefix = "$."
+		if strings.HasPrefix(i.FieldName, jsonPathPrefix) {
+			// Technically we could automatically remove the prefix, but
+			// this is done to enforce consistency across the codebase.
+			return fmt.Errorf("must not include JSONPath prefix (%q) in field name", jsonPathPrefix)
+		}
+		if _, err := jsonpath.Prepare(jsonPathPrefix + i.FieldName); err != nil {
+			return fmt.Errorf("invalid JSONPath field name: %w", err)
+		}
+	}
+
+	if i.Type == IndexForeign && i.ForeignType == "" {
+		return errors.New("index foreign type is not set")
+	}
+
+	return nil
+}
+
+// Validate ensures the provided Index objects are a valid configuration.
+func (i Indexes) Validate() error {
+	// Helper function to attempt to describe the specific index object that failed validation.
+	errFunc := func(idx Index, err error) error {
+		var descriptor string
+		var descriptorParts []interface{}
+		if idx.Name != "" {
+			descriptorParts = []interface{}{"name", idx.Name}
+		} else if idx.FieldName != "" {
+			descriptorParts = []interface{}{"field_name", idx.FieldName}
+		}
+		if len(descriptorParts) > 0 {
+			descriptor = fmt.Sprintf(" (%s = %q)", descriptorParts...)
+		}
+		return fmt.Errorf("invalid index%s in list: %w", descriptor, err)
+	}
+
+	for _, idx := range i {
+		if err := idx.Validate(); err != nil {
+			return errFunc(idx, err)
+		}
+	}
+
+	if _, diff := lo.Difference(lo.FindUniques(i), i); len(diff) > 0 {
+		return errFunc(diff[0], errors.New("duplicate index contents"))
+	}
+
+	return nil
 }
 
 func MultiValueIndex(values ...string) string {

@@ -36,9 +36,6 @@ func (s *ObjectStore) foreignIndexKey(foreignType model.Type,
 func (s *ObjectStore) indexKV(index model.Index, object model.Object) (string,
 	[]byte, error,
 ) {
-	if index.Name == "" || index.Value == "" {
-		return "", nil, nil
-	}
 	switch index.Type {
 	case model.IndexUnique:
 		key := s.uniqueIndexKey(object.Type(), index.Name, index.Value)
@@ -48,7 +45,6 @@ func (s *ObjectStore) indexKV(index model.Index, object model.Object) (string,
 		}
 
 		return key, value, nil
-
 	case model.IndexForeign:
 		key := s.foreignIndexKey(index.ForeignType, index.Value,
 			object.Type(), object.ID())
@@ -57,10 +53,9 @@ func (s *ObjectStore) indexKV(index model.Index, object model.Object) (string,
 			return "", nil, err
 		}
 		return key, value, nil
-
-	default:
-		panic("invalid index type")
 	}
+
+	return "", nil, errors.New("invalid index type")
 }
 
 type ErrConstraint struct {
@@ -82,10 +77,7 @@ func (s *ObjectStore) createIndexes(ctx context.Context,
 		case model.IndexUnique:
 			key, value, err := s.indexKV(index, object)
 			if err != nil {
-				return fmt.Errorf("render indexes: %v", err)
-			}
-			if key == "" {
-				continue
+				return fmt.Errorf("unable to render indexes: %w", err)
 			}
 
 			err = s.checkIndex(ctx, tx, index, key)
@@ -101,10 +93,7 @@ func (s *ObjectStore) createIndexes(ctx context.Context,
 		case model.IndexForeign:
 			key, value, err := s.indexKV(index, object)
 			if err != nil {
-				return fmt.Errorf("render indexes: %v", err)
-			}
-			if key == "" {
-				continue
+				return fmt.Errorf("unable to render indexes: %w", err)
 			}
 
 			err = s.checkIndex(ctx, tx, index, key)
@@ -169,10 +158,7 @@ func (s *ObjectStore) deleteIndexes(ctx context.Context, tx persistence.Tx,
 		case model.IndexUnique:
 			key, _, err := s.indexKV(index, object)
 			if err != nil {
-				return fmt.Errorf("render indexes: %v", err)
-			}
-			if key == "" {
-				continue
+				return fmt.Errorf("unable to render indexes: %w", err)
 			}
 			err = tx.Delete(ctx, key)
 			if err != nil {
@@ -187,10 +173,7 @@ func (s *ObjectStore) deleteIndexes(ctx context.Context, tx persistence.Tx,
 		case model.IndexForeign:
 			key, _, err := s.indexKV(index, object)
 			if err != nil {
-				return fmt.Errorf("render indexes: %v", err)
-			}
-			if key == "" {
-				continue
+				return fmt.Errorf("unable to render indexes: %w", err)
 			}
 			err = tx.Delete(ctx, key)
 			if err != nil {
