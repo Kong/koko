@@ -18,6 +18,9 @@
       "name": "kong.admin.service.v1.ConsumerService"
     },
     {
+      "name": "kong.admin.service.v1.ConsumerGroupService"
+    },
+    {
       "name": "kong.admin.service.v1.NodeService"
     },
     {
@@ -626,6 +629,437 @@
         ]
       }
     },
+    "/v1/consumer-groups": {
+      "get": {
+        "operationId": "ConsumerGroupService_ListConsumerGroups",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/kong.admin.service.v1.ListConsumerGroupsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "cluster.id",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "page.size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "page.number",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "page.filter",
+            "description": "Allows callers to provide a CEL expression to filter results on `list` API calls.\n\nFor example, given a resource with the following tags, `tag1` \u0026 `tag2`, the\nfollowing CEL expressions are supported:\n\n- Matches resources that have `tag1` as any tag:\n    - `\"tag1\" in tags`\n- Matches all resources that have both `tag1` \u0026 `tag2`:\n    - `[\"tag1\", \"tag2\"].all(x, x in tags)`\n    - `\"tag1\" in tags \u0026\u0026 \"tag2\" in tags`\n- Matches resources that have `tag1` or `tag2`:\n    - `[\"tag1\", \"tag2\"].exists(x, x in tags)`\n    - `\"tag1\" in tags || \"tag2\" in tags`\n\nLimitations:\nCurrently, it is only possible to filter on tags, and supported logical\noperators/macros are limited to only what is documented above.\n\nFor further information, you may view the CEL Specification:\nhttps://github.com/google/cel-spec",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "kong.admin.service.v1.ConsumerGroupService"
+        ]
+      },
+      "post": {
+        "operationId": "ConsumerGroupService_CreateConsumerGroup",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/kong.admin.service.v1.CreateConsumerGroupResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "item",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/kong.admin.model.v1.ConsumerGroup"
+            }
+          },
+          {
+            "name": "cluster.id",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "kong.admin.service.v1.ConsumerGroupService"
+        ]
+      }
+    },
+    "/v1/consumer-groups/{consumer_group_id}/rate-limiting-advanced-config": {
+      "get": {
+        "operationId": "ConsumerGroupService_GetConsumerGroupRateLimitingAdvancedConfig",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/kong.admin.service.v1.GetConsumerGroupRateLimitingAdvancedConfigResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "consumer_group_id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "cluster.id",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "kong.admin.service.v1.ConsumerGroupService"
+        ]
+      },
+      "delete": {
+        "operationId": "ConsumerGroupService_DeleteConsumerGroupRateLimitingAdvancedConfig",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/kong.admin.service.v1.DeleteConsumerGroupRateLimitingAdvancedConfigResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "consumer_group_id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "cluster.id",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "kong.admin.service.v1.ConsumerGroupService"
+        ]
+      },
+      "post": {
+        "operationId": "ConsumerGroupService_CreateConsumerGroupRateLimitingAdvancedConfig",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/kong.admin.service.v1.CreateConsumerGroupRateLimitingAdvancedConfigResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "consumer_group_id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "item",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/kong.admin.model.v1.ConsumerGroupRateLimitingAdvancedConfig"
+            }
+          },
+          {
+            "name": "cluster.id",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "kong.admin.service.v1.ConsumerGroupService"
+        ]
+      },
+      "put": {
+        "operationId": "ConsumerGroupService_UpsertConsumerGroupRateLimitingAdvancedConfig",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/kong.admin.service.v1.UpsertConsumerGroupRateLimitingAdvancedConfigResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "consumer_group_id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "item",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/kong.admin.model.v1.ConsumerGroupRateLimitingAdvancedConfig"
+            }
+          },
+          {
+            "name": "cluster.id",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "kong.admin.service.v1.ConsumerGroupService"
+        ]
+      }
+    },
+    "/v1/consumer-groups/{id}": {
+      "get": {
+        "operationId": "ConsumerGroupService_GetConsumerGroup",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/kong.admin.service.v1.GetConsumerGroupResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "cluster.id",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "kong.admin.service.v1.ConsumerGroupService"
+        ]
+      },
+      "delete": {
+        "operationId": "ConsumerGroupService_DeleteConsumerGroup",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/kong.admin.service.v1.DeleteConsumerGroupResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "cluster.id",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "kong.admin.service.v1.ConsumerGroupService"
+        ]
+      }
+    },
+    "/v1/consumer-groups/{id}/members": {
+      "get": {
+        "operationId": "ConsumerGroupService_ListConsumerGroupMembers",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/kong.admin.service.v1.ListConsumerGroupMembersResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "cluster.id",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "page.size",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "page.number",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "page.filter",
+            "description": "Allows callers to provide a CEL expression to filter results on `list` API calls.\n\nFor example, given a resource with the following tags, `tag1` \u0026 `tag2`, the\nfollowing CEL expressions are supported:\n\n- Matches resources that have `tag1` as any tag:\n    - `\"tag1\" in tags`\n- Matches all resources that have both `tag1` \u0026 `tag2`:\n    - `[\"tag1\", \"tag2\"].all(x, x in tags)`\n    - `\"tag1\" in tags \u0026\u0026 \"tag2\" in tags`\n- Matches resources that have `tag1` or `tag2`:\n    - `[\"tag1\", \"tag2\"].exists(x, x in tags)`\n    - `\"tag1\" in tags || \"tag2\" in tags`\n\nLimitations:\nCurrently, it is only possible to filter on tags, and supported logical\noperators/macros are limited to only what is documented above.\n\nFor further information, you may view the CEL Specification:\nhttps://github.com/google/cel-spec",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "kong.admin.service.v1.ConsumerGroupService"
+        ]
+      }
+    },
+    "/v1/consumer-groups/{item.id}": {
+      "put": {
+        "operationId": "ConsumerGroupService_UpsertConsumerGroup",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/kong.admin.service.v1.UpsertConsumerGroupResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "item.id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "item",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "created_at": {
+                  "type": "integer",
+                  "format": "int32"
+                },
+                "updated_at": {
+                  "type": "integer",
+                  "format": "int32"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "tags": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "name": "cluster.id",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "kong.admin.service.v1.ConsumerGroupService"
+        ]
+      }
+    },
     "/v1/consumers": {
       "get": {
         "operationId": "ConsumerService_ListConsumers",
@@ -710,6 +1144,88 @@
         ],
         "tags": [
           "kong.admin.service.v1.ConsumerService"
+        ]
+      }
+    },
+    "/v1/consumers/{consumer_id}/groups/{consumer_group_id}/members": {
+      "delete": {
+        "operationId": "ConsumerGroupService_DeleteConsumerGroupMember",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/kong.admin.service.v1.DeleteConsumerGroupMemberResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "consumer_id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "consumer_group_id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "cluster.id",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "kong.admin.service.v1.ConsumerGroupService"
+        ]
+      },
+      "post": {
+        "operationId": "ConsumerGroupService_CreateConsumerGroupMember",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/kong.admin.service.v1.CreateConsumerGroupMemberResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "consumer_id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "consumer_group_id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "cluster.id",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "kong.admin.service.v1.ConsumerGroupService"
         ]
       }
     },
@@ -1845,6 +2361,70 @@
             "required": true,
             "schema": {
               "$ref": "#/definitions/kong.admin.model.v1.Certificate"
+            }
+          }
+        ],
+        "tags": [
+          "kong.admin.service.v1.SchemasService"
+        ]
+      }
+    },
+    "/v1/schemas/json/consumer-group-rate-limiting-advanced-config/validate": {
+      "post": {
+        "operationId": "SchemasService_ValidateConsumerGroupRateLimitingAdvancedConfigSchema",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/kong.admin.service.v1.ValidateConsumerGroupRateLimitingAdvancedConfigSchemaResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "item",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/kong.admin.model.v1.ConsumerGroupRateLimitingAdvancedConfig"
+            }
+          }
+        ],
+        "tags": [
+          "kong.admin.service.v1.SchemasService"
+        ]
+      }
+    },
+    "/v1/schemas/json/consumer-group/validate": {
+      "post": {
+        "operationId": "SchemasService_ValidateConsumerGroupSchema",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/kong.admin.service.v1.ValidateConsumerGroupSchemaResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/google.rpc.Status"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "item",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/kong.admin.model.v1.ConsumerGroup"
             }
           }
         ],
@@ -3761,6 +4341,75 @@
         }
       }
     },
+    "kong.admin.model.v1.ConsumerGroup": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "created_at": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "updated_at": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "name": {
+          "type": "string"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "kong.admin.model.v1.ConsumerGroupRateLimitingAdvancedConfig": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "consumer_group_id": {
+          "type": "string"
+        },
+        "created_at": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "updated_at": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "window_size": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "limit": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "retry_after_jitter_max": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "window_type": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "window_size",
+        "limit"
+      ]
+    },
     "kong.admin.model.v1.HeaderValues": {
       "type": "object",
       "properties": {
@@ -4480,6 +5129,30 @@
         }
       }
     },
+    "kong.admin.service.v1.CreateConsumerGroupMemberResponse": {
+      "type": "object",
+      "properties": {
+        "item": {
+          "$ref": "#/definitions/kong.admin.model.v1.ConsumerGroup"
+        }
+      }
+    },
+    "kong.admin.service.v1.CreateConsumerGroupRateLimitingAdvancedConfigResponse": {
+      "type": "object",
+      "properties": {
+        "item": {
+          "$ref": "#/definitions/kong.admin.model.v1.ConsumerGroupRateLimitingAdvancedConfig"
+        }
+      }
+    },
+    "kong.admin.service.v1.CreateConsumerGroupResponse": {
+      "type": "object",
+      "properties": {
+        "item": {
+          "$ref": "#/definitions/kong.admin.model.v1.ConsumerGroup"
+        }
+      }
+    },
     "kong.admin.service.v1.CreateConsumerResponse": {
       "type": "object",
       "properties": {
@@ -4566,6 +5239,15 @@
     "kong.admin.service.v1.DeleteCertificateResponse": {
       "type": "object"
     },
+    "kong.admin.service.v1.DeleteConsumerGroupMemberResponse": {
+      "type": "object"
+    },
+    "kong.admin.service.v1.DeleteConsumerGroupRateLimitingAdvancedConfigResponse": {
+      "type": "object"
+    },
+    "kong.admin.service.v1.DeleteConsumerGroupResponse": {
+      "type": "object"
+    },
     "kong.admin.service.v1.DeleteConsumerResponse": {
       "type": "object"
     },
@@ -4631,6 +5313,22 @@
           "items": {
             "type": "string"
           }
+        }
+      }
+    },
+    "kong.admin.service.v1.GetConsumerGroupRateLimitingAdvancedConfigResponse": {
+      "type": "object",
+      "properties": {
+        "item": {
+          "$ref": "#/definitions/kong.admin.model.v1.ConsumerGroupRateLimitingAdvancedConfig"
+        }
+      }
+    },
+    "kong.admin.service.v1.GetConsumerGroupResponse": {
+      "type": "object",
+      "properties": {
+        "item": {
+          "$ref": "#/definitions/kong.admin.model.v1.ConsumerGroup"
         }
       }
     },
@@ -4775,6 +5473,34 @@
           "type": "array",
           "items": {
             "$ref": "#/definitions/kong.admin.model.v1.Certificate"
+          }
+        },
+        "page": {
+          "$ref": "#/definitions/kong.admin.model.v1.PaginationResponse"
+        }
+      }
+    },
+    "kong.admin.service.v1.ListConsumerGroupMembersResponse": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/kong.admin.model.v1.Consumer"
+          }
+        },
+        "page": {
+          "$ref": "#/definitions/kong.admin.model.v1.PaginationResponse"
+        }
+      }
+    },
+    "kong.admin.service.v1.ListConsumerGroupsResponse": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/kong.admin.model.v1.ConsumerGroup"
           }
         },
         "page": {
@@ -4938,6 +5664,22 @@
         }
       }
     },
+    "kong.admin.service.v1.UpsertConsumerGroupRateLimitingAdvancedConfigResponse": {
+      "type": "object",
+      "properties": {
+        "item": {
+          "$ref": "#/definitions/kong.admin.model.v1.ConsumerGroupRateLimitingAdvancedConfig"
+        }
+      }
+    },
+    "kong.admin.service.v1.UpsertConsumerGroupResponse": {
+      "type": "object",
+      "properties": {
+        "item": {
+          "$ref": "#/definitions/kong.admin.model.v1.ConsumerGroup"
+        }
+      }
+    },
     "kong.admin.service.v1.UpsertConsumerResponse": {
       "type": "object",
       "properties": {
@@ -5022,6 +5764,12 @@
       "type": "object"
     },
     "kong.admin.service.v1.ValidateCertificateSchemaResponse": {
+      "type": "object"
+    },
+    "kong.admin.service.v1.ValidateConsumerGroupRateLimitingAdvancedConfigSchemaResponse": {
+      "type": "object"
+    },
+    "kong.admin.service.v1.ValidateConsumerGroupSchemaResponse": {
       "type": "object"
     },
     "kong.admin.service.v1.ValidateConsumerSchemaResponse": {
