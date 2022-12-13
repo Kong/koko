@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package kong.admin.model.v1;
+
+import "google/api/field_behavior.proto";
+
+option go_package = "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1;v1";
+
+message ConsumerGroup {
+  string id = 1;
+  int32 created_at = 2;
+  int32 updated_at = 3;
+  string name = 4;
+  repeated string tags = 5;
+}
+
+message ConsumerGroupRateLimitingAdvancedConfig {
+  string id = 1;
+  string consumer_group_id = 2;
+  int32 created_at = 3;
+  int32 updated_at = 4;
+
+  repeated int32 window_size = 5 [(google.api.field_behavior) = REQUIRED];
+  repeated int32 limit = 6 [(google.api.field_behavior) = REQUIRED];
+  int32 retry_after_jitter_max = 7;
+  string window_type = 8;
+}

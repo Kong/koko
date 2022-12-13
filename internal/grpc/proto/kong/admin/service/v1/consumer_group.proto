@@ -1,0 +1,189 @@
+syntax = "proto3";
+
+package kong.admin.service.v1;
+
+import "google/api/annotations.proto";
+import "google/api/visibility.proto";
+import "kong/admin/model/v1/cluster.proto";
+import "kong/admin/model/v1/consumer.proto";
+import "kong/admin/model/v1/consumer_group.proto";
+import "kong/admin/model/v1/pagination.proto";
+
+option go_package = "github.com/kong/koko/internal/gen/kong/admin/service/v1;v1";
+
+service ConsumerGroupService {
+  rpc GetConsumerGroup(GetConsumerGroupRequest) returns (GetConsumerGroupResponse) {
+    option (google.api.http) = {get: "/v1/consumer-groups/{id}"};
+  }
+  rpc CreateConsumerGroup(CreateConsumerGroupRequest) returns (CreateConsumerGroupResponse) {
+    option (google.api.http) = {
+      post: "/v1/consumer-groups"
+      body: "item"
+    };
+  }
+  rpc UpsertConsumerGroup(UpsertConsumerGroupRequest) returns (UpsertConsumerGroupResponse) {
+    option (google.api.http) = {
+      put: "/v1/consumer-groups/{item.id}"
+      body: "item"
+    };
+  }
+  rpc DeleteConsumerGroup(DeleteConsumerGroupRequest) returns (DeleteConsumerGroupResponse) {
+    option (google.api.http) = {delete: "/v1/consumer-groups/{id}"};
+  }
+  rpc ListConsumerGroups(ListConsumerGroupsRequest) returns (ListConsumerGroupsResponse) {
+    option (google.api.http) = {get: "/v1/consumer-groups"};
+  }
+
+  rpc ListConsumerGroupMembers(ListConsumerGroupMembersRequest) returns (ListConsumerGroupMembersResponse) {
+    option (google.api.http) = {get: "/v1/consumer-groups/{id}/members"};
+  }
+  rpc CreateConsumerGroupMember(CreateConsumerGroupMemberRequest) returns (CreateConsumerGroupMemberResponse) {
+    option (google.api.http) = {post: "/v1/consumers/{consumer_id}/groups/{consumer_group_id}/members"};
+  }
+  rpc DeleteConsumerGroupMember(DeleteConsumerGroupMemberRequest) returns (DeleteConsumerGroupMemberResponse) {
+    option (google.api.http) = {delete: "/v1/consumers/{consumer_id}/groups/{consumer_group_id}/members"};
+  }
+
+  rpc GetConsumerGroupRateLimitingAdvancedConfig(GetConsumerGroupRateLimitingAdvancedConfigRequest) returns (GetConsumerGroupRateLimitingAdvancedConfigResponse) {
+    option (google.api.http) = {get: "/v1/consumer-groups/{consumer_group_id}/rate-limiting-advanced-config"};
+  }
+  rpc CreateConsumerGroupRateLimitingAdvancedConfig(CreateConsumerGroupRateLimitingAdvancedConfigRequest) returns (CreateConsumerGroupRateLimitingAdvancedConfigResponse) {
+    option (google.api.http) = {
+      post: "/v1/consumer-groups/{consumer_group_id}/rate-limiting-advanced-config"
+      body: "item"
+    };
+  }
+  rpc UpsertConsumerGroupRateLimitingAdvancedConfig(UpsertConsumerGroupRateLimitingAdvancedConfigRequest) returns (UpsertConsumerGroupRateLimitingAdvancedConfigResponse) {
+    option (google.api.http) = {
+      put: "/v1/consumer-groups/{consumer_group_id}/rate-limiting-advanced-config"
+      body: "item"
+    };
+  }
+  rpc DeleteConsumerGroupRateLimitingAdvancedConfig(DeleteConsumerGroupRateLimitingAdvancedConfigRequest) returns (DeleteConsumerGroupRateLimitingAdvancedConfigResponse) {
+    option (google.api.http) = {delete: "/v1/consumer-groups/{consumer_group_id}/rate-limiting-advanced-config"};
+  }
+
+  rpc ListConsumerGroupRateLimitingAdvancedConfig(ListConsumerGroupRateLimitingAdvancedConfigRequest) returns (ListConsumerGroupRateLimitingAdvancedConfigResponse) {
+    // Not exposed over HTTP as this is only meant for the relay.
+    option (google.api.method_visibility).restriction = "RELAY";
+  }
+}
+
+message GetConsumerGroupRequest {
+  string id = 1;
+  model.v1.RequestCluster cluster = 2;
+}
+
+message GetConsumerGroupResponse {
+  model.v1.ConsumerGroup item = 1;
+}
+
+message CreateConsumerGroupRequest {
+  model.v1.ConsumerGroup item = 1;
+  model.v1.RequestCluster cluster = 2;
+}
+
+message CreateConsumerGroupResponse {
+  model.v1.ConsumerGroup item = 1;
+}
+
+message UpsertConsumerGroupRequest {
+  model.v1.ConsumerGroup item = 1;
+  model.v1.RequestCluster cluster = 2;
+}
+
+message UpsertConsumerGroupResponse {
+  model.v1.ConsumerGroup item = 1;
+}
+
+message DeleteConsumerGroupRequest {
+  string id = 1;
+  model.v1.RequestCluster cluster = 2;
+}
+
+message DeleteConsumerGroupResponse {}
+
+message ListConsumerGroupsRequest {
+  model.v1.RequestCluster cluster = 1;
+  model.v1.PaginationRequest page = 2;
+}
+
+message ListConsumerGroupsResponse {
+  repeated model.v1.ConsumerGroup items = 1;
+  model.v1.PaginationResponse page = 2;
+}
+
+message ListConsumerGroupMembersRequest {
+  string id = 1;
+  model.v1.RequestCluster cluster = 2;
+  model.v1.PaginationRequest page = 3;
+}
+
+message ListConsumerGroupMembersResponse {
+  repeated model.v1.Consumer items = 1;
+  model.v1.PaginationResponse page = 2;
+}
+
+message CreateConsumerGroupMemberRequest {
+  string consumer_id = 1;
+  string consumer_group_id = 2;
+  model.v1.RequestCluster cluster = 3;
+}
+
+message CreateConsumerGroupMemberResponse {
+  model.v1.ConsumerGroup item = 1;
+}
+
+message DeleteConsumerGroupMemberRequest {
+  string consumer_id = 1;
+  string consumer_group_id = 2;
+  model.v1.RequestCluster cluster = 3;
+}
+
+message DeleteConsumerGroupMemberResponse {}
+
+message GetConsumerGroupRateLimitingAdvancedConfigRequest {
+  string consumer_group_id = 1;
+  model.v1.RequestCluster cluster = 2;
+}
+
+message GetConsumerGroupRateLimitingAdvancedConfigResponse {
+  model.v1.ConsumerGroupRateLimitingAdvancedConfig item = 1;
+}
+
+message CreateConsumerGroupRateLimitingAdvancedConfigRequest {
+  string consumer_group_id = 1;
+  model.v1.ConsumerGroupRateLimitingAdvancedConfig item = 2;
+  model.v1.RequestCluster cluster = 3;
+}
+
+message CreateConsumerGroupRateLimitingAdvancedConfigResponse {
+  model.v1.ConsumerGroupRateLimitingAdvancedConfig item = 1;
+}
+
+message UpsertConsumerGroupRateLimitingAdvancedConfigRequest {
+  string consumer_group_id = 1;
+  model.v1.ConsumerGroupRateLimitingAdvancedConfig item = 2;
+  model.v1.RequestCluster cluster = 3;
+}
+
+message UpsertConsumerGroupRateLimitingAdvancedConfigResponse {
+  model.v1.ConsumerGroupRateLimitingAdvancedConfig item = 1;
+}
+
+message DeleteConsumerGroupRateLimitingAdvancedConfigRequest {
+  string consumer_group_id = 1;
+  model.v1.RequestCluster cluster = 2;
+}
+
+message DeleteConsumerGroupRateLimitingAdvancedConfigResponse {}
+
+message ListConsumerGroupRateLimitingAdvancedConfigRequest {
+  model.v1.RequestCluster cluster = 1;
+  model.v1.PaginationRequest page = 2;
+}
+
+message ListConsumerGroupRateLimitingAdvancedConfigResponse {
+  repeated model.v1.ConsumerGroupRateLimitingAdvancedConfig items = 1;
+  model.v1.PaginationResponse page = 2;
+}

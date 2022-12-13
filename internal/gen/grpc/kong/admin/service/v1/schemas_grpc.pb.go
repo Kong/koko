@@ -26,6 +26,8 @@ type SchemasServiceClient interface {
 	ValidateCACertificateSchema(ctx context.Context, in *ValidateCACertificateSchemaRequest, opts ...grpc.CallOption) (*ValidateCACertificateSchemaResponse, error)
 	ValidateCertificateSchema(ctx context.Context, in *ValidateCertificateSchemaRequest, opts ...grpc.CallOption) (*ValidateCertificateSchemaResponse, error)
 	ValidateConsumerSchema(ctx context.Context, in *ValidateConsumerSchemaRequest, opts ...grpc.CallOption) (*ValidateConsumerSchemaResponse, error)
+	ValidateConsumerGroupSchema(ctx context.Context, in *ValidateConsumerGroupSchemaRequest, opts ...grpc.CallOption) (*ValidateConsumerGroupSchemaResponse, error)
+	ValidateConsumerGroupRateLimitingAdvancedConfigSchema(ctx context.Context, in *ValidateConsumerGroupRateLimitingAdvancedConfigSchemaRequest, opts ...grpc.CallOption) (*ValidateConsumerGroupRateLimitingAdvancedConfigSchemaResponse, error)
 	ValidatePluginSchema(ctx context.Context, in *ValidatePluginSchemaRequest, opts ...grpc.CallOption) (*ValidatePluginSchemaResponse, error)
 	ValidateRouteSchema(ctx context.Context, in *ValidateRouteSchemaRequest, opts ...grpc.CallOption) (*ValidateRouteSchemaResponse, error)
 	ValidateServiceSchema(ctx context.Context, in *ValidateServiceSchemaRequest, opts ...grpc.CallOption) (*ValidateServiceSchemaResponse, error)
@@ -75,6 +77,24 @@ func (c *schemasServiceClient) ValidateCertificateSchema(ctx context.Context, in
 func (c *schemasServiceClient) ValidateConsumerSchema(ctx context.Context, in *ValidateConsumerSchemaRequest, opts ...grpc.CallOption) (*ValidateConsumerSchemaResponse, error) {
 	out := new(ValidateConsumerSchemaResponse)
 	err := c.cc.Invoke(ctx, "/kong.admin.service.v1.SchemasService/ValidateConsumerSchema", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *schemasServiceClient) ValidateConsumerGroupSchema(ctx context.Context, in *ValidateConsumerGroupSchemaRequest, opts ...grpc.CallOption) (*ValidateConsumerGroupSchemaResponse, error) {
+	out := new(ValidateConsumerGroupSchemaResponse)
+	err := c.cc.Invoke(ctx, "/kong.admin.service.v1.SchemasService/ValidateConsumerGroupSchema", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *schemasServiceClient) ValidateConsumerGroupRateLimitingAdvancedConfigSchema(ctx context.Context, in *ValidateConsumerGroupRateLimitingAdvancedConfigSchemaRequest, opts ...grpc.CallOption) (*ValidateConsumerGroupRateLimitingAdvancedConfigSchemaResponse, error) {
+	out := new(ValidateConsumerGroupRateLimitingAdvancedConfigSchemaResponse)
+	err := c.cc.Invoke(ctx, "/kong.admin.service.v1.SchemasService/ValidateConsumerGroupRateLimitingAdvancedConfigSchema", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -170,6 +190,8 @@ type SchemasServiceServer interface {
 	ValidateCACertificateSchema(context.Context, *ValidateCACertificateSchemaRequest) (*ValidateCACertificateSchemaResponse, error)
 	ValidateCertificateSchema(context.Context, *ValidateCertificateSchemaRequest) (*ValidateCertificateSchemaResponse, error)
 	ValidateConsumerSchema(context.Context, *ValidateConsumerSchemaRequest) (*ValidateConsumerSchemaResponse, error)
+	ValidateConsumerGroupSchema(context.Context, *ValidateConsumerGroupSchemaRequest) (*ValidateConsumerGroupSchemaResponse, error)
+	ValidateConsumerGroupRateLimitingAdvancedConfigSchema(context.Context, *ValidateConsumerGroupRateLimitingAdvancedConfigSchemaRequest) (*ValidateConsumerGroupRateLimitingAdvancedConfigSchemaResponse, error)
 	ValidatePluginSchema(context.Context, *ValidatePluginSchemaRequest) (*ValidatePluginSchemaResponse, error)
 	ValidateRouteSchema(context.Context, *ValidateRouteSchemaRequest) (*ValidateRouteSchemaResponse, error)
 	ValidateServiceSchema(context.Context, *ValidateServiceSchemaRequest) (*ValidateServiceSchemaResponse, error)
@@ -197,6 +219,12 @@ func (UnimplementedSchemasServiceServer) ValidateCertificateSchema(context.Conte
 }
 func (UnimplementedSchemasServiceServer) ValidateConsumerSchema(context.Context, *ValidateConsumerSchemaRequest) (*ValidateConsumerSchemaResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ValidateConsumerSchema not implemented")
+}
+func (UnimplementedSchemasServiceServer) ValidateConsumerGroupSchema(context.Context, *ValidateConsumerGroupSchemaRequest) (*ValidateConsumerGroupSchemaResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ValidateConsumerGroupSchema not implemented")
+}
+func (UnimplementedSchemasServiceServer) ValidateConsumerGroupRateLimitingAdvancedConfigSchema(context.Context, *ValidateConsumerGroupRateLimitingAdvancedConfigSchemaRequest) (*ValidateConsumerGroupRateLimitingAdvancedConfigSchemaResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ValidateConsumerGroupRateLimitingAdvancedConfigSchema not implemented")
 }
 func (UnimplementedSchemasServiceServer) ValidatePluginSchema(context.Context, *ValidatePluginSchemaRequest) (*ValidatePluginSchemaResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ValidatePluginSchema not implemented")
@@ -306,6 +334,42 @@ func _SchemasService_ValidateConsumerSchema_Handler(srv interface{}, ctx context
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(SchemasServiceServer).ValidateConsumerSchema(ctx, req.(*ValidateConsumerSchemaRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _SchemasService_ValidateConsumerGroupSchema_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ValidateConsumerGroupSchemaRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SchemasServiceServer).ValidateConsumerGroupSchema(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/kong.admin.service.v1.SchemasService/ValidateConsumerGroupSchema",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SchemasServiceServer).ValidateConsumerGroupSchema(ctx, req.(*ValidateConsumerGroupSchemaRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _SchemasService_ValidateConsumerGroupRateLimitingAdvancedConfigSchema_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ValidateConsumerGroupRateLimitingAdvancedConfigSchemaRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SchemasServiceServer).ValidateConsumerGroupRateLimitingAdvancedConfigSchema(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/kong.admin.service.v1.SchemasService/ValidateConsumerGroupRateLimitingAdvancedConfigSchema",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SchemasServiceServer).ValidateConsumerGroupRateLimitingAdvancedConfigSchema(ctx, req.(*ValidateConsumerGroupRateLimitingAdvancedConfigSchemaRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -494,6 +558,14 @@ var SchemasService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ValidateConsumerSchema",
 			Handler:    _SchemasService_ValidateConsumerSchema_Handler,
+		},
+		{
+			MethodName: "ValidateConsumerGroupSchema",
+			Handler:    _SchemasService_ValidateConsumerGroupSchema_Handler,
+		},
+		{
+			MethodName: "ValidateConsumerGroupRateLimitingAdvancedConfigSchema",
+			Handler:    _SchemasService_ValidateConsumerGroupRateLimitingAdvancedConfigSchema_Handler,
 		},
 		{
 			MethodName: "ValidatePluginSchema",
