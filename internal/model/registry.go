@@ -87,3 +87,15 @@ func ObjectFromProto(p proto.Message) (Object, error) {
 	// match any underlining resource on our model objects.
 	return nil, fmt.Errorf("cannot find type from Protobuf message %s", expectedFullName)
 }
+
+// OptionsForType returns the options for the provided Type, granted that options exist
+// for the given type. In the event no options exist, DefaultObjectOptions is returned.
+func OptionsForType(typ Type) ObjectOptions {
+	if obj, err := NewObject(typ); err == nil {
+		if obj, ok := obj.(ObjectWithOptions); ok {
+			return obj.Options()
+		}
+	}
+
+	return DefaultObjectOptions
+}
