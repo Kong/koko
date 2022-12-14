@@ -123,6 +123,21 @@ func (s *SchemasService) ValidateConsumerSchema(
 	return &v1.ValidateConsumerSchemaResponse{}, s.validateSchema(ctx, req.Item)
 }
 
+func (s *SchemasService) ValidateConsumerGroupRateLimitingAdvancedConfigSchema(
+	ctx context.Context,
+	req *v1.ValidateConsumerGroupRateLimitingAdvancedConfigSchemaRequest,
+) (*v1.ValidateConsumerGroupRateLimitingAdvancedConfigSchemaResponse, error) {
+	return &v1.ValidateConsumerGroupRateLimitingAdvancedConfigSchemaResponse{},
+		s.validateSchema(ctx, req.Item)
+}
+
+func (s *SchemasService) ValidateConsumerGroupSchema(
+	ctx context.Context,
+	req *v1.ValidateConsumerGroupSchemaRequest,
+) (*v1.ValidateConsumerGroupSchemaResponse, error) {
+	return &v1.ValidateConsumerGroupSchemaResponse{}, s.validateSchema(ctx, req.Item)
+}
+
 func (s *SchemasService) ValidatePluginSchema(
 	ctx context.Context,
 	req *v1.ValidatePluginSchemaRequest,
