@@ -25,6 +25,10 @@ func (t *postgresTx) Get(ctx context.Context, key string) ([]byte, error) {
 	return t.query.Get(ctx, key)
 }
 
+func (t *postgresTx) Insert(ctx context.Context, key string, value []byte) error {
+	return t.query.Insert(ctx, key, value)
+}
+
 func (t *postgresTx) Put(ctx context.Context, key string, value []byte) error {
 	return t.query.Put(ctx, key, value)
 }

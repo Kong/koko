@@ -22,6 +22,9 @@ type CRUD interface {
 	// Get retrieves the value from store.
 	// It returns ErrNotFound if key is not found.
 	Get(ctx context.Context, key string) ([]byte, error)
+	// Insert a key and value in the store.
+	// If key is already present, an ErrUniqueViolation is returned.
+	Insert(ctx context.Context, key string, value []byte) error
 	// Put sets key to value in the store.
 	// If key is already present, it is overwritten.
 	Put(ctx context.Context, key string, value []byte) error

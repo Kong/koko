@@ -18,11 +18,14 @@ import (
 
 const (
 	getQuery    = `SELECT * from store where key=$1`
-	insertQuery = `insert into store(key,value) values($1,$2) on conflict (key) do update set value=$2;`
+	insertQuery = `insert into store(key,value) values($1,$2)`
+	putQuery    = `insert into store(key,value) values($1,$2) on conflict (key) do update set value=$2;`
 	deleteQuery = `delete from store where key=$1`
 
 	DefaultPort = 5432
 	DefaultPool = "pgx"
+
+	uniqueViolationErrorCode = "23505"
 )
 
 type Postgres struct {
@@ -95,6 +98,11 @@ func (s *Postgres) Get(ctx context.Context, key string) ([]byte, error) {
 	return q.Get(ctx, key)
 }
 
+func (s *Postgres) Insert(ctx context.Context, key string, value []byte) error {
+	q := postgresQuery{query: s.dbPool, queryTimeout: s.queryTimeout}
+	return q.Insert(ctx, key, value)
+}
+
 func (s *Postgres) Put(ctx context.Context, key string, value []byte) error {
 	q := postgresQuery{query: s.dbPool, queryTimeout: s.queryTimeout}
 	return q.Put(ctx, key, value)
@@ -161,10 +169,29 @@ func (t *postgresQuery) Get(ctx context.Context, key string) ([]byte, error) {
 	return value, err
 }
 
-func (t *postgresQuery) Put(ctx context.Context, key string, value []byte) error {
+func (t *postgresQuery) Insert(ctx context.Context, key string, value []byte) error {
 	ctx, cancel := context.WithTimeout(ctx, t.queryTimeout)
 	defer cancel()
 	res, err := t.query.Exec(ctx, insertQuery, key, value)
+	if err != nil {
+		if pgErr, ok := err.(*pgconn.PgError); ok {
+			if pgErr.Code == uniqueViolationErrorCode {
+				return persistence.ErrUniqueViolation
+			}
+		}
+		return err
+	}
+	rowCount := res.RowsAffected()
+	if rowCount != 1 {
+		return persistence.ErrInvalidRowsAffected
+	}
+	return nil
+}
+
+func (t *postgresQuery) Put(ctx context.Context, key string, value []byte) error {
+	ctx, cancel := context.WithTimeout(ctx, t.queryTimeout)
+	defer cancel()
+	res, err := t.query.Exec(ctx, putQuery, key, value)
 	if err != nil {
 		return err
 	}

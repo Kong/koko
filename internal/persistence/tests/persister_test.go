@@ -68,7 +68,6 @@ func TestPersister(t *testing.T) {
 			gotValue, err := p.Get(context.Background(), "key3")
 			require.Nil(t, err)
 			equalJSON(t, value, gotValue)
-
 			value = json("value3-new")
 			require.Nil(t, p.Put(context.Background(), "key3", value))
 			// get
@@ -87,6 +86,28 @@ func TestPersister(t *testing.T) {
 			require.ErrorAs(t, err,
 				&persistence.ErrNotFound{Key: "key4"})
 			require.Nil(t, gotValue)
+		})
+		t.Run("Insert()", func(t *testing.T) {
+			t.Run("stores a value", func(t *testing.T) {
+				// insert
+				value := json("value6")
+				require.NoError(t, p.Insert(context.Background(), "key6", value))
+				// get
+				gotValue, err := p.Get(context.Background(), "key6")
+				require.NoError(t, err)
+				equalJSON(t, value, gotValue)
+			})
+			t.Run("raises an error if a key is already present", func(t *testing.T) {
+				// insert
+				value := json("value7")
+				require.NoError(t, p.Insert(context.Background(), "key7", value))
+				// get
+				gotValue, err := p.Get(context.Background(), "key7")
+				require.NoError(t, err)
+				equalJSON(t, value, gotValue)
+				value = json("value7-new")
+				require.Equal(t, p.Insert(context.Background(), "key7", value), persistence.ErrUniqueViolation)
+			})
 		})
 		t.Run("deletes fails when a key does not exist",
 			func(t *testing.T) {
