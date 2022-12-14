@@ -73,6 +73,12 @@ func (s *ObjectStore) createIndexes(ctx context.Context,
 ) error {
 	indexes := object.Indexes()
 	for _, index := range indexes {
+		// Skip indexes that are meant for explicit removal only (these are
+		// only created with the model.IndexActionAdd index action).
+		if index.Action == model.IndexActionRemove {
+			continue
+		}
+
 		switch index.Type {
 		case model.IndexUnique:
 			key, value, err := s.indexKV(index, object)
@@ -154,6 +160,12 @@ func (s *ObjectStore) deleteIndexes(ctx context.Context, tx persistence.Tx,
 ) error {
 	indexes := object.Indexes()
 	for _, index := range indexes {
+		// Skip indexes that are meant for explicit addition only (these are
+		// only removed with the model.IndexActionRemove index action).
+		if index.Action == model.IndexActionAdd {
+			continue
+		}
+
 		switch index.Type {
 		case model.IndexUnique:
 			key, _, err := s.indexKV(index, object)

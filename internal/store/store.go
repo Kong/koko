@@ -201,7 +201,14 @@ func (s *ObjectStore) Upsert(ctx context.Context, object model.Object,
 					return err
 				}
 			}
-			if err := s.deleteIndexes(ctx, tx, oldObject); err != nil {
+
+			// Handle deleting explicit indexes when asked, otherwise, default to the managed behavior.
+			objectForIndexDeletions := oldObject
+			if _, ok := model.Indexes(object.Indexes()).Actions()[model.IndexActionRemove]; ok {
+				objectForIndexDeletions = object
+			}
+
+			if err := s.deleteIndexes(ctx, tx, objectForIndexDeletions); err != nil {
 				return err
 			}
 
