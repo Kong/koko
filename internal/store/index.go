@@ -165,10 +165,26 @@ func (s *ObjectStore) checkIndex(ctx context.Context, tx persistence.Tx,
 	}
 }
 
-func (s *ObjectStore) deleteIndexes(ctx context.Context, tx persistence.Tx,
+func (s *ObjectStore) deleteIndexes(
+	ctx context.Context,
+	tx persistence.Tx,
 	object model.Object,
+	fullDelete bool,
 ) error {
 	indexes := object.Indexes()
+
+	// Ensure we delete all foreign indexes, even the ones that are
+	// managed outside the persistence store integration (and thus
+	// such indexes aren't represented on the object itself).
+	//
+	// This is used to ensure we delete one-to-many relations, like
+	// what's in use for consumer groups & its members.
+	if fullDelete {
+		if err := s.deleteForeignIndexes(ctx, tx, object); err != nil {
+			return err
+		}
+	}
+
 	for _, index := range indexes {
 		// Skip indexes that are meant for explicit addition only (these are
 		// only removed with the model.IndexActionRemove index action).
@@ -193,6 +209,12 @@ func (s *ObjectStore) deleteIndexes(ctx context.Context, tx persistence.Tx,
 				).Error("delete index failed, possible data integrity issue")
 			}
 		case model.IndexForeign:
+			// Foreign key indexes are deleted when the object is being
+			// fully deleted instead of replaced (during the upsert).
+			if fullDelete {
+				continue
+			}
+
 			key, _, err := s.indexKV(index, object)
 			if err != nil {
 				return fmt.Errorf("unable to render indexes: %w", err)
@@ -252,5 +274,32 @@ func (s *ObjectStore) onDeleteCascade(ctx context.Context,
 			}
 		}
 	}
+	return nil
+}
+
+// deleteForeignIndexes handles deleting all foreign indexes that exist for the given object.
+func (s *ObjectStore) deleteForeignIndexes(ctx context.Context, tx persistence.Tx, object model.Object) error {
+	opt, err := NewListOpts(ListReverseFor(object.Type(), object.ID()))
+	if err != nil {
+		return err
+	}
+
+	listResult, err := tx.List(
+		ctx,
+		s.referencedListKey(persistence.WildcardOperator, opt),
+		getPersistenceListOptions(opt),
+	)
+	if err != nil {
+		return err
+	}
+
+	// TODO(tjasko): Eventually we should introduce bulk deletion support.
+	//  That way we can delete all matching keys in just one DB query.
+	for _, kv := range listResult.KVList {
+		if err := tx.Delete(ctx, string(kv.Key)); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
