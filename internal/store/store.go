@@ -551,12 +551,7 @@ func (s *ObjectStore) updateForeignKeysTx(
 					return err
 				}
 
-				// Ensure the foreign relation is not already created.
-				if err := s.checkIndex(gCtx, tx, index, key); err != nil {
-					return err
-				}
-
-				if err := tx.Put(gCtx, key, value); err != nil {
+				if err := tx.Insert(gCtx, key, value); err != nil {
 					return err
 				}
 			} else {
