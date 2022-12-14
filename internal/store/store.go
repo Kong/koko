@@ -209,7 +209,7 @@ func (s *ObjectStore) Upsert(ctx context.Context, object model.Object,
 				objectForIndexDeletions = object
 			}
 
-			if err := s.deleteIndexes(ctx, tx, objectForIndexDeletions); err != nil {
+			if err := s.deleteIndexes(ctx, tx, objectForIndexDeletions, false); err != nil {
 				return err
 			}
 
@@ -386,7 +386,7 @@ func (s *ObjectStore) delete(ctx context.Context, tx persistence.Tx,
 	if err != nil {
 		return err
 	}
-	if err := s.deleteIndexes(ctx, tx, object); err != nil {
+	if err := s.deleteIndexes(ctx, tx, object, true); err != nil {
 		return err
 	}
 	return s.updateEvent(ctx, tx, object)
