@@ -89,6 +89,36 @@ const (
 	IndexForeign TypeIndex = "foreign"
 )
 
+// IndexAction determines how the index is managed by the persistence store.
+type IndexAction int
+
+const (
+	// IndexActionManaged is the default index action, which automatically removes the previously defined indexes (found
+	// on the currently stored object in the DB) when applicable & inserts the new indexes defined on the resource.
+	//
+	// The automated removal is useful in most use cases, as if the related entity ID/name/etc. changes, we no longer
+	// want to keep that index around. However, in the event that we're storing multiple indexes for a list of foreign
+	// resource IDs, it's impossible to remove a single index without fetching all existing objects (which has
+	// scalability & performance concerns when there's a large number of foreign keys).
+	//
+	// Cannot be combined with any other actions.
+	IndexActionManaged IndexAction = iota
+
+	// IndexActionAdd explicitly defines that this index should
+	// be created without deleting any prior existing indexes.
+	//
+	// This should be used when foreign key relations should be added,
+	// and it's not ideal to look up all existing indexes on the object.
+	IndexActionAdd
+
+	// IndexActionRemove explicitly defines that this index should
+	// be removed without deleting any prior existing indexes.
+	//
+	// This should be used when foreign key relations should be removed,
+	// and it's not ideal to look up all existing indexes on the object.
+	IndexActionRemove
+)
+
 // Index defines an index/foreign key based on the defined Index.Type
 // & its applicable fields. Unless noted, all fields are required.
 //
@@ -113,6 +143,8 @@ type Index struct {
 	ForeignType Type
 	// Value is the value of the field for this Index.
 	Value string
+	// Action defines the way this index will be handled. Defaults to IndexActionManaged.
+	Action IndexAction
 }
 
 // Indexes is a list of Index objects.
@@ -127,6 +159,11 @@ type ObjectList interface {
 	SetTotalCount(count int)
 	SetNextPage(pageNum int)
 	GetNextPage() int
+}
+
+// Actions returns all unique index actions used within the slice of Index objects.
+func (i Indexes) Actions() map[IndexAction]bool {
+	return lo.Associate(i, func(idx Index) (IndexAction, bool) { return idx.Action, true })
 }
 
 // Validate ensures the provided Index object is a valid configuration.
@@ -162,6 +199,10 @@ func (i *Index) Validate() error {
 
 // Validate ensures the provided Index objects are a valid configuration.
 func (i Indexes) Validate() error {
+	if actions := i.Actions(); len(actions) >= 2 && actions[IndexActionManaged] {
+		return errors.New("the IndexActionManaged action cannot be used in conjunction with any other actions")
+	}
+
 	// Helper function to attempt to describe the specific index object that failed validation.
 	errFunc := func(idx Index, err error) error {
 		var descriptor string
