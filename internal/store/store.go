@@ -12,7 +12,9 @@ import (
 	"github.com/kong/koko/internal/model"
 	"github.com/kong/koko/internal/persistence"
 	"github.com/kong/koko/internal/store/event"
+	"github.com/samber/lo"
 	"go.uber.org/zap"
+	"golang.org/x/sync/errgroup"
 )
 
 const DefaultOperationTimeout = 15 * time.Second
@@ -29,6 +31,18 @@ type Store interface {
 	// Cluster returns the store's underlining cluster ID. When no specific cluster
 	// is associated to the Store, the returned value will be DefaultCluster.
 	Cluster() string
+
+	// UpdateForeignKeys allows bulk updates of one-to-many relationships for the provided object.
+	//
+	// The indexes (defined on the passed in model.Object) that have the type of model.IndexForeign will be
+	// created/removed based on the provided model.IndexAction. All other indexes will be ignored.
+	//
+	// The passed in object must have its ID set. Upon a successful update of the object's foreign key(s), the object
+	// will have its `updated_at` timestamp altered and the fully resolved object will be set on the passed in object.
+	//
+	// ErrNotFound will be returned to the caller in the event the ID set on the object cannot be found or in any of
+	// the foreign relations (the `value` field on model.Index).
+	UpdateForeignKeys(context.Context, model.Object) error
 
 	Create(context.Context, model.Object, ...CreateOptsFunc) error
 	Upsert(context.Context, model.Object, ...CreateOptsFunc) error
@@ -348,6 +362,45 @@ func (s *ObjectStore) readByTypeID(ctx context.Context, tx persistence.CRUD,
 	return nil
 }
 
+func (s *ObjectStore) UpdateForeignKeys(
+	ctx context.Context,
+	obj model.Object,
+) error {
+	if obj == nil {
+		return errNoObject
+	}
+
+	if obj.ID() == "" {
+		return errors.New("required object ID is not set")
+	}
+
+	// We only care about the foreign key indexes with the applicable index actions.
+	// Otherwise, we'll ignore everything else as we're not concerned about it.
+	fkIndexes := model.Indexes(lo.Filter(obj.Indexes(), func(idx model.Index, _ int) bool {
+		if idx.Type != model.IndexForeign {
+			return false
+		}
+		return lo.Contains([]model.IndexAction{model.IndexActionAdd, model.IndexActionRemove}, idx.Action)
+	}))
+	if len(fkIndexes) == 0 {
+		return errors.New("no valid foreign key indexes defined")
+	}
+	if err := fkIndexes.Validate(); err != nil {
+		return err
+	}
+
+	if err := s.withTx(ctx, func(tx persistence.Tx) error {
+		return s.updateForeignKeysTx(ctx, obj, fkIndexes, tx)
+	}); err != nil {
+		if errors.As(err, &persistence.ErrNotFound{}) {
+			return ErrNotFound
+		}
+		return err
+	}
+
+	return nil
+}
+
 func (s *ObjectStore) Delete(ctx context.Context,
 	opts ...DeleteOptsFunc,
 ) error {
@@ -461,6 +514,80 @@ func (s *ObjectStore) referencedList(ctx context.Context, list model.ObjectList,
 		list.SetNextPage(opt.Page + 1)
 	}
 	return nil
+}
+
+func (s *ObjectStore) updateForeignKeysTx(
+	ctx context.Context,
+	obj model.Object,
+	indexes model.Indexes,
+	tx persistence.Tx,
+) error {
+	// Ensure the "parent" entity exists. This is also used to resolve the full object for the caller's use.
+	if err := s.readByTypeID(ctx, tx, obj.Type(), obj.ID(), obj); err != nil {
+		return err
+	}
+
+	// Create/remove foreign keys as requested. This is handled asynchronously
+	// as bulk management is supported & this should be a performant call.
+	g, gCtx := errgroup.WithContext(ctx)
+	for i := range indexes {
+		index := indexes[i]
+		g.Go(func() error {
+			key, value, err := s.indexKV(index, obj)
+			if err != nil {
+				return fmt.Errorf("unable to render indexes: %w", err)
+			}
+
+			if index.Action == model.IndexActionAdd {
+				// Ensure the foreign entity exists.
+				fk, err := s.genID(index.ForeignType, index.Value)
+				if err != nil {
+					return err
+				}
+				if _, err = tx.Get(gCtx, fk); err != nil {
+					if errors.As(err, &persistence.ErrNotFound{}) {
+						return ErrConstraint{Index: index}
+					}
+					return err
+				}
+
+				// Ensure the foreign relation is not already created.
+				if err := s.checkIndex(gCtx, tx, index, key); err != nil {
+					return err
+				}
+
+				if err := tx.Put(gCtx, key, value); err != nil {
+					return err
+				}
+			} else {
+				if err := tx.Delete(gCtx, key); err != nil {
+					return err
+				}
+			}
+
+			return nil
+		})
+	}
+
+	if err := g.Wait(); err != nil {
+		return err
+	}
+
+	if err := s.updateEvent(ctx, tx, obj); err != nil {
+		return err
+	}
+
+	// Update "parent" entity only so we can update the `updated_at` timestamp.
+	setTSField(obj.Resource(), fieldUpdatedAt, true)
+	id, err := s.genID(obj.Type(), obj.ID())
+	if err != nil {
+		return err
+	}
+	value, err := wrapObject(obj)
+	if err != nil {
+		return err
+	}
+	return tx.Put(ctx, id, value)
 }
 
 func (s *ObjectStore) referencedListKey(typ model.Type, opt *ListOpts) string {
