@@ -1,0 +1,55 @@
+{
+  "required": [
+    "id",
+    "window_size",
+    "limit",
+    "consumer_group_id"
+  ],
+  "properties": {
+    "consumer_group_id": {
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+      "type": "string",
+      "description": "must be a valid UUID"
+    },
+    "created_at": {
+      "minimum": 1,
+      "type": "integer"
+    },
+    "id": {
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+      "type": "string",
+      "description": "must be a valid UUID"
+    },
+    "limit": {
+      "items": {
+        "type": "integer"
+      },
+      "type": "array"
+    },
+    "retry_after_jitter_max": {
+      "minimum": 0,
+      "type": "integer",
+      "default": 0
+    },
+    "updated_at": {
+      "minimum": 1,
+      "type": "integer"
+    },
+    "window_size": {
+      "items": {
+        "type": "integer"
+      },
+      "type": "array"
+    },
+    "window_type": {
+      "enum": [
+        "fixed",
+        "sliding"
+      ],
+      "type": "string",
+      "default": "sliding"
+    }
+  },
+  "additionalProperties": false,
+  "type": "object"
+}
