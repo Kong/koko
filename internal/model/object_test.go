@@ -141,6 +141,14 @@ func TestIndexes_Validate(t *testing.T) {
 		expectedError string
 	}{
 		{
+			name: "mixed index action types",
+			indexes: Indexes{
+				{Action: IndexActionManaged},
+				{Action: IndexActionAdd},
+			},
+			expectedError: "the IndexActionManaged action cannot be used in conjunction with any other actions",
+		},
+		{
 			name: "ensure regular validation executes: without name",
 			indexes: Indexes{{
 				Type:  IndexUnique,
