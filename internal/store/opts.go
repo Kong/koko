@@ -160,7 +160,7 @@ func ListFor(typ model.Type, id string) ListOptsFunc {
 //     service: {id: service-1}
 //   - id: route-3
 //
-// When calling `ListFor(resource.TypeRoute, "route-1")` with
+// When calling `ListReverseFor(resource.TypeRoute, "route-1")` with
 // `resource.NewList(resource.TypeService)`.
 //
 // Then this would return the service with ID `service-1`.
