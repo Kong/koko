@@ -538,29 +538,28 @@ func (s *ObjectStore) updateForeignKeysTx(
 				return fmt.Errorf("unable to render indexes: %w", err)
 			}
 
-			if index.Action == model.IndexActionAdd {
-				// Ensure the foreign entity exists.
-				fk, err := s.genID(index.ForeignType, index.Value)
-				if err != nil {
-					return err
-				}
-				if _, err = tx.Get(gCtx, fk); err != nil {
-					if errors.As(err, &persistence.ErrNotFound{}) {
-						return ErrConstraint{Index: index}
+			err = func() error {
+				if index.Action == model.IndexActionAdd {
+					// Ensure the foreign entity exists.
+					fk, err := s.genID(index.ForeignType, index.Value)
+					if err != nil {
+						return err
 					}
-					return err
+					if _, err = tx.Get(gCtx, fk); err != nil {
+						return err
+					}
+
+					return tx.Insert(gCtx, key, value)
 				}
 
-				if err := tx.Insert(gCtx, key, value); err != nil {
-					return err
-				}
-			} else {
-				if err := tx.Delete(gCtx, key); err != nil {
-					return err
-				}
+				return tx.Delete(gCtx, key)
+			}()
+
+			if err == persistence.ErrUniqueViolation {
+				return ErrConstraint{Index: index}
 			}
 
-			return nil
+			return err
 		})
 	}
 
