@@ -1835,14 +1835,14 @@
                 "name": {
                   "type": "string"
                 },
+                "kid": {
+                  "type": "string"
+                },
                 "jwk": {
-                  "$ref": "#/definitions/kong.admin.model.v1.JwkKey"
+                  "type": "string"
                 },
                 "pem": {
                   "$ref": "#/definitions/kong.admin.model.v1.PemKey"
-                },
-                "key_format": {
-                  "$ref": "#/definitions/kong.admin.model.v1.KeyFormat"
                 }
               }
             }
@@ -4958,92 +4958,6 @@
         }
       }
     },
-    "kong.admin.model.v1.JwkKey": {
-      "type": "object",
-      "properties": {
-        "kid": {
-          "type": "string"
-        },
-        "issuer": {
-          "type": "string"
-        },
-        "kty": {
-          "type": "string"
-        },
-        "use": {
-          "type": "string"
-        },
-        "key_ops": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "alg": {
-          "type": "string"
-        },
-        "x5u": {
-          "type": "string"
-        },
-        "x5c": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "x5t": {
-          "type": "string"
-        },
-        "x5t_s256": {
-          "type": "string"
-        },
-        "k": {
-          "type": "string"
-        },
-        "x": {
-          "type": "string"
-        },
-        "y": {
-          "type": "string"
-        },
-        "crv": {
-          "type": "string"
-        },
-        "n": {
-          "type": "string"
-        },
-        "e": {
-          "type": "string"
-        },
-        "d": {
-          "type": "string"
-        },
-        "p": {
-          "type": "string"
-        },
-        "q": {
-          "type": "string"
-        },
-        "dp": {
-          "type": "string"
-        },
-        "dq": {
-          "type": "string"
-        },
-        "qi": {
-          "type": "string"
-        },
-        "oth": {
-          "type": "string"
-        },
-        "r": {
-          "type": "string"
-        },
-        "t": {
-          "type": "string"
-        }
-      }
-    },
     "kong.admin.model.v1.Key": {
       "type": "object",
       "properties": {
@@ -5070,26 +4984,16 @@
         "name": {
           "type": "string"
         },
+        "kid": {
+          "type": "string"
+        },
         "jwk": {
-          "$ref": "#/definitions/kong.admin.model.v1.JwkKey"
+          "type": "string"
         },
         "pem": {
           "$ref": "#/definitions/kong.admin.model.v1.PemKey"
-        },
-        "key_format": {
-          "$ref": "#/definitions/kong.admin.model.v1.KeyFormat"
         }
       }
-    },
-    "kong.admin.model.v1.KeyFormat": {
-      "type": "string",
-      "enum": [
-        "KEY_FORMAT_UNSPECIFIED",
-        "KEY_FORMAT_JWK",
-        "KEY_FORMAT_PEM",
-        "KEY_FORMAT_KID"
-      ],
-      "default": "KEY_FORMAT_UNSPECIFIED"
     },
     "kong.admin.model.v1.KeySet": {
       "type": "object",

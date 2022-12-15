@@ -1438,36 +1438,51 @@ func TestVersionCompatibility_KeysEntities(t *testing.T) {
 	})
 
 	// Create a service
-	service := &v1.Service{
+	serviceID := admin.POST("/v1/services").WithJSON(&v1.Service{
 		Id:   uuid.NewString(),
 		Name: "foo",
 		Host: "httpbin.org",
 		Path: "/",
-	}
-	res := admin.POST("/v1/services").WithJSON(service).Expect()
-	res.Status(http.StatusCreated)
+	}).
+		Expect().Status(http.StatusCreated).
+		JSON().Path("$.item.id").String().Raw()
 
-	admin.POST("/v1/keys").WithJSON(&v1.Key{
-		Name: "mellon",
-		Jwk:  &v1.JwkKey{},
-	}).Expect().Status(http.StatusCreated)
+	// create a key-set
+	keySetID := admin.POST("/v1/key-sets").WithJSON(&v1.KeySet{
+		Name: "my_keys",
+	}).
+		Expect().Status(http.StatusCreated).
+		JSON().Path("$.item.id").String().Raw()
 
-	t.Run("pre 3.0", func(t *testing.T) {
-		kongClient.RunWhenKong(t, "< 3.0.0")
-
-		util.WaitFunc(t, func() error {
-			return util.EnsureConfig(&v1.TestingConfig{
-				Services: []*v1.Service{{Name: "foo"}},
-			})
-		})
-	})
+	// create a key
+	//nolint: lll // JSON can't cut lines
+	keyID := admin.POST("/v1/keys").WithJSON(&v1.Key{
+		Id:   uuid.NewString(),
+		Name: "boss_key",
+		Set:  &v1.KeySet{Id: keySetID},
+		Kid:  "vsR8NCNV_1_LB06LqudGa2r-T0y4Z6VQVYue9IQz6A4",
+		Jwk: `{
+			"kty": "RSA",
+			"kid": "vsR8NCNV_1_LB06LqudGa2r-T0y4Z6VQVYue9IQz6A4",
+			"n": "v2KAzzfruqctVHaE9WSCWIg1xAhMwxTIK-i56WNqPtpWBo9AqxcVea8NyVctEjUNq_mix5CklNy3ru7ARh7rBG_LU65fzs4fY_uYalul3QZSnr61Gj-cTUB3Gy4PhA63yXCbYRR3gDy6WR_wfis1MS61j0R_AjgXuVufmmC0F7R9qSWfR8ft0CbQgemEHY3ddKeW7T7fKv1jnRwYAkl5B_xtvxRFIYT-uR9NNftixNpUIW7q8qvOH7D9icXOg4_wIVxTRe5QiRYwEFoUbV1V9bFtu5FLal0vZnLaWwg5tA6enhzBpxJNdrS0v1RcPpyeNP-9r3cUDGmeftwz9v95UQ",
+			"e": "AQAB",
+			"alg": "A256GCM"
+		}`,
+	}).
+		Expect().Status(http.StatusCreated).
+		JSON().Path("$.item.id").String().Raw()
 
 	t.Run("pre 3.1", func(t *testing.T) {
-		kongClient.RunWhenKong(t, ">= 3.0.0 < 3.1.0")
+		kongClient.RunWhenKong(t, "< 3.1.0")
 
 		util.WaitFunc(t, func() error {
 			return util.EnsureConfig(&v1.TestingConfig{
-				Services: []*v1.Service{{Name: "foo"}},
+				Services: []*v1.Service{
+					{
+						Id:   serviceID,
+						Name: "foo",
+					},
+				},
 			})
 		})
 	})
@@ -1477,8 +1492,27 @@ func TestVersionCompatibility_KeysEntities(t *testing.T) {
 
 		util.WaitFunc(t, func() error {
 			return util.EnsureConfig(&v1.TestingConfig{
-				Services: []*v1.Service{{Name: "foo"}},
-				Keys:     []*v1.Key{{Name: "mellon"}},
+				Services: []*v1.Service{
+					{
+						Id:   serviceID,
+						Name: "foo",
+					},
+				},
+				Keys: []*v1.Key{
+					{
+						Id:   keyID,
+						Name: "boss_key",
+						Set: &v1.KeySet{
+							Id: keySetID,
+						},
+					},
+				},
+				KeySets: []*v1.KeySet{
+					{
+						Id:   keySetID,
+						Name: "my_keys",
+					},
+				},
 			})
 		})
 	})

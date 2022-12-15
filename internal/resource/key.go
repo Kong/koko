@@ -45,9 +45,7 @@ func (k Key) ProcessDefaults(ctx context.Context) error {
 		return fmt.Errorf("invalid nil resource")
 	}
 	defaultID(&k.Key.Id)
-	if k.Key.Jwk != nil {
-		defaultID(&k.Key.Jwk.Kid)
-	}
+	defaultID(&k.Key.Kid)
 	return nil
 }
 
@@ -64,7 +62,14 @@ func (k Key) Indexes() []model.Index {
 		return nil
 	}
 
-	res := []model.Index{}
+	res := []model.Index{
+		{
+			Name:      "kid",
+			Type:      model.IndexUnique,
+			Value:     k.Key.Kid,
+			FieldName: "kid",
+		},
+	}
 
 	if k.Key.Name != "" {
 		res = append(res, model.Index{
@@ -72,15 +77,6 @@ func (k Key) Indexes() []model.Index {
 			Type:      model.IndexUnique,
 			Value:     k.Key.Name,
 			FieldName: "name",
-		})
-	}
-
-	if k.Key.Jwk != nil {
-		res = append(res, model.Index{
-			Name:      "kid",
-			Type:      model.IndexUnique,
-			Value:     k.Key.Jwk.Kid,
-			FieldName: "kid",
 		})
 	}
 
@@ -112,12 +108,13 @@ func init() {
 			"updated_at": typedefs.UnixEpoch,
 			"name":       typedefs.Name,
 			"set":        typedefs.ReferenceObject,
+			"kid":        {Type: "string"},
 			"jwk":        typedefs.JWKKey,
 			"pem":        typedefs.PEMKey,
 			"tags":       typedefs.Tags,
 		},
 		AdditionalProperties: &falsy,
-		Required:             []string{"id"},
+		Required:             []string{"id", "kid"},
 		AllOf: []*generator.Schema{
 			{
 				Title:       "one key format",

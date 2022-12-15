@@ -1,6 +1,7 @@
 {
   "required": [
-    "id"
+    "id",
+    "kid"
   ],
   "properties": {
     "created_at": {
@@ -13,90 +14,10 @@
       "description": "must be a valid UUID"
     },
     "jwk": {
-      "required": [
-        "kid"
-      ],
-      "properties": {
-        "alg": {
-          "type": "string"
-        },
-        "crv": {
-          "type": "string"
-        },
-        "d": {
-          "type": "string"
-        },
-        "dp": {
-          "type": "string"
-        },
-        "dq": {
-          "type": "string"
-        },
-        "e": {
-          "type": "string"
-        },
-        "issuer": {
-          "type": "string"
-        },
-        "k": {
-          "type": "string"
-        },
-        "key_ops": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        },
-        "kid": {
-          "type": "string"
-        },
-        "kty": {
-          "type": "string"
-        },
-        "n": {
-          "type": "string"
-        },
-        "oth": {
-          "type": "string"
-        },
-        "p": {
-          "type": "string"
-        },
-        "qi": {
-          "type": "string"
-        },
-        "r": {
-          "type": "string"
-        },
-        "t": {
-          "type": "string"
-        },
-        "use": {
-          "type": "string"
-        },
-        "x": {
-          "type": "string"
-        },
-        "x5c": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        },
-        "x5t": {
-          "type": "string"
-        },
-        "x5t_S256": {
-          "type": "string"
-        },
-        "x5u": {
-          "type": "string"
-        },
-        "y": {
-          "type": "string"
-        }
-      },
-      "type": "object"
+      "type": "string"
+    },
+    "kid": {
+      "type": "string"
     },
     "name": {
       "maxLength": 128,

@@ -14,7 +14,7 @@ import (
 func goodKey() *v1.Key {
 	return &v1.Key{
 		Id:   uuid.NewString(),
-		Jwk:  &v1.JwkKey{Kid: uuid.NewString()},
+		Jwk:  "xxxx",
 		Name: "simpleKey-" + uuid.NewString(),
 	}
 }
@@ -24,7 +24,7 @@ func validateGoodKey(body *httpexpect.Object) {
 	body.ContainsKey("created_at")
 	body.ContainsKey("updated_at")
 	body.ContainsKey("jwk")
-	body.Path("$.jwk").Object().ContainsKey("kid")
+	body.ContainsKey("kid")
 }
 
 func TestKeyCreate(t *testing.T) {

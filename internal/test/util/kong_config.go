@@ -20,6 +20,8 @@ type KongConfig struct {
 	CACertificates []*kong.CACertificate `json:"ca_certificates,omitempty"`
 	SNIs           []*kong.SNI           `json:"snis,omitempty"`
 	Vaults         []*kong.Vault         `json:"vaults,omitempty"`
+	Keys           []*kong.Key           `json:"keys,omitempty"`
+	KeySets        []*kong.KeySet        `json:"key_sets,omitempty"`
 }
 
 func EnsureConfig(expectedConfig *model.TestingConfig) error {
@@ -89,6 +91,14 @@ func fetchKongConfig() (KongConfig, error) {
 			return KongConfig{}, fmt.Errorf("unable to fetch valuts: %w", err)
 		}
 	}
+	keys, err := client.Keys.ListAll(ctx)
+	if err != nil {
+		return KongConfig{}, fmt.Errorf("fetch Keys: %w", err)
+	}
+	keySets, err := client.KeySets.ListAll(ctx)
+	if err != nil {
+		return KongConfig{}, fmt.Errorf("fetch KeySets: %w", err)
+	}
 
 	var allTargets []*kong.Target
 	for _, u := range upstreams {
@@ -109,6 +119,8 @@ func fetchKongConfig() (KongConfig, error) {
 		CACertificates: caCertificates,
 		SNIs:           snis,
 		Vaults:         vaults,
+		Keys:           keys,
+		KeySets:        keySets,
 		Targets:        allTargets,
 	}, nil
 }

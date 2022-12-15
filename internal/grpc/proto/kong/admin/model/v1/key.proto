@@ -21,9 +21,9 @@ message Key {
 
   KeySet set = 5;
   string name = 6;
-  JwkKey jwk = 7;
-  PemKey pem = 8;
-  KeyFormat key_format = 9;
+  string kid = 7;
+  string jwk = 8;
+  PemKey pem = 9;
 }
 
 message JwkKey {
