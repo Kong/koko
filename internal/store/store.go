@@ -459,8 +459,10 @@ func (s *ObjectStore) referencedList(ctx context.Context, list model.ObjectList,
 		id := key[keyPrefixLen:]
 		if opt.ReferenceReverseLookup {
 			startIdx := strings.Index(keyPrefix, persistence.WildcardOperator)
-			endIdx := strings.Index(key[startIdx:], "/")
-			id = key[startIdx : startIdx+endIdx]
+			if startIdx < 0 {
+				return errors.New("unable to find wildcard operator in key prefix")
+			}
+			id, _, _ = strings.Cut(key[startIdx:], "/")
 		}
 
 		if err := s.readByTypeID(ctx, s.store, typ, id, object); err != nil {
