@@ -26,7 +26,7 @@ func validateGoodKeySet(body *httpexpect.Object) {
 func TestKeySetCreate(t *testing.T) {
 	s, cleanup := setup(t)
 	defer cleanup()
-	c := httpexpect.New(t, s.URL)
+	c := httpexpect.Default(t, s.URL)
 	t.Run("creates a valid keyset", func(_ *testing.T) {
 		res := c.POST("/v1/key-sets").WithJSON(goodKeySet()).Expect()
 		res.Status(http.StatusCreated)
@@ -44,7 +44,7 @@ func TestKeySetCreate(t *testing.T) {
 func TestKeySetUpsert(t *testing.T) {
 	s, cleanup := setup(t)
 	defer cleanup()
-	c := httpexpect.New(t, s.URL)
+	c := httpexpect.Default(t, s.URL)
 	t.Run("upsert a valid keyset", func(_ *testing.T) {
 		res := c.PUT("/v1/key-sets/{}", uuid.NewString()).
 			WithJSON(goodKeySet()).
@@ -82,7 +82,7 @@ func TestKeySetUpsert(t *testing.T) {
 func TestKeySetRead(t *testing.T) {
 	s, cleanup := setup(t)
 	defer cleanup()
-	c := httpexpect.New(t, s.URL)
+	c := httpexpect.Default(t, s.URL)
 	ks := goodKeySet()
 	res := c.POST("/v1/key-sets").WithJSON(ks).Expect()
 	res.Status(http.StatusCreated)
@@ -123,7 +123,7 @@ func TestKeySetRead(t *testing.T) {
 func TestKeySetDelete(t *testing.T) {
 	s, cleanup := setup(t)
 	defer cleanup()
-	c := httpexpect.New(t, s.URL)
+	c := httpexpect.Default(t, s.URL)
 	ks := goodKeySet()
 	res := c.POST("/v1/key-sets").WithJSON(ks).Expect()
 	id := res.JSON().Path("$.item.id").String().Raw()
@@ -153,7 +153,7 @@ func TestKeySetList(t *testing.T) {
 	s, cleanup := setup(t)
 	defer cleanup()
 
-	c := httpexpect.New(t, s.URL)
+	c := httpexpect.Default(t, s.URL)
 
 	ks1 := goodKeySet()
 	res := c.POST("/v1/key-sets").WithJSON(ks1).Expect()

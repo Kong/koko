@@ -5,6 +5,7 @@ import (
 	"encoding/pem"
 
 	"github.com/kong/koko/internal/crypto"
+	"github.com/lestrrat-go/jwx/jwk"
 	"github.com/santhosh-tekuri/jsonschema/v5"
 )
 
@@ -87,9 +88,30 @@ func isPEMPKIXEncodedPublicKey(v interface{}) bool {
 	return err == nil
 }
 
+func isJWTEncodedKey(v interface{}) bool {
+	var err error
+	var key jwk.Key
+	switch v := v.(type) {
+	case []byte:
+		key, err = jwk.ParseKey(v)
+	case string:
+		key, err = jwk.ParseKey([]byte(v))
+	default:
+		return false
+	}
+	if err != nil {
+		return false
+	}
+	if key.KeyID() == "" {
+		return false
+	}
+	return true
+}
+
 func init() {
 	jsonschema.Formats["pem-encoded-cert"] = isPEMEncodedCertificate
 	jsonschema.Formats["pem-encoded-private-key"] = isPEMEncodedPrivateKey
 	jsonschema.Formats["pem-encoded-public-key"] = isPEMEncodedPublicKey
 	jsonschema.Formats["pem-pkix-encoded-public-key"] = isPEMPKIXEncodedPublicKey
+	jsonschema.Formats["jwt-encoded-key"] = isJWTEncodedKey
 }

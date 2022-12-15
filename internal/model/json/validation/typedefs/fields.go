@@ -227,7 +227,8 @@ var PEMKey = &generator.Schema{
 }
 
 var JWKKey = &generator.Schema{
-	Type: "string",
+	Type:   "string",
+	Format: "jwt-encoded-key",
 }
 
 func intP(i int) *int { return &i }

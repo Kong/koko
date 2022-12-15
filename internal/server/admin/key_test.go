@@ -13,8 +13,15 @@ import (
 
 func goodKey() *v1.Key {
 	return &v1.Key{
-		Id:   uuid.NewString(),
-		Jwk:  "xxxx",
+		Id: uuid.NewString(),
+		//nolint: lll // JSON strings can't be wrapped
+		Jwk: `{
+			"kty": "RSA",
+			"kid": "vsR8NCNV_1_LB06LqudGa2r-T0y4Z6VQVYue9IQz6A4",
+			"n": "v2KAzzfruqctVHaE9WSCWIg1xAhMwxTIK-i56WNqPtpWBo9AqxcVea8NyVctEjUNq_mix5CklNy3ru7ARh7rBG_LU65fzs4fY_uYalul3QZSnr61Gj-cTUB3Gy4PhA63yXCbYRR3gDy6WR_wfis1MS61j0R_AjgXuVufmmC0F7R9qSWfR8ft0CbQgemEHY3ddKeW7T7fKv1jnRwYAkl5B_xtvxRFIYT-uR9NNftixNpUIW7q8qvOH7D9icXOg4_wIVxTRe5QiRYwEFoUbV1V9bFtu5FLal0vZnLaWwg5tA6enhzBpxJNdrS0v1RcPpyeNP-9r3cUDGmeftwz9v95UQ",
+			"e": "AQAB",
+			"alg": "A256GCM"
+		}`,
 		Name: "simpleKey-" + uuid.NewString(),
 	}
 }
@@ -30,7 +37,7 @@ func validateGoodKey(body *httpexpect.Object) {
 func TestKeyCreate(t *testing.T) {
 	s, cleanup := setup(t)
 	defer cleanup()
-	c := httpexpect.New(t, s.URL)
+	c := httpexpect.Default(t, s.URL)
 	t.Run("creates a valid key", func(_ *testing.T) {
 		res := c.POST("/v1/keys").WithJSON(goodKey()).Expect()
 		res.Status(http.StatusCreated)
@@ -48,7 +55,7 @@ func TestKeyCreate(t *testing.T) {
 func TestKeyUpsert(t *testing.T) {
 	s, cleanup := setup(t)
 	defer cleanup()
-	c := httpexpect.New(t, s.URL)
+	c := httpexpect.Default(t, s.URL)
 	t.Run("upsert a valid key", func(_ *testing.T) {
 		res := c.PUT("/v1/keys/{}", uuid.NewString()).
 			WithJSON(goodKey()).
@@ -87,7 +94,7 @@ func TestKeyUpsert(t *testing.T) {
 func TestKeyRead(t *testing.T) {
 	s, cleanup := setup(t)
 	defer cleanup()
-	c := httpexpect.New(t, s.URL)
+	c := httpexpect.Default(t, s.URL)
 	k := goodKey()
 	res := c.POST("/v1/keys").WithJSON(k).Expect()
 	res.Status(http.StatusCreated)
@@ -128,7 +135,7 @@ func TestKeyRead(t *testing.T) {
 func TestKeyDelete(t *testing.T) {
 	s, cleanup := setup(t)
 	defer cleanup()
-	c := httpexpect.New(t, s.URL)
+	c := httpexpect.Default(t, s.URL)
 	k := goodKey()
 	res := c.POST("/v1/keys").WithJSON(k).Expect()
 	id := res.JSON().Path("$.item.id").String().Raw()
@@ -158,7 +165,7 @@ func TestKeyList(t *testing.T) {
 	s, cleanup := setup(t)
 	defer cleanup()
 
-	c := httpexpect.New(t, s.URL)
+	c := httpexpect.Default(t, s.URL)
 
 	k1 := goodKey()
 	res := c.POST("/v1/keys").WithJSON(k1).Expect()
@@ -231,7 +238,7 @@ func TestKeyAndKeyset(t *testing.T) {
 	s, cleanup := setup(t)
 	defer cleanup()
 
-	c := httpexpect.New(t, s.URL)
+	c := httpexpect.Default(t, s.URL)
 
 	// create a keyset
 	ks := &v1.KeySet{

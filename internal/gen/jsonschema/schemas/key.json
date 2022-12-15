@@ -14,7 +14,8 @@
       "description": "must be a valid UUID"
     },
     "jwk": {
-      "type": "string"
+      "type": "string",
+      "format": "jwt-encoded-key"
     },
     "kid": {
       "type": "string"

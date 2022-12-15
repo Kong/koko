@@ -52,6 +52,14 @@ OSSGmeqEIC8Krk/G0V9iw4i9OQoBTFeFrja/3JGqUzvoXHJW012MiJ5ErY1bK8du
 Z2uSW/FjsT7HM69XuC0ibPNJ+5Cw7iQJ6QIXTjID3dhv4NywmENhJW71nSyg/RPT
 xV73bGApHGnNU8lCGx/9s1dL
 -----END PRIVATE KEY-----`
+	//nolint: lll // JSON long lines can't be wrapped
+	jwkTestKey = `{
+		"kty": "RSA",
+		"kid": "vsR8NCNV_1_LB06LqudGa2r-T0y4Z6VQVYue9IQz6A4",
+		"n": "v2KAzzfruqctVHaE9WSCWIg1xAhMwxTIK-i56WNqPtpWBo9AqxcVea8NyVctEjUNq_mix5CklNy3ru7ARh7rBG_LU65fzs4fY_uYalul3QZSnr61Gj-cTUB3Gy4PhA63yXCbYRR3gDy6WR_wfis1MS61j0R_AjgXuVufmmC0F7R9qSWfR8ft0CbQgemEHY3ddKeW7T7fKv1jnRwYAkl5B_xtvxRFIYT-uR9NNftixNpUIW7q8qvOH7D9icXOg4_wIVxTRe5QiRYwEFoUbV1V9bFtu5FLal0vZnLaWwg5tA6enhzBpxJNdrS0v1RcPpyeNP-9r3cUDGmeftwz9v95UQ",
+		"e": "AQAB",
+		"alg": "A256GCM"
+	}`
 )
 
 func TestNewKey(t *testing.T) {
@@ -79,11 +87,6 @@ func TestKey_ProcessDefaults(t *testing.T) {
 	err := k.ProcessDefaults(context.Background())
 	require.NoError(t, err)
 	require.True(t, validUUID(k.ID()))
-
-	// k.Key.Id = ""
-	// k.Key.CreatedAt = 0
-	// k.Key.UpdatedAt = 0
-	// require.Equal(t, k.Resource(), &v1.Key{})
 }
 
 func goodKey() Key {
@@ -131,8 +134,7 @@ func TestKey_Validate(t *testing.T) {
 			Key: func() Key {
 				k := goodKey()
 				k.Key.Kid = ""
-				k.Key.Jwk = "xxx"
-				// k.Key.Jwk = &v1.JwkKey{}
+				k.Key.Jwk = jwkTestKey
 				return k
 			},
 			wantErr: true,
@@ -150,7 +152,7 @@ func TestKey_Validate(t *testing.T) {
 			name: "key with valid jwk is valid",
 			Key: func() Key {
 				k := NewKey()
-				k.Key.Jwk = "xxx"
+				k.Key.Jwk = jwkTestKey
 				k.ProcessDefaults(context.Background())
 				return k
 			},
@@ -196,7 +198,7 @@ func TestKey_Validate(t *testing.T) {
 			name: "key with both jwk and pem is not valid",
 			Key: func() Key {
 				k := NewKey()
-				k.Key.Jwk = "xxx"
+				k.Key.Jwk = jwkTestKey
 				k.Key.Pem = &v1.PemKey{
 					PublicKey:  pemTestPublicKey,
 					PrivateKey: pemTestPrivateKey,
@@ -216,7 +218,7 @@ func TestKey_Validate(t *testing.T) {
 			name: "repeated tags isn't valid",
 			Key: func() Key {
 				k := NewKey()
-				k.Key.Jwk = "xxx"
+				k.Key.Jwk = jwkTestKey
 				k.Key.Tags = []string{"A1", "X3", "A1"}
 				k.ProcessDefaults(context.Background())
 				return k
