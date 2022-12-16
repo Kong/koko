@@ -67,6 +67,7 @@ type services struct {
 	caCertificate v1.CACertificateServiceServer
 	sni           v1.SNIServiceServer
 	vault         v1.VaultServiceServer
+	consumerGroup v1.ConsumerGroupServiceServer
 
 	status v1.StatusServiceServer
 	node   v1.NodeServiceServer
@@ -186,6 +187,14 @@ func buildServices(opts HandlerOpts) services {
 				storeLoader: opts.StoreLoader,
 				loggerFields: []zapcore.Field{
 					zap.String("admin-service", "vault"),
+				},
+			},
+		},
+		consumerGroup: &ConsumerGroupService{
+			CommonOpts: CommonOpts{
+				storeLoader: opts.StoreLoader,
+				loggerFields: []zapcore.Field{
+					zap.String("admin-service", "consumer-group"),
 				},
 			},
 		},
@@ -329,4 +338,5 @@ func RegisterAdminService(server *grpc.Server, opts HandlerOpts) {
 	v1.RegisterConsumerServiceServer(server, services.consumer)
 	v1.RegisterSNIServiceServer(server, services.sni)
 	v1.RegisterVaultServiceServer(server, services.vault)
+	v1.RegisterConsumerGroupServiceServer(server, services.consumerGroup)
 }
