@@ -13,16 +13,21 @@ import (
 	"github.com/kong/koko/internal/log"
 	"github.com/kong/koko/internal/resource"
 	"github.com/kong/koko/internal/server/admin"
+	"github.com/kong/koko/internal/server/kong/ws/config"
 	serverUtil "github.com/kong/koko/internal/server/util"
 	"github.com/kong/koko/internal/store"
 	"github.com/kong/koko/internal/test/util"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/status"
 	"google.golang.org/grpc/test/bufconn"
 )
 
-func TestCleanupNodes(t *testing.T) {
+func TestManager_cleanupNodes(t *testing.T) {
 	persister, err := util.GetPersister(t)
 	require.Nil(t, err)
 	db := store.New(persister, log.Logger).ForCluster(store.DefaultCluster)
@@ -122,4 +127,30 @@ func clientConn(t *testing.T, l *bufconn.Listener) grpc.ClientConnInterface {
 		grpc.WithTransportCredentials(insecure.NewCredentials()))
 	require.Nil(t, err)
 	return conn
+}
+
+func TestManager_updateEventHandler(t *testing.T) {
+	mockCL := newMockConfigLoader()
+	mockCL.On("Load", context.Background(), "missing-cluster-id").
+		Return(config.Content{}, status.Error(codes.InvalidArgument, "cluster not found"))
+
+	logs := make([]string, 0)
+	m := Manager{
+		configClient: ConfigClient{
+			Node: newMockNodeClient(),
+		},
+		configLoader: mockCL,
+		Cluster: MockCluster{
+			id: "missing-cluster-id",
+		},
+		logger: log.Logger.WithOptions(zap.Hooks(func(entry zapcore.Entry) error {
+			logs = append(logs, entry.Message)
+			return nil
+		})),
+	}
+
+	m.updateEventHandler(context.Background())
+
+	expected := []string{"reconciling payload", "cluster not found, skipping retry", "failed to reconcile configuration"}
+	require.ElementsMatch(t, logs, expected)
 }
