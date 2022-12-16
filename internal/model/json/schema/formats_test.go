@@ -16,7 +16,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var publicKey = `
+var (
+	publicKey = `
 -----BEGIN PUBLIC KEY-----
 MIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEA2gujMwJavJnU9VA3U+RM
 fKJAUvcptlncXSA0jJqTU1PNrK6vJzDbmmaNGC7L4hmue2im4fzujc0lYQM4AYBO
@@ -33,13 +34,30 @@ B60cbIexAfjSnMk+rEwlWQ0CAwEAAQ==
 -----END PUBLIC KEY-----
 `
 
+	publicPKCS1Key = `
+-----BEGIN RSA PUBLIC KEY-----
+MIICCgKCAgEA3NYMI4kuZATPaZCkJ3Xo8XyK0O75FbuAvCWKxuQjFTlPbWqcIbhf
+W29e5wPVBrXwLcu8hP4cawCzvlu42DLKx2OOuMLgjzTQC7Ol2fr42erZr7zb0tFy
+cC8+ldbW7MzvuG55ruSTidReRZo4CyM6YuUGGRyFyQvUD0wC+eDYLwYvkSllfKue
+1zyqiUsjNvKN70zQ9tA31HJvFETTrV2GNPeftP7IPORJbD0FjwX8qXjibhvS6cHO
+jBx11k6WLy+VQnmqnVXxgv8M4LUXqI+J0BNFptu0Z1JINp6yJ6pdej06WBpCyGkA
+1G8jaYQ/lpC/ckdfSHrKHZ3RyIuYC0Wq21XUBFCCBZOrNbne8geDzL6aplclzKG+
+xuo8X9s6e2FkBoTaeH2TqaH7hmnZ4xSUfsOrmP3zqmdvZTeR/bROeNwBxNy3Wez8
+2hQ7DGhzVM1bb3WWs4nh/NAr9U64Gx3JqTpzaAN+FlAO2CTq303huCE1VMYzTlOc
+CB99FeTfiRb95K6XRWuNC5HWVZuv6+fsSS2S4HBY9ZWCHIBlU67qyngGhaBctlmd
+UDfu3os9TWh8tIKmG+kX0A+KSxhRzjXitonR0pN0vKcZMG0jaZQe+NzU4p/ymq/A
+gdX6z0rCYSNPiwqy1XhA+Zl8GJCLrLFQdebbyHaFoYplh8HvixWEmfECAwEAAQ==
+-----END RSA PUBLIC KEY-----
+`
+)
+
 func TestRSA_PKCS8PrivateKeyFormat(t *testing.T) {
 	key, err := rsa.GenerateKey(rand.Reader, 2048)
-	require.Nil(t, err)
+	require.NoError(t, err)
 	require.NotNil(t, key)
 
 	der, err := x509.MarshalPKCS8PrivateKey(key)
-	require.Nil(t, err)
+	require.NoError(t, err)
 	require.NotNil(t, der)
 
 	keyPEM := pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: der})
@@ -49,7 +67,7 @@ func TestRSA_PKCS8PrivateKeyFormat(t *testing.T) {
 
 func TestRSA_PKCS1PrivateKeyFormat(t *testing.T) {
 	key, err := rsa.GenerateKey(rand.Reader, 2048)
-	require.Nil(t, err)
+	require.NoError(t, err)
 	require.NotNil(t, key)
 
 	der := x509.MarshalPKCS1PrivateKey(key)
@@ -62,11 +80,11 @@ func TestRSA_PKCS1PrivateKeyFormat(t *testing.T) {
 
 func TestECDSA_PKCS8PrivateKeyFormat(t *testing.T) {
 	key, err := ecdsa.GenerateKey(elliptic.P521(), rand.Reader)
-	require.Nil(t, err)
+	require.NoError(t, err)
 	require.NotNil(t, key)
 
 	der, err := x509.MarshalPKCS8PrivateKey(key)
-	require.Nil(t, err)
+	require.NoError(t, err)
 	require.NotNil(t, der)
 
 	keyPEM := pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: der})
@@ -76,12 +94,12 @@ func TestECDSA_PKCS8PrivateKeyFormat(t *testing.T) {
 
 func TestED25519_PKCS8PrivateKeyFormat(t *testing.T) {
 	pubkey, pvtkey, err := ed25519.GenerateKey(rand.Reader)
-	require.Nil(t, err)
+	require.NoError(t, err)
 	require.NotNil(t, pubkey)
 	require.NotNil(t, pvtkey)
 
 	der, err := x509.MarshalPKCS8PrivateKey(pvtkey)
-	require.Nil(t, err)
+	require.NoError(t, err)
 	require.NotNil(t, der)
 
 	keyPEM := pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: der})
@@ -91,11 +109,11 @@ func TestED25519_PKCS8PrivateKeyFormat(t *testing.T) {
 
 func TestECDSAPrivateKeyFormat(t *testing.T) {
 	key, err := ecdsa.GenerateKey(elliptic.P521(), rand.Reader)
-	require.Nil(t, err)
+	require.NoError(t, err)
 	require.NotNil(t, key)
 
 	der, err := x509.MarshalECPrivateKey(key)
-	require.Nil(t, err)
+	require.NoError(t, err)
 	require.NotNil(t, der)
 
 	keyPEM := pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: der})
@@ -112,7 +130,7 @@ func TestInvalidPrivateKeyFormat(t *testing.T) {
 
 func TestPEMEncodedCertificateFormat(t *testing.T) {
 	key, err := rsa.GenerateKey(rand.Reader, 2048)
-	require.Nil(t, err)
+	require.NoError(t, err)
 	require.NotNil(t, key)
 
 	cert := x509.Certificate{
@@ -129,7 +147,7 @@ func TestPEMEncodedCertificateFormat(t *testing.T) {
 	}
 
 	der, err := x509.CreateCertificate(rand.Reader, &cert, &cert, &key.PublicKey, key)
-	require.Nil(t, err)
+	require.NoError(t, err)
 	require.NotNil(t, der)
 
 	certPEM := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: der})
@@ -145,19 +163,63 @@ func TestInvalidPEMEncodedCertificateFormat(t *testing.T) {
 	require.False(t, isPEMEncodedCertificate(1))
 }
 
-func TestRSA_PKIXPublicKeyFormat(t *testing.T) {
-	pubPEM, _ := pem.Decode([]byte(publicKey))
-	parsedKey, err := x509.ParsePKIXPublicKey(pubPEM.Bytes)
-	require.Nil(t, err)
+func TestPEMEncodedPublicKeyPKCS1Format(t *testing.T) {
+	pubPEM, _ := pem.Decode([]byte(publicPKCS1Key))
+	parsedKey, err := x509.ParsePKCS1PublicKey(pubPEM.Bytes)
+	require.NoError(t, err)
 	require.NotNil(t, parsedKey)
 
-	der, err := x509.MarshalPKIXPublicKey(parsedKey)
-	require.Nil(t, err)
+	der := x509.MarshalPKCS1PublicKey(parsedKey)
 	require.NotNil(t, der)
 
 	keyPEM := pem.EncodeToMemory(&pem.Block{Type: "PUBLIC KEY", Bytes: der})
 	require.NotNil(t, keyPEM)
 	require.True(t, isPEMEncodedPublicKey(string(keyPEM)))
+}
+
+func TestPEMEncodedPublicKeyPKCS8Format(t *testing.T) {
+	pubPEM, _ := pem.Decode([]byte(publicKey))
+	parsedKey, err := x509.ParsePKIXPublicKey(pubPEM.Bytes)
+	require.NoError(t, err)
+	require.NotNil(t, parsedKey)
+
+	der, err := x509.MarshalPKIXPublicKey(parsedKey)
+	require.NoError(t, err)
+	require.NotNil(t, der)
+
+	keyPEM := pem.EncodeToMemory(&pem.Block{Type: "PUBLIC KEY", Bytes: der})
+	require.NotNil(t, keyPEM)
+	require.True(t, isPEMEncodedPublicKey(string(keyPEM)))
+}
+
+func TestPEMPKIXEncodedPublicKeyPKCS1Format(t *testing.T) {
+	pubPEM, _ := pem.Decode([]byte(publicPKCS1Key))
+	parsedKey, err := x509.ParsePKCS1PublicKey(pubPEM.Bytes)
+	require.NoError(t, err)
+	require.NotNil(t, parsedKey)
+
+	der := x509.MarshalPKCS1PublicKey(parsedKey)
+	require.NotNil(t, der)
+
+	keyPEM := pem.EncodeToMemory(&pem.Block{Type: "PUBLIC KEY", Bytes: der})
+	require.NotNil(t, keyPEM)
+	// PEMPKIXEncodedPublicKey should not accept a PKCS1 key
+	require.False(t, isPEMPKIXEncodedPublicKey(string(keyPEM)))
+}
+
+func TestPEMPKIXEncodedPublicKeyPKCS8Format(t *testing.T) {
+	pubPEM, _ := pem.Decode([]byte(publicKey))
+	parsedKey, err := x509.ParsePKIXPublicKey(pubPEM.Bytes)
+	require.NoError(t, err)
+	require.NotNil(t, parsedKey)
+
+	der, err := x509.MarshalPKIXPublicKey(parsedKey)
+	require.NoError(t, err)
+	require.NotNil(t, der)
+
+	keyPEM := pem.EncodeToMemory(&pem.Block{Type: "PUBLIC KEY", Bytes: der})
+	require.NotNil(t, keyPEM)
+	require.True(t, isPEMPKIXEncodedPublicKey(string(keyPEM)))
 }
 
 func TestInvalidPublicKeyFormat(t *testing.T) {
