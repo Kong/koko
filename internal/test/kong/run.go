@@ -277,6 +277,7 @@ func GetKongConfForShared() DockerInput {
 	return DockerInput{
 		EnvVars: map[string]string{
 			"KONG_CLUSTER_MTLS": "shared",
+			"KONG_LICENSE_DATA": os.Getenv("KONG_LICENSE_DATA"),
 		},
 		ClientKey:  certs.DefaultSharedKey,
 		ClientCert: certs.DefaultSharedCert,

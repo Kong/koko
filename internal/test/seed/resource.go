@@ -42,6 +42,11 @@ var DefaultNewResourceFuncs = map[model.Type]NewResourceFunc{
 		r.Username = fmt.Sprintf("username-%d", i+1)
 		return nil
 	},
+	resource.TypeConsumerGroup: func(_ Seeder, m proto.Message, i int) error {
+		r := m.(*v1.ConsumerGroup)
+		r.Name = fmt.Sprintf("name-%d", i+1)
+		return nil
+	},
 	resource.TypePlugin: func(s Seeder, m proto.Message, i int) error {
 		r := m.(*v1.Plugin)
 		r.Name = "key-auth"
