@@ -120,12 +120,12 @@ func (p *Payload) configForVersion(version string) (cacheEntry, error) {
 				zap.Int("total-resource-changes", resourcesUpdated))
 			metrics.Gauge("version_compatibility_configuration_change_count",
 				int64(changeCount), metrics.Tag{
-					Key:   "kong-dp-version",
+					Key:   "kong_dp_version",
 					Value: version,
 				})
 			metrics.Gauge("version_compatibility_configuration_resource_change_count",
 				int64(resourcesUpdated), metrics.Tag{
-					Key:   "kong-dp-version",
+					Key:   "kong_dp_version",
 					Value: version,
 				})
 		}
