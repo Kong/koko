@@ -15,6 +15,8 @@ import (
 
 const (
 	TypeConsumerGroup model.Type = "consumer_group"
+
+	ConsumerGroupRuleTitle = "consumer_group_rule"
 )
 
 func NewConsumerGroup() ConsumerGroup {
@@ -134,6 +136,16 @@ func init() {
 		Required: []string{
 			"id",
 			"name",
+		},
+		AllOf: []*generator.Schema{
+			{
+				Title: ConsumerGroupRuleTitle,
+				Description: "Consumer Groups are a Kong Enterprise-only feature. " +
+					"Please upgrade to Kong Enterprise to use this feature.",
+				Not: &generator.Schema{
+					Required: []string{"name"},
+				},
+			},
 		},
 	}
 	err = generator.DefaultRegistry.Register(string(TypeConsumerGroup), consumerGroupSchema)

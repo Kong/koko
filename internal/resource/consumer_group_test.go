@@ -7,6 +7,7 @@ import (
 	"github.com/google/uuid"
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
 	"github.com/kong/koko/internal/model/json/validation"
+	"github.com/kong/koko/internal/test/util"
 	"github.com/stretchr/testify/require"
 )
 
@@ -42,10 +43,11 @@ func TestConsumerGroup_ProcessDefaults(t *testing.T) {
 
 func TestConsumerGroup_Validate(t *testing.T) {
 	tests := []struct {
-		name          string
-		ConsumerGroup func() ConsumerGroup
-		wantErr       bool
-		Errs          []*v1.ErrorDetail
+		name                    string
+		ConsumerGroup           func() ConsumerGroup
+		wantErr                 bool
+		skipIfEnterpriseTesting bool
+		Errs                    []*v1.ErrorDetail
 	}{
 		{
 			name: "empty consumer-group throws an error",
@@ -80,12 +82,23 @@ func TestConsumerGroup_Validate(t *testing.T) {
 			},
 		},
 		{
-			name: "valid consumer-group passes",
+			name: "valid consumer-group fails because it's not implemented",
 			ConsumerGroup: func() ConsumerGroup {
 				r := NewConsumerGroup()
 				r.ProcessDefaults(context.Background())
 				r.ConsumerGroup.Name = "test"
 				return r
+			},
+			skipIfEnterpriseTesting: true,
+			wantErr:                 true,
+			Errs: []*v1.ErrorDetail{
+				{
+					Type: v1.ErrorType_ERROR_TYPE_ENTITY,
+					Messages: []string{
+						`Consumer Groups are a Kong Enterprise-only feature. ` +
+							`Please upgrade to Kong Enterprise to use this feature.`,
+					},
+				},
 			},
 		},
 		{
@@ -109,7 +122,7 @@ func TestConsumerGroup_Validate(t *testing.T) {
 			},
 		},
 		{
-			name: "consumer-group with valid member passes",
+			name: "consumer-group with valid member fails because it's not implemented",
 			ConsumerGroup: func() ConsumerGroup {
 				r := NewConsumerGroup()
 				r.ProcessDefaults(context.Background())
@@ -117,11 +130,23 @@ func TestConsumerGroup_Validate(t *testing.T) {
 				r.MemberIDsToAdd = []string{uuid.NewString()}
 				return r
 			},
+			skipIfEnterpriseTesting: true,
+			wantErr:                 true,
+			Errs: []*v1.ErrorDetail{
+				{
+					Type: v1.ErrorType_ERROR_TYPE_ENTITY,
+					Messages: []string{
+						`Consumer Groups are a Kong Enterprise-only feature. ` +
+							`Please upgrade to Kong Enterprise to use this feature.`,
+					},
+				},
+			},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			util.SkipTestIfEnterpriseTesting(t, tt.skipIfEnterpriseTesting)
 			err := tt.ConsumerGroup().Validate(context.Background())
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Validate() error = %v, wantErr %v", err, tt.wantErr)

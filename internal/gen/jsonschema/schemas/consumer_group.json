@@ -35,5 +35,16 @@
       "type": "integer"
     }
   },
-  "additionalProperties": false
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "not": {
+        "required": [
+          "name"
+        ]
+      },
+      "title": "consumer_group_rule",
+      "description": "Consumer Groups are a Kong Enterprise-only feature. Please upgrade to Kong Enterprise to use this feature."
+    }
+  ]
 }
