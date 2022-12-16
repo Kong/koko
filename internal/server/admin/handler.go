@@ -305,6 +305,12 @@ func NewHandler(opts HandlerOpts) (http.Handler, error) {
 		return nil, err
 	}
 
+	err = v1.RegisterConsumerGroupServiceHandlerServer(context.Background(),
+		mux, services.consumerGroup)
+	if err != nil {
+		return nil, err
+	}
+
 	return mux, nil
 }
 
