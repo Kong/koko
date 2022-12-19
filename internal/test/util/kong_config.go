@@ -41,6 +41,15 @@ func EnsureKongConfig(expectedConfig KongConfig) error {
 	return JSONSubset(expectedConfig, gotConfig)
 }
 
+// errCode returns the http resultcode if `err` is
+// of type `kong.APIError`, zero otherwise.
+func errCode(err error) int {
+	if err, ok := err.(*kong.APIError); ok {
+		return err.Code()
+	}
+	return 0
+}
+
 var BasedKongAdminAPIAddr = kong.String("http://localhost:8001")
 
 func fetchKongConfig() (KongConfig, error) {
@@ -92,11 +101,11 @@ func fetchKongConfig() (KongConfig, error) {
 		}
 	}
 	keys, err := client.Keys.ListAll(ctx)
-	if err != nil {
+	if err != nil && errCode(err) != http.StatusNotFound {
 		return KongConfig{}, fmt.Errorf("fetch Keys: %w", err)
 	}
 	keySets, err := client.KeySets.ListAll(ctx)
-	if err != nil {
+	if err != nil && errCode(err) != http.StatusNotFound {
 		return KongConfig{}, fmt.Errorf("fetch KeySets: %w", err)
 	}
 
