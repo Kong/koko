@@ -23,6 +23,9 @@ func (s *KeySetService) GetKeySet(
 	ctx context.Context,
 	req *v1.GetKeySetRequest,
 ) (*v1.GetKeySetResponse, error) {
+	if req.Id == "" {
+		return nil, s.err(ctx, util.ErrClient{Message: "required ID is missing"})
+	}
 	logger := s.logger(ctx)
 	db, err := s.getDB(ctx, req.Cluster)
 	if err != nil {

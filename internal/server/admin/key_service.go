@@ -23,6 +23,9 @@ func (s *KeyService) GetKey(
 	ctx context.Context,
 	req *v1.GetKeyRequest,
 ) (*v1.GetKeyResponse, error) {
+	if req.Id == "" {
+		return nil, s.err(ctx, util.ErrClient{Message: "required ID is missing"})
+	}
 	logger := s.logger(ctx)
 	db, err := s.getDB(ctx, req.Cluster)
 	if err != nil {
@@ -31,7 +34,7 @@ func (s *KeyService) GetKey(
 	result := resource.NewKey()
 	err = getEntityByIDOrName(ctx, req.Id, result, store.GetByName(req.Id), db, logger)
 	if err != nil {
-		return nil, util.HandleErr(ctx, logger, err)
+		return nil, s.err(ctx, err)
 	}
 
 	return &v1.GetKeyResponse{
