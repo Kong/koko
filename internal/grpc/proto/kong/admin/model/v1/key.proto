@@ -1,0 +1,60 @@
+syntax = "proto3";
+
+package kong.admin.model.v1;
+
+import "kong/admin/model/v1/keyset.proto";
+
+option go_package = "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1;v1";
+
+enum KeyFormat {
+  KEY_FORMAT_UNSPECIFIED = 0;
+  KEY_FORMAT_JWK = 1;
+  KEY_FORMAT_PEM = 2;
+  KEY_FORMAT_KID = 3;
+}
+
+message Key {
+  string id = 1;
+  int32 created_at = 2;
+  int32 updated_at = 3;
+  repeated string tags = 4;
+
+  KeySet set = 5;
+  string name = 6;
+  string kid = 7;
+  string jwk = 8;
+  PemKey pem = 9;
+}
+
+message JwkKey {
+  string kid = 1;
+  string issuer = 2;
+  string kty = 3;
+  string use = 4;
+  repeated string key_ops = 5;
+  string alg = 6;
+  string x5u = 7;
+  repeated string x5c = 8;
+  string x5t = 9;
+  string x5t_s256 = 10;
+  string k = 11;
+  string x = 12;
+  string y = 13;
+  string crv = 14;
+  string n = 15;
+  string e = 16;
+  string d = 17;
+  string p = 18;
+  string q = 19;
+  string dp = 20;
+  string dq = 21;
+  string qi = 22;
+  string oth = 23;
+  string r = 24;
+  string t = 25;
+}
+
+message PemKey {
+  string private_key = 1;
+  string public_key = 2;
+}

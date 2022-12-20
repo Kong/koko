@@ -1419,3 +1419,101 @@ func intMin(lhs int, rhs int) int {
 	}
 	return rhs
 }
+
+func TestVersionCompatibility_KeysEntities(t *testing.T) {
+	cleanup := run.Koko(t)
+	defer cleanup()
+
+	dpCleanup := run.KongDP(kong.GetKongConfForShared())
+	defer dpCleanup()
+	require.NoError(t, util.WaitForKong(t))
+	require.NoError(t, util.WaitForKongAdminAPI(t))
+
+	admin := httpexpect.WithConfig(httpexpect.Config{
+		BaseURL:  "http://localhost:3000",
+		Reporter: httpexpect.NewRequireReporter(t),
+		Printers: []httpexpect.Printer{
+			httpexpect.NewCompactPrinter(t),
+		},
+	})
+
+	// Create a service
+	serviceID := admin.POST("/v1/services").WithJSON(&v1.Service{
+		Id:   uuid.NewString(),
+		Name: "foo",
+		Host: "httpbin.org",
+		Path: "/",
+	}).
+		Expect().Status(http.StatusCreated).
+		JSON().Path("$.item.id").String().Raw()
+
+	// create a key-set
+	keySetID := admin.POST("/v1/key-sets").WithJSON(&v1.KeySet{
+		Name: "my_keys",
+	}).
+		Expect().Status(http.StatusCreated).
+		JSON().Path("$.item.id").String().Raw()
+
+	// create a key
+	//nolint: lll // JSON can't cut lines
+	keyID := admin.POST("/v1/keys").WithJSON(&v1.Key{
+		Id:   uuid.NewString(),
+		Name: "boss_key",
+		Set:  &v1.KeySet{Id: keySetID},
+		Kid:  "vsR8NCNV_1_LB06LqudGa2r-T0y4Z6VQVYue9IQz6A4",
+		Jwk: `{
+			"kty": "RSA",
+			"kid": "vsR8NCNV_1_LB06LqudGa2r-T0y4Z6VQVYue9IQz6A4",
+			"n": "v2KAzzfruqctVHaE9WSCWIg1xAhMwxTIK-i56WNqPtpWBo9AqxcVea8NyVctEjUNq_mix5CklNy3ru7ARh7rBG_LU65fzs4fY_uYalul3QZSnr61Gj-cTUB3Gy4PhA63yXCbYRR3gDy6WR_wfis1MS61j0R_AjgXuVufmmC0F7R9qSWfR8ft0CbQgemEHY3ddKeW7T7fKv1jnRwYAkl5B_xtvxRFIYT-uR9NNftixNpUIW7q8qvOH7D9icXOg4_wIVxTRe5QiRYwEFoUbV1V9bFtu5FLal0vZnLaWwg5tA6enhzBpxJNdrS0v1RcPpyeNP-9r3cUDGmeftwz9v95UQ",
+			"e": "AQAB",
+			"alg": "A256GCM"
+		}`,
+	}).
+		Expect().Status(http.StatusCreated).
+		JSON().Path("$.item.id").String().Raw()
+
+	t.Run("pre 3.1", func(t *testing.T) {
+		kongClient.RunWhenKong(t, "< 3.1.0")
+
+		util.WaitFunc(t, func() error {
+			return util.EnsureConfig(&v1.TestingConfig{
+				Services: []*v1.Service{
+					{
+						Id:   serviceID,
+						Name: "foo",
+					},
+				},
+			})
+		})
+	})
+
+	t.Run("3.1 and above", func(t *testing.T) {
+		kongClient.RunWhenKong(t, ">= 3.1.0")
+
+		util.WaitFunc(t, func() error {
+			return util.EnsureConfig(&v1.TestingConfig{
+				Services: []*v1.Service{
+					{
+						Id:   serviceID,
+						Name: "foo",
+					},
+				},
+				Keys: []*v1.Key{
+					{
+						Id:   keyID,
+						Name: "boss_key",
+						Set: &v1.KeySet{
+							Id: keySetID,
+						},
+					},
+				},
+				KeySets: []*v1.KeySet{
+					{
+						Id:   keySetID,
+						Name: "my_keys",
+					},
+				},
+			})
+		})
+	})
+}

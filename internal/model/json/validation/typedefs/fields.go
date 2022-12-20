@@ -217,4 +217,18 @@ var Reference = &generator.Schema{
 	Pattern:     ReferencePattern,
 }
 
+var PEMKey = &generator.Schema{
+	Type: "object",
+	Properties: map[string]*generator.Schema{
+		"private_key": {Format: "pem-encoded-private-key"},
+		"public_key":  {Format: "pem-encoded-public-key"},
+	},
+	Required: []string{"private_key"},
+}
+
+var JWKKey = &generator.Schema{
+	Type:   "string",
+	Format: "jwt-encoded-key",
+}
+
 func intP(i int) *int { return &i }

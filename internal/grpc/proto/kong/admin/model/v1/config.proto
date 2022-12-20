@@ -5,6 +5,8 @@ package kong.admin.model.v1;
 import "kong/admin/model/v1/ca_certificate.proto";
 import "kong/admin/model/v1/certificate.proto";
 import "kong/admin/model/v1/consumer.proto";
+import "kong/admin/model/v1/key.proto";
+import "kong/admin/model/v1/keyset.proto";
 import "kong/admin/model/v1/plugin.proto";
 import "kong/admin/model/v1/route.proto";
 import "kong/admin/model/v1/service.proto";
@@ -26,4 +28,6 @@ message TestingConfig {
   repeated CACertificate ca_certificates = 8;
   repeated SNI snis = 9;
   repeated Vault vaults = 10;
+  repeated Key keys = 11;
+  repeated KeySet key_sets = 12;
 }

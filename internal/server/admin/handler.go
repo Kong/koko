@@ -54,6 +54,14 @@ func (c CommonOpts) getDB(ctx context.Context,
 	return store, nil
 }
 
+func (c CommonOpts) logger(ctx context.Context) *zap.Logger {
+	return util.LoggerFromContext(ctx).With(c.loggerFields...)
+}
+
+func (c CommonOpts) err(ctx context.Context, err error) error {
+	return util.HandleErr(ctx, c.logger(ctx), err)
+}
+
 type services struct {
 	service       v1.ServiceServiceServer
 	route         v1.RouteServiceServer
@@ -65,6 +73,8 @@ type services struct {
 	certificate   v1.CertificateServiceServer
 	consumer      v1.ConsumerServiceServer
 	caCertificate v1.CACertificateServiceServer
+	key           v1.KeyServiceServer
+	keyset        v1.KeySetServiceServer
 	sni           v1.SNIServiceServer
 	vault         v1.VaultServiceServer
 	consumerGroup v1.ConsumerGroupServiceServer
@@ -198,6 +208,22 @@ func buildServices(opts HandlerOpts) services {
 				},
 			},
 		},
+		key: &KeyService{
+			CommonOpts: CommonOpts{
+				storeLoader: opts.StoreLoader,
+				loggerFields: []zapcore.Field{
+					zap.String("admin-service", "key"),
+				},
+			},
+		},
+		keyset: &KeySetService{
+			CommonOpts: CommonOpts{
+				storeLoader: opts.StoreLoader,
+				loggerFields: []zapcore.Field{
+					zap.String("admin-service", "key-set"),
+				},
+			},
+		},
 	}
 }
 
@@ -287,6 +313,18 @@ func NewHandler(opts HandlerOpts) (http.Handler, error) {
 		return nil, err
 	}
 
+	err = v1.RegisterKeyServiceHandlerServer(context.Background(),
+		mux, services.key)
+	if err != nil {
+		return nil, err
+	}
+
+	err = v1.RegisterKeySetServiceHandlerServer(context.Background(),
+		mux, services.keyset)
+	if err != nil {
+		return nil, err
+	}
+
 	err = v1.RegisterCACertificateServiceHandlerServer(context.Background(),
 		mux, services.caCertificate)
 	if err != nil {
@@ -345,4 +383,6 @@ func RegisterAdminService(server *grpc.Server, opts HandlerOpts) {
 	v1.RegisterSNIServiceServer(server, services.sni)
 	v1.RegisterVaultServiceServer(server, services.vault)
 	v1.RegisterConsumerGroupServiceServer(server, services.consumerGroup)
+	v1.RegisterKeyServiceServer(server, services.key)
+	v1.RegisterKeySetServiceServer(server, services.keyset)
 }

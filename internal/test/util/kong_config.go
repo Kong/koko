@@ -20,6 +20,8 @@ type KongConfig struct {
 	CACertificates []*kong.CACertificate `json:"ca_certificates,omitempty"`
 	SNIs           []*kong.SNI           `json:"snis,omitempty"`
 	Vaults         []*kong.Vault         `json:"vaults,omitempty"`
+	Keys           []*kong.Key           `json:"keys,omitempty"`
+	KeySets        []*kong.KeySet        `json:"key_sets,omitempty"`
 }
 
 func EnsureConfig(expectedConfig *model.TestingConfig) error {
@@ -37,6 +39,15 @@ func EnsureKongConfig(expectedConfig KongConfig) error {
 		return fmt.Errorf("fetching kong config: %v", err)
 	}
 	return JSONSubset(expectedConfig, gotConfig)
+}
+
+// errCode returns the http resultcode if `err` is
+// of type `kong.APIError`, zero otherwise.
+func errCode(err error) int {
+	if err, ok := err.(*kong.APIError); ok {
+		return err.Code()
+	}
+	return 0
 }
 
 var BasedKongAdminAPIAddr = kong.String("http://localhost:8001")
@@ -89,6 +100,14 @@ func fetchKongConfig() (KongConfig, error) {
 			return KongConfig{}, fmt.Errorf("unable to fetch valuts: %w", err)
 		}
 	}
+	keys, err := client.Keys.ListAll(ctx)
+	if err != nil && errCode(err) != http.StatusNotFound {
+		return KongConfig{}, fmt.Errorf("fetch Keys: %w", err)
+	}
+	keySets, err := client.KeySets.ListAll(ctx)
+	if err != nil && errCode(err) != http.StatusNotFound {
+		return KongConfig{}, fmt.Errorf("fetch KeySets: %w", err)
+	}
 
 	var allTargets []*kong.Target
 	for _, u := range upstreams {
@@ -109,6 +128,8 @@ func fetchKongConfig() (KongConfig, error) {
 		CACertificates: caCertificates,
 		SNIs:           snis,
 		Vaults:         vaults,
+		Keys:           keys,
+		KeySets:        keySets,
 		Targets:        allTargets,
 	}, nil
 }

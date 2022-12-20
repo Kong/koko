@@ -1015,6 +1015,34 @@ var (
 				},
 			},
 		},
+		{
+			Metadata: config.ChangeMetadata{
+				ID:          config.ChangeID("P141"),
+				Severity:    config.ChangeSeverityError,
+				Description: standardCoreEntityMessage("key", "3.1"),
+				Resolution:  standardUpgradeMessage("3.1"),
+			},
+			SemverRange: versionsPre310,
+			Update: config.ConfigTableUpdates{
+				Name:   config.Key.String(),
+				Type:   config.Key,
+				Remove: true,
+			},
+		},
+		{
+			Metadata: config.ChangeMetadata{
+				ID:          config.ChangeID("P142"),
+				Severity:    config.ChangeSeverityError,
+				Description: standardCoreEntityMessage("key-set", "3.1"),
+				Resolution:  standardUpgradeMessage("3.1"),
+			},
+			SemverRange: versionsPre310,
+			Update: config.ConfigTableUpdates{
+				Name:   config.KeySet.String(),
+				Type:   config.KeySet,
+				Remove: true,
+			},
+		},
 	}
 )
 

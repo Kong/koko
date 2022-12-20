@@ -6274,6 +6274,95 @@ func TestVersionCompatibility_ProcessConfigTableUpdates(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "removing whole top-level fields",
+			configTableUpdates: map[string][]ConfigTableUpdates{
+				"< 3.1.0": {
+					{
+						Name:     "keys",
+						Type:     Key,
+						Remove:   true,
+						ChangeID: "T102",
+					},
+				},
+			},
+			uncompressedPayload: `{
+				"config_table": {
+					"services": [
+						{
+							"id": "5441b100-f441-4d4b-bcc2-3bb153e2bd41",
+							"name": "service_1",
+							"service_field_1": "element"
+						},
+						{
+							"id": "6441b100-f441-4d4b-bcc2-3bb153e2bd41",
+							"name": "service_2",
+							"service_field_1": "element"
+						}
+					],
+					"keys": [
+						{
+							"id": "152b5c2f-c289-4ad6-a475-a0d185cb4801",
+							"kid": "e30e3a56-3900-4849-a391-c69a206fe67d"
+						}
+					],
+					"plugins": [
+						{
+							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							"name": "plugin_1",
+							"plugin_field_2": "foo"
+						},
+						{
+							"id": "859c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							"name": "plugin_2",
+							"plugin_field_2": "foo"
+						}
+					]
+				}
+			}`,
+			dataPlaneVersion: "3.0.1",
+			expectedPayload: `{
+				"config_table": {
+					"services": [
+						{
+							"id": "5441b100-f441-4d4b-bcc2-3bb153e2bd41",
+							"name": "service_1",
+							"service_field_1": "element"
+						},
+						{
+							"id": "6441b100-f441-4d4b-bcc2-3bb153e2bd41",
+							"name": "service_2",
+							"service_field_1": "element"
+						}
+					],
+					"plugins": [
+						{
+							"id": "759c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							"name": "plugin_1",
+							"plugin_field_2": "foo"
+						},
+						{
+							"id": "859c0d3a-bc3d-4ccc-8d4d-f92de95c1f1a",
+							"name": "plugin_2",
+							"plugin_field_2": "foo"
+						}
+					]
+				}
+			}`,
+			expectedChanges: TrackedChanges{
+				ChangeDetails: []ChangeDetail{
+					{
+						ID: "T102",
+						Resources: []ResourceInfo{
+							{
+								Type: "key",
+								ID:   "152b5c2f-c289-4ad6-a475-a0d185cb4801",
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	for _, test := range tests {

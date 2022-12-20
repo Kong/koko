@@ -44,6 +44,8 @@ const (
 	ConsumerGroup
 	ConsumerGroupConsumer
 	ConsumerGroupPlugin
+	Key
+	KeySet
 )
 
 func (u UpdateType) String() string {
@@ -57,6 +59,8 @@ func (u UpdateType) String() string {
 		"consumer_group",
 		"consumer_group_consumer",
 		"consumer_group_plugin",
+		"key",
+		"key_set",
 	}[u]
 }
 
@@ -71,6 +75,8 @@ func (u UpdateType) ConfigTableKey() string {
 		"consumer_groups",
 		"consumer_group_consumers",
 		"consumer_group_plugins",
+		"keys",
+		"key_sets",
 	}[u]
 }
 
@@ -273,7 +279,8 @@ func (vc *WSVersionCompatibility) processConfigTableUpdates(uncompressedPayload 
 			processedPayload = vc.processPluginUpdates(processedPayload,
 				configTableUpdate, dataPlaneVersionStr, tracker)
 		case Service, CorePlugin, Route, Upstream, Vault,
-			ConsumerGroup, ConsumerGroupConsumer, ConsumerGroupPlugin:
+			ConsumerGroup, ConsumerGroupConsumer, ConsumerGroupPlugin,
+			Key, KeySet:
 			processedPayload = vc.processCoreEntityUpdates(processedPayload,
 				configTableUpdate, dataPlaneVersionStr, tracker)
 		default:
