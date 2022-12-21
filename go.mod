@@ -30,7 +30,7 @@ require (
 	github.com/jeremywohl/flatten v1.0.1
 	github.com/kong/go-kong v0.33.1-0.20221216215022-d8d2d9de7467
 	github.com/kong/go-wrpc v0.0.0-20220926162517-2374aa556d56
-	github.com/kong/goks v0.6.1
+	github.com/kong/goks v0.6.2
 	github.com/kong/semver/v4 v4.0.1
 	github.com/lestrrat-go/jwx v1.2.25
 	github.com/mattn/go-sqlite3 v1.14.16
@@ -45,7 +45,7 @@ require (
 	github.com/tidwall/gjson v1.14.4
 	github.com/tidwall/sjson v1.2.5
 	github.com/yalp/jsonpath v0.0.0-20180802001716-5cc68e5049a0
-	github.com/yuin/gopher-lua v0.0.0-20210529063254-f4c35e4016d9
+	github.com/yuin/gopher-lua v0.0.0-20221210110428-332342483e3f
 	go.uber.org/atomic v1.10.0
 	go.uber.org/zap v1.24.0
 	golang.org/x/exp v0.0.0-20221031165847-c99f073a8326
@@ -168,13 +168,14 @@ require (
 	golang.org/x/term v0.2.0 // indirect
 	golang.org/x/text v0.4.0 // indirect
 	golang.org/x/tools v0.3.0 // indirect
+	gopkg.in/yaml.v1 v1.0.0-20140924161607-9f9df34309c0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	moul.io/http2curl/v2 v2.3.0 // indirect
 	olympos.io/encoding/edn v0.0.0-20201019073823-d3554ca0b0a3 // indirect
 )
 
-replace github.com/yuin/gopher-lua => github.com/hbagdi/gopher-lua v0.0.0-20211129210354-3e4a277fb892
+replace github.com/yuin/gopher-lua => github.com/kong/gopher-lua v0.0.0-20221216134051-5199433b6390
 
-replace github.com/layeh/gopher-json => github.com/hbagdi/gopher-json v0.0.0-20220325165250-3030ea88774d
+replace github.com/layeh/gopher-json => github.com/kong/gopher-json v0.0.0-20221216152158-64015758f4ba
 
 replace github.com/jeremywohl/flatten => github.com/hbagdi/flatten v1.0.2-0.20211207185041-fe643c674d12
