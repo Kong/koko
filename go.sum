@@ -737,10 +737,6 @@ github.com/hbagdi/flatten v1.0.2-0.20211207185041-fe643c674d12 h1:kOFpGCRwA8hl5s
 github.com/hbagdi/flatten v1.0.2-0.20211207185041-fe643c674d12/go.mod h1:4AmD/VxjWcI5SRB0n6szE2A6s2fsNHDLO0nAlMHgfLQ=
 github.com/hbagdi/gang v0.1.0 h1:hhn2OlgahzNLin7NbMJ9YJP6jeIsJuA83jzdFHW+0bs=
 github.com/hbagdi/gang v0.1.0/go.mod h1:g5QECQdp53nfGqxQpBq9IN5+hxMhsLOhbS4npP2iA2s=
-github.com/hbagdi/gopher-json v0.0.0-20220325165250-3030ea88774d h1:usQmJ+My7LkHpbJlTaZcdIZ6SjB14RL1K/yCTLQugwY=
-github.com/hbagdi/gopher-json v0.0.0-20220325165250-3030ea88774d/go.mod h1:UcFBID7OH3S2ZyMendQaeFLwqG9ViDd1n1ZkUSpHOfQ=
-github.com/hbagdi/gopher-lua v0.0.0-20211129210354-3e4a277fb892 h1:poeRFIafrco9L7eQC/lqfYq4npPWw0odfvRUOxHealk=
-github.com/hbagdi/gopher-lua v0.0.0-20211129210354-3e4a277fb892/go.mod h1:E1AXubJBdNmFERAOucpDIxNzeGfLzg0mYh+UfMWdChA=
 github.com/hpcloud/tail v1.0.0/go.mod h1:ab1qPbhIpdTxEkNHXyeSf5vhxWSCs/tWer42PpOxQnU=
 github.com/iancoleman/strcase v0.2.0/go.mod h1:iwCmte+B7n89clKwxIoIXy/HfoL7AsD47ZCWhYzw7ho=
 github.com/ianlancetaylor/demangle v0.0.0-20181102032728-5e5cf60278f6/go.mod h1:aSSvb/t6k1mPoxDqO4vJh6VOCGPwU4O0C2/Eqndh1Sc=
@@ -886,8 +882,12 @@ github.com/kong/go-kong v0.33.1-0.20221216215022-d8d2d9de7467 h1:svTBtvgpVfrBMSI
 github.com/kong/go-kong v0.33.1-0.20221216215022-d8d2d9de7467/go.mod h1:G30uJtuJOjJXFL1vulIrz/27KhPdE2g0GtJZlNINU6U=
 github.com/kong/go-wrpc v0.0.0-20220926162517-2374aa556d56 h1:VMRlo1tRNyJnIZhS4M7tN/NKuWYNXY7tV8cgL8I2Jbg=
 github.com/kong/go-wrpc v0.0.0-20220926162517-2374aa556d56/go.mod h1:y0xoS99VcKjQ7Q0p8y3ppSLIeKOF7apHLv3TdpThqnY=
-github.com/kong/goks v0.6.1 h1:DqVDCWYHzODlXAP8faCB432R5j6rjDv6vMYIO2xyAPU=
-github.com/kong/goks v0.6.1/go.mod h1:6RGfTb580yTXjD/UtFF8nSY7qsFrB+zFXAJ7krssDww=
+github.com/kong/goks v0.6.2 h1:SKZ3lrBugBmS3+UtR4ZEbJb+RZxuZllGy36zep/BNXc=
+github.com/kong/goks v0.6.2/go.mod h1:C46UNEL64zFzQZMeRACBMVFCG9DHELwMfmF6cnVIEZQ=
+github.com/kong/gopher-json v0.0.0-20221216152158-64015758f4ba h1:D6P7OP+2bKacD+nXMmCt6/6o1lyywE+wgp+7VT+XNO8=
+github.com/kong/gopher-json v0.0.0-20221216152158-64015758f4ba/go.mod h1:RwmiOAgP5hK+yOCQxFEq1c6GIUqD2kZa+E2mMuydp4Y=
+github.com/kong/gopher-lua v0.0.0-20221216134051-5199433b6390 h1:At74YBENxFcNXUACymVQ9nPP7hscC0/WtHGJIyqo4OI=
+github.com/kong/gopher-lua v0.0.0-20221216134051-5199433b6390/go.mod h1:GBR0iDaNXjAgGg9zfCvksxSRnQx76gclCIb7kdAd1Pw=
 github.com/kong/semver/v4 v4.0.1 h1:DIcNR8W3gfx0KabFBADPalxxsp+q/5COwIFkkhrFQ2Y=
 github.com/kong/semver/v4 v4.0.1/go.mod h1:LImQ0oT15pJvSns/hs2laLca2zcYoHu5EsSNY0J6/QA=
 github.com/konsorten/go-windows-terminal-sequences v1.0.1/go.mod h1:T0+1ngSBFLxvqU3pZ+m/2kptfBszLMUkC4ZK/EgS/cQ=
@@ -1619,7 +1619,6 @@ golang.org/x/sys v0.0.0-20180909124046-d0be0721c37e/go.mod h1:STP8DvDyc/dI5b8T5h
 golang.org/x/sys v0.0.0-20181026203630-95b1ffbd15a5/go.mod h1:STP8DvDyc/dI5b8T5hshtkjS+E42TnysNCUPdjciGhY=
 golang.org/x/sys v0.0.0-20181107165924-66b7b1311ac8/go.mod h1:STP8DvDyc/dI5b8T5hshtkjS+E42TnysNCUPdjciGhY=
 golang.org/x/sys v0.0.0-20181116152217-5ac8a444bdc5/go.mod h1:STP8DvDyc/dI5b8T5hshtkjS+E42TnysNCUPdjciGhY=
-golang.org/x/sys v0.0.0-20190204203706-41f3e6584952/go.mod h1:STP8DvDyc/dI5b8T5hshtkjS+E42TnysNCUPdjciGhY=
 golang.org/x/sys v0.0.0-20190215142949-d0b11bdaac8a/go.mod h1:STP8DvDyc/dI5b8T5hshtkjS+E42TnysNCUPdjciGhY=
 golang.org/x/sys v0.0.0-20190222072716-a9d3bda3a223/go.mod h1:STP8DvDyc/dI5b8T5hshtkjS+E42TnysNCUPdjciGhY=
 golang.org/x/sys v0.0.0-20190312061237-fead79001313/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
@@ -2055,6 +2054,8 @@ gopkg.in/square/go-jose.v2 v2.3.1/go.mod h1:M9dMgbHiYLoDGQrXy7OpJDJWiKiU//h+vD76
 gopkg.in/square/go-jose.v2 v2.5.1/go.mod h1:M9dMgbHiYLoDGQrXy7OpJDJWiKiU//h+vD76mk0e1AI=
 gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 h1:uRGJdciOHaEIrze2W8Q3AKkepLTh2hOroT7a+7czfdQ=
 gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7/go.mod h1:dt/ZhP58zS4L8KSrWDmTeBkI65Dw0HsyUHuEVlX15mw=
+gopkg.in/yaml.v1 v1.0.0-20140924161607-9f9df34309c0 h1:POO/ycCATvegFmVuPpQzZFJ+pGZeX22Ufu6fibxDVjU=
+gopkg.in/yaml.v1 v1.0.0-20140924161607-9f9df34309c0/go.mod h1:WDnlLJ4WF5VGsH/HVa3CI79GS0ol3YnhVnKP89i0kNg=
 gopkg.in/yaml.v2 v2.0.0-20170812160011-eb3733d160e7/go.mod h1:JAlM8MvJe8wmxCU4Bli9HhUf9+ttbYbLASfIpnQbh74=
 gopkg.in/yaml.v2 v2.2.1/go.mod h1:hI93XBmqTisBFMUTm0b8Fm+jr3Dg1NNxqwp+5A1VGuI=
 gopkg.in/yaml.v2 v2.2.2/go.mod h1:hI93XBmqTisBFMUTm0b8Fm+jr3Dg1NNxqwp+5A1VGuI=
