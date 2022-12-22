@@ -761,6 +761,19 @@
       "description": "'ws' and 'wss' protocols are Kong Enterprise-only features. Please upgrade to Kong Enterprise to use this feature."
     },
     {
+      "description": "The 'priority' field is only allowed in expression-based routes.",
+      "if": {
+        "required": [
+          "priority"
+        ]
+      },
+      "then": {
+        "required": [
+          "expression"
+        ]
+      }
+    },
+    {
       "title": "atc_route_rule",
       "description": "When 'expression' is defined, 'priority' is required.",
       "if": {

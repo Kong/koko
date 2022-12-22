@@ -760,6 +760,15 @@ func init() {
 				},
 			},
 			{
+				Description: "The 'priority' field is only allowed in expression-based routes.",
+				If: &generator.Schema{
+					Required: []string{"priority"},
+				},
+				Then: &generator.Schema{
+					Required: []string{"expression"},
+				},
+			},
+			{
 				Title:       ExpressionRouteRuleTitle,
 				Description: "When 'expression' is defined, 'priority' is required.",
 				If: &generator.Schema{

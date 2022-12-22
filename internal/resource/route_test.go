@@ -1326,6 +1326,23 @@ func TestRoute_Validate(t *testing.T) {
 			},
 		},
 		{
+			name: "priority is only for expression routes",
+			Route: func() Route {
+				r := goodRoute()
+				r.Route.Priority = 4
+				return r
+			},
+			wantErr: true,
+			Errs: []*model.ErrorDetail{
+				{
+					Type: model.ErrorType_ERROR_TYPE_ENTITY,
+					Messages: []string{
+						"The 'priority' field is only allowed in expression-based routes.",
+					},
+				},
+			},
+		},
+		{
 			name: "expression route needs priority",
 			Route: func() Route {
 				r := expressionRoute("net.port == 80")
