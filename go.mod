@@ -13,6 +13,7 @@ require (
 	github.com/cespare/xxhash/v2 v2.2.0
 	github.com/gavv/httpexpect/v2 v2.8.0
 	github.com/go-sql-driver/mysql v1.7.0
+	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/golang-jwt/jwt/v4 v4.4.3
 	github.com/golang-migrate/migrate/v4 v4.15.2
 	github.com/golang/protobuf v1.5.2
@@ -27,8 +28,8 @@ require (
 	github.com/jackc/pgconn v1.13.0
 	github.com/jackc/pgx/v4 v4.17.2
 	github.com/jeremywohl/flatten v1.0.1
-	github.com/kong/go-kong v0.33.1-0.20221216215022-d8d2d9de7467
 	github.com/kong/go-atc-router v0.0.0-20221111113617-cca0bca3c5d9
+	github.com/kong/go-kong v0.33.1-0.20221216215022-d8d2d9de7467
 	github.com/kong/go-wrpc v0.0.0-20220926162517-2374aa556d56
 	github.com/kong/goks v0.6.2
 	github.com/kong/semver/v4 v4.0.1
@@ -85,7 +86,7 @@ require (
 	github.com/go-ole/go-ole v1.2.6 // indirect
 	github.com/goccy/go-json v0.9.7 // indirect
 	github.com/gofrs/flock v0.8.1 // indirect
-	github.com/gofrs/uuid v4.3.0+incompatible // indirect
+	github.com/gofrs/uuid v4.3.1+incompatible // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/glog v1.0.0 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
