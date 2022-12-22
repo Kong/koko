@@ -6,7 +6,9 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/google/uuid"
 	"github.com/imdario/mergo"
+	atcrouter "github.com/kong/go-atc-router"
 	v1 "github.com/kong/koko/internal/gen/grpc/kong/admin/model/v1"
 	"github.com/kong/koko/internal/model"
 	"github.com/kong/koko/internal/model/json/extension"
@@ -14,6 +16,7 @@ import (
 	"github.com/kong/koko/internal/model/json/validation"
 	"github.com/kong/koko/internal/model/json/validation/typedefs"
 	"github.com/samber/lo"
+	"github.com/santhosh-tekuri/jsonschema/v5"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
@@ -30,7 +33,22 @@ const (
 	// WSProtocolsRuleTitle denotes the name of the schema rule to apply
 	// to ws protocols.
 	WSProtocolsRuleTitle = "ws_protocols_rule"
+	// ExpressionRouteRuleTitle denotes the name of the schema rule to apply
+	// to expression-based routes.
+	ExpressionRouteRuleTitle = "atc_route_rule"
 )
+
+func fieldForbidsOthers(fldA string, others []string) map[string]*generator.Schema {
+	out := make(map[string]*generator.Schema, len(others))
+
+	for _, other := range others {
+		out[other] = &generator.Schema{Not: &generator.Schema{
+			Description: fmt.Sprintf("When '%s' is defined, the field '%s' must not be set.", fldA, other),
+		}}
+	}
+
+	return out
+}
 
 var (
 	defaultRoute = &v1.Route{
@@ -41,6 +59,14 @@ var (
 		RequestBuffering:        wrapperspb.Bool(true),
 		ResponseBuffering:       wrapperspb.Bool(true),
 		PathHandling:            "v0",
+		HttpsRedirectStatusCode: http.StatusUpgradeRequired,
+	}
+	defaultExpressionRoute = &v1.Route{
+		Protocols:               []string{typedefs.ProtocolHTTP, typedefs.ProtocolHTTPS},
+		PreserveHost:            wrapperspb.Bool(false),
+		StripPath:               wrapperspb.Bool(true),
+		RequestBuffering:        wrapperspb.Bool(true),
+		ResponseBuffering:       wrapperspb.Bool(true),
 		HttpsRedirectStatusCode: http.StatusUpgradeRequired,
 	}
 	_ model.Object = Route{}
@@ -136,16 +162,58 @@ func (r Route) ProcessDefaults(ctx context.Context) error {
 			r.Route.StripPath = wrapperspb.Bool(false)
 		}
 	}
-	err := mergo.Merge(r.Route, defaultRoute,
-		mergo.WithTransformers(wrappersPBTransformer{}))
-	if err != nil {
-		return err
+	if r.Route.Expression == "" {
+		err := mergo.Merge(r.Route, defaultRoute,
+			mergo.WithTransformers(wrappersPBTransformer{}))
+		if err != nil {
+			return err
+		}
+	} else {
+		err := mergo.Merge(r.Route, defaultExpressionRoute,
+			mergo.WithTransformers(wrappersPBTransformer{}))
+		if err != nil {
+			return err
+		}
 	}
 	defaultID(&r.Route.Id)
 	return nil
 }
 
+func buildSchema() *atcrouter.Schema {
+	schema := atcrouter.NewSchema()
+
+	for fieldType, fields := range map[atcrouter.FieldType][]string{
+		atcrouter.String: {
+			"net.protocol", "tls.sni",
+			"http.method", "http.host",
+			"http.path", "http.raw_path",
+			"http.headers.*",
+		},
+		atcrouter.Int: {"net.port"},
+	} {
+		for _, fieldName := range fields {
+			schema.AddField(fieldName, fieldType)
+		}
+	}
+
+	return schema
+}
+
+var cachedSchema = buildSchema()
+
 func init() {
+	jsonschema.Formats["route-expression"] = func(v interface{}) bool {
+		expression, ok := v.(string)
+		if !ok {
+			return false
+		}
+
+		router := atcrouter.NewRouter(cachedSchema)
+		defer router.Free()
+		err := router.AddMatcher(0, uuid.New(), expression)
+		return err == nil
+	}
+
 	err := model.RegisterType(TypeRoute, &v1.Route{}, func() model.Object {
 		return NewRoute()
 	})
@@ -324,6 +392,13 @@ func init() {
 			"created_at": typedefs.UnixEpoch,
 			"updated_at": typedefs.UnixEpoch,
 			"service":    typedefs.ReferenceObject,
+			"expression": {
+				Type:   "string",
+				Format: "route-expression",
+			},
+			"priority": {
+				Type: "integer",
+			},
 		},
 		AdditionalProperties: &falsy,
 		Required: []string{
@@ -411,6 +486,7 @@ func init() {
 								Const: typedefs.ProtocolHTTP,
 							},
 						},
+						"expression": {Not: &generator.Schema{}},
 					},
 				},
 				Then: &generator.Schema{
@@ -444,6 +520,7 @@ func init() {
 								Const: typedefs.ProtocolHTTPS,
 							},
 						},
+						"expression": {Not: &generator.Schema{}},
 					},
 				},
 				Then: &generator.Schema{
@@ -680,6 +757,37 @@ func init() {
 							},
 						},
 					},
+				},
+			},
+			{
+				Description: "The 'priority' field is only allowed in expression-based routes.",
+				If: &generator.Schema{
+					Required: []string{"priority"},
+				},
+				Then: &generator.Schema{
+					Required: []string{"expression"},
+				},
+			},
+			{
+				Title:       ExpressionRouteRuleTitle,
+				Description: "When 'expression' is defined, 'priority' is required.",
+				If: &generator.Schema{
+					Required: []string{"expression"},
+				},
+				Then: &generator.Schema{
+					Required: []string{"priority"},
+				},
+			},
+			{
+				Title: ExpressionRouteRuleTitle,
+				If: &generator.Schema{
+					Required: []string{"expression"},
+				},
+				Then: &generator.Schema{
+					Properties: fieldForbidsOthers("expression", []string{
+						"hosts", "headers", "methods", "paths", "path_handling",
+						"regex_priority", "snis", "sources", "destinations",
+					}),
 				},
 			},
 		},

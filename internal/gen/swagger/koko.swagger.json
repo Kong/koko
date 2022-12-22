@@ -2747,6 +2747,13 @@
                 },
                 "service": {
                   "$ref": "#/definitions/kong.admin.model.v1.Service"
+                },
+                "expression": {
+                  "type": "string"
+                },
+                "priority": {
+                  "type": "integer",
+                  "format": "int32"
                 }
               }
             }
@@ -5386,6 +5393,13 @@
         },
         "service": {
           "$ref": "#/definitions/kong.admin.model.v1.Service"
+        },
+        "expression": {
+          "type": "string"
+        },
+        "priority": {
+          "type": "integer",
+          "format": "int32"
         }
       }
     },

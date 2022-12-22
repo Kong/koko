@@ -2,7 +2,7 @@ name: Lint [OSS]
 on: pull_request
 jobs:
   lint:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
     - name: Setup go
       uses: actions/setup-go@v3
@@ -20,6 +20,13 @@ jobs:
           ~/.cache/go-build
           ~/.cache/buf
         key: ${{ runner.os }}-go-lint-${{ hashFiles('**/go.sum') }}
+    - name: Cache go-atc-router library
+      id: cache-atc
+      uses: actions/cache@v3
+      with:
+        path: |
+          /tmp/lib
+        key: ${{ runner.os }}-go-atc-router-${{ hashFiles('**/go.sum') }}
     - name: make install-tools
       run: make install-tools
     - name: make verify
