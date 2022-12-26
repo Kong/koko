@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.0
-	github.com/DataDog/datadog-go/v5 v5.1.1
+	github.com/DataDog/datadog-go/v5 v5.2.0
 	github.com/Masterminds/squirrel v1.5.3
 	github.com/bluele/gcache v0.0.2
 	github.com/bufbuild/buf v1.10.0
