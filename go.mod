@@ -28,7 +28,7 @@ require (
 	github.com/jackc/pgconn v1.13.0
 	github.com/jackc/pgx/v4 v4.17.2
 	github.com/jeremywohl/flatten v1.0.1
-	github.com/kong/go-atc-router v0.0.0-20221111113617-cca0bca3c5d9
+	github.com/kong/go-atc-router v0.0.0-20230103153602-fa1203956dc2
 	github.com/kong/go-kong v0.33.1-0.20221216215022-d8d2d9de7467
 	github.com/kong/go-wrpc v0.0.0-20220926162517-2374aa556d56
 	github.com/kong/goks v0.6.2
