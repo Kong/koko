@@ -878,8 +878,8 @@ github.com/klauspost/compress v1.15.12 h1:YClS/PImqYbn+UILDnqxQCZ3RehC9N318SU3kE
 github.com/klauspost/compress v1.15.12/go.mod h1:QPwzmACJjUTFsnSHH934V6woptycfrDDJnH7hvFVbGM=
 github.com/klauspost/pgzip v1.2.5 h1:qnWYvvKqedOF2ulHpMG72XQol4ILEJ8k2wwRl/Km8oE=
 github.com/klauspost/pgzip v1.2.5/go.mod h1:Ch1tH69qFZu15pkjo5kYi6mth2Zzwzt50oCQKQE9RUs=
-github.com/kong/go-atc-router v0.0.0-20230103153602-fa1203956dc2 h1:E72ZqbBVwBWs61XA+Wdd8QIFaU9el7zSHJHL5VNAdFk=
-github.com/kong/go-atc-router v0.0.0-20230103153602-fa1203956dc2/go.mod h1:ngIriezTJk26AA4eZoxOOKfh7jEmTWNKp8mWS4eULRM=
+github.com/kong/go-atc-router v0.0.0-20230104102006-0f677f19f87b h1:5klJh16tLB0AvIbkNE6i9lvRbI7OkuXKrauUE4vqe14=
+github.com/kong/go-atc-router v0.0.0-20230104102006-0f677f19f87b/go.mod h1:ngIriezTJk26AA4eZoxOOKfh7jEmTWNKp8mWS4eULRM=
 github.com/kong/go-kong v0.33.1-0.20221216215022-d8d2d9de7467 h1:svTBtvgpVfrBMSIgF76cZJHZGz3XBBFfXQT3VP3wkvk=
 github.com/kong/go-kong v0.33.1-0.20221216215022-d8d2d9de7467/go.mod h1:G30uJtuJOjJXFL1vulIrz/27KhPdE2g0GtJZlNINU6U=
 github.com/kong/go-wrpc v0.0.0-20220926162517-2374aa556d56 h1:VMRlo1tRNyJnIZhS4M7tN/NKuWYNXY7tV8cgL8I2Jbg=
