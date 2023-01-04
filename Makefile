@@ -4,24 +4,29 @@ DEFAULT_BRANCH:=$(shell git remote show origin | sed -n '/HEAD branch/s/.*: //p'
 ATCROUTER_LIB = /tmp/lib/libatc_router.a
 DEPS = $(ATCROUTER_LIB)
 
+INSTALL_LIBS = libatc_router.so
+INSTALLED_LIBS = $(addprefix /usr/lib/,$(INSTALL_LIBS))
+
 $(ATCROUTER_LIB):
 	./scripts/build-library.sh go-atc-router/main/make-lib.sh /tmp/lib
 
+$(INSTALLED_LIBS): $(ATCROUTER_LIB)
+	sudo -En ln -s /tmp/lib/$(INSTALL_LIBS) /usr/lib
 
 .PHONY: install-tools
 install-tools:
 	./scripts/install-tools.sh
 
 .PHONY: build
-build: $(DEPS)
+build: $(DEPS) $(INSTALLED_LIBS)
 	go build -o koko main.go
 
 .PHONY: run
-run: $(DEPS)
+run: $(DEPS) $(INSTALLED_LIBS)
 	go run main.go serve
 
 .PHONY: lint
-lint: verify-tidy $(DEPS)
+lint: verify-tidy $(DEPS) $(INSTALLED_LIBS)
 	buf format -d --exit-code
 	buf lint
 	./bin/golangci-lint run ./...
@@ -34,22 +39,22 @@ verify-tidy:
 all: lint test
 
 .PHONY: test
-test: $(DEPS)
-	go test -ldflags="-extldflags=-static" -tags testsetup -count 1 ./...
+test: $(DEPS) $(INSTALLED_LIBS)
+	go test -tags testsetup -count 1 ./...
 
-test-race: $(DEPS)
-	go test -ldflags="-extldflags=-static" -tags testsetup -count 1 -race -p 1 ./...
+test-race: $(DEPS) $(INSTALLED_LIBS)
+	go test -tags testsetup -count 1 -race -p 1 ./...
 
 .PHONY: test-integration
-test-integration: $(DEPS)
-	go test -ldflags="-extldflags=-static" -tags=testsetup,integration -timeout 15m -race -count 1 -p 1 ./internal/test/...
+test-integration: $(DEPS) $(INSTALLED_LIBS)
+	go test -tags=testsetup,integration -timeout 15m -race -count 1 -p 1 ./internal/test/...
 
 .PHONY: gen
-gen:
+gen: $(INSTALLED_LIBS)
 	./scripts/update-codegen.sh
 
 .PHONY: gen-verify
-gen-verify: $(DEPS)
+gen-verify: $(DEPS) $(INSTALLED_LIBS)
 	./scripts/verify-codegen.sh
 
 .PHONY: buf-format
