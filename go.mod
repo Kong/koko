@@ -21,7 +21,7 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/websocket v1.5.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
-	github.com/grpc-ecosystem/grpc-gateway/v2 v2.14.0
+	github.com/grpc-ecosystem/grpc-gateway/v2 v2.15.0
 	github.com/hbagdi/gang v0.1.0
 	github.com/ilyakaznacheev/cleanenv v1.4.2
 	github.com/imdario/mergo v0.3.13
@@ -51,14 +51,13 @@ require (
 	go.uber.org/zap v1.24.0
 	golang.org/x/exp v0.0.0-20221031165847-c99f073a8326
 	golang.org/x/sync v0.1.0
-	google.golang.org/genproto v0.0.0-20221114212237-e4508ebdbee1
+	google.golang.org/genproto v0.0.0-20221207170731-23e4bf6bdc37
 	google.golang.org/grpc v1.51.0
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.2.0
 	google.golang.org/protobuf v1.28.2-0.20220831092852-f930b1dc76e8
 )
 
 require (
-	cloud.google.com/go/compute v1.12.1 // indirect
 	github.com/Azure/go-ansiterm v0.0.0-20210617225240-d185dfc1b5a1 // indirect
 	github.com/BurntSushi/toml v1.1.0 // indirect
 	github.com/Microsoft/go-winio v0.6.0 // indirect
