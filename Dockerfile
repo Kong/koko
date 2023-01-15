@@ -4,7 +4,7 @@ WORKDIR /koko
 
 ADD . .
 
-RUN ./scripts/build-library.sh go-atc-router/main/make-lib.sh /koko/lib
+RUN ./scripts/build-library.sh kong/go-atc-router make-lib.sh /koko/lib
 
 FROM golang:1.19 AS build
 
