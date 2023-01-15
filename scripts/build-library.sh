@@ -1,6 +1,9 @@
 #!/bin/bash -e
 
-SCRIPT_REF="$1"
-DSTDIR="$2"
+MODULE_NAME="$1"
+SCRIPT_FILE="$2"
+DSTDIR="$3"
 
-curl -sSfL "https://raw.githubusercontent.com/Kong/$SCRIPT_REF" | bash -s -- "$DSTDIR"
+MODULE_VERSION=$(grep -F "$MODULE_NAME" go.mod | (read mod ver; echo "${ver##*-}"))
+
+curl -sSfL "https://raw.githubusercontent.com/$MODULE_NAME/$MODULE_VERSION/$SCRIPT_FILE" | bash -s -- "$DSTDIR"
