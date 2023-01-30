@@ -1,4 +1,4 @@
-FROM rust:1.66 AS atc-router
+FROM rust:1.67 AS atc-router
 
 WORKDIR /koko
 
