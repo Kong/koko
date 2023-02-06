@@ -6,7 +6,7 @@ ADD . .
 
 RUN ./scripts/build-library.sh kong/go-atc-router make-lib.sh /koko/lib
 
-FROM golang:1.19 AS build
+FROM golang:1.20 AS build
 
 WORKDIR /koko
 
