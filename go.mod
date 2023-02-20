@@ -39,7 +39,7 @@ require (
 	github.com/prometheus/client_golang v1.14.0
 	github.com/prometheus/client_model v0.3.0
 	github.com/samber/lo v1.37.0
-	github.com/santhosh-tekuri/jsonschema/v5 v5.1.1
+	github.com/santhosh-tekuri/jsonschema/v5 v5.2.0
 	github.com/shirou/gopsutil/v3 v3.22.11
 	github.com/spf13/cobra v1.6.1
 	github.com/stretchr/testify v1.8.1
