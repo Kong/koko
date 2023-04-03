@@ -26,7 +26,7 @@ RUN CGO_ENABLED=1 go build \
   -o koko \
   main.go
 
-FROM alpine:3.17.0
+FROM alpine:3.17.3
 RUN adduser --disabled-password --gecos "" koko
 RUN apk --no-cache add ca-certificates bash
 USER koko
