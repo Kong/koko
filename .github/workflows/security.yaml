@@ -2,6 +2,7 @@ name: Go Vulnerability Checker
 on: pull_request
 jobs:
   govulncheck:
+    timeout-minutes: ${{ fromJSON(vars.GHA_DEFAULT_TIMEOUT) }}
     runs-on: ubuntu-latest
     steps:
     - name: Set up Go
