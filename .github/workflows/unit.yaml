@@ -2,6 +2,7 @@ name: Unit Tests [OSS]
 on: pull_request
 jobs:
   unit-test:
+    timeout-minutes: ${{ fromJSON(vars.GHA_DEFAULT_TIMEOUT) }}
     runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
