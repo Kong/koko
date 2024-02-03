@@ -5,6 +5,7 @@ on:
       - "v*"
 jobs:
   build-image:
+    timeout-minutes: ${{ fromJSON(vars.GHA_DEFAULT_TIMEOUT) }}
     name: Build Docker image
     runs-on: ubuntu-latest
     steps:
