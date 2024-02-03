@@ -2,6 +2,7 @@ name: Lint [OSS]
 on: pull_request
 jobs:
   lint:
+    timeout-minutes: ${{ fromJSON(vars.GHA_DEFAULT_TIMEOUT) }}
     runs-on: ubuntu-22.04
     steps:
     - name: Setup go
